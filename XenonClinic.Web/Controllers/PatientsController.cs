@@ -9,9 +9,9 @@ namespace XenonClinic.Web.Controllers;
 [Authorize]
 public class PatientsController : Controller
 {
-    private readonly XenonClinicDbContext _db;
+    private readonly ClinicDbContext _db;
 
-    public PatientsController(XenonClinicDbContext db)
+    public PatientsController(ClinicDbContext db)
     {
         _db = db;
     }
