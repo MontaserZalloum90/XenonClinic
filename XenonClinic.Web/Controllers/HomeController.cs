@@ -11,6 +11,9 @@ public class HomeController : Controller
     private readonly XenonClinicDbContext _db;
 
     public HomeController(XenonClinicDbContext db)
+    private readonly ClinicDbContext _db;
+
+    public HomeController(ClinicDbContext db)
     {
         _db = db;
     }

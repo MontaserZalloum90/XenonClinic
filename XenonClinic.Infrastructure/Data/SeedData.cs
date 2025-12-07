@@ -10,6 +10,7 @@ public static class SeedData
     {
         using var scope = serviceProvider.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<XenonClinicDbContext>();
+        var context = scope.ServiceProvider.GetRequiredService<ClinicDbContext>();
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
         var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
 
@@ -122,6 +123,7 @@ public static class SeedData
                 for (int j = 0; j < 3; j++)
                 {
                     var start = DateTime.UtcNow.AddDays(-random.Next(1, 60)).AddHours(random.Next(8, 18));
+                    var start = DateTime.UtcNow.AddDays(-random.Next(60, 1)).AddHours(random.Next(8, 18));
                     var status = new[] { "Booked", "Completed", "Cancelled", "NoShow" }[random.Next(4)];
                     var type = new[] { "HearingTest", "Fitting", "Consultation", "Repair", "FollowUp" }[random.Next(5)];
                     appointments.Add(new Appointment

@@ -29,3 +29,15 @@ Open the repository with the root `XenonClinic.sln` to load all three projects t
 - Run any available automated tests (add as they are created): `dotnet test XenonClinic.sln`
 
 > Note: This container image does not ship with the .NET SDK and outbound downloads are blocked, so commands above may not execute here. They are ready for a local environment where the SDK is installed.
+## Running locally
+1. Install .NET 8 SDK.
+2. Update the connection string in `XenonClinic.Web/Program.cs` if needed (defaults to LocalDB/SQL Server).
+3. From the `XenonClinic.Web` directory run:
+   ```bash
+   dotnet restore
+   dotnet ef database update  # create the database schema
+   dotnet run
+   ```
+4. Browse to `https://localhost:5001` and log in with `admin@xenon.local` / `Admin@123!`.
+
+> Note: This container image does not ship with the .NET SDK, so commands above may not execute here, but the solution layout is ready for a local environment.
