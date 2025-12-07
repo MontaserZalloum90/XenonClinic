@@ -1,0 +1,65 @@
+@model XenonClinic.Core.Entities.Patient
+@{
+    ViewData["Title"] = "New Patient";
+}
+<h2 class="mb-3">New Patient</h2>
+<form asp-action="Create" method="post" class="card card-rounded p-4">
+    <div class="row g-3">
+        <div class="col-md-6">
+            <label asp-for="EmiratesId" class="form-label"></label>
+            <div class="input-group">
+                <input asp-for="EmiratesId" class="form-control" />
+                <button type="button" class="btn btn-outline-primary" onclick="readEid()">Read Emirates ID</button>
+            </div>
+            <span asp-validation-for="EmiratesId" class="text-danger"></span>
+        </div>
+        <div class="col-md-6">
+            <label asp-for="FullNameEn" class="form-label"></label>
+            <input asp-for="FullNameEn" class="form-control" />
+            <span asp-validation-for="FullNameEn" class="text-danger"></span>
+        </div>
+        <div class="col-md-6">
+            <label asp-for="FullNameAr" class="form-label"></label>
+            <input asp-for="FullNameAr" class="form-control" />
+        </div>
+        <div class="col-md-3">
+            <label asp-for="DateOfBirth" class="form-label"></label>
+            <input asp-for="DateOfBirth" class="form-control" type="date" />
+        </div>
+        <div class="col-md-3">
+            <label asp-for="Gender" class="form-label"></label>
+            <select asp-for="Gender" class="form-select">
+                <option value="M">Male</option>
+                <option value="F">Female</option>
+            </select>
+        </div>
+        <div class="col-md-6">
+            <label asp-for="PhoneNumber" class="form-label"></label>
+            <input asp-for="PhoneNumber" class="form-control" />
+        </div>
+        <div class="col-md-6">
+            <label asp-for="Email" class="form-label"></label>
+            <input asp-for="Email" class="form-control" />
+        </div>
+        <div class="col-md-6">
+            <label asp-for="HearingLossType" class="form-label"></label>
+            <select asp-for="HearingLossType" class="form-select">
+                <option value="Sensorineural">Sensorineural</option>
+                <option value="Conductive">Conductive</option>
+                <option value="Mixed">Mixed</option>
+                <option value="Normal">Normal</option>
+            </select>
+        </div>
+        <div class="col-12">
+            <label asp-for="Notes" class="form-label"></label>
+            <textarea asp-for="Notes" class="form-control" rows="3"></textarea>
+        </div>
+    </div>
+    <div class="mt-4 d-flex justify-content-end gap-2">
+        <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+        <button type="submit" class="btn btn-xenon">Save</button>
+    </div>
+</form>
+@section Scripts{
+    <partial name="_ValidationScriptsPartial" />
+}

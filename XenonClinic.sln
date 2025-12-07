@@ -1,0 +1,33 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31912.275
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "XenonClinic.Core", "XenonClinic.Core\XenonClinic.Core.csproj", "{f9fe2d80-739b-46d9-bbff-f154f5d15835}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "XenonClinic.Infrastructure", "XenonClinic.Infrastructure\XenonClinic.Infrastructure.csproj", "{5d066e3a-b6e3-4d45-a337-aa813812d42a}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "XenonClinic.Web", "XenonClinic.Web\XenonClinic.Web.csproj", "{dba4a1db-7e6d-4455-8add-472198171c4a}"
+EndProject
+Global
+GlobalSection(SolutionConfigurationPlatforms) = preSolution
+Debug|Any CPU = Debug|Any CPU
+Release|Any CPU = Release|Any CPU
+EndGlobalSection
+GlobalSection(ProjectConfigurationPlatforms) = postSolution
+{f9fe2d80-739b-46d9-bbff-f154f5d15835}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+{f9fe2d80-739b-46d9-bbff-f154f5d15835}.Debug|Any CPU.Build.0 = Debug|Any CPU
+{f9fe2d80-739b-46d9-bbff-f154f5d15835}.Release|Any CPU.ActiveCfg = Release|Any CPU
+{f9fe2d80-739b-46d9-bbff-f154f5d15835}.Release|Any CPU.Build.0 = Release|Any CPU
+{5d066e3a-b6e3-4d45-a337-aa813812d42a}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+{5d066e3a-b6e3-4d45-a337-aa813812d42a}.Debug|Any CPU.Build.0 = Debug|Any CPU
+{5d066e3a-b6e3-4d45-a337-aa813812d42a}.Release|Any CPU.ActiveCfg = Release|Any CPU
+{5d066e3a-b6e3-4d45-a337-aa813812d42a}.Release|Any CPU.Build.0 = Release|Any CPU
+{dba4a1db-7e6d-4455-8add-472198171c4a}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+{dba4a1db-7e6d-4455-8add-472198171c4a}.Debug|Any CPU.Build.0 = Debug|Any CPU
+{dba4a1db-7e6d-4455-8add-472198171c4a}.Release|Any CPU.ActiveCfg = Release|Any CPU
+{dba4a1db-7e6d-4455-8add-472198171c4a}.Release|Any CPU.Build.0 = Release|Any CPU
+EndGlobalSection
+GlobalSection(SolutionProperties) = preSolution
+HideSolutionNode = FALSE
+EndGlobalSection
+EndGlobal
