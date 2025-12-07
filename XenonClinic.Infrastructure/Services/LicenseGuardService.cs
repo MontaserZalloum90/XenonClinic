@@ -1,0 +1,53 @@
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using XenonClinic.Core.Entities;
+using XenonClinic.Core.Interfaces;
+using XenonClinic.Infrastructure.Data;
+
+namespace XenonClinic.Infrastructure.Services;
+
+public class LicenseGuardService : ILicenseGuardService
+{
+    private readonly ClinicDbContext _db;
+    private readonly UserManager<ApplicationUser> _userManager;
+
+    public LicenseGuardService(ClinicDbContext db, UserManager<ApplicationUser> userManager)
+    {
+        _db = db;
+        _userManager = userManager;
+    }
+
+    public async Task<bool> CanCreateBranchAsync()
+    {
+        var license = await _db.LicenseConfigs.AsNoTracking().FirstOrDefaultAsync();
+        if (license == null || !license.IsActive)
+        {
+            return false;
+        }
+
+        if (license.ExpiryDate.HasValue && license.ExpiryDate.Value.Date < DateTime.UtcNow.Date)
+        {
+            return false;
+        }
+
+        var branchesCount = await _db.Branches.CountAsync();
+        return branchesCount < license.MaxBranches;
+    }
+
+    public async Task<bool> CanCreateUserAsync()
+    {
+        var license = await _db.LicenseConfigs.AsNoTracking().FirstOrDefaultAsync();
+        if (license == null || !license.IsActive)
+        {
+            return false;
+        }
+
+        if (license.ExpiryDate.HasValue && license.ExpiryDate.Value.Date < DateTime.UtcNow.Date)
+        {
+            return false;
+        }
+
+        var usersCount = await _userManager.Users.CountAsync();
+        return usersCount < license.MaxUsers;
+    }
+}

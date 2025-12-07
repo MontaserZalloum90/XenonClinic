@@ -1,0 +1,72 @@
+@{
+    ViewData["Title"] = "Analytics";
+    var apptSeries = ViewBag.AppointmentSeries as IEnumerable<dynamic> ?? Enumerable.Empty<dynamic>();
+    var revenueSeries = ViewBag.RevenueSeries as IEnumerable<dynamic> ?? Enumerable.Empty<dynamic>();
+    var types = ViewBag.AppointmentTypes as IEnumerable<dynamic> ?? Enumerable.Empty<dynamic>();
+    var devices = ViewBag.DeviceModels as IEnumerable<dynamic> ?? Enumerable.Empty<dynamic>();
+}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h2 class="mb-0">Analytics Overview</h2>
+        <p class="text-muted">High-level KPIs and business performance</p>
+    </div>
+</div>
+<div class="row g-3">
+    <div class="col-md-3"><div class="card card-rounded"><div class="card-body"><div class="text-muted">Patients</div><div class="fs-3 fw-bold">@ViewBag.TotalPatients</div></div></div></div>
+    <div class="col-md-3"><div class="card card-rounded"><div class="card-body"><div class="text-muted">Appointments</div><div class="fs-3 fw-bold">@ViewBag.TotalAppointments</div></div></div></div>
+    <div class="col-md-3"><div class="card card-rounded"><div class="card-body"><div class="text-muted">Completed Visits</div><div class="fs-3 fw-bold">@ViewBag.CompletedVisits</div></div></div></div>
+    <div class="col-md-3"><div class="card card-rounded"><div class="card-body"><div class="text-muted">Revenue</div><div class="fs-3 fw-bold">AED @ViewBag.TotalRevenue</div></div></div></div>
+</div>
+<div class="row g-3 mt-2">
+    <div class="col-lg-6">
+        <div class="card card-rounded">
+            <div class="card-body">
+                <h5 class="mb-3">Appointments (30d)</h5>
+                <canvas id="appointmentChart" height="210"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card card-rounded">
+            <div class="card-body">
+                <h5 class="mb-3">Revenue (30d)</h5>
+                <canvas id="revenueChart" height="210"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="row g-3 mt-2">
+    <div class="col-lg-6">
+        <div class="card card-rounded">
+            <div class="card-body">
+                <h5 class="mb-3">Appointment Types</h5>
+                <canvas id="typesChart" height="220"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card card-rounded">
+            <div class="card-body">
+                <h5 class="mb-3">Top Devices Sold</h5>
+                <canvas id="devicesChart" height="220"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+@section Scripts {
+    <script>
+        const apptLabels = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(apptSeries.Select(x => ((DateTime)x.Date).ToString("dd MMM"))));
+        const apptData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(apptSeries.Select(x => (int)x.Count)));
+        const revenueLabels = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(revenueSeries.Select(x => ((DateTime)x.Date).ToString("dd MMM"))));
+        const revenueData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(revenueSeries.Select(x => (decimal)x.Amount)));
+        const typeLabels = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(types.Select(x => (string)x.Type)));
+        const typeData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(types.Select(x => (int)x.Count)));
+        const deviceLabels = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(devices.Select(x => (string)x.Model)));
+        const deviceData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(devices.Select(x => (int)x.Count)));
+
+        new Chart(document.getElementById('appointmentChart'), { type: 'bar', data: { labels: apptLabels, datasets: [{ data: apptData, backgroundColor: '#1F6FEB' }] }, options: { plugins: { legend: { display: false } } } });
+        new Chart(document.getElementById('revenueChart'), { type: 'line', data: { labels: revenueLabels, datasets: [{ data: revenueData, borderColor: '#0ea5e9', fill: true, backgroundColor: 'rgba(14,165,233,0.12)' }] }, options: { plugins: { legend: { display: false } } } });
+        new Chart(document.getElementById('typesChart'), { type: 'doughnut', data: { labels: typeLabels, datasets: [{ data: typeData, backgroundColor: ['#1F6FEB', '#0ea5e9', '#22c55e', '#f59e0b', '#ef4444'] }] } });
+        new Chart(document.getElementById('devicesChart'), { type: 'bar', data: { labels: deviceLabels, datasets: [{ data: deviceData, backgroundColor: '#22c55e' }] }, options: { plugins: { legend: { display: false } } } });
+    </script>
+}
