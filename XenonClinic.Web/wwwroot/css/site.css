@@ -1,0 +1,37 @@
+body {
+    font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+.sidebar {
+    width: 240px;
+    min-height: 100vh;
+    color: #fff;
+}
+.sidebar .logo {
+    width: 40px;
+    height: 40px;
+    object-fit: contain;
+    border-radius: 10px;
+    background: rgba(255,255,255,0.1);
+    padding: 4px;
+}
+.nav-link {
+    border-radius: 12px;
+}
+.nav-link:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+.card-rounded {
+    border-radius: 16px;
+    border: none;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.05);
+}
+.btn-xenon {
+    background: linear-gradient(90deg, #1F6FEB, #0ea5e9);
+    color: #fff;
+    border: none;
+    border-radius: 14px;
+    padding: 10px 18px;
+}
+.table-xenon th {
+    color: #64748b;
+}
