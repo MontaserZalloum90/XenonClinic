@@ -8,9 +8,9 @@ namespace XenonClinic.Web.Controllers;
 [Authorize]
 public class HomeController : Controller
 {
-    private readonly XenonClinicDbContext _db;
+    private readonly ClinicDbContext _db;
 
-    public HomeController(XenonClinicDbContext db)
+    public HomeController(ClinicDbContext db)
     {
         _db = db;
     }

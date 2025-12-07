@@ -1,10 +1,7 @@
-using System.Threading.Tasks;
+namespace XenonClinic.Core.Interfaces;
 
-namespace XenonClinic.Core.Interfaces
+public interface ILicenseGuardService
 {
-    public interface ILicenseGuardService
-    {
-        Task<bool> CanCreateBranchAsync();
-        Task<bool> CanCreateUserAsync();
-    }
+    Task<bool> CanCreateBranchAsync();
+    Task<bool> CanCreateUserAsync();
 }

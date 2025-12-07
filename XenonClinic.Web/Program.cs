@@ -7,26 +7,18 @@ using XenonClinic.Infrastructure.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Connection string (override in appsettings.json if you want)
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
-                     ?? "Server=(localdb)\\mssqllocaldb;Database=XenonClinic;Trusted_Connection=True;MultipleActiveResultSets=true";
+    ?? "Server=(localdb)\\mssqllocaldb;Database=XenonClinic;Trusted_Connection=True;MultipleActiveResultSets=true";
 
-// DbContext
-builder.Services.AddDbContext<XenonClinicDbContext>(options =>
-    options.UseSqlServer(connectionString));
+builder.Services.AddDbContext<ClinicDbContext>(options => options.UseSqlServer(connectionString));
 
-// Identity
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
-    {
-        options.Password.RequireDigit = true;
-        options.Password.RequireNonAlphanumeric = false;
-        options.Password.RequireUppercase = true;
-        options.Password.RequiredLength = 6;
-    })
-    .AddEntityFrameworkStores<XenonClinicDbContext>()
-    .AddDefaultTokenProviders();
+{
+    options.Password.RequireDigit = true;
+    options.Password.RequireNonAlphanumeric = false;
+}).AddEntityFrameworkStores<ClinicDbContext>()
+  .AddDefaultTokenProviders();
 
-// App services
 builder.Services.AddScoped<ILicenseGuardService, LicenseGuardService>();
 
 builder.Services.AddControllersWithViews();
@@ -43,7 +35,6 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseRouting();
-
 app.UseAuthentication();
 app.UseAuthorization();
 
@@ -51,7 +42,6 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
-// Seed database
 using (var scope = app.Services.CreateScope())
 {
     await SeedData.InitializeAsync(scope.ServiceProvider);

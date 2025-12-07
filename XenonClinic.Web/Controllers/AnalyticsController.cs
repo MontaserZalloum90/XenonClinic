@@ -8,9 +8,9 @@ namespace XenonClinic.Web.Controllers;
 [Authorize(Roles = "Admin,BranchAdmin,Audiologist")]
 public class AnalyticsController : Controller
 {
-    private readonly XenonClinicDbContext _db;
+    private readonly ClinicDbContext _db;
 
-    public AnalyticsController(XenonClinicDbContext db)
+    public AnalyticsController(ClinicDbContext db)
     {
         _db = db;
     }
