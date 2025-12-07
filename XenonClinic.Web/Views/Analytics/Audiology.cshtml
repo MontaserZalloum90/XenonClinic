@@ -1,0 +1,31 @@
+@{
+    ViewData["Title"] = "Audiology Insights";
+    var diagnoses = ViewBag.Diagnoses as IEnumerable<dynamic> ?? Enumerable.Empty<dynamic>();
+    var loss = ViewBag.HearingLoss as IEnumerable<dynamic> ?? Enumerable.Empty<dynamic>();
+    var ageBuckets = ViewBag.AgeBuckets as IDictionary<string, int> ?? new Dictionary<string, int>();
+}
+<h2 class="mb-3">Audiology Insights</h2>
+<div class="row g-3">
+    <div class="col-md-4"><div class="card card-rounded"><div class="card-body"><div class="text-muted">Repeat Visit Rate</div><div class="fs-2 fw-bold">@ViewBag.RepeatVisitRate</div><p class="text-muted small">Patients with more than 3 visits</p></div></div></div>
+</div>
+<div class="row g-3 mt-2">
+    <div class="col-lg-6"><div class="card card-rounded"><div class="card-body"><h5>Top Diagnoses</h5><canvas id="diagChart" height="220"></canvas></div></div></div>
+    <div class="col-lg-6"><div class="card card-rounded"><div class="card-body"><h5>Hearing Loss Types</h5><canvas id="lossChart" height="220"></canvas></div></div></div>
+</div>
+<div class="row g-3 mt-2">
+    <div class="col-lg-6"><div class="card card-rounded"><div class="card-body"><h5>Age Distribution</h5><canvas id="ageChart" height="220"></canvas></div></div></div>
+</div>
+@section Scripts {
+    <script>
+        const diagLabels = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(diagnoses.Select(x => (string)x.Diagnosis)));
+        const diagData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(diagnoses.Select(x => (int)x.Count)));
+        const lossLabels = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(loss.Select(x => (string)x.Type)));
+        const lossData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(loss.Select(x => (int)x.Count)));
+        const ageLabels = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ageBuckets.Keys));
+        const ageData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ageBuckets.Values));
+
+        new Chart(document.getElementById('diagChart'), { type: 'bar', data: { labels: diagLabels, datasets: [{ data: diagData, backgroundColor: '#1F6FEB' }] }, options: { plugins: { legend: { display: false } } } });
+        new Chart(document.getElementById('lossChart'), { type: 'pie', data: { labels: lossLabels, datasets: [{ data: lossData, backgroundColor: ['#0ea5e9', '#22c55e', '#f59e0b', '#ef4444'] }] } });
+        new Chart(document.getElementById('ageChart'), { type: 'bar', data: { labels: ageLabels, datasets: [{ data: ageData, backgroundColor: '#a855f7' }] }, options: { plugins: { legend: { display: false } } } });
+    </script>
+}

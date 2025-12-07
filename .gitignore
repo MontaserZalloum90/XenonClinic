@@ -1,0 +1,28 @@
+## Visual Studio / .NET build outputs
+bin/
+obj/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.userprefs
+
+## NuGet
+*.nupkg
+*.snupkg
+project.lock.json
+packages/
+.nuget/
+
+## VS Code
+.vscode/
+.history/
+
+## Logs and temp
+*.log
+*.tmp
+*.temp
+
+## OS artifacts
+.DS_Store
+Thumbs.db
