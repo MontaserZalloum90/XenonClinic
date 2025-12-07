@@ -1,5 +1,3 @@
-using System;
-
 namespace XenonClinic.Core.Entities;
 
 public class HearingDevice

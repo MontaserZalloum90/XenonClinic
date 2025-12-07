@@ -11,6 +11,9 @@ public class AnalyticsController : Controller
     private readonly XenonClinicDbContext _db;
 
     public AnalyticsController(XenonClinicDbContext db)
+    private readonly ClinicDbContext _db;
+
+    public AnalyticsController(ClinicDbContext db)
     {
         _db = db;
     }

@@ -39,40 +39,12 @@ namespace XenonClinic.Infrastructure.Data
                     .HasForeignKey(ub => ub.BranchId);
             });
 
-            // Primary branch mapping for users
-            builder.Entity<ApplicationUser>()
-                .HasOne(u => u.PrimaryBranch)
-                .WithMany(b => b.PrimaryUsers)
-                .HasForeignKey(u => u.PrimaryBranchId)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            // Branch relationships
+            // Basic relationships (conventions handle most, but these make intent explicit)
             builder.Entity<Branch>()
                 .HasMany(b => b.Patients)
                 .WithOne(p => p.Branch!)
                 .HasForeignKey(p => p.BranchId);
 
-            builder.Entity<Branch>()
-                .HasMany(b => b.Appointments)
-                .WithOne(a => a.Branch!)
-                .HasForeignKey(a => a.BranchId);
-
-            builder.Entity<Branch>()
-                .HasMany(b => b.Visits)
-                .WithOne(v => v.Branch!)
-                .HasForeignKey(v => v.BranchId);
-
-            builder.Entity<Branch>()
-                .HasMany(b => b.Devices)
-                .WithOne(d => d.Branch!)
-                .HasForeignKey(d => d.BranchId);
-
-            builder.Entity<Branch>()
-                .HasMany(b => b.Invoices)
-                .WithOne(i => i.Branch!)
-                .HasForeignKey(i => i.BranchId);
-
-            // Patient relationships
             builder.Entity<Patient>()
                 .HasMany(p => p.Appointments)
                 .WithOne(a => a.Patient!)
