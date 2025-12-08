@@ -57,6 +57,10 @@ export const authApi = {
 export const appointmentsApi = {
   getAll: () => api.get('/api/AppointmentsApi'),
   getById: (id: number) => api.get(`/api/AppointmentsApi/${id}`),
+  getByDate: (date: Date) => {
+    const dateStr = date.toISOString().split('T')[0];
+    return api.get(`/api/AppointmentsApi/date/${dateStr}`);
+  },
   getToday: () => api.get('/api/AppointmentsApi/today'),
   getUpcoming: (days: number = 7) => api.get(`/api/AppointmentsApi/upcoming?days=${days}`),
   create: (data: any) => api.post('/api/AppointmentsApi', data),
