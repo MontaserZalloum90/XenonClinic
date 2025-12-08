@@ -1285,4 +1285,184 @@
   <data name="SupplierPaymentStatus_Cancelled">
     <value>Cancelled</value>
   </data>
+  <data name="Laboratory">
+    <value>Laboratory</value>
+  </data>
+  <data name="Lab_Dashboard">
+    <value>Lab Dashboard</value>
+  </data>
+  <data name="Lab_Orders">
+    <value>Lab Orders</value>
+  </data>
+  <data name="Lab_Tests">
+    <value>Lab Tests</value>
+  </data>
+  <data name="Lab_Results">
+    <value>Lab Results</value>
+  </data>
+  <data name="New_Lab_Order">
+    <value>New Lab Order</value>
+  </data>
+  <data name="Recent_Lab_Orders">
+    <value>Recent Lab Orders</value>
+  </data>
+  <data name="Pending_Lab_Results">
+    <value>Pending Lab Results</value>
+  </data>
+  <data name="No_Recent_Lab_Orders">
+    <value>No recent lab orders</value>
+  </data>
+  <data name="No_Pending_Results">
+    <value>No pending results</value>
+  </data>
+  <data name="Total_Lab_Orders">
+    <value>Total Lab Orders</value>
+  </data>
+  <data name="Pending_Orders">
+    <value>Pending Orders</value>
+  </data>
+  <data name="Urgent_Orders">
+    <value>Urgent Orders</value>
+  </data>
+  <data name="Abnormal_Results">
+    <value>Abnormal Results</value>
+  </data>
+  <data name="Completed_Today">
+    <value>Completed Today</value>
+  </data>
+  <data name="Active_Tests">
+    <value>Active Tests</value>
+  </data>
+  <data name="Enter_Results">
+    <value>Enter Results</value>
+  </data>
+  <data name="Urgent_Only">
+    <value>Urgent Only</value>
+  </data>
+  <data name="Collect_Specimen">
+    <value>Collect Specimen</value>
+  </data>
+  <data name="No_Lab_Orders_Found">
+    <value>No lab orders found</value>
+  </data>
+  <data name="Lab_Tests_Catalog">
+    <value>Lab Tests Catalog</value>
+  </data>
+  <data name="Add_Test">
+    <value>Add Test</value>
+  </data>
+  <data name="Test_Code">
+    <value>Test Code</value>
+  </data>
+  <data name="Test_Name">
+    <value>Test Name</value>
+  </data>
+  <data name="Specimen">
+    <value>Specimen</value>
+  </data>
+  <data name="TAT">
+    <value>TAT</value>
+  </data>
+  <data name="External_Lab">
+    <value>External Lab</value>
+  </data>
+  <data name="In_House">
+    <value>In-House</value>
+  </data>
+  <data name="No_Lab_Tests_Found">
+    <value>No lab tests found</value>
+  </data>
+  <data name="Fasting">
+    <value>Fasting Required</value>
+  </data>
+  <data name="Reference_Range">
+    <value>Reference Range</value>
+  </data>
+  <data name="Abnormal">
+    <value>Abnormal</value>
+  </data>
+  <data name="No_Lab_Results_Found">
+    <value>No lab results found</value>
+  </data>
+  <data name="Enter">
+    <value>Enter</value>
+  </data>
+  <data name="LabOrderStatus_Pending">
+    <value>Pending</value>
+  </data>
+  <data name="LabOrderStatus_Collected">
+    <value>Collected</value>
+  </data>
+  <data name="LabOrderStatus_InProgress">
+    <value>In Progress</value>
+  </data>
+  <data name="LabOrderStatus_Completed">
+    <value>Completed</value>
+  </data>
+  <data name="LabOrderStatus_Cancelled">
+    <value>Cancelled</value>
+  </data>
+  <data name="LabResultStatus_Pending">
+    <value>Pending</value>
+  </data>
+  <data name="LabResultStatus_InProgress">
+    <value>In Progress</value>
+  </data>
+  <data name="LabResultStatus_Completed">
+    <value>Completed</value>
+  </data>
+  <data name="LabResultStatus_Reviewed">
+    <value>Reviewed</value>
+  </data>
+  <data name="LabResultStatus_Verified">
+    <value>Verified</value>
+  </data>
+  <data name="TestCategory_Hematology">
+    <value>Hematology</value>
+  </data>
+  <data name="TestCategory_Biochemistry">
+    <value>Biochemistry</value>
+  </data>
+  <data name="TestCategory_Microbiology">
+    <value>Microbiology</value>
+  </data>
+  <data name="TestCategory_Immunology">
+    <value>Immunology</value>
+  </data>
+  <data name="TestCategory_Pathology">
+    <value>Pathology</value>
+  </data>
+  <data name="TestCategory_Imaging">
+    <value>Imaging</value>
+  </data>
+  <data name="TestCategory_Audiology">
+    <value>Audiology</value>
+  </data>
+  <data name="TestCategory_Cardiology">
+    <value>Cardiology</value>
+  </data>
+  <data name="TestCategory_Other">
+    <value>Other</value>
+  </data>
+  <data name="SpecimenType_Blood">
+    <value>Blood</value>
+  </data>
+  <data name="SpecimenType_Urine">
+    <value>Urine</value>
+  </data>
+  <data name="SpecimenType_Saliva">
+    <value>Saliva</value>
+  </data>
+  <data name="SpecimenType_Tissue">
+    <value>Tissue</value>
+  </data>
+  <data name="SpecimenType_Swab">
+    <value>Swab</value>
+  </data>
+  <data name="SpecimenType_Stool">
+    <value>Stool</value>
+  </data>
+  <data name="SpecimenType_Other">
+    <value>Other</value>
+  </data>
 </root>

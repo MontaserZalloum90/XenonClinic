@@ -1285,4 +1285,184 @@
   <data name="SupplierPaymentStatus_Cancelled">
     <value>ملغى</value>
   </data>
+  <data name="Laboratory">
+    <value>المختبر</value>
+  </data>
+  <data name="Lab_Dashboard">
+    <value>لوحة تحكم المختبر</value>
+  </data>
+  <data name="Lab_Orders">
+    <value>طلبات المختبر</value>
+  </data>
+  <data name="Lab_Tests">
+    <value>فحوصات المختبر</value>
+  </data>
+  <data name="Lab_Results">
+    <value>نتائج المختبر</value>
+  </data>
+  <data name="New_Lab_Order">
+    <value>طلب مختبر جديد</value>
+  </data>
+  <data name="Recent_Lab_Orders">
+    <value>طلبات المختبر الأخيرة</value>
+  </data>
+  <data name="Pending_Lab_Results">
+    <value>نتائج قيد الانتظار</value>
+  </data>
+  <data name="No_Recent_Lab_Orders">
+    <value>لا توجد طلبات مختبر حديثة</value>
+  </data>
+  <data name="No_Pending_Results">
+    <value>لا توجد نتائج قيد الانتظار</value>
+  </data>
+  <data name="Total_Lab_Orders">
+    <value>إجمالي طلبات المختبر</value>
+  </data>
+  <data name="Pending_Orders">
+    <value>الطلبات قيد الانتظار</value>
+  </data>
+  <data name="Urgent_Orders">
+    <value>الطلبات العاجلة</value>
+  </data>
+  <data name="Abnormal_Results">
+    <value>نتائج غير طبيعية</value>
+  </data>
+  <data name="Completed_Today">
+    <value>مكتمل اليوم</value>
+  </data>
+  <data name="Active_Tests">
+    <value>الفحوصات النشطة</value>
+  </data>
+  <data name="Enter_Results">
+    <value>إدخال النتائج</value>
+  </data>
+  <data name="Urgent_Only">
+    <value>العاجلة فقط</value>
+  </data>
+  <data name="Collect_Specimen">
+    <value>جمع العينة</value>
+  </data>
+  <data name="No_Lab_Orders_Found">
+    <value>لم يتم العثور على طلبات مختبر</value>
+  </data>
+  <data name="Lab_Tests_Catalog">
+    <value>دليل الفحوصات المخبرية</value>
+  </data>
+  <data name="Add_Test">
+    <value>إضافة فحص</value>
+  </data>
+  <data name="Test_Code">
+    <value>رمز الفحص</value>
+  </data>
+  <data name="Test_Name">
+    <value>اسم الفحص</value>
+  </data>
+  <data name="Specimen">
+    <value>العينة</value>
+  </data>
+  <data name="TAT">
+    <value>مدة الإنجاز</value>
+  </data>
+  <data name="External_Lab">
+    <value>مختبر خارجي</value>
+  </data>
+  <data name="In_House">
+    <value>داخلي</value>
+  </data>
+  <data name="No_Lab_Tests_Found">
+    <value>لم يتم العثور على فحوصات</value>
+  </data>
+  <data name="Fasting">
+    <value>يتطلب صياماً</value>
+  </data>
+  <data name="Reference_Range">
+    <value>المدى المرجعي</value>
+  </data>
+  <data name="Abnormal">
+    <value>غير طبيعي</value>
+  </data>
+  <data name="No_Lab_Results_Found">
+    <value>لم يتم العثور على نتائج</value>
+  </data>
+  <data name="Enter">
+    <value>إدخال</value>
+  </data>
+  <data name="LabOrderStatus_Pending">
+    <value>قيد الانتظار</value>
+  </data>
+  <data name="LabOrderStatus_Collected">
+    <value>تم الجمع</value>
+  </data>
+  <data name="LabOrderStatus_InProgress">
+    <value>قيد التنفيذ</value>
+  </data>
+  <data name="LabOrderStatus_Completed">
+    <value>مكتمل</value>
+  </data>
+  <data name="LabOrderStatus_Cancelled">
+    <value>ملغى</value>
+  </data>
+  <data name="LabResultStatus_Pending">
+    <value>قيد الانتظار</value>
+  </data>
+  <data name="LabResultStatus_InProgress">
+    <value>قيد التنفيذ</value>
+  </data>
+  <data name="LabResultStatus_Completed">
+    <value>مكتمل</value>
+  </data>
+  <data name="LabResultStatus_Reviewed">
+    <value>تمت المراجعة</value>
+  </data>
+  <data name="LabResultStatus_Verified">
+    <value>تم التحقق</value>
+  </data>
+  <data name="TestCategory_Hematology">
+    <value>أمراض الدم</value>
+  </data>
+  <data name="TestCategory_Biochemistry">
+    <value>الكيمياء الحيوية</value>
+  </data>
+  <data name="TestCategory_Microbiology">
+    <value>الأحياء الدقيقة</value>
+  </data>
+  <data name="TestCategory_Immunology">
+    <value>المناعة</value>
+  </data>
+  <data name="TestCategory_Pathology">
+    <value>علم الأمراض</value>
+  </data>
+  <data name="TestCategory_Imaging">
+    <value>التصوير</value>
+  </data>
+  <data name="TestCategory_Audiology">
+    <value>السمعيات</value>
+  </data>
+  <data name="TestCategory_Cardiology">
+    <value>القلب</value>
+  </data>
+  <data name="TestCategory_Other">
+    <value>أخرى</value>
+  </data>
+  <data name="SpecimenType_Blood">
+    <value>دم</value>
+  </data>
+  <data name="SpecimenType_Urine">
+    <value>بول</value>
+  </data>
+  <data name="SpecimenType_Saliva">
+    <value>لعاب</value>
+  </data>
+  <data name="SpecimenType_Tissue">
+    <value>نسيج</value>
+  </data>
+  <data name="SpecimenType_Swab">
+    <value>مسحة</value>
+  </data>
+  <data name="SpecimenType_Stool">
+    <value>براز</value>
+  </data>
+  <data name="SpecimenType_Other">
+    <value>أخرى</value>
+  </data>
 </root>
