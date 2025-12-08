@@ -6,6 +6,7 @@ using XenonClinic.Core.Entities;
 using XenonClinic.Core.Interfaces;
 using XenonClinic.Infrastructure.Data;
 using XenonClinic.Web.Models.Admin;
+using XenonClinic.Web.Models.Admin.Auth;
 
 namespace XenonClinic.Web.Controllers;
 
@@ -15,6 +16,8 @@ public class AdminController : Controller
     private readonly ITenantService _tenantService;
     private readonly ICompanyService _companyService;
     private readonly IAdminService _adminService;
+    private readonly ICompanyAuthConfigService _authConfigService;
+    private readonly ISecretEncryptionService _encryptionService;
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly RoleManager<IdentityRole> _roleManager;
     private readonly ClinicDbContext _context;
@@ -23,6 +26,8 @@ public class AdminController : Controller
         ITenantService tenantService,
         ICompanyService companyService,
         IAdminService adminService,
+        ICompanyAuthConfigService authConfigService,
+        ISecretEncryptionService encryptionService,
         UserManager<ApplicationUser> userManager,
         RoleManager<IdentityRole> roleManager,
         ClinicDbContext context)
@@ -30,6 +35,8 @@ public class AdminController : Controller
         _tenantService = tenantService;
         _companyService = companyService;
         _adminService = adminService;
+        _authConfigService = authConfigService;
+        _encryptionService = encryptionService;
         _userManager = userManager;
         _roleManager = roleManager;
         _context = context;
@@ -985,6 +992,337 @@ public class AdminController : Controller
         TempData["Success"] = "Settings saved successfully.";
 
         return RedirectToAction(nameof(Settings), new { tenantId = model.TenantId });
+    }
+
+    // ==================== Company Authentication Settings ====================
+
+    [Authorize(Roles = "SuperAdmin,TenantAdmin,CompanyAdmin")]
+    public async Task<IActionResult> AuthSettings(int companyId)
+    {
+        if (!await _companyService.HasAccessToCompanyAsync(companyId))
+        {
+            return Forbid();
+        }
+
+        var company = await _companyService.GetCompanyByIdAsync(companyId);
+        if (company == null)
+        {
+            return NotFound();
+        }
+
+        var authSettings = await _authConfigService.GetAuthSettingsAsync(companyId);
+        var providers = await _authConfigService.GetIdentityProvidersAsync(companyId);
+
+        var model = new CompanyAuthSettingsViewModel
+        {
+            CompanyId = companyId,
+            CompanyName = company.Name,
+            CompanyCode = company.Code,
+
+            // Auth settings
+            AuthMode = authSettings?.AuthMode ?? AuthMode.LocalOnly,
+            AllowLocalLogin = authSettings?.AllowLocalLogin ?? true,
+            AllowExternalLogin = authSettings?.AllowExternalLogin ?? false,
+            AutoProvisionUsers = authSettings?.AutoProvisionUsers ?? false,
+            DefaultRoleOnAutoProvision = authSettings?.DefaultRoleOnAutoProvision ?? "User",
+            DefaultExternalProviderName = authSettings?.DefaultExternalProviderName,
+            IsEnabled = authSettings?.IsEnabled ?? false,
+            LoginPageMessage = authSettings?.LoginPageMessage,
+            LoginPageMessageAr = authSettings?.LoginPageMessageAr,
+            PostLoginRedirectUrl = authSettings?.PostLoginRedirectUrl,
+            PostLogoutRedirectUrl = authSettings?.PostLogoutRedirectUrl,
+
+            // Identity providers
+            IdentityProviders = providers.Select(p => new IdentityProviderItemViewModel
+            {
+                Id = p.Id,
+                Name = p.Name,
+                DisplayName = p.DisplayName,
+                Type = p.Type,
+                IsDefault = p.IsDefault,
+                IsEnabled = p.IsEnabled,
+                DisplayOrder = p.DisplayOrder
+            }).ToList(),
+
+            // Available roles for auto-provision
+            AvailableRoles = await GetAvailableRolesAsync()
+        };
+
+        return View(model);
+    }
+
+    [Authorize(Roles = "SuperAdmin,TenantAdmin,CompanyAdmin")]
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> AuthSettings(CompanyAuthSettingsViewModel model)
+    {
+        if (!await _companyService.HasAccessToCompanyAsync(model.CompanyId))
+        {
+            return Forbid();
+        }
+
+        if (!ModelState.IsValid)
+        {
+            model.AvailableRoles = await GetAvailableRolesAsync();
+            model.IdentityProviders = (await _authConfigService.GetIdentityProvidersAsync(model.CompanyId))
+                .Select(p => new IdentityProviderItemViewModel
+                {
+                    Id = p.Id,
+                    Name = p.Name,
+                    DisplayName = p.DisplayName,
+                    Type = p.Type,
+                    IsDefault = p.IsDefault,
+                    IsEnabled = p.IsEnabled
+                }).ToList();
+            return View(model);
+        }
+
+        var settings = new CompanyAuthSettings
+        {
+            CompanyId = model.CompanyId,
+            AuthMode = model.AuthMode,
+            AllowLocalLogin = model.AllowLocalLogin,
+            AllowExternalLogin = model.AllowExternalLogin,
+            AutoProvisionUsers = model.AutoProvisionUsers,
+            DefaultRoleOnAutoProvision = model.DefaultRoleOnAutoProvision,
+            DefaultExternalProviderName = model.DefaultExternalProviderName,
+            IsEnabled = model.IsEnabled,
+            LoginPageMessage = model.LoginPageMessage,
+            LoginPageMessageAr = model.LoginPageMessageAr,
+            PostLoginRedirectUrl = model.PostLoginRedirectUrl,
+            PostLogoutRedirectUrl = model.PostLogoutRedirectUrl,
+            UpdatedBy = User.Identity?.Name
+        };
+
+        await _authConfigService.SaveAuthSettingsAsync(settings);
+        TempData["Success"] = "Authentication settings saved successfully.";
+
+        return RedirectToAction(nameof(AuthSettings), new { companyId = model.CompanyId });
+    }
+
+    [Authorize(Roles = "SuperAdmin,TenantAdmin,CompanyAdmin")]
+    public async Task<IActionResult> CreateIdentityProvider(int companyId)
+    {
+        if (!await _companyService.HasAccessToCompanyAsync(companyId))
+        {
+            return Forbid();
+        }
+
+        var company = await _companyService.GetCompanyByIdAsync(companyId);
+        if (company == null)
+        {
+            return NotFound();
+        }
+
+        var model = new IdentityProviderFormViewModel
+        {
+            CompanyId = companyId,
+            CompanyName = company.Name,
+            Type = IdentityProviderType.OIDC,
+            IsEnabled = true,
+            OidcUsePkce = true,
+            OidcRequireHttpsMetadata = true,
+            OidcGetClaimsFromUserInfoEndpoint = true,
+            OidcScopes = "openid,profile,email",
+            OidcResponseType = "code",
+            SamlWantAssertionsSigned = true,
+            SamlAllowedClockSkewMinutes = 5,
+            WsFedRequireHttps = true,
+            ButtonClass = "btn-outline-primary",
+            IconClass = "bi bi-box-arrow-in-right"
+        };
+
+        return View("IdentityProviderForm", model);
+    }
+
+    [Authorize(Roles = "SuperAdmin,TenantAdmin,CompanyAdmin")]
+    public async Task<IActionResult> EditIdentityProvider(int id)
+    {
+        var provider = await _authConfigService.GetIdentityProviderByIdAsync(id);
+        if (provider == null)
+        {
+            return NotFound();
+        }
+
+        if (!await _companyService.HasAccessToCompanyAsync(provider.CompanyId))
+        {
+            return Forbid();
+        }
+
+        var company = await _companyService.GetCompanyByIdAsync(provider.CompanyId);
+
+        var model = new IdentityProviderFormViewModel
+        {
+            Id = provider.Id,
+            CompanyId = provider.CompanyId,
+            CompanyName = company?.Name ?? "",
+            Name = provider.Name,
+            DisplayName = provider.DisplayName,
+            Type = provider.Type,
+            IsDefault = provider.IsDefault,
+            IsEnabled = provider.IsEnabled,
+            DisplayOrder = provider.DisplayOrder,
+            IconClass = provider.IconClass,
+            ButtonClass = provider.ButtonClass,
+
+            // OIDC
+            OidcAuthority = provider.OidcAuthority,
+            OidcClientId = provider.OidcClientId,
+            OidcCallbackPath = provider.OidcCallbackPath,
+            OidcSignedOutCallbackPath = provider.OidcSignedOutCallbackPath,
+            OidcResponseType = provider.OidcResponseType,
+            OidcUsePkce = provider.OidcUsePkce,
+            OidcScopes = provider.OidcScopes,
+            OidcRequireHttpsMetadata = provider.OidcRequireHttpsMetadata,
+            OidcGetClaimsFromUserInfoEndpoint = provider.OidcGetClaimsFromUserInfoEndpoint,
+
+            // SAML
+            SamlEntityId = provider.SamlEntityId,
+            SamlAcsPath = provider.SamlAcsPath,
+            SamlSloPath = provider.SamlSloPath,
+            SamlMetadataUrl = provider.SamlMetadataUrl,
+            SamlIdpEntityId = provider.SamlIdpEntityId,
+            SamlSignAuthnRequests = provider.SamlSignAuthnRequests,
+            SamlWantAssertionsSigned = provider.SamlWantAssertionsSigned,
+            SamlAllowedClockSkewMinutes = provider.SamlAllowedClockSkewMinutes,
+
+            // WS-Fed
+            WsFedMetadataAddress = provider.WsFedMetadataAddress,
+            WsFedWtrealm = provider.WsFedWtrealm,
+            WsFedReplyUrl = provider.WsFedReplyUrl,
+            WsFedRequireHttps = provider.WsFedRequireHttps,
+
+            // Claim mappings
+            ClaimMappingEmail = provider.ClaimMappingEmail,
+            ClaimMappingUpn = provider.ClaimMappingUpn,
+            ClaimMappingName = provider.ClaimMappingName,
+            ClaimMappingFirstName = provider.ClaimMappingFirstName,
+            ClaimMappingLastName = provider.ClaimMappingLastName,
+            ClaimMappingGroups = provider.ClaimMappingGroups,
+            ExtraConfigJson = provider.ExtraConfigJson
+        };
+
+        return View("IdentityProviderForm", model);
+    }
+
+    [Authorize(Roles = "SuperAdmin,TenantAdmin,CompanyAdmin")]
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> SaveIdentityProvider(IdentityProviderFormViewModel model)
+    {
+        if (!await _companyService.HasAccessToCompanyAsync(model.CompanyId))
+        {
+            return Forbid();
+        }
+
+        if (!ModelState.IsValid)
+        {
+            return View("IdentityProviderForm", model);
+        }
+
+        var provider = new CompanyIdentityProvider
+        {
+            Id = model.Id ?? 0,
+            CompanyId = model.CompanyId,
+            Name = model.Name,
+            DisplayName = model.DisplayName,
+            Type = model.Type,
+            IsDefault = model.IsDefault,
+            IsEnabled = model.IsEnabled,
+            DisplayOrder = model.DisplayOrder,
+            IconClass = model.IconClass,
+            ButtonClass = model.ButtonClass,
+
+            // OIDC
+            OidcAuthority = model.OidcAuthority,
+            OidcClientId = model.OidcClientId,
+            OidcCallbackPath = model.OidcCallbackPath,
+            OidcSignedOutCallbackPath = model.OidcSignedOutCallbackPath,
+            OidcResponseType = model.OidcResponseType,
+            OidcUsePkce = model.OidcUsePkce,
+            OidcScopes = model.OidcScopes,
+            OidcRequireHttpsMetadata = model.OidcRequireHttpsMetadata,
+            OidcGetClaimsFromUserInfoEndpoint = model.OidcGetClaimsFromUserInfoEndpoint,
+
+            // SAML
+            SamlEntityId = model.SamlEntityId,
+            SamlAcsPath = model.SamlAcsPath,
+            SamlSloPath = model.SamlSloPath,
+            SamlMetadataUrl = model.SamlMetadataUrl,
+            SamlIdpEntityId = model.SamlIdpEntityId,
+            SamlSignAuthnRequests = model.SamlSignAuthnRequests,
+            SamlWantAssertionsSigned = model.SamlWantAssertionsSigned,
+            SamlAllowedClockSkewMinutes = model.SamlAllowedClockSkewMinutes,
+
+            // WS-Fed
+            WsFedMetadataAddress = model.WsFedMetadataAddress,
+            WsFedWtrealm = model.WsFedWtrealm,
+            WsFedReplyUrl = model.WsFedReplyUrl,
+            WsFedRequireHttps = model.WsFedRequireHttps,
+
+            // Claim mappings
+            ClaimMappingEmail = model.ClaimMappingEmail,
+            ClaimMappingUpn = model.ClaimMappingUpn,
+            ClaimMappingName = model.ClaimMappingName,
+            ClaimMappingFirstName = model.ClaimMappingFirstName,
+            ClaimMappingLastName = model.ClaimMappingLastName,
+            ClaimMappingGroups = model.ClaimMappingGroups,
+            ExtraConfigJson = model.ExtraConfigJson,
+
+            UpdatedBy = User.Identity?.Name
+        };
+
+        // Encrypt client secret if provided
+        if (!string.IsNullOrEmpty(model.OidcClientSecret))
+        {
+            provider.OidcClientSecretEncrypted = _encryptionService.Encrypt(model.OidcClientSecret);
+        }
+        else if (model.Id.HasValue)
+        {
+            // Preserve existing secret if not changed
+            var existing = await _authConfigService.GetIdentityProviderByIdAsync(model.Id.Value);
+            provider.OidcClientSecretEncrypted = existing?.OidcClientSecretEncrypted;
+        }
+
+        // Encrypt SAML certificate password if provided
+        if (!string.IsNullOrEmpty(model.SamlSpCertificatePassword))
+        {
+            provider.SamlSpCertificatePasswordEncrypted = _encryptionService.Encrypt(model.SamlSpCertificatePassword);
+        }
+        else if (model.Id.HasValue)
+        {
+            var existing = await _authConfigService.GetIdentityProviderByIdAsync(model.Id.Value);
+            provider.SamlSpCertificatePasswordEncrypted = existing?.SamlSpCertificatePasswordEncrypted;
+        }
+
+        provider.SamlSpCertificate = model.SamlSpCertificate;
+
+        await _authConfigService.SaveIdentityProviderAsync(provider);
+        TempData["Success"] = "Identity provider saved successfully.";
+
+        return RedirectToAction(nameof(AuthSettings), new { companyId = model.CompanyId });
+    }
+
+    [Authorize(Roles = "SuperAdmin,TenantAdmin,CompanyAdmin")]
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteIdentityProvider(int id, int companyId)
+    {
+        var provider = await _authConfigService.GetIdentityProviderByIdAsync(id);
+        if (provider == null)
+        {
+            return NotFound();
+        }
+
+        if (!await _companyService.HasAccessToCompanyAsync(provider.CompanyId))
+        {
+            return Forbid();
+        }
+
+        await _authConfigService.DeleteIdentityProviderAsync(id);
+        TempData["Success"] = "Identity provider deleted successfully.";
+
+        return RedirectToAction(nameof(AuthSettings), new { companyId });
     }
 
     // ==================== Helper Methods ====================

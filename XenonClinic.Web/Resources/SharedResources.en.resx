@@ -2050,4 +2050,303 @@
   <data name="ManageUsers">
     <value>Manage Users</value>
   </data>
+
+  <!-- Authentication Settings -->
+  <data name="Login">
+    <value>Login</value>
+  </data>
+  <data name="SignIn">
+    <value>Sign In</value>
+  </data>
+  <data name="SigningInTo">
+    <value>Signing in to</value>
+  </data>
+  <data name="SelectCompany">
+    <value>Select Company</value>
+  </data>
+  <data name="Or">
+    <value>or</value>
+  </data>
+  <data name="OrSignInWithEmail">
+    <value>or sign in with email</value>
+  </data>
+  <data name="RememberMe">
+    <value>Remember me</value>
+  </data>
+  <data name="ForgotPassword">
+    <value>Forgot password?</value>
+  </data>
+  <data name="NotYourCompany">
+    <value>Not your company?</value>
+  </data>
+  <data name="ChangeCompany">
+    <value>Change company</value>
+  </data>
+  <data name="NoLoginMethodsAvailable">
+    <value>No login methods are available. Please contact your administrator.</value>
+  </data>
+  <data name="PoweredBy">
+    <value>Powered by</value>
+  </data>
+  <data name="AccountLocked">
+    <value>Account Locked</value>
+  </data>
+  <data name="AccountLockedMessage">
+    <value>Your account has been locked due to multiple failed login attempts. Please try again later.</value>
+  </data>
+  <data name="BackToLogin">
+    <value>Back to Login</value>
+  </data>
+  <data name="AccessDenied">
+    <value>Access Denied</value>
+  </data>
+  <data name="AccessDeniedMessage">
+    <value>You do not have permission to access this resource.</value>
+  </data>
+  <data name="GoHome">
+    <value>Go Home</value>
+  </data>
+  <data name="AuthenticationSettings">
+    <value>Authentication Settings</value>
+  </data>
+  <data name="AuthenticationMode">
+    <value>Authentication Mode</value>
+  </data>
+  <data name="AuthMode">
+    <value>Auth Mode</value>
+  </data>
+  <data name="EnableCustomAuthSettings">
+    <value>Enable Custom Authentication Settings</value>
+  </data>
+  <data name="EnableCustomAuthSettingsHelp">
+    <value>When enabled, this company will use custom authentication settings instead of the default local login.</value>
+  </data>
+  <data name="AllowLocalLogin">
+    <value>Allow Local Login</value>
+  </data>
+  <data name="AllowExternalLogin">
+    <value>Allow External Login (SSO)</value>
+  </data>
+  <data name="UserProvisioning">
+    <value>User Provisioning</value>
+  </data>
+  <data name="AutoProvisionUsers">
+    <value>Auto-Provision External Users</value>
+  </data>
+  <data name="AutoProvisionUsersHelp">
+    <value>Automatically create user accounts for users who authenticate via external providers.</value>
+  </data>
+  <data name="DefaultRole">
+    <value>Default Role</value>
+  </data>
+  <data name="DefaultProvider">
+    <value>Default Provider</value>
+  </data>
+  <data name="LoginPageCustomization">
+    <value>Login Page Customization</value>
+  </data>
+  <data name="LoginMessage">
+    <value>Login Message</value>
+  </data>
+  <data name="PostLoginRedirect">
+    <value>Post-Login Redirect URL</value>
+  </data>
+  <data name="PostLogoutRedirect">
+    <value>Post-Logout Redirect URL</value>
+  </data>
+  <data name="IdentityProviders">
+    <value>Identity Providers</value>
+  </data>
+  <data name="CreateIdentityProvider">
+    <value>Create Identity Provider</value>
+  </data>
+  <data name="EditIdentityProvider">
+    <value>Edit Identity Provider</value>
+  </data>
+  <data name="Default">
+    <value>Default</value>
+  </data>
+  <data name="Disabled">
+    <value>Disabled</value>
+  </data>
+  <data name="ConfirmDeleteProvider">
+    <value>Are you sure you want to delete this identity provider?</value>
+  </data>
+  <data name="NoIdentityProviders">
+    <value>No identity providers configured</value>
+  </data>
+  <data name="AddFirstProvider">
+    <value>Add your first provider</value>
+  </data>
+  <data name="LoginURL">
+    <value>Login URL</value>
+  </data>
+  <data name="CompanyLoginURLHelp">
+    <value>Share this URL with users to access your company's login page.</value>
+  </data>
+  <data name="BackToAuthSettings">
+    <value>Back to Auth Settings</value>
+  </data>
+  <data name="BackToCompanies">
+    <value>Back to Companies</value>
+  </data>
+  <data name="InternalName">
+    <value>Internal Name</value>
+  </data>
+  <data name="InternalNameHelp">
+    <value>Unique identifier for this provider (e.g., ADFS-OIDC)</value>
+  </data>
+  <data name="ProviderType">
+    <value>Provider Type</value>
+  </data>
+  <data name="DisplayOrder">
+    <value>Display Order</value>
+  </data>
+  <data name="Enabled">
+    <value>Enabled</value>
+  </data>
+  <data name="IconClass">
+    <value>Icon CSS Class</value>
+  </data>
+  <data name="IconClassHelp">
+    <value>Bootstrap Icons class (e.g., bi bi-microsoft)</value>
+  </data>
+  <data name="ButtonClass">
+    <value>Button CSS Class</value>
+  </data>
+  <data name="OIDCConfiguration">
+    <value>OpenID Connect Configuration</value>
+  </data>
+  <data name="AuthorityURL">
+    <value>Authority URL</value>
+  </data>
+  <data name="AuthorityURLHelp">
+    <value>The OIDC authority URL (e.g., https://login.microsoftonline.com/{tenant}/v2.0)</value>
+  </data>
+  <data name="ClientID">
+    <value>Client ID</value>
+  </data>
+  <data name="ClientSecret">
+    <value>Client Secret</value>
+  </data>
+  <data name="ResponseType">
+    <value>Response Type</value>
+  </data>
+  <data name="Scopes">
+    <value>Scopes</value>
+  </data>
+  <data name="ScopesHelp">
+    <value>Comma-separated scopes (e.g., openid,profile,email)</value>
+  </data>
+  <data name="CallbackPath">
+    <value>Callback Path</value>
+  </data>
+  <data name="SignedOutCallbackPath">
+    <value>Signed Out Callback Path</value>
+  </data>
+  <data name="UsePKCE">
+    <value>Use PKCE</value>
+  </data>
+  <data name="RequireHTTPS">
+    <value>Require HTTPS</value>
+  </data>
+  <data name="GetUserInfoClaims">
+    <value>Get Claims from UserInfo</value>
+  </data>
+  <data name="SAML2Configuration">
+    <value>SAML 2.0 Configuration</value>
+  </data>
+  <data name="SPEntityID">
+    <value>SP Entity ID</value>
+  </data>
+  <data name="IdPEntityID">
+    <value>IdP Entity ID</value>
+  </data>
+  <data name="IdPMetadataURL">
+    <value>IdP Metadata URL</value>
+  </data>
+  <data name="ACSPath">
+    <value>ACS Path</value>
+  </data>
+  <data name="SLOPath">
+    <value>SLO Path</value>
+  </data>
+  <data name="ClockSkewMinutes">
+    <value>Clock Skew (minutes)</value>
+  </data>
+  <data name="SignRequests">
+    <value>Sign Requests</value>
+  </data>
+  <data name="WantAssertionsSigned">
+    <value>Want Assertions Signed</value>
+  </data>
+  <data name="SPCertificate">
+    <value>SP Certificate</value>
+  </data>
+  <data name="CertificatePassword">
+    <value>Certificate Password</value>
+  </data>
+  <data name="WSFedConfiguration">
+    <value>WS-Federation Configuration</value>
+  </data>
+  <data name="MetadataAddress">
+    <value>Metadata Address</value>
+  </data>
+  <data name="Wtrealm">
+    <value>Wtrealm</value>
+  </data>
+  <data name="ReplyURL">
+    <value>Reply URL</value>
+  </data>
+  <data name="ClaimMappings">
+    <value>Claim Mappings</value>
+  </data>
+  <data name="EmailClaimType">
+    <value>Email Claim Type</value>
+  </data>
+  <data name="UPNClaimType">
+    <value>UPN Claim Type</value>
+  </data>
+  <data name="NameClaimType">
+    <value>Name Claim Type</value>
+  </data>
+  <data name="FirstNameClaimType">
+    <value>First Name Claim Type</value>
+  </data>
+  <data name="LastNameClaimType">
+    <value>Last Name Claim Type</value>
+  </data>
+  <data name="GroupsClaimType">
+    <value>Groups Claim Type</value>
+  </data>
+  <data name="ExtraConfigJSON">
+    <value>Extra Configuration (JSON)</value>
+  </data>
+  <data name="ExtraConfigJSONHelp">
+    <value>Additional provider-specific configuration in JSON format</value>
+  </data>
+  <data name="Help">
+    <value>Help</value>
+  </data>
+  <data name="OIDCHelp">
+    <value>OpenID Connect</value>
+  </data>
+  <data name="OIDCHelpText">
+    <value>OpenID Connect is recommended for most modern identity providers. Common authorities:</value>
+  </data>
+  <data name="SAML2Help">
+    <value>SAML 2.0</value>
+  </data>
+  <data name="SAML2HelpText">
+    <value>SAML 2.0 is supported by many enterprise identity providers including ADFS, Okta, and OneLogin.</value>
+  </data>
+  <data name="WSFedHelp">
+    <value>WS-Federation</value>
+  </data>
+  <data name="WSFedHelpText">
+    <value>WS-Federation is a legacy protocol primarily used with older ADFS installations.</value>
+  </data>
+  <data name="Delete">
+    <value>Delete</value>
+  </data>
 </root>

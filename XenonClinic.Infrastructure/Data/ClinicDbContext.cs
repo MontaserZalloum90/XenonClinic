@@ -54,6 +54,10 @@ public class ClinicDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<Expense> Expenses => Set<Expense>();
     public DbSet<FinancialTransaction> FinancialTransactions => Set<FinancialTransaction>();
 
+    // Authentication configuration entities
+    public DbSet<CompanyAuthSettings> CompanyAuthSettings => Set<CompanyAuthSettings>();
+    public DbSet<CompanyIdentityProvider> CompanyIdentityProviders => Set<CompanyIdentityProvider>();
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
@@ -1192,5 +1196,72 @@ public class ClinicDbContext : IdentityDbContext<ApplicationUser>
             .WithMany()
             .HasForeignKey(ft => ft.SaleId)
             .OnDelete(DeleteBehavior.SetNull);
+
+        // ========================================
+        // Company Authentication Configuration
+        // ========================================
+
+        // CompanyAuthSettings configuration
+        builder.Entity<CompanyAuthSettings>()
+            .HasIndex(cas => cas.CompanyId)
+            .IsUnique();
+
+        builder.Entity<CompanyAuthSettings>()
+            .HasIndex(cas => cas.IsEnabled);
+
+        builder.Entity<CompanyAuthSettings>()
+            .HasOne(cas => cas.Company)
+            .WithOne(c => c.AuthSettings)
+            .HasForeignKey<CompanyAuthSettings>(cas => cas.CompanyId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<CompanyAuthSettings>()
+            .HasMany(cas => cas.IdentityProviders)
+            .WithOne()
+            .HasForeignKey(ip => ip.CompanyId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // CompanyIdentityProvider configuration
+        builder.Entity<CompanyIdentityProvider>()
+            .HasIndex(ip => ip.CompanyId);
+
+        builder.Entity<CompanyIdentityProvider>()
+            .HasIndex(ip => ip.Name);
+
+        builder.Entity<CompanyIdentityProvider>()
+            .HasIndex(ip => ip.IsEnabled);
+
+        builder.Entity<CompanyIdentityProvider>()
+            .HasIndex(ip => ip.IsDefault);
+
+        builder.Entity<CompanyIdentityProvider>()
+            .HasIndex(ip => new { ip.CompanyId, ip.Name })
+            .IsUnique();
+
+        builder.Entity<CompanyIdentityProvider>()
+            .HasOne(ip => ip.Company)
+            .WithMany()
+            .HasForeignKey(ip => ip.CompanyId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<CompanyIdentityProvider>()
+            .Property(ip => ip.Name)
+            .HasMaxLength(100)
+            .IsRequired();
+
+        builder.Entity<CompanyIdentityProvider>()
+            .Property(ip => ip.DisplayName)
+            .HasMaxLength(200)
+            .IsRequired();
+
+        // ApplicationUser external login indexes
+        builder.Entity<ApplicationUser>()
+            .HasIndex(u => u.ExternalUserId);
+
+        builder.Entity<ApplicationUser>()
+            .HasIndex(u => u.ExternalProviderName);
+
+        builder.Entity<ApplicationUser>()
+            .HasIndex(u => new { u.CompanyId, u.ExternalProviderName, u.ExternalUserId });
     }
 }

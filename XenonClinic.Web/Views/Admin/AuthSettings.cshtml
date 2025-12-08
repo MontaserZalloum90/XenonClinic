@@ -1,0 +1,239 @@
+@using Microsoft.AspNetCore.Mvc.Localization
+@using XenonClinic.Core.Entities
+@inject IViewLocalizer Localizer
+@model XenonClinic.Web.Models.Admin.Auth.CompanyAuthSettingsViewModel
+@{
+    ViewData["Title"] = Localizer["AuthenticationSettings"];
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="mb-1">@Localizer["AuthenticationSettings"]</h4>
+        <small class="text-muted">@Model.CompanyName (@Model.CompanyCode)</small>
+    </div>
+    <a asp-action="Companies" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i>@Localizer["BackToCompanies"]
+    </a>
+</div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="bi bi-check-circle me-2"></i>@TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<div class="row">
+    <div class="col-lg-8">
+        <form asp-action="AuthSettings" method="post">
+            <input type="hidden" asp-for="CompanyId" />
+
+            <div class="card card-rounded mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="bi bi-shield-lock me-2"></i>@Localizer["AuthenticationMode"]</h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input asp-for="IsEnabled" class="form-check-input" type="checkbox" id="isEnabled" />
+                            <label class="form-check-label" for="isEnabled">
+                                <strong>@Localizer["EnableCustomAuthSettings"]</strong>
+                                <br /><small class="text-muted">@Localizer["EnableCustomAuthSettingsHelp"]</small>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div id="authSettingsContent">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label asp-for="AuthMode" class="form-label">@Localizer["AuthMode"]</label>
+                                <select asp-for="AuthMode" class="form-select" asp-items="Html.GetEnumSelectList<AuthMode>()"></select>
+                            </div>
+                        </div>
+
+                        <div class="row g-3 mt-2">
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input asp-for="AllowLocalLogin" class="form-check-input" type="checkbox" />
+                                    <label asp-for="AllowLocalLogin" class="form-check-label">@Localizer["AllowLocalLogin"]</label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input asp-for="AllowExternalLogin" class="form-check-input" type="checkbox" />
+                                    <label asp-for="AllowExternalLogin" class="form-check-label">@Localizer["AllowExternalLogin"]</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card card-rounded mb-4" id="userProvisioningCard">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="bi bi-person-plus me-2"></i>@Localizer["UserProvisioning"]</h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input asp-for="AutoProvisionUsers" class="form-check-input" type="checkbox" />
+                            <label asp-for="AutoProvisionUsers" class="form-check-label">
+                                @Localizer["AutoProvisionUsers"]
+                                <br /><small class="text-muted">@Localizer["AutoProvisionUsersHelp"]</small>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label asp-for="DefaultRoleOnAutoProvision" class="form-label">@Localizer["DefaultRole"]</label>
+                            <select asp-for="DefaultRoleOnAutoProvision" class="form-select">
+                                @foreach (var role in Model.AvailableRoles)
+                                {
+                                    <option value="@role">@role</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="DefaultExternalProviderName" class="form-label">@Localizer["DefaultProvider"]</label>
+                            <select asp-for="DefaultExternalProviderName" class="form-select">
+                                <option value="">@Localizer["None"]</option>
+                                @foreach (var provider in Model.IdentityProviders)
+                                {
+                                    <option value="@provider.Name">@provider.DisplayName</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card card-rounded mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="bi bi-chat-left-text me-2"></i>@Localizer["LoginPageCustomization"]</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label asp-for="LoginPageMessage" class="form-label">@Localizer["LoginMessage"] (EN)</label>
+                            <textarea asp-for="LoginPageMessage" class="form-control" rows="2"></textarea>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="LoginPageMessageAr" class="form-label">@Localizer["LoginMessage"] (AR)</label>
+                            <textarea asp-for="LoginPageMessageAr" class="form-control" rows="2" dir="rtl"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mt-2">
+                        <div class="col-md-6">
+                            <label asp-for="PostLoginRedirectUrl" class="form-label">@Localizer["PostLoginRedirect"]</label>
+                            <input asp-for="PostLoginRedirectUrl" class="form-control" placeholder="/dashboard" />
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="PostLogoutRedirectUrl" class="form-label">@Localizer["PostLogoutRedirect"]</label>
+                            <input asp-for="PostLogoutRedirectUrl" class="form-control" placeholder="/Account/Login" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-check-circle me-1"></i>@Localizer["SaveSettings"]
+                </button>
+                <a asp-action="Companies" class="btn btn-outline-secondary">@Localizer["Cancel"]</a>
+            </div>
+        </form>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card card-rounded">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6 class="mb-0"><i class="bi bi-key me-2"></i>@Localizer["IdentityProviders"]</h6>
+                <a asp-action="CreateIdentityProvider" asp-route-companyId="@Model.CompanyId" class="btn btn-sm btn-primary">
+                    <i class="bi bi-plus"></i>
+                </a>
+            </div>
+            <div class="card-body p-0">
+                @if (Model.IdentityProviders.Any())
+                {
+                    <div class="list-group list-group-flush">
+                        @foreach (var provider in Model.IdentityProviders.OrderBy(p => p.DisplayOrder))
+                        {
+                            <div class="list-group-item d-flex justify-content-between align-items-center">
+                                <div>
+                                    <div class="fw-semibold">
+                                        @provider.DisplayName
+                                        @if (provider.IsDefault)
+                                        {
+                                            <span class="badge bg-primary ms-1">@Localizer["Default"]</span>
+                                        }
+                                    </div>
+                                    <small class="text-muted">
+                                        @provider.TypeDisplayName
+                                        @if (!provider.IsEnabled)
+                                        {
+                                            <span class="badge bg-secondary">@Localizer["Disabled"]</span>
+                                        }
+                                    </small>
+                                </div>
+                                <div class="btn-group">
+                                    <a asp-action="EditIdentityProvider" asp-route-id="@provider.Id" class="btn btn-sm btn-outline-primary" title="@Localizer["Edit"]">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <form asp-action="DeleteIdentityProvider" asp-route-id="@provider.Id" asp-route-companyId="@Model.CompanyId" method="post" class="d-inline"
+                                          onsubmit="return confirm('@Localizer["ConfirmDeleteProvider"]');">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="@Localizer["Delete"]">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="text-center text-muted p-4">
+                        <i class="bi bi-key fs-1 mb-2 d-block opacity-50"></i>
+                        <p class="mb-0">@Localizer["NoIdentityProviders"]</p>
+                        <a asp-action="CreateIdentityProvider" asp-route-companyId="@Model.CompanyId" class="btn btn-sm btn-link">
+                            @Localizer["AddFirstProvider"]
+                        </a>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <div class="card card-rounded mt-3">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="bi bi-info-circle me-2"></i>@Localizer["LoginURL"]</h6>
+            </div>
+            <div class="card-body">
+                <p class="small text-muted mb-2">@Localizer["CompanyLoginURLHelp"]</p>
+                <code class="d-block bg-light p-2 rounded small">/Account/Login?company=@Model.CompanyCode</code>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.getElementById('isEnabled')?.addEventListener('change', function() {
+            const content = document.getElementById('authSettingsContent');
+            const provisioningCard = document.getElementById('userProvisioningCard');
+            if (this.checked) {
+                content.style.display = 'block';
+                provisioningCard.style.display = 'block';
+            } else {
+                content.style.display = 'none';
+                provisioningCard.style.display = 'none';
+            }
+        });
+
+        // Trigger on page load
+        document.getElementById('isEnabled')?.dispatchEvent(new Event('change'));
+    </script>
+}

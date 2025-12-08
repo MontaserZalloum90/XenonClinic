@@ -35,4 +35,9 @@ public class Company
     public Tenant Tenant { get; set; } = null!;
     public ICollection<Branch> Branches { get; set; } = new List<Branch>();
     public ICollection<ApplicationUser> Users { get; set; } = new List<ApplicationUser>();
+
+    /// <summary>
+    /// Authentication settings for this company
+    /// </summary>
+    public CompanyAuthSettings? AuthSettings { get; set; }
 }

@@ -2050,4 +2050,315 @@
   <data name="ManageUsers">
     <value>إدارة المستخدمين</value>
   </data>
+
+  <!-- Authentication -->
+  <data name="SignIn">
+    <value>تسجيل الدخول</value>
+  </data>
+  <data name="SignInToYourAccount">
+    <value>تسجيل الدخول إلى حسابك</value>
+  </data>
+  <data name="SignInWithSSO">
+    <value>تسجيل الدخول باستخدام تسجيل الدخول الموحد</value>
+  </data>
+  <data name="SignInWith">
+    <value>تسجيل الدخول باستخدام {0}</value>
+  </data>
+  <data name="RememberMe">
+    <value>تذكرني</value>
+  </data>
+  <data name="ForgotPassword">
+    <value>نسيت كلمة المرور؟</value>
+  </data>
+  <data name="Or">
+    <value>أو</value>
+  </data>
+  <data name="SelectCompany">
+    <value>اختر الشركة</value>
+  </data>
+  <data name="SelectCompanyToContinue">
+    <value>اختر شركتك للمتابعة</value>
+  </data>
+  <data name="Continue">
+    <value>متابعة</value>
+  </data>
+  <data name="ChangeCompany">
+    <value>تغيير الشركة</value>
+  </data>
+  <data name="InvalidLoginAttempt">
+    <value>محاولة تسجيل دخول غير صالحة.</value>
+  </data>
+  <data name="AccountLockedOut">
+    <value>تم قفل الحساب</value>
+  </data>
+  <data name="AccountLockedMessage">
+    <value>تم قفل حسابك. يرجى المحاولة مرة أخرى لاحقاً أو الاتصال بالمسؤول.</value>
+  </data>
+  <data name="AccessDenied">
+    <value>الوصول مرفوض</value>
+  </data>
+  <data name="AccessDeniedMessage">
+    <value>ليس لديك صلاحية الوصول إلى هذا المورد.</value>
+  </data>
+  <data name="ReturnToHome">
+    <value>العودة إلى الصفحة الرئيسية</value>
+  </data>
+  <data name="ExternalLoginError">
+    <value>حدث خطأ أثناء تسجيل الدخول الخارجي.</value>
+  </data>
+  <data name="SsoOnlyMessage">
+    <value>هذه الشركة تتطلب تسجيل الدخول الموحد. يرجى استخدام أحد أزرار تسجيل الدخول الموحد.</value>
+  </data>
+  <data name="LocalLoginDisabled">
+    <value>تسجيل الدخول المحلي معطل لهذه الشركة.</value>
+  </data>
+  <data name="UserNotProvisioned">
+    <value>لم يتم تزويد حسابك للوصول إلى هذا النظام. يرجى الاتصال بالمسؤول.</value>
+  </data>
+
+  <!-- Authentication Settings Admin -->
+  <data name="AuthenticationSettings">
+    <value>إعدادات المصادقة</value>
+  </data>
+  <data name="AuthMode">
+    <value>وضع المصادقة</value>
+  </data>
+  <data name="AuthMode_LocalOnly">
+    <value>محلي فقط</value>
+  </data>
+  <data name="AuthMode_SsoOnly">
+    <value>تسجيل دخول موحد فقط</value>
+  </data>
+  <data name="AuthMode_Hybrid">
+    <value>هجين</value>
+  </data>
+  <data name="AllowLocalLogin">
+    <value>السماح بتسجيل الدخول المحلي</value>
+  </data>
+  <data name="AllowExternalLogin">
+    <value>السماح بتسجيل الدخول الخارجي</value>
+  </data>
+  <data name="AutoProvisionUsers">
+    <value>إنشاء المستخدمين تلقائياً</value>
+  </data>
+  <data name="AutoProvisionUsersHelp">
+    <value>إنشاء حسابات مستخدمين جديدة تلقائياً لمستخدمي تسجيل الدخول الموحد</value>
+  </data>
+  <data name="DefaultRoleOnAutoProvision">
+    <value>الدور الافتراضي للمستخدمين الجدد</value>
+  </data>
+  <data name="AuthenticationBehavior">
+    <value>سلوك المصادقة</value>
+  </data>
+  <data name="IdentityProviders">
+    <value>موفرو الهوية</value>
+  </data>
+  <data name="AddIdentityProvider">
+    <value>إضافة موفر هوية</value>
+  </data>
+  <data name="EditIdentityProvider">
+    <value>تعديل موفر الهوية</value>
+  </data>
+  <data name="CreateIdentityProvider">
+    <value>إنشاء موفر هوية</value>
+  </data>
+  <data name="NoIdentityProviders">
+    <value>لم يتم تكوين موفري هوية</value>
+  </data>
+  <data name="ProviderName">
+    <value>اسم الموفر</value>
+  </data>
+  <data name="ProviderType">
+    <value>نوع الموفر</value>
+  </data>
+  <data name="Enabled">
+    <value>مفعل</value>
+  </data>
+  <data name="Disabled">
+    <value>معطل</value>
+  </data>
+  <data name="DisplayOrder">
+    <value>ترتيب العرض</value>
+  </data>
+  <data name="ButtonLabel">
+    <value>نص الزر</value>
+  </data>
+  <data name="ButtonLabelHelp">
+    <value>النص المعروض على زر تسجيل الدخول (مثل: تسجيل الدخول باستخدام Azure AD)</value>
+  </data>
+  <data name="IconCssClass">
+    <value>رمز CSS</value>
+  </data>
+  <data name="IconCssClassHelp">
+    <value>فئة CSS للرمز (مثل: fa-microsoft)</value>
+  </data>
+
+  <!-- OIDC Configuration -->
+  <data name="OIDCConfiguration">
+    <value>تكوين OpenID Connect</value>
+  </data>
+  <data name="Authority">
+    <value>السلطة</value>
+  </data>
+  <data name="AuthorityHelp">
+    <value>عنوان URL لسلطة OpenID Connect (مثل: https://login.microsoftonline.com/{tenant})</value>
+  </data>
+  <data name="ClientId">
+    <value>معرف العميل</value>
+  </data>
+  <data name="ClientIdHelp">
+    <value>معرف العميل من موفر الهوية</value>
+  </data>
+  <data name="ClientSecret">
+    <value>سر العميل</value>
+  </data>
+  <data name="ClientSecretHelp">
+    <value>سر العميل (اتركه فارغاً للإبقاء على القيمة الحالية)</value>
+  </data>
+  <data name="Scopes">
+    <value>النطاقات</value>
+  </data>
+  <data name="ScopesHelp">
+    <value>النطاقات المطلوبة من موفر الهوية (مفصولة بمسافات)</value>
+  </data>
+  <data name="ResponseType">
+    <value>نوع الاستجابة</value>
+  </data>
+  <data name="ResponseTypeHelp">
+    <value>نوع استجابة OAuth2 (مثل: code)</value>
+  </data>
+  <data name="UsePkce">
+    <value>استخدام PKCE</value>
+  </data>
+  <data name="UsePkceHelp">
+    <value>تفعيل مفتاح الإثبات لتبادل الكود (موصى به)</value>
+  </data>
+  <data name="GetClaimsFromUserInfo">
+    <value>جلب المطالبات من UserInfo</value>
+  </data>
+  <data name="GetClaimsFromUserInfoHelp">
+    <value>جلب مطالبات إضافية من نقطة نهاية UserInfo</value>
+  </data>
+
+  <!-- SAML2 Configuration -->
+  <data name="SAML2Configuration">
+    <value>تكوين SAML 2.0</value>
+  </data>
+  <data name="EntityId">
+    <value>معرف الكيان</value>
+  </data>
+  <data name="EntityIdHelp">
+    <value>معرف الكيان الفريد لمزود الخدمة (عادة عنوان URL للتطبيق)</value>
+  </data>
+  <data name="MetadataUrl">
+    <value>عنوان البيانات الوصفية</value>
+  </data>
+  <data name="MetadataUrlHelp">
+    <value>عنوان URL للبيانات الوصفية لموفر الهوية</value>
+  </data>
+  <data name="IdpEntityId">
+    <value>معرف كيان موفر الهوية</value>
+  </data>
+  <data name="IdpEntityIdHelp">
+    <value>معرف الكيان لموفر الهوية</value>
+  </data>
+  <data name="IdpSsoUrl">
+    <value>عنوان تسجيل الدخول الموحد</value>
+  </data>
+  <data name="IdpSsoUrlHelp">
+    <value>عنوان URL لخدمة تسجيل الدخول الموحد لموفر الهوية</value>
+  </data>
+  <data name="IdpCertificate">
+    <value>شهادة موفر الهوية</value>
+  </data>
+  <data name="IdpCertificateHelp">
+    <value>الشهادة X.509 بترميز Base64 من موفر الهوية</value>
+  </data>
+  <data name="SpCertificate">
+    <value>شهادة مزود الخدمة</value>
+  </data>
+  <data name="SpCertificateHelp">
+    <value>شهادة مزود الخدمة (اختياري، للتوقيع)</value>
+  </data>
+  <data name="SpCertificatePassword">
+    <value>كلمة مرور الشهادة</value>
+  </data>
+  <data name="SpCertificatePasswordHelp">
+    <value>كلمة المرور لشهادة مزود الخدمة</value>
+  </data>
+  <data name="SignRequests">
+    <value>توقيع الطلبات</value>
+  </data>
+  <data name="SignRequestsHelp">
+    <value>توقيع طلبات SAML</value>
+  </data>
+  <data name="WantAssertionsSigned">
+    <value>تأكيدات موقعة</value>
+  </data>
+  <data name="WantAssertionsSignedHelp">
+    <value>طلب تأكيدات موقعة من موفر الهوية</value>
+  </data>
+
+  <!-- WS-Federation Configuration -->
+  <data name="WSFedConfiguration">
+    <value>تكوين WS-Federation</value>
+  </data>
+  <data name="MetadataAddress">
+    <value>عنوان البيانات الوصفية</value>
+  </data>
+  <data name="MetadataAddressHelp">
+    <value>عنوان URL للبيانات الوصفية لـ WS-Federation (مثل: https://adfs.example.com/FederationMetadata/2007-06/FederationMetadata.xml)</value>
+  </data>
+  <data name="Wtrealm">
+    <value>Wtrealm</value>
+  </data>
+  <data name="WtrealmHelp">
+    <value>معرف مجال الطرف المعتمد (عادة عنوان URL للتطبيق)</value>
+  </data>
+  <data name="Wreply">
+    <value>Wreply</value>
+  </data>
+  <data name="WreplyHelp">
+    <value>عنوان URL للرد (اختياري، يتم تعيينه تلقائياً إذا كان فارغاً)</value>
+  </data>
+
+  <!-- Claim Mappings -->
+  <data name="ClaimMappings">
+    <value>تعيينات المطالبات</value>
+  </data>
+  <data name="ClaimMappingsHelp">
+    <value>تعيين مطالبات موفر الهوية إلى سمات المستخدم</value>
+  </data>
+  <data name="EmailClaimType">
+    <value>نوع مطالبة البريد الإلكتروني</value>
+  </data>
+  <data name="UPNClaimType">
+    <value>نوع مطالبة UPN</value>
+  </data>
+  <data name="NameClaimType">
+    <value>نوع مطالبة الاسم</value>
+  </data>
+  <data name="FirstNameClaimType">
+    <value>نوع مطالبة الاسم الأول</value>
+  </data>
+  <data name="LastNameClaimType">
+    <value>نوع مطالبة اسم العائلة</value>
+  </data>
+  <data name="GroupsClaimType">
+    <value>نوع مطالبة المجموعات</value>
+  </data>
+  <data name="DefaultClaimTypes">
+    <value>أنواع المطالبات الافتراضية</value>
+  </data>
+  <data name="LeaveEmptyForDefaults">
+    <value>اتركه فارغاً لاستخدام أنواع المطالبات القياسية</value>
+  </data>
+
+  <!-- General -->
+  <data name="SaveChanges">
+    <value>حفظ التغييرات</value>
+  </data>
+  <data name="Delete">
+    <value>حذف</value>
+  </data>
 </root>

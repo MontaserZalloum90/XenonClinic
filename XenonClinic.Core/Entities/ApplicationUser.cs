@@ -22,6 +22,27 @@ public class ApplicationUser : IdentityUser
     public DateTime? UpdatedAt { get; set; }
     public string? UpdatedBy { get; set; }
 
+    // External login tracking
+    /// <summary>
+    /// Whether this user was auto-provisioned from an external IdP
+    /// </summary>
+    public bool IsExternalUser { get; set; } = false;
+
+    /// <summary>
+    /// The identity provider that provisioned this user (e.g., "ADFS-OIDC")
+    /// </summary>
+    public string? ExternalProviderName { get; set; }
+
+    /// <summary>
+    /// The external identifier from the IdP (usually sub or nameidentifier claim)
+    /// </summary>
+    public string? ExternalUserId { get; set; }
+
+    /// <summary>
+    /// Last external login timestamp
+    /// </summary>
+    public DateTime? LastExternalLoginAt { get; set; }
+
     // Navigation properties
     public Tenant? Tenant { get; set; }
     public Company? Company { get; set; }
