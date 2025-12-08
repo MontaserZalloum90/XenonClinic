@@ -1,14 +1,13 @@
-@model IEnumerable<XenonClinic.Core.Entities.Appointment>
+@model XenonClinic.Web.Models.DashboardViewModel
 @{
     ViewData["Title"] = "Dashboard";
-    var visits = ViewBag.VisitsSeries as IEnumerable<dynamic> ?? Enumerable.Empty<dynamic>();
 }
 <div class="row g-3">
     <div class="col-md-3">
         <div class="card card-rounded">
             <div class="card-body">
                 <div class="text-muted small">Appointments Today</div>
-                <div class="fs-3 fw-bold text-primary">@ViewBag.AppointmentsToday</div>
+                <div class="fs-3 fw-bold text-primary">@Model.AppointmentsToday</div>
             </div>
         </div>
     </div>
@@ -16,7 +15,7 @@
         <div class="card card-rounded">
             <div class="card-body">
                 <div class="text-muted small">Active Patients</div>
-                <div class="fs-3 fw-bold text-success">@ViewBag.ActivePatients</div>
+                <div class="fs-3 fw-bold text-success">@Model.ActivePatients</div>
             </div>
         </div>
     </div>
@@ -24,7 +23,7 @@
         <div class="card card-rounded">
             <div class="card-body">
                 <div class="text-muted small">Visits This Week</div>
-                <div class="fs-3 fw-bold text-info">@ViewBag.VisitsThisWeek</div>
+                <div class="fs-3 fw-bold text-info">@Model.VisitsThisWeek</div>
             </div>
         </div>
     </div>
@@ -32,7 +31,7 @@
         <div class="card card-rounded">
             <div class="card-body">
                 <div class="text-muted small">Revenue This Month</div>
-                <div class="fs-3 fw-bold text-warning">AED @ViewBag.RevenueThisMonth</div>
+                <div class="fs-3 fw-bold text-warning">AED @Model.RevenueThisMonth.ToString("N2")</div>
             </div>
         </div>
     </div>
@@ -57,7 +56,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach (var item in Model)
+                            @foreach (var item in Model.UpcomingAppointments)
                             {
                                 <tr>
                                     <td>@item.StartTime.ToString("dd MMM HH:mm")</td>
@@ -84,8 +83,8 @@
 
 @section Scripts {
     <script>
-        const visitsLabels = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(visits.Select(v => ((DateTime)v.Date).ToString("dd MMM"))));
-        const visitsData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(visits.Select(v => (int)v.Count)));
+        const visitsLabels = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.VisitsSeries.Select(v => v.Date.ToString("dd MMM"))));
+        const visitsData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.VisitsSeries.Select(v => v.Count)));
         const ctx = document.getElementById('visitsChart');
         if (ctx) {
             new Chart(ctx, {

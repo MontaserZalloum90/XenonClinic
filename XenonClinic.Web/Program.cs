@@ -4,6 +4,7 @@ using XenonClinic.Core.Entities;
 using XenonClinic.Core.Interfaces;
 using XenonClinic.Infrastructure.Data;
 using XenonClinic.Infrastructure.Services;
+using XenonClinic.Web.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -22,15 +23,20 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 }).AddEntityFrameworkStores<ClinicDbContext>()
   .AddDefaultTokenProviders();
 
+// Register services
 builder.Services.AddScoped<ILicenseGuardService, LicenseGuardService>();
+builder.Services.AddScoped<IBranchScopedService, BranchScopedService>();
+builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddControllersWithViews();
 
 var app = builder.Build();
 
+// Global exception handling middleware
+app.UseMiddleware<GlobalExceptionHandlerMiddleware>();
+
 if (!app.Environment.IsDevelopment())
 {
-    app.UseExceptionHandler("/Home/Error");
     app.UseHsts();
 }
 

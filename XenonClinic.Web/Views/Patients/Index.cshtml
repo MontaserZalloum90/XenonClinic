@@ -1,4 +1,4 @@
-@model IEnumerable<XenonClinic.Core.Entities.Patient>
+@model IEnumerable<XenonClinic.Web.Models.PatientDto>
 @{
     ViewData["Title"] = "Patients";
 }
@@ -33,7 +33,7 @@
                     <tr>
                         <td>@patient.FullNameEn</td>
                         <td>@patient.EmiratesId</td>
-                        <td>@patient.BranchId</td>
+                        <td>@patient.BranchName</td>
                         <td>@patient.PhoneNumber</td>
                         <td>@patient.HearingLossType</td>
                     </tr>
