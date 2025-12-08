@@ -8,10 +8,6 @@ namespace XenonClinic.Infrastructure.Services;
 
 public class LicenseGuardService : ILicenseGuardService
 {
-    private readonly XenonClinicDbContext _db;
-    private readonly UserManager<ApplicationUser> _userManager;
-
-    public LicenseGuardService(XenonClinicDbContext db, UserManager<ApplicationUser> userManager)
     private readonly ClinicDbContext _db;
     private readonly UserManager<ApplicationUser> _userManager;
 

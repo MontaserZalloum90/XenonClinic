@@ -10,14 +10,15 @@ var builder = WebApplication.CreateBuilder(args);
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
     ?? "Server=(localdb)\\mssqllocaldb;Database=XenonClinic;Trusted_Connection=True;MultipleActiveResultSets=true";
 
-builder.Services.AddDbContext<XenonClinicDbContext>(options => options.UseSqlServer(connectionString));
 builder.Services.AddDbContext<ClinicDbContext>(options => options.UseSqlServer(connectionString));
 
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 {
     options.Password.RequireDigit = true;
     options.Password.RequireNonAlphanumeric = false;
-}).AddEntityFrameworkStores<XenonClinicDbContext>()
+    options.Password.RequireUppercase = true;
+    options.Password.RequireLowercase = true;
+    options.Password.RequiredLength = 8;
 }).AddEntityFrameworkStores<ClinicDbContext>()
   .AddDefaultTokenProviders();
 
