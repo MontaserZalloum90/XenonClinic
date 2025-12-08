@@ -832,4 +832,262 @@
   <data name="Clear">
     <value>مسح</value>
   </data>
+
+  <!-- Sales Module -->
+  <data name="Sales">
+    <value>المبيعات</value>
+  </data>
+  <data name="Sales_Dashboard">
+    <value>لوحة المبيعات</value>
+  </data>
+  <data name="Invoices">
+    <value>الفواتير</value>
+  </data>
+  <data name="Invoice">
+    <value>فاتورة</value>
+  </data>
+  <data name="Invoice_Number">
+    <value>رقم الفاتورة</value>
+  </data>
+  <data name="Invoice_Date">
+    <value>تاريخ الفاتورة</value>
+  </data>
+  <data name="Invoice_Details">
+    <value>تفاصيل الفاتورة</value>
+  </data>
+  <data name="New_Sale">
+    <value>فاتورة جديدة</value>
+  </data>
+  <data name="Create_First_Sale">
+    <value>إنشاء أول فاتورة</value>
+  </data>
+  <data name="No_Invoices_Found">
+    <value>لم يتم العثور على فواتير</value>
+  </data>
+  <data name="No_Recent_Sales">
+    <value>لا توجد مبيعات حديثة</value>
+  </data>
+  <data name="Recent_Sales">
+    <value>المبيعات الأخيرة</value>
+  </data>
+
+  <!-- Quotations -->
+  <data name="Quotations">
+    <value>عروض الأسعار</value>
+  </data>
+  <data name="Quotation_Number">
+    <value>رقم عرض السعر</value>
+  </data>
+  <data name="Recent_Quotations">
+    <value>عروض الأسعار الأخيرة</value>
+  </data>
+  <data name="No_Recent_Quotations">
+    <value>لا توجد عروض أسعار حديثة</value>
+  </data>
+  <data name="No_Quotations_Found">
+    <value>لم يتم العثور على عروض أسعار</value>
+  </data>
+  <data name="Pending_Quotations">
+    <value>عروض الأسعار المعلقة</value>
+  </data>
+  <data name="Convert_to_Sale">
+    <value>تحويل إلى فاتورة</value>
+  </data>
+  <data name="Convert">
+    <value>تحويل</value>
+  </data>
+  <data name="Expired">
+    <value>منتهية</value>
+  </data>
+  <data name="Back_to_Dashboard">
+    <value>العودة إلى لوحة التحكم</value>
+  </data>
+
+  <!-- Financial Terms -->
+  <data name="Sales_Today">
+    <value>مبيعات اليوم</value>
+  </data>
+  <data name="Sales_This_Month">
+    <value>مبيعات الشهر</value>
+  </data>
+  <data name="Outstanding_Balance">
+    <value>الرصيد المستحق</value>
+  </data>
+  <data name="Overdue">
+    <value>متأخرة</value>
+  </data>
+  <data name="Overdue_Invoices">
+    <value>الفواتير المتأخرة</value>
+  </data>
+  <data name="Overdue_Invoices_Count">
+    <value>لديك {0} فاتورة متأخرة برصيد مستحق {1} درهم</value>
+  </data>
+  <data name="View_Overdue">
+    <value>عرض المتأخرة</value>
+  </data>
+  <data name="Awaiting_Response">
+    <value>في انتظار الرد</value>
+  </data>
+  <data name="Customer">
+    <value>العميل</value>
+  </data>
+  <data name="Customer_Information">
+    <value>معلومات العميل</value>
+  </data>
+  <data name="Due_Date">
+    <value>تاريخ الاستحقاق</value>
+  </data>
+  <data name="Paid">
+    <value>مدفوع</value>
+  </data>
+  <data name="Paid_Amount">
+    <value>المبلغ المدفوع</value>
+  </data>
+  <data name="Balance">
+    <value>الرصيد</value>
+  </data>
+  <data name="Balance_Due">
+    <value>الرصيد المستحق</value>
+  </data>
+  <data name="Subtotal">
+    <value>المجموع الفرعي</value>
+  </data>
+  <data name="Discount">
+    <value>الخصم</value>
+  </data>
+  <data name="Tax">
+    <value>الضريبة</value>
+  </data>
+  <data name="Total_Amount">
+    <value>المبلغ الإجمالي</value>
+  </data>
+  <data name="Unit_Price">
+    <value>سعر الوحدة</value>
+  </data>
+  <data name="Serial">
+    <value>الرقم التسلسلي</value>
+  </data>
+  <data name="Attention">
+    <value>تنبيه</value>
+  </data>
+  <data name="Print">
+    <value>طباعة</value>
+  </data>
+  <data name="Ref">
+    <value>مرجع</value>
+  </data>
+  <data name="Maximum">
+    <value>الحد الأقصى</value>
+  </data>
+
+  <!-- Payment -->
+  <data name="Payment">
+    <value>الدفع</value>
+  </data>
+  <data name="Payment_Status">
+    <value>حالة الدفع</value>
+  </data>
+  <data name="Payment_Method">
+    <value>طريقة الدفع</value>
+  </data>
+  <data name="Payment_Date">
+    <value>تاريخ الدفع</value>
+  </data>
+  <data name="Payment_History">
+    <value>سجل المدفوعات</value>
+  </data>
+  <data name="Record_Payment">
+    <value>تسجيل دفعة</value>
+  </data>
+  <data name="No_Payments_Yet">
+    <value>لم يتم تسجيل أي دفعات بعد</value>
+  </data>
+  <data name="Reference_Number">
+    <value>الرقم المرجعي</value>
+  </data>
+  <data name="Transaction_ID_Check_Number">
+    <value>رقم المعاملة، رقم الشيك، إلخ</value>
+  </data>
+
+  <!-- Sale Status -->
+  <data name="Sale_Status">
+    <value>حالة المبيع</value>
+  </data>
+  <data name="SaleStatus_Draft">
+    <value>مسودة</value>
+  </data>
+  <data name="SaleStatus_Confirmed">
+    <value>مؤكدة</value>
+  </data>
+  <data name="SaleStatus_Completed">
+    <value>مكتملة</value>
+  </data>
+  <data name="SaleStatus_Cancelled">
+    <value>ملغاة</value>
+  </data>
+  <data name="SaleStatus_Refunded">
+    <value>مستردة</value>
+  </data>
+
+  <!-- Payment Status -->
+  <data name="PaymentStatus_Pending">
+    <value>قيد الانتظار</value>
+  </data>
+  <data name="PaymentStatus_Partial">
+    <value>جزئي</value>
+  </data>
+  <data name="PaymentStatus_Paid">
+    <value>مدفوعة</value>
+  </data>
+  <data name="PaymentStatus_Refunded">
+    <value>مستردة</value>
+  </data>
+  <data name="PaymentStatus_Overdue">
+    <value>متأخرة</value>
+  </data>
+
+  <!-- Payment Methods -->
+  <data name="PaymentMethod_Cash">
+    <value>نقداً</value>
+  </data>
+  <data name="PaymentMethod_Card">
+    <value>بطاقة</value>
+  </data>
+  <data name="PaymentMethod_BankTransfer">
+    <value>تحويل بنكي</value>
+  </data>
+  <data name="PaymentMethod_Insurance">
+    <value>تأمين</value>
+  </data>
+  <data name="PaymentMethod_Installment">
+    <value>أقساط</value>
+  </data>
+  <data name="PaymentMethod_Cheque">
+    <value>شيك</value>
+  </data>
+
+  <!-- Quotation Status -->
+  <data name="QuotationStatus_Draft">
+    <value>مسودة</value>
+  </data>
+  <data name="QuotationStatus_Sent">
+    <value>مرسلة</value>
+  </data>
+  <data name="QuotationStatus_Accepted">
+    <value>مقبولة</value>
+  </data>
+  <data name="QuotationStatus_Rejected">
+    <value>مرفوضة</value>
+  </data>
+  <data name="QuotationStatus_Expired">
+    <value>منتهية</value>
+  </data>
+
+  <!-- Common -->
+  <data name="Expiry_Date">
+    <value>تاريخ الانتهاء</value>
+  </data>
+  <data name="Amount">
+    <value>المبلغ</value>
+  </data>
 </root>

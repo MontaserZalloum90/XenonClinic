@@ -1,0 +1,263 @@
+@model XenonClinic.Web.Models.SalesDashboardViewModel
+@using Microsoft.Extensions.Localization
+@inject IStringLocalizer<SharedResources> Localizer
+
+@{
+    ViewData["Title"] = Localizer["Sales_Dashboard"];
+}
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>@Localizer["Sales_Dashboard"]</h2>
+        <div>
+            <a asp-action="Create" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i> @Localizer["New_Sale"]
+            </a>
+            <a asp-action="Quotations" class="btn btn-success">
+                <i class="bi bi-file-text"></i> @Localizer["Quotations"]
+            </a>
+        </div>
+    </div>
+
+    <!-- Metrics Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-subtitle mb-2">@Localizer["Sales_Today"]</h6>
+                            <h2 class="mb-0">@Model.TotalSalesToday.ToString("N2") AED</h2>
+                            <small>@Model.TotalInvoicesToday @Localizer["Invoices"]</small>
+                        </div>
+                        <i class="bi bi-cash-stack fs-1 opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-subtitle mb-2">@Localizer["Sales_This_Month"]</h6>
+                            <h2 class="mb-0">@Model.TotalSalesThisMonth.ToString("N2") AED</h2>
+                            <small>@Model.TotalInvoicesThisMonth @Localizer["Invoices"]</small>
+                        </div>
+                        <i class="bi bi-graph-up-arrow fs-1 opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-dark">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-subtitle mb-2">@Localizer["Outstanding_Balance"]</h6>
+                            <h2 class="mb-0">@Model.OutstandingBalance.ToString("N2") AED</h2>
+                            <small>@Model.OverdueInvoices @Localizer["Overdue"]</small>
+                        </div>
+                        <i class="bi bi-exclamation-triangle fs-1 opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-subtitle mb-2">@Localizer["Pending_Quotations"]</h6>
+                            <h2 class="mb-0">@Model.PendingQuotations</h2>
+                            <small>@Localizer["Awaiting_Response"]</small>
+                        </div>
+                        <i class="bi bi-file-earmark-text fs-1 opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Overdue Invoices Alert -->
+    @if (Model.OverdueInvoices > 0)
+    {
+        <div class="alert alert-danger d-flex align-items-center mb-4" role="alert">
+            <i class="bi bi-exclamation-octagon-fill me-3 fs-4"></i>
+            <div>
+                <strong>@Localizer["Attention"]:</strong>
+                @string.Format(Localizer["Overdue_Invoices_Count"].Value, Model.OverdueInvoices, Model.OutstandingBalance.ToString("N2"))
+                <a asp-action="Invoices" class="alert-link ms-2">@Localizer["View_Overdue"]</a>
+            </div>
+        </div>
+    }
+
+    <div class="row">
+        <!-- Recent Sales -->
+        <div class="col-lg-8 mb-4">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">@Localizer["Recent_Sales"]</h5>
+                    <a asp-action="Invoices" class="btn btn-sm btn-outline-primary">@Localizer["View_All"]</a>
+                </div>
+                <div class="card-body p-0">
+                    @if (Model.RecentSales.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>@Localizer["Invoice_Number"]</th>
+                                        <th>@Localizer["Date"]</th>
+                                        <th>@Localizer["Customer"]</th>
+                                        <th>@Localizer["Total"]</th>
+                                        <th>@Localizer["Payment_Status"]</th>
+                                        <th>@Localizer["Actions"]</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var sale in Model.RecentSales)
+                                    {
+                                        <tr>
+                                            <td><strong>@sale.InvoiceNumber</strong></td>
+                                            <td>@sale.SaleDate.ToString("yyyy-MM-dd")</td>
+                                            <td>@sale.PatientName</td>
+                                            <td>@sale.Total.ToString("N2") AED</td>
+                                            <td>
+                                                @{
+                                                    var paymentClass = sale.PaymentStatus switch
+                                                    {
+                                                        XenonClinic.Core.Enums.PaymentStatus.Paid => "success",
+                                                        XenonClinic.Core.Enums.PaymentStatus.Partial => "warning",
+                                                        XenonClinic.Core.Enums.PaymentStatus.Pending => "secondary",
+                                                        XenonClinic.Core.Enums.PaymentStatus.Overdue => "danger",
+                                                        _ => "secondary"
+                                                    };
+                                                }
+                                                <span class="badge bg-@paymentClass">@Localizer[$"PaymentStatus_{sale.PaymentStatus}"]</span>
+                                            </td>
+                                            <td>
+                                                <a asp-action="Details" asp-route-id="@sale.Id" class="btn btn-sm btn-outline-primary">
+                                                    <i class="bi bi-eye"></i>
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-4 text-muted">
+                            <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                            @Localizer["No_Recent_Sales"]
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Quotations -->
+        <div class="col-lg-4 mb-4">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">@Localizer["Recent_Quotations"]</h5>
+                    <a asp-action="Quotations" class="btn btn-sm btn-outline-success">@Localizer["View_All"]</a>
+                </div>
+                <div class="card-body p-0">
+                    @if (Model.RecentQuotations.Any())
+                    {
+                        <div class="list-group list-group-flush">
+                            @foreach (var quotation in Model.RecentQuotations)
+                            {
+                                <div class="list-group-item">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div class="flex-grow-1">
+                                            <strong>@quotation.QuotationNumber</strong>
+                                            <div class="small text-muted">@quotation.PatientName</div>
+                                            <div class="mt-1">
+                                                @{
+                                                    var statusClass = quotation.Status switch
+                                                    {
+                                                        XenonClinic.Core.Enums.QuotationStatus.Sent => "primary",
+                                                        XenonClinic.Core.Enums.QuotationStatus.Accepted => "success",
+                                                        XenonClinic.Core.Enums.QuotationStatus.Rejected => "danger",
+                                                        XenonClinic.Core.Enums.QuotationStatus.Expired => "secondary",
+                                                        _ => "secondary"
+                                                    };
+                                                }
+                                                <span class="badge bg-@statusClass">@Localizer[$"QuotationStatus_{quotation.Status}"]</span>
+                                            </div>
+                                        </div>
+                                        <div class="text-end">
+                                            <strong>@quotation.Total.ToString("N2") AED</strong>
+                                            <div class="small text-muted">@quotation.QuotationDate.ToString("MMM dd")</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-4 text-muted">
+                            <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                            @Localizer["No_Recent_Quotations"]
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Overdue Sales -->
+    @if (Model.OverdueSales.Any())
+    {
+        <div class="row">
+            <div class="col-12">
+                <div class="card border-danger">
+                    <div class="card-header bg-danger text-white">
+                        <h5 class="mb-0">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            @Localizer["Overdue_Invoices"]
+                        </h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>@Localizer["Invoice_Number"]</th>
+                                        <th>@Localizer["Customer"]</th>
+                                        <th>@Localizer["Due_Date"]</th>
+                                        <th>@Localizer["Total"]</th>
+                                        <th>@Localizer["Balance"]</th>
+                                        <th>@Localizer["Actions"]</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var sale in Model.OverdueSales)
+                                    {
+                                        <tr class="table-danger">
+                                            <td><strong>@sale.InvoiceNumber</strong></td>
+                                            <td>@sale.PatientName</td>
+                                            <td>@sale.DueDate?.ToString("yyyy-MM-dd")</td>
+                                            <td>@sale.Total.ToString("N2") AED</td>
+                                            <td><strong class="text-danger">@sale.Balance.ToString("N2") AED</strong></td>
+                                            <td>
+                                                <a asp-action="Details" asp-route-id="@sale.Id" class="btn btn-sm btn-danger">
+                                                    <i class="bi bi-eye"></i> @Localizer["View"]
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
