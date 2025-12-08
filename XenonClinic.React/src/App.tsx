@@ -8,6 +8,11 @@ import { Dashboard } from './pages/Dashboard';
 import { AppointmentsList } from './pages/Appointments/AppointmentsList';
 import { PatientsList } from './pages/Patients/PatientsList';
 import { LaboratoryList } from './pages/Laboratory/LaboratoryList';
+import { HRList } from './pages/HR/HRList';
+import { FinancialList } from './pages/Financial/FinancialList';
+import { InventoryList } from './pages/Inventory/InventoryList';
+import { PharmacyList } from './pages/Pharmacy/PharmacyList';
+import { RadiologyList } from './pages/Radiology/RadiologyList';
 
 // Create React Query client
 const queryClient = new QueryClient({
@@ -66,6 +71,56 @@ function App() {
                 <ProtectedRoute>
                   <Layout>
                     <LaboratoryList />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/hr"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <HRList />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/financial"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <FinancialList />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/inventory"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <InventoryList />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/pharmacy"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <PharmacyList />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/radiology"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <RadiologyList />
                   </Layout>
                 </ProtectedRoute>
               }
