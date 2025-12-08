@@ -1090,4 +1090,199 @@
   <data name="Amount">
     <value>Amount</value>
   </data>
+  <data name="Procurement">
+    <value>Procurement</value>
+  </data>
+  <data name="Procurement_Dashboard">
+    <value>Procurement Dashboard</value>
+  </data>
+  <data name="Purchase_Orders">
+    <value>Purchase Orders</value>
+  </data>
+  <data name="Purchase_Order">
+    <value>Purchase Order</value>
+  </data>
+  <data name="New_Purchase_Order">
+    <value>New Purchase Order</value>
+  </data>
+  <data name="Order_Number">
+    <value>Order Number</value>
+  </data>
+  <data name="Expected_Delivery">
+    <value>Expected Delivery</value>
+  </data>
+  <data name="Supplier">
+    <value>Supplier</value>
+  </data>
+  <data name="Suppliers">
+    <value>Suppliers</value>
+  </data>
+  <data name="Add_Supplier">
+    <value>Add Supplier</value>
+  </data>
+  <data name="Supplier_Name">
+    <value>Supplier Name</value>
+  </data>
+  <data name="Contact_Person">
+    <value>Contact Person</value>
+  </data>
+  <data name="Code">
+    <value>Code</value>
+  </data>
+  <data name="Payment_Terms">
+    <value>Payment Terms</value>
+  </data>
+  <data name="Total_Orders">
+    <value>Total Orders</value>
+  </data>
+  <data name="Outstanding">
+    <value>Outstanding</value>
+  </data>
+  <data name="All_Suppliers">
+    <value>All Suppliers</value>
+  </data>
+  <data name="No_Suppliers_Found">
+    <value>No Suppliers Found</value>
+  </data>
+  <data name="Add_First_Supplier">
+    <value>Add your first supplier to get started</value>
+  </data>
+  <data name="Goods_Receipts">
+    <value>Goods Receipts</value>
+  </data>
+  <data name="New_Goods_Receipt">
+    <value>New Goods Receipt</value>
+  </data>
+  <data name="Receipt_Number">
+    <value>Receipt Number</value>
+  </data>
+  <data name="Supplier_Invoice">
+    <value>Supplier Invoice</value>
+  </data>
+  <data name="Received_By">
+    <value>Received By</value>
+  </data>
+  <data name="Direct_Receipt">
+    <value>Direct Receipt</value>
+  </data>
+  <data name="No_Goods_Receipts_Found">
+    <value>No Goods Receipts Found</value>
+  </data>
+  <data name="Supplier_Payments">
+    <value>Supplier Payments</value>
+  </data>
+  <data name="New_Payment">
+    <value>New Payment</value>
+  </data>
+  <data name="General_Payment">
+    <value>General Payment</value>
+  </data>
+  <data name="Paid_By">
+    <value>Paid By</value>
+  </data>
+  <data name="No_Supplier_Payments_Found">
+    <value>No Supplier Payments Found</value>
+  </data>
+  <data name="Total_Purchase_Orders">
+    <value>Total Purchase Orders</value>
+  </data>
+  <data name="Pending_Approvals">
+    <value>Pending Approvals</value>
+  </data>
+  <data name="Total_Purchase_Value">
+    <value>Total Purchase Value</value>
+  </data>
+  <data name="Outstanding_Payments">
+    <value>Outstanding Payments</value>
+  </data>
+  <data name="Active_Purchase_Orders">
+    <value>Active Purchase Orders</value>
+  </data>
+  <data name="Goods_Receipts_This_Month">
+    <value>Goods Receipts This Month</value>
+  </data>
+  <data name="Requires_Attention">
+    <value>Requires Attention</value>
+  </data>
+  <data name="All_Time">
+    <value>All Time</value>
+  </data>
+  <data name="Manage_Payments">
+    <value>Manage Payments</value>
+  </data>
+  <data name="In_Progress">
+    <value>In Progress</value>
+  </data>
+  <data name="Quick_Actions">
+    <value>Quick Actions</value>
+  </data>
+  <data name="Recent_Purchase_Orders">
+    <value>Recent Purchase Orders</value>
+  </data>
+  <data name="Recent_Goods_Receipts">
+    <value>Recent Goods Receipts</value>
+  </data>
+  <data name="No_Recent_Purchase_Orders">
+    <value>No recent purchase orders</value>
+  </data>
+  <data name="No_Recent_Goods_Receipts">
+    <value>No recent goods receipts</value>
+  </data>
+  <data name="No_Purchase_Orders_Found">
+    <value>No Purchase Orders Found</value>
+  </data>
+  <data name="Total_Value">
+    <value>Total Value</value>
+  </data>
+  <data name="Total_Amount">
+    <value>Total Amount</value>
+  </data>
+  <data name="Receive_Goods">
+    <value>Receive Goods</value>
+  </data>
+  <data name="Make_Payment">
+    <value>Make Payment</value>
+  </data>
+  <data name="Approve">
+    <value>Approve</value>
+  </data>
+  <data name="PurchaseOrderStatus_Draft">
+    <value>Draft</value>
+  </data>
+  <data name="PurchaseOrderStatus_Submitted">
+    <value>Submitted</value>
+  </data>
+  <data name="PurchaseOrderStatus_Approved">
+    <value>Approved</value>
+  </data>
+  <data name="PurchaseOrderStatus_Ordered">
+    <value>Ordered</value>
+  </data>
+  <data name="PurchaseOrderStatus_PartiallyReceived">
+    <value>Partially Received</value>
+  </data>
+  <data name="PurchaseOrderStatus_Received">
+    <value>Received</value>
+  </data>
+  <data name="PurchaseOrderStatus_Cancelled">
+    <value>Cancelled</value>
+  </data>
+  <data name="GoodsReceiptStatus_Draft">
+    <value>Draft</value>
+  </data>
+  <data name="GoodsReceiptStatus_Completed">
+    <value>Completed</value>
+  </data>
+  <data name="GoodsReceiptStatus_Cancelled">
+    <value>Cancelled</value>
+  </data>
+  <data name="SupplierPaymentStatus_Pending">
+    <value>Pending</value>
+  </data>
+  <data name="SupplierPaymentStatus_Paid">
+    <value>Paid</value>
+  </data>
+  <data name="SupplierPaymentStatus_Cancelled">
+    <value>Cancelled</value>
+  </data>
 </root>

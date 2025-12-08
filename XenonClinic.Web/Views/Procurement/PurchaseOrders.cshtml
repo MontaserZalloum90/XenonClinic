@@ -1,0 +1,191 @@
+@model IEnumerable<XenonClinic.Web.Models.PurchaseOrderDto>
+@using Microsoft.Extensions.Localization
+@inject IStringLocalizer<SharedResources> Localizer
+
+@{
+    ViewData["Title"] = Localizer["Purchase_Orders"];
+}
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>@Localizer["Purchase_Orders"]</h2>
+        <div>
+            <a asp-action="CreatePurchaseOrder" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i> @Localizer["New_Purchase_Order"]
+            </a>
+            <a asp-action="Index" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> @Localizer["Back_to_Dashboard"]
+            </a>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label">@Localizer["Status"]</label>
+                    <select name="status" class="form-select">
+                        <option value="">@Localizer["All_Statuses"]</option>
+                        @foreach (var status in Enum.GetValues<XenonClinic.Core.Enums.PurchaseOrderStatus>())
+                        {
+                            <option value="@status" selected="@(Context.Request.Query["status"] == status.ToString() ? "selected" : null)">
+                                @Localizer[$"PurchaseOrderStatus_{status}"]
+                            </option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">@Localizer["Supplier"]</label>
+                    <select name="supplierId" class="form-select">
+                        <option value="">@Localizer["All_Suppliers"]</option>
+                        @if (ViewBag.Suppliers != null)
+                        {
+                            @foreach (var supplier in (IEnumerable<SelectListItem>)ViewBag.Suppliers)
+                            {
+                                <option value="@supplier.Value" selected="@(Context.Request.Query["supplierId"] == supplier.Value ? "selected" : null)">
+                                    @supplier.Text
+                                </option>
+                            }
+                        }
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">@Localizer["From_Date"]</label>
+                    <input type="date" name="fromDate" class="form-control" value="@Context.Request.Query["fromDate"]" />
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">@Localizer["To_Date"]</label>
+                    <input type="date" name="toDate" class="form-control" value="@Context.Request.Query["toDate"]" />
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary me-2">
+                        <i class="bi bi-search"></i> @Localizer["Search"]
+                    </button>
+                    <a asp-action="PurchaseOrders" class="btn btn-outline-secondary">
+                        <i class="bi bi-x-circle"></i> @Localizer["Clear"]
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Purchase Orders Table -->
+    <div class="card">
+        <div class="card-body p-0">
+            @if (Model.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>@Localizer["Order_Number"]</th>
+                                <th>@Localizer["Date"]</th>
+                                <th>@Localizer["Supplier"]</th>
+                                <th>@Localizer["Expected_Delivery"]</th>
+                                <th>@Localizer["Total"]</th>
+                                <th>@Localizer["Received"]</th>
+                                <th>@Localizer["Balance"]</th>
+                                <th>@Localizer["Status"]</th>
+                                <th>@Localizer["Actions"]</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var po in Model)
+                            {
+                                <tr>
+                                    <td><strong>@po.OrderNumber</strong></td>
+                                    <td>@po.OrderDate.ToString("yyyy-MM-dd")</td>
+                                    <td>@po.SupplierName</td>
+                                    <td>
+                                        @if (po.ExpectedDeliveryDate.HasValue)
+                                        {
+                                            @po.ExpectedDeliveryDate.Value.ToString("yyyy-MM-dd")
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">-</span>
+                                        }
+                                    </td>
+                                    <td>@po.Total.ToString("N2") AED</td>
+                                    <td>@po.ReceivedAmount.ToString("N2") AED</td>
+                                    <td>
+                                        @if (po.Balance > 0)
+                                        {
+                                            <span class="text-danger">@po.Balance.ToString("N2") AED</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-success">@Localizer["Paid"]</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @{
+                                            var statusClass = po.Status switch
+                                            {
+                                                XenonClinic.Core.Enums.PurchaseOrderStatus.Draft => "secondary",
+                                                XenonClinic.Core.Enums.PurchaseOrderStatus.Submitted => "info",
+                                                XenonClinic.Core.Enums.PurchaseOrderStatus.Approved => "primary",
+                                                XenonClinic.Core.Enums.PurchaseOrderStatus.Ordered => "warning",
+                                                XenonClinic.Core.Enums.PurchaseOrderStatus.PartiallyReceived => "warning",
+                                                XenonClinic.Core.Enums.PurchaseOrderStatus.Received => "success",
+                                                XenonClinic.Core.Enums.PurchaseOrderStatus.Cancelled => "danger",
+                                                _ => "secondary"
+                                            };
+                                        }
+                                        <span class="badge bg-@statusClass">@Localizer[$"PurchaseOrderStatus_{po.Status}"]</span>
+                                    </td>
+                                    <td>
+                                        @if (po.Status == XenonClinic.Core.Enums.PurchaseOrderStatus.Submitted)
+                                        {
+                                            <form asp-action="ApprovePurchaseOrder" asp-route-id="@po.Id" method="post" class="d-inline">
+                                                <button type="submit" class="btn btn-sm btn-success" title="@Localizer["Approve"]">
+                                                    <i class="bi bi-check-circle"></i>
+                                                </button>
+                                            </form>
+                                        }
+                                        @if (po.Status == XenonClinic.Core.Enums.PurchaseOrderStatus.Approved ||
+                                             po.Status == XenonClinic.Core.Enums.PurchaseOrderStatus.Ordered ||
+                                             po.Status == XenonClinic.Core.Enums.PurchaseOrderStatus.PartiallyReceived)
+                                        {
+                                            <a asp-action="CreateGoodsReceipt" asp-route-purchaseOrderId="@po.Id" class="btn btn-sm btn-primary" title="@Localizer["Receive_Goods"]">
+                                                <i class="bi bi-box-arrow-in-down"></i>
+                                            </a>
+                                        }
+                                        @if (po.Balance > 0 && po.Status != XenonClinic.Core.Enums.PurchaseOrderStatus.Cancelled)
+                                        {
+                                            <a asp-action="CreateSupplierPayment" asp-route-purchaseOrderId="@po.Id" class="btn btn-sm btn-warning" title="@Localizer["Make_Payment"]">
+                                                <i class="bi bi-cash"></i>
+                                            </a>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="card-footer">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="text-muted">
+                                @Localizer["Total"]: @Model.Count() @Localizer["Purchase_Orders"]
+                            </div>
+                        </div>
+                        <div class="col-md-6 text-end">
+                            <strong>@Localizer["Total_Value"]:</strong> @Model.Sum(p => p.Total).ToString("N2") AED
+                        </div>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="text-center py-5">
+                    <i class="bi bi-cart-x fs-1 d-block mb-3 text-muted"></i>
+                    <h5 class="text-muted">@Localizer["No_Purchase_Orders_Found"]</h5>
+                    <p class="text-muted">@Localizer["Try_Different_Filters"]</p>
+                </div>
+            }
+        </div>
+    </div>
+</div>

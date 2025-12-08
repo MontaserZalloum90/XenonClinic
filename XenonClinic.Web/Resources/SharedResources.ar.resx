@@ -1090,4 +1090,199 @@
   <data name="Amount">
     <value>المبلغ</value>
   </data>
+  <data name="Procurement">
+    <value>المشتريات</value>
+  </data>
+  <data name="Procurement_Dashboard">
+    <value>لوحة تحكم المشتريات</value>
+  </data>
+  <data name="Purchase_Orders">
+    <value>أوامر الشراء</value>
+  </data>
+  <data name="Purchase_Order">
+    <value>أمر الشراء</value>
+  </data>
+  <data name="New_Purchase_Order">
+    <value>أمر شراء جديد</value>
+  </data>
+  <data name="Order_Number">
+    <value>رقم الأمر</value>
+  </data>
+  <data name="Expected_Delivery">
+    <value>التسليم المتوقع</value>
+  </data>
+  <data name="Supplier">
+    <value>المورد</value>
+  </data>
+  <data name="Suppliers">
+    <value>الموردون</value>
+  </data>
+  <data name="Add_Supplier">
+    <value>إضافة مورد</value>
+  </data>
+  <data name="Supplier_Name">
+    <value>اسم المورد</value>
+  </data>
+  <data name="Contact_Person">
+    <value>الشخص المسؤول</value>
+  </data>
+  <data name="Code">
+    <value>الرمز</value>
+  </data>
+  <data name="Payment_Terms">
+    <value>شروط الدفع</value>
+  </data>
+  <data name="Total_Orders">
+    <value>إجمالي الطلبات</value>
+  </data>
+  <data name="Outstanding">
+    <value>المستحق</value>
+  </data>
+  <data name="All_Suppliers">
+    <value>جميع الموردين</value>
+  </data>
+  <data name="No_Suppliers_Found">
+    <value>لم يتم العثور على موردين</value>
+  </data>
+  <data name="Add_First_Supplier">
+    <value>أضف المورد الأول للبدء</value>
+  </data>
+  <data name="Goods_Receipts">
+    <value>إيصالات الاستلام</value>
+  </data>
+  <data name="New_Goods_Receipt">
+    <value>إيصال استلام جديد</value>
+  </data>
+  <data name="Receipt_Number">
+    <value>رقم الإيصال</value>
+  </data>
+  <data name="Supplier_Invoice">
+    <value>فاتورة المورد</value>
+  </data>
+  <data name="Received_By">
+    <value>استلام من قبل</value>
+  </data>
+  <data name="Direct_Receipt">
+    <value>استلام مباشر</value>
+  </data>
+  <data name="No_Goods_Receipts_Found">
+    <value>لم يتم العثور على إيصالات استلام</value>
+  </data>
+  <data name="Supplier_Payments">
+    <value>مدفوعات الموردين</value>
+  </data>
+  <data name="New_Payment">
+    <value>دفعة جديدة</value>
+  </data>
+  <data name="General_Payment">
+    <value>دفعة عامة</value>
+  </data>
+  <data name="Paid_By">
+    <value>تم الدفع من قبل</value>
+  </data>
+  <data name="No_Supplier_Payments_Found">
+    <value>لم يتم العثور على مدفوعات للموردين</value>
+  </data>
+  <data name="Total_Purchase_Orders">
+    <value>إجمالي أوامر الشراء</value>
+  </data>
+  <data name="Pending_Approvals">
+    <value>في انتظار الموافقة</value>
+  </data>
+  <data name="Total_Purchase_Value">
+    <value>إجمالي قيمة الشراء</value>
+  </data>
+  <data name="Outstanding_Payments">
+    <value>المدفوعات المستحقة</value>
+  </data>
+  <data name="Active_Purchase_Orders">
+    <value>أوامر الشراء النشطة</value>
+  </data>
+  <data name="Goods_Receipts_This_Month">
+    <value>إيصالات الاستلام هذا الشهر</value>
+  </data>
+  <data name="Requires_Attention">
+    <value>يتطلب انتباه</value>
+  </data>
+  <data name="All_Time">
+    <value>جميع الأوقات</value>
+  </data>
+  <data name="Manage_Payments">
+    <value>إدارة المدفوعات</value>
+  </data>
+  <data name="In_Progress">
+    <value>قيد التنفيذ</value>
+  </data>
+  <data name="Quick_Actions">
+    <value>إجراءات سريعة</value>
+  </data>
+  <data name="Recent_Purchase_Orders">
+    <value>أوامر الشراء الأخيرة</value>
+  </data>
+  <data name="Recent_Goods_Receipts">
+    <value>إيصالات الاستلام الأخيرة</value>
+  </data>
+  <data name="No_Recent_Purchase_Orders">
+    <value>لا توجد أوامر شراء حديثة</value>
+  </data>
+  <data name="No_Recent_Goods_Receipts">
+    <value>لا توجد إيصالات استلام حديثة</value>
+  </data>
+  <data name="No_Purchase_Orders_Found">
+    <value>لم يتم العثور على أوامر شراء</value>
+  </data>
+  <data name="Total_Value">
+    <value>القيمة الإجمالية</value>
+  </data>
+  <data name="Total_Amount">
+    <value>المبلغ الإجمالي</value>
+  </data>
+  <data name="Receive_Goods">
+    <value>استلام البضائع</value>
+  </data>
+  <data name="Make_Payment">
+    <value>إجراء الدفع</value>
+  </data>
+  <data name="Approve">
+    <value>موافقة</value>
+  </data>
+  <data name="PurchaseOrderStatus_Draft">
+    <value>مسودة</value>
+  </data>
+  <data name="PurchaseOrderStatus_Submitted">
+    <value>مقدم</value>
+  </data>
+  <data name="PurchaseOrderStatus_Approved">
+    <value>موافق عليه</value>
+  </data>
+  <data name="PurchaseOrderStatus_Ordered">
+    <value>مطلوب</value>
+  </data>
+  <data name="PurchaseOrderStatus_PartiallyReceived">
+    <value>مستلم جزئياً</value>
+  </data>
+  <data name="PurchaseOrderStatus_Received">
+    <value>مستلم</value>
+  </data>
+  <data name="PurchaseOrderStatus_Cancelled">
+    <value>ملغى</value>
+  </data>
+  <data name="GoodsReceiptStatus_Draft">
+    <value>مسودة</value>
+  </data>
+  <data name="GoodsReceiptStatus_Completed">
+    <value>مكتمل</value>
+  </data>
+  <data name="GoodsReceiptStatus_Cancelled">
+    <value>ملغى</value>
+  </data>
+  <data name="SupplierPaymentStatus_Pending">
+    <value>قيد الانتظار</value>
+  </data>
+  <data name="SupplierPaymentStatus_Paid">
+    <value>مدفوع</value>
+  </data>
+  <data name="SupplierPaymentStatus_Cancelled">
+    <value>ملغى</value>
+  </data>
 </root>
