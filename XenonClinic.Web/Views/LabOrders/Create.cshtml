@@ -1,0 +1,131 @@
+@using XenonClinic.Core.Enums
+@using Microsoft.AspNetCore.Mvc.Localization
+@inject IViewLocalizer Localizer
+@model XenonClinic.Core.Entities.LabOrder
+@{
+    ViewData["Title"] = "Create Lab Order";
+    var patients = ViewBag.Patients as SelectList;
+    var externalLabs = ViewBag.ExternalLabs as SelectList;
+}
+
+<div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center mb-4 gap-2">
+    <h4 class="mb-0"><i class="bi bi-microscope me-2"></i>Create Lab Order</h4>
+    <a asp-action="Index" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i>Back to List
+    </a>
+</div>
+
+<div class="card card-rounded">
+    <div class="card-body">
+        <form asp-action="Create" method="post">
+            @Html.AntiForgeryToken()
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+            <div class="row g-3">
+                <!-- Patient Selection -->
+                <div class="col-md-6">
+                    <label asp-for="PatientId" class="form-label">Patient *</label>
+                    <select asp-for="PatientId" asp-items="patients" class="form-select">
+                        <option value="">-- Select Patient --</option>
+                    </select>
+                    <span asp-validation-for="PatientId" class="text-danger"></span>
+                </div>
+
+                <!-- Order Date -->
+                <div class="col-md-6">
+                    <label asp-for="OrderDate" class="form-label">Order Date *</label>
+                    <input asp-for="OrderDate" type="datetime-local" class="form-control" />
+                    <span asp-validation-for="OrderDate" class="text-danger"></span>
+                </div>
+
+                <!-- External Lab -->
+                <div class="col-md-6">
+                    <label asp-for="ExternalLabId" class="form-label">External Lab</label>
+                    <select asp-for="ExternalLabId" asp-items="externalLabs" class="form-select">
+                        <option value="">-- In-House --</option>
+                    </select>
+                    <small class="form-text text-muted">Leave blank for in-house testing</small>
+                </div>
+
+                <!-- Expected Completion Date -->
+                <div class="col-md-6">
+                    <label asp-for="ExpectedCompletionDate" class="form-label">Expected Completion Date</label>
+                    <input asp-for="ExpectedCompletionDate" type="date" class="form-control" />
+                    <span asp-validation-for="ExpectedCompletionDate" class="text-danger"></span>
+                </div>
+
+                <!-- Total Amount -->
+                <div class="col-md-6">
+                    <label asp-for="TotalAmount" class="form-label">Total Amount *</label>
+                    <div class="input-group">
+                        <span class="input-group-text">$</span>
+                        <input asp-for="TotalAmount" type="number" step="0.01" class="form-control" />
+                    </div>
+                    <span asp-validation-for="TotalAmount" class="text-danger"></span>
+                </div>
+
+                <!-- Status -->
+                <div class="col-md-6">
+                    <label asp-for="Status" class="form-label">Status</label>
+                    <select asp-for="Status" class="form-select">
+                        <option value="@LabOrderStatus.Pending">Pending</option>
+                        <option value="@LabOrderStatus.Collected">Collected</option>
+                        <option value="@LabOrderStatus.InProgress">In Progress</option>
+                        <option value="@LabOrderStatus.Completed">Completed</option>
+                        <option value="@LabOrderStatus.Cancelled">Cancelled</option>
+                    </select>
+                </div>
+
+                <!-- Checkboxes -->
+                <div class="col-md-6">
+                    <div class="form-check">
+                        <input asp-for="IsUrgent" class="form-check-input" />
+                        <label asp-for="IsUrgent" class="form-check-label">
+                            <span class="badge bg-danger">URGENT</span> Priority Order
+                        </label>
+                    </div>
+                    <div class="form-check mt-2">
+                        <input asp-for="IsPaid" class="form-check-input" />
+                        <label asp-for="IsPaid" class="form-check-label">
+                            Payment Received
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Clinical Notes -->
+                <div class="col-12">
+                    <label asp-for="ClinicalNotes" class="form-label">Clinical Notes</label>
+                    <textarea asp-for="ClinicalNotes" class="form-control" rows="3"
+                              placeholder="Clinical information, symptoms, diagnosis..."></textarea>
+                    <span asp-validation-for="ClinicalNotes" class="text-danger"></span>
+                </div>
+
+                <!-- General Notes -->
+                <div class="col-12">
+                    <label asp-for="Notes" class="form-label">General Notes</label>
+                    <textarea asp-for="Notes" class="form-control" rows="2"
+                              placeholder="Additional notes or instructions..."></textarea>
+                    <span asp-validation-for="Notes" class="text-danger"></span>
+                </div>
+            </div>
+
+            <div class="alert alert-info mt-3">
+                <i class="bi bi-info-circle me-2"></i>
+                <strong>Note:</strong> After creating the order, you can add specific lab tests and enter results in the order details page.
+            </div>
+
+            <div class="d-flex justify-content-end gap-2 mt-4">
+                <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-check-circle me-1"></i>Create Lab Order
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}
