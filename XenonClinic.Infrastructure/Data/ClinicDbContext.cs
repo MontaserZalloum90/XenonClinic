@@ -38,6 +38,11 @@ public class ClinicDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<GoodsReceipt> GoodsReceipts => Set<GoodsReceipt>();
     public DbSet<GoodsReceiptItem> GoodsReceiptItems => Set<GoodsReceiptItem>();
     public DbSet<SupplierPayment> SupplierPayments => Set<SupplierPayment>();
+    public DbSet<ExternalLab> ExternalLabs => Set<ExternalLab>();
+    public DbSet<LabTest> LabTests => Set<LabTest>();
+    public DbSet<LabOrder> LabOrders => Set<LabOrder>();
+    public DbSet<LabOrderItem> LabOrderItems => Set<LabOrderItem>();
+    public DbSet<LabResult> LabResults => Set<LabResult>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -790,5 +795,148 @@ public class ClinicDbContext : IdentityDbContext<ApplicationUser>
         builder.Entity<SupplierPayment>()
             .Property(p => p.Amount)
             .HasPrecision(18, 2);
+
+        // ExternalLab configuration
+        builder.Entity<ExternalLab>()
+            .HasIndex(e => e.Code)
+            .IsUnique();
+
+        builder.Entity<ExternalLab>()
+            .HasIndex(e => e.Name);
+
+        builder.Entity<ExternalLab>()
+            .HasIndex(e => e.BranchId);
+
+        builder.Entity<ExternalLab>()
+            .HasOne(e => e.Branch)
+            .WithMany()
+            .HasForeignKey(e => e.BranchId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // LabTest configuration
+        builder.Entity<LabTest>()
+            .HasIndex(l => l.TestCode)
+            .IsUnique();
+
+        builder.Entity<LabTest>()
+            .HasIndex(l => l.TestName);
+
+        builder.Entity<LabTest>()
+            .HasIndex(l => l.Category);
+
+        builder.Entity<LabTest>()
+            .HasIndex(l => l.BranchId);
+
+        builder.Entity<LabTest>()
+            .HasIndex(l => new { l.BranchId, l.Category });
+
+        builder.Entity<LabTest>()
+            .HasOne(l => l.Branch)
+            .WithMany()
+            .HasForeignKey(l => l.BranchId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<LabTest>()
+            .HasOne(l => l.ExternalLab)
+            .WithMany(e => e.LabTests)
+            .HasForeignKey(l => l.ExternalLabId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        builder.Entity<LabTest>()
+            .Property(l => l.Price)
+            .HasPrecision(18, 2);
+
+        // LabOrder configuration
+        builder.Entity<LabOrder>()
+            .HasIndex(o => o.OrderNumber)
+            .IsUnique();
+
+        builder.Entity<LabOrder>()
+            .HasIndex(o => o.OrderDate);
+
+        builder.Entity<LabOrder>()
+            .HasIndex(o => o.BranchId);
+
+        builder.Entity<LabOrder>()
+            .HasIndex(o => o.PatientId);
+
+        builder.Entity<LabOrder>()
+            .HasIndex(o => o.Status);
+
+        builder.Entity<LabOrder>()
+            .HasIndex(o => new { o.BranchId, o.OrderDate });
+
+        builder.Entity<LabOrder>()
+            .HasIndex(o => new { o.PatientId, o.OrderDate });
+
+        builder.Entity<LabOrder>()
+            .HasOne(o => o.Patient)
+            .WithMany()
+            .HasForeignKey(o => o.PatientId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<LabOrder>()
+            .HasOne(o => o.Branch)
+            .WithMany()
+            .HasForeignKey(o => o.BranchId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<LabOrder>()
+            .HasOne(o => o.ExternalLab)
+            .WithMany(e => e.LabOrders)
+            .HasForeignKey(o => o.ExternalLabId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        builder.Entity<LabOrder>()
+            .Property(o => o.TotalAmount)
+            .HasPrecision(18, 2);
+
+        // LabOrderItem configuration
+        builder.Entity<LabOrderItem>()
+            .HasIndex(i => i.LabOrderId);
+
+        builder.Entity<LabOrderItem>()
+            .HasOne(i => i.LabOrder)
+            .WithMany(o => o.Items)
+            .HasForeignKey(i => i.LabOrderId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<LabOrderItem>()
+            .HasOne(i => i.LabTest)
+            .WithMany()
+            .HasForeignKey(i => i.LabTestId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<LabOrderItem>()
+            .Property(i => i.Price)
+            .HasPrecision(18, 2);
+
+        // LabResult configuration
+        builder.Entity<LabResult>()
+            .HasIndex(r => r.LabOrderId);
+
+        builder.Entity<LabResult>()
+            .HasIndex(r => r.Status);
+
+        builder.Entity<LabResult>()
+            .HasIndex(r => new { r.LabOrderId, r.Status });
+
+        builder.Entity<LabResult>()
+            .HasOne(r => r.LabOrder)
+            .WithMany(o => o.Results)
+            .HasForeignKey(r => r.LabOrderId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<LabResult>()
+            .HasOne(r => r.LabOrderItem)
+            .WithMany()
+            .HasForeignKey(r => r.LabOrderItemId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<LabResult>()
+            .HasOne(r => r.LabTest)
+            .WithMany()
+            .HasForeignKey(r => r.LabTestId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }
