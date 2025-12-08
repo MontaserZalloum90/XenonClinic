@@ -72,6 +72,9 @@ public class ClinicDbContext : IdentityDbContext<ApplicationUser>
     // Audit Logging
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
 
+    // Feature Flags
+    public DbSet<FeatureFlag> FeatureFlags => Set<FeatureFlag>();
+
     // Dynamic Lookup entities
     public DbSet<AppointmentTypeLookup> AppointmentTypeLookups => Set<AppointmentTypeLookup>();
     public DbSet<AppointmentStatusLookup> AppointmentStatusLookups => Set<AppointmentStatusLookup>();
@@ -1575,5 +1578,61 @@ public class ClinicDbContext : IdentityDbContext<ApplicationUser>
         builder.Entity<AuditLog>()
             .Property(a => a.ModuleName)
             .HasMaxLength(100);
+
+        // ========================================
+        // Feature Flag Configuration
+        // ========================================
+
+        builder.Entity<FeatureFlag>()
+            .HasIndex(f => f.Key)
+            .IsUnique();
+
+        builder.Entity<FeatureFlag>()
+            .HasIndex(f => f.IsEnabled);
+
+        builder.Entity<FeatureFlag>()
+            .HasIndex(f => f.Environment);
+
+        builder.Entity<FeatureFlag>()
+            .Property(f => f.Key)
+            .HasMaxLength(100)
+            .IsRequired();
+
+        builder.Entity<FeatureFlag>()
+            .Property(f => f.Name)
+            .HasMaxLength(200)
+            .IsRequired();
+
+        builder.Entity<FeatureFlag>()
+            .Property(f => f.Description)
+            .HasMaxLength(1000);
+
+        builder.Entity<FeatureFlag>()
+            .Property(f => f.Environment)
+            .HasMaxLength(50);
+
+        builder.Entity<FeatureFlag>()
+            .Property(f => f.EnabledTenantIds)
+            .HasMaxLength(1000);
+
+        builder.Entity<FeatureFlag>()
+            .Property(f => f.EnabledCompanyIds)
+            .HasMaxLength(1000);
+
+        builder.Entity<FeatureFlag>()
+            .Property(f => f.EnabledUserIds)
+            .HasMaxLength(2000);
+
+        builder.Entity<FeatureFlag>()
+            .Property(f => f.EnabledRoles)
+            .HasMaxLength(500);
+
+        builder.Entity<FeatureFlag>()
+            .Property(f => f.CreatedBy)
+            .HasMaxLength(450);
+
+        builder.Entity<FeatureFlag>()
+            .Property(f => f.UpdatedBy)
+            .HasMaxLength(450);
     }
 }

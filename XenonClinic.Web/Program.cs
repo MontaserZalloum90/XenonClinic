@@ -124,6 +124,18 @@ builder.Services.AddScoped<ICacheService, RedisCacheService>();
 // ==================== AUDIT SERVICE ====================
 builder.Services.AddScoped<IAuditService, AuditService>();
 
+// ==================== FEATURE FLAGS ====================
+builder.Services.AddScoped<IFeatureFlagService, FeatureFlagService>();
+
+// ==================== HEALTH CHECKS ====================
+builder.Services.AddCustomHealthChecks(builder.Configuration);
+
+// ==================== API VERSIONING ====================
+builder.Services.AddCustomApiVersioning();
+
+// ==================== METRICS (PROMETHEUS) ====================
+builder.Services.AddCustomMetrics();
+
 // Add session support (for company context)
 // Note: Distributed cache is already configured above
 builder.Services.AddSession(options =>
@@ -327,11 +339,20 @@ app.UseSecurityHeaders(options =>
     }
 });
 
-// 4. Serilog request logging
+// 4. Input validation (XSS, SQL injection protection)
+app.UseInputValidation();
+
+// 5. Serilog request logging
 app.UseSerilogRequestLogging();
 
-// 5. Rate limiting
+// 6. Rate limiting
 app.UseRateLimiter();
+
+// 7. Prometheus metrics
+app.UseCustomMetrics();
+
+// 8. Health checks
+app.UseCustomHealthChecks();
 
 // Swagger middleware
 if (app.Environment.IsDevelopment())

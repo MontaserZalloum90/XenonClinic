@@ -16,8 +16,8 @@ public static class SerilogConfiguration
     {
         var configuration = builder.Configuration;
 
-        // Configure Serilog
-        Log.Logger = new LoggerConfiguration()
+        // Build Serilog configuration
+        var loggerConfig = new LoggerConfiguration()
             .ReadFrom.Configuration(configuration)
             .Enrich.FromLogContext()
             .Enrich.WithMachineName()
@@ -40,8 +40,22 @@ public static class SerilogConfiguration
                 new CompactJsonFormatter(),
                 path: "logs/xenonclinic-json-.log",
                 rollingInterval: RollingInterval.Day,
-                retainedFileCountLimit: 30)
-            .CreateLogger();
+                retainedFileCountLimit: 30);
+
+        // Add Seq sink if configured (centralized logging)
+        var seqUrl = configuration["Seq:ServerUrl"];
+        var seqApiKey = configuration["Seq:ApiKey"];
+        if (!string.IsNullOrEmpty(seqUrl))
+        {
+            loggerConfig.WriteTo.Seq(
+                serverUrl: seqUrl,
+                apiKey: seqApiKey,
+                restrictedToMinimumLevel: LogEventLevel.Information);
+
+            Console.WriteLine($"[System] Seq centralized logging enabled: {seqUrl}");
+        }
+
+        Log.Logger = loggerConfig.CreateLogger();
 
         builder.Host.UseSerilog();
 
