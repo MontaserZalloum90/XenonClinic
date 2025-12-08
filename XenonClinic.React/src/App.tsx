@@ -7,6 +7,7 @@ import { Login } from './pages/Login';
 import { Dashboard } from './pages/Dashboard';
 import { AppointmentsList } from './pages/Appointments/AppointmentsList';
 import { PatientsList } from './pages/Patients/PatientsList';
+import { LaboratoryList } from './pages/Laboratory/LaboratoryList';
 
 // Create React Query client
 const queryClient = new QueryClient({
@@ -55,6 +56,16 @@ function App() {
                 <ProtectedRoute>
                   <Layout>
                     <PatientsList />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/laboratory"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <LaboratoryList />
                   </Layout>
                 </ProtectedRoute>
               }

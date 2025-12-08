@@ -88,4 +88,18 @@ export const patientsApi = {
   getStatistics: () => api.get('/api/PatientsApi/statistics'),
 };
 
+export const laboratoryApi = {
+  getAllOrders: () => api.get('/api/LaboratoryApi/orders'),
+  getOrderById: (id: number) => api.get(`/api/LaboratoryApi/orders/${id}`),
+  getPendingOrders: () => api.get('/api/LaboratoryApi/orders/pending'),
+  getUrgentOrders: () => api.get('/api/LaboratoryApi/orders/urgent'),
+  getOrdersByPatient: (patientId: number) => api.get(`/api/LaboratoryApi/orders/patient/${patientId}`),
+  createOrder: (data: any) => api.post('/api/LaboratoryApi/orders', data),
+  updateOrder: (id: number, data: any) => api.put(`/api/LaboratoryApi/orders/${id}`, data),
+  updateStatus: (id: number, status: number) => api.post(`/api/LaboratoryApi/orders/${id}/status`, { status }),
+  deleteOrder: (id: number) => api.delete(`/api/LaboratoryApi/orders/${id}`),
+  getAllTests: () => api.get('/api/LaboratoryApi/tests'),
+  getStatistics: () => api.get('/api/LaboratoryApi/statistics'),
+};
+
 export default api;
