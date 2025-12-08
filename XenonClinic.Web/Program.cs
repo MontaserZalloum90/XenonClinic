@@ -43,17 +43,7 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 }).AddEntityFrameworkStores<ClinicDbContext>()
   .AddDefaultTokenProviders();
 
-// Configure authentication cookie
-builder.Services.ConfigureApplicationCookie(options =>
-{
-    options.LoginPath = "/Account/Login";
-    options.LogoutPath = "/Account/Logout";
-    options.AccessDeniedPath = "/Account/AccessDenied";
-    options.ExpireTimeSpan = TimeSpan.FromDays(14);
-    options.SlidingExpiration = true;
-});
-
-// ==================== JWT AUTHENTICATION FOR SPA ====================
+// ==================== JWT AUTHENTICATION FOR API ====================
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
 var jwtKey = jwtSettings["SecretKey"] ?? "XenonClinic-SecureKey-12345678901234567890123456789012"; // Min 32 chars
 var jwtIssuer = jwtSettings["Issuer"] ?? "XenonClinic";
@@ -61,8 +51,9 @@ var jwtAudience = jwtSettings["Audience"] ?? "XenonClinicReact";
 
 builder.Services.AddAuthentication(options =>
 {
-    // Keep cookie auth as default for MVC
-    options.DefaultScheme = IdentityConstants.ApplicationScheme;
+    // Use JWT as default for API
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
 })
 .AddJwtBearer(options =>
 {
@@ -263,8 +254,7 @@ builder.Services.Configure<RequestLocalizationOptions>(options =>
     options.RequestCultureProviders.Insert(0, new CookieRequestCultureProvider());
 });
 
-builder.Services.AddControllersWithViews()
-    .AddViewLocalization()
+builder.Services.AddControllers()
     .AddDataAnnotationsLocalization();
 
 // ==================== SWAGGER/OPENAPI FOR API DOCUMENTATION ====================
@@ -371,7 +361,6 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-app.UseStaticFiles();
 
 app.UseRouting();
 
@@ -394,9 +383,7 @@ app.UseTenantResolution();
 // License validation middleware - validates module licenses
 app.UseLicenseValidation();
 
-app.MapControllerRoute(
-    name: "default",
-    pattern: "{controller=Home}/{action=Index}/{id?}");
+app.MapControllers();
 
 using (var scope = app.Services.CreateScope())
 {
