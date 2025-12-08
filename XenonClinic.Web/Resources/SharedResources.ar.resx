@@ -1,0 +1,215 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+
+  <!-- Navigation -->
+  <data name="Dashboard">
+    <value>لوحة التحكم</value>
+  </data>
+  <data name="Patients">
+    <value>المرضى</value>
+  </data>
+  <data name="Analytics">
+    <value>التحليلات</value>
+  </data>
+  <data name="Audiology">
+    <value>السمعيات</value>
+  </data>
+  <data name="Settings">
+    <value>الإعدادات</value>
+  </data>
+
+  <!-- Dashboard -->
+  <data name="AppointmentsToday">
+    <value>المواعيد اليوم</value>
+  </data>
+  <data name="ActivePatients">
+    <value>المرضى النشطون</value>
+  </data>
+  <data name="VisitsThisWeek">
+    <value>الزيارات هذا الأسبوع</value>
+  </data>
+  <data name="RevenueThisMonth">
+    <value>الإيرادات هذا الشهر</value>
+  </data>
+  <data name="UpcomingAppointments">
+    <value>المواعيد القادمة</value>
+  </data>
+  <data name="ManagePatients">
+    <value>إدارة المرضى</value>
+  </data>
+  <data name="VisitsLast7Days">
+    <value>الزيارات (آخر 7 أيام)</value>
+  </data>
+
+  <!-- Patients -->
+  <data name="NewPatient">
+    <value>مريض جديد</value>
+  </data>
+  <data name="SearchPatients">
+    <value>البحث عن المرضى</value>
+  </data>
+  <data name="Search">
+    <value>بحث</value>
+  </data>
+  <data name="Name">
+    <value>الاسم</value>
+  </data>
+  <data name="EmiratesID">
+    <value>الهوية الإماراتية</value>
+  </data>
+  <data name="Branch">
+    <value>الفرع</value>
+  </data>
+  <data name="Phone">
+    <value>الهاتف</value>
+  </data>
+  <data name="HearingLoss">
+    <value>فقدان السمع</value>
+  </data>
+  <data name="TotalPatients">
+    <value>إجمالي المرضى</value>
+  </data>
+  <data name="Previous">
+    <value>السابق</value>
+  </data>
+  <data name="Next">
+    <value>التالي</value>
+  </data>
+  <data name="Page">
+    <value>صفحة</value>
+  </data>
+  <data name="Of">
+    <value>من</value>
+  </data>
+  <data name="Showing">
+    <value>عرض</value>
+  </data>
+
+  <!-- Patient Form -->
+  <data name="FullNameEnglish">
+    <value>الاسم الكامل (إنجليزي)</value>
+  </data>
+  <data name="FullNameArabic">
+    <value>الاسم الكامل (عربي)</value>
+  </data>
+  <data name="DateOfBirth">
+    <value>تاريخ الميلاد</value>
+  </data>
+  <data name="Gender">
+    <value>الجنس</value>
+  </data>
+  <data name="Male">
+    <value>ذكر</value>
+  </data>
+  <data name="Female">
+    <value>أنثى</value>
+  </data>
+  <data name="Email">
+    <value>البريد الإلكتروني</value>
+  </data>
+  <data name="HearingLossType">
+    <value>نوع فقدان السمع</value>
+  </data>
+  <data name="Notes">
+    <value>ملاحظات</value>
+  </data>
+  <data name="Save">
+    <value>حفظ</value>
+  </data>
+  <data name="Cancel">
+    <value>إلغاء</value>
+  </data>
+  <data name="ReadEmiratesID">
+    <value>قراءة الهوية الإماراتية</value>
+  </data>
+
+  <!-- Common -->
+  <data name="Language">
+    <value>اللغة</value>
+  </data>
+  <data name="English">
+    <value>English</value>
+  </data>
+  <data name="Arabic">
+    <value>العربية</value>
+  </data>
+  <data name="Logout">
+    <value>تسجيل الخروج</value>
+  </data>
+  <data name="Profile">
+    <value>الملف الشخصي</value>
+  </data>
+
+  <!-- Appointment Types -->
+  <data name="HearingTest">
+    <value>فحص السمع</value>
+  </data>
+  <data name="Fitting">
+    <value>تركيب السماعة</value>
+  </data>
+  <data name="Consultation">
+    <value>استشارة</value>
+  </data>
+  <data name="Repair">
+    <value>إصلاح</value>
+  </data>
+  <data name="FollowUp">
+    <value>متابعة</value>
+  </data>
+
+  <!-- Hearing Loss Types -->
+  <data name="Normal">
+    <value>طبيعي</value>
+  </data>
+  <data name="Sensorineural">
+    <value>حسي عصبي</value>
+  </data>
+  <data name="Conductive">
+    <value>توصيلي</value>
+  </data>
+  <data name="Mixed">
+    <value>مختلط</value>
+  </data>
+
+  <!-- Status -->
+  <data name="Booked">
+    <value>محجوز</value>
+  </data>
+  <data name="Completed">
+    <value>مكتمل</value>
+  </data>
+  <data name="Cancelled">
+    <value>ملغي</value>
+  </data>
+  <data name="NoShow">
+    <value>عدم الحضور</value>
+  </data>
+
+  <!-- Table Headers -->
+  <data name="When">
+    <value>متى</value>
+  </data>
+  <data name="Type">
+    <value>النوع</value>
+  </data>
+  <data name="Status">
+    <value>الحالة</value>
+  </data>
+</root>

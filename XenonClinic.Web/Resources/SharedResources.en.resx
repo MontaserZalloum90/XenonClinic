@@ -1,0 +1,215 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+
+  <!-- Navigation -->
+  <data name="Dashboard">
+    <value>Dashboard</value>
+  </data>
+  <data name="Patients">
+    <value>Patients</value>
+  </data>
+  <data name="Analytics">
+    <value>Analytics</value>
+  </data>
+  <data name="Audiology">
+    <value>Audiology</value>
+  </data>
+  <data name="Settings">
+    <value>Settings</value>
+  </data>
+
+  <!-- Dashboard -->
+  <data name="AppointmentsToday">
+    <value>Appointments Today</value>
+  </data>
+  <data name="ActivePatients">
+    <value>Active Patients</value>
+  </data>
+  <data name="VisitsThisWeek">
+    <value>Visits This Week</value>
+  </data>
+  <data name="RevenueThisMonth">
+    <value>Revenue This Month</value>
+  </data>
+  <data name="UpcomingAppointments">
+    <value>Upcoming Appointments</value>
+  </data>
+  <data name="ManagePatients">
+    <value>Manage Patients</value>
+  </data>
+  <data name="VisitsLast7Days">
+    <value>Visits (Last 7 days)</value>
+  </data>
+
+  <!-- Patients -->
+  <data name="NewPatient">
+    <value>New Patient</value>
+  </data>
+  <data name="SearchPatients">
+    <value>Search by name or Emirates ID</value>
+  </data>
+  <data name="Search">
+    <value>Search</value>
+  </data>
+  <data name="Name">
+    <value>Name</value>
+  </data>
+  <data name="EmiratesID">
+    <value>Emirates ID</value>
+  </data>
+  <data name="Branch">
+    <value>Branch</value>
+  </data>
+  <data name="Phone">
+    <value>Phone</value>
+  </data>
+  <data name="HearingLoss">
+    <value>Hearing Loss</value>
+  </data>
+  <data name="TotalPatients">
+    <value>total patients</value>
+  </data>
+  <data name="Previous">
+    <value>Previous</value>
+  </data>
+  <data name="Next">
+    <value>Next</value>
+  </data>
+  <data name="Page">
+    <value>Page</value>
+  </data>
+  <data name="Of">
+    <value>of</value>
+  </data>
+  <data name="Showing">
+    <value>Showing</value>
+  </data>
+
+  <!-- Patient Form -->
+  <data name="FullNameEnglish">
+    <value>Full Name (English)</value>
+  </data>
+  <data name="FullNameArabic">
+    <value>Full Name (Arabic)</value>
+  </data>
+  <data name="DateOfBirth">
+    <value>Date of Birth</value>
+  </data>
+  <data name="Gender">
+    <value>Gender</value>
+  </data>
+  <data name="Male">
+    <value>Male</value>
+  </data>
+  <data name="Female">
+    <value>Female</value>
+  </data>
+  <data name="Email">
+    <value>Email</value>
+  </data>
+  <data name="HearingLossType">
+    <value>Hearing Loss Type</value>
+  </data>
+  <data name="Notes">
+    <value>Notes</value>
+  </data>
+  <data name="Save">
+    <value>Save</value>
+  </data>
+  <data name="Cancel">
+    <value>Cancel</value>
+  </data>
+  <data name="ReadEmiratesID">
+    <value>Read Emirates ID</value>
+  </data>
+
+  <!-- Common -->
+  <data name="Language">
+    <value>Language</value>
+  </data>
+  <data name="English">
+    <value>English</value>
+  </data>
+  <data name="Arabic">
+    <value>العربية</value>
+  </data>
+  <data name="Logout">
+    <value>Logout</value>
+  </data>
+  <data name="Profile">
+    <value>Profile</value>
+  </data>
+
+  <!-- Appointment Types -->
+  <data name="HearingTest">
+    <value>Hearing Test</value>
+  </data>
+  <data name="Fitting">
+    <value>Fitting</value>
+  </data>
+  <data name="Consultation">
+    <value>Consultation</value>
+  </data>
+  <data name="Repair">
+    <value>Repair</value>
+  </data>
+  <data name="FollowUp">
+    <value>Follow Up</value>
+  </data>
+
+  <!-- Hearing Loss Types -->
+  <data name="Normal">
+    <value>Normal</value>
+  </data>
+  <data name="Sensorineural">
+    <value>Sensorineural</value>
+  </data>
+  <data name="Conductive">
+    <value>Conductive</value>
+  </data>
+  <data name="Mixed">
+    <value>Mixed</value>
+  </data>
+
+  <!-- Status -->
+  <data name="Booked">
+    <value>Booked</value>
+  </data>
+  <data name="Completed">
+    <value>Completed</value>
+  </data>
+  <data name="Cancelled">
+    <value>Cancelled</value>
+  </data>
+  <data name="NoShow">
+    <value>No Show</value>
+  </data>
+
+  <!-- Table Headers -->
+  <data name="When">
+    <value>When</value>
+  </data>
+  <data name="Type">
+    <value>Type</value>
+  </data>
+  <data name="Status">
+    <value>Status</value>
+  </data>
+</root>

@@ -1,63 +1,65 @@
+@using Microsoft.AspNetCore.Mvc.Localization
+@inject IViewLocalizer Localizer
 @model XenonClinic.Web.Models.CreatePatientViewModel
 @{
-    ViewData["Title"] = "New Patient";
+    ViewData["Title"] = Localizer["NewPatient"];
 }
-<h2 class="mb-3">New Patient</h2>
-<form asp-action="Create" method="post" class="card card-rounded p-4">
+<h2 class="mb-3">@Localizer["NewPatient"]</h2>
+<form asp-action="Create" method="post" class="card card-rounded p-3 p-md-4">
     <div class="row g-3">
-        <div class="col-md-6">
-            <label asp-for="EmiratesId" class="form-label"></label>
-            <div class="input-group">
+        <div class="col-md-6 col-12">
+            <label class="form-label">@Localizer["EmiratesID"]</label>
+            <div class="input-group flex-column flex-sm-row gap-2 gap-sm-0">
                 <input asp-for="EmiratesId" class="form-control" />
-                <button type="button" class="btn btn-outline-primary" onclick="readEid()">Read Emirates ID</button>
+                <button type="button" class="btn btn-outline-primary" onclick="readEid()">@Localizer["ReadEmiratesID"]</button>
             </div>
             <span asp-validation-for="EmiratesId" class="text-danger"></span>
         </div>
-        <div class="col-md-6">
-            <label asp-for="FullNameEn" class="form-label"></label>
+        <div class="col-md-6 col-12">
+            <label class="form-label">@Localizer["FullNameEnglish"]</label>
             <input asp-for="FullNameEn" class="form-control" />
             <span asp-validation-for="FullNameEn" class="text-danger"></span>
         </div>
-        <div class="col-md-6">
-            <label asp-for="FullNameAr" class="form-label"></label>
+        <div class="col-md-6 col-12">
+            <label class="form-label">@Localizer["FullNameArabic"]</label>
             <input asp-for="FullNameAr" class="form-control" />
         </div>
-        <div class="col-md-3">
-            <label asp-for="DateOfBirth" class="form-label"></label>
+        <div class="col-md-3 col-sm-6 col-12">
+            <label class="form-label">@Localizer["DateOfBirth"]</label>
             <input asp-for="DateOfBirth" class="form-control" type="date" />
         </div>
-        <div class="col-md-3">
-            <label asp-for="Gender" class="form-label"></label>
+        <div class="col-md-3 col-sm-6 col-12">
+            <label class="form-label">@Localizer["Gender"]</label>
             <select asp-for="Gender" class="form-select">
-                <option value="M">Male</option>
-                <option value="F">Female</option>
+                <option value="M">@Localizer["Male"]</option>
+                <option value="F">@Localizer["Female"]</option>
             </select>
         </div>
-        <div class="col-md-6">
-            <label asp-for="PhoneNumber" class="form-label"></label>
+        <div class="col-md-6 col-12">
+            <label class="form-label">@Localizer["Phone"]</label>
             <input asp-for="PhoneNumber" class="form-control" />
         </div>
-        <div class="col-md-6">
-            <label asp-for="Email" class="form-label"></label>
+        <div class="col-md-6 col-12">
+            <label class="form-label">@Localizer["Email"]</label>
             <input asp-for="Email" class="form-control" />
         </div>
-        <div class="col-md-6">
-            <label asp-for="HearingLossType" class="form-label"></label>
+        <div class="col-md-6 col-12">
+            <label class="form-label">@Localizer["HearingLossType"]</label>
             <select asp-for="HearingLossType" class="form-select">
-                <option value="Sensorineural">Sensorineural</option>
-                <option value="Conductive">Conductive</option>
-                <option value="Mixed">Mixed</option>
-                <option value="Normal">Normal</option>
+                <option value="Sensorineural">@Localizer["Sensorineural"]</option>
+                <option value="Conductive">@Localizer["Conductive"]</option>
+                <option value="Mixed">@Localizer["Mixed"]</option>
+                <option value="Normal">@Localizer["Normal"]</option>
             </select>
         </div>
         <div class="col-12">
-            <label asp-for="Notes" class="form-label"></label>
+            <label class="form-label">@Localizer["Notes"]</label>
             <textarea asp-for="Notes" class="form-control" rows="3"></textarea>
         </div>
     </div>
-    <div class="mt-4 d-flex justify-content-end gap-2">
-        <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
-        <button type="submit" class="btn btn-xenon">Save</button>
+    <div class="mt-4 d-flex flex-column flex-sm-row justify-content-end gap-2">
+        <a asp-action="Index" class="btn btn-outline-secondary">@Localizer["Cancel"]</a>
+        <button type="submit" class="btn btn-xenon">@Localizer["Save"]</button>
     </div>
 </form>
 @section Scripts{
