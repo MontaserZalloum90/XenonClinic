@@ -1,8 +1,12 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Localization;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 using System.Globalization;
+using System.Text;
 using XenonClinic.Core.Abstractions;
 using XenonClinic.Core.Entities;
 using XenonClinic.Core.Interfaces;
@@ -40,6 +44,44 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.AccessDeniedPath = "/Account/AccessDenied";
     options.ExpireTimeSpan = TimeSpan.FromDays(14);
     options.SlidingExpiration = true;
+});
+
+// ==================== JWT AUTHENTICATION FOR SPA ====================
+var jwtSettings = builder.Configuration.GetSection("JwtSettings");
+var jwtKey = jwtSettings["SecretKey"] ?? "XenonClinic-SecureKey-12345678901234567890123456789012"; // Min 32 chars
+var jwtIssuer = jwtSettings["Issuer"] ?? "XenonClinic";
+var jwtAudience = jwtSettings["Audience"] ?? "XenonClinicReact";
+
+builder.Services.AddAuthentication(options =>
+{
+    // Keep cookie auth as default for MVC
+    options.DefaultScheme = IdentityConstants.ApplicationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = jwtIssuer,
+        ValidAudience = jwtAudience,
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
+        ClockSkew = TimeSpan.Zero
+    };
+});
+
+// ==================== CORS FOR REACT SPA ====================
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("ReactApp", policy =>
+    {
+        policy.WithOrigins("http://localhost:5173", "http://localhost:3000") // Vite default + CRA default
+              .AllowAnyMethod()
+              .AllowAnyHeader()
+              .AllowCredentials();
+    });
 });
 
 // Register services
@@ -180,6 +222,47 @@ builder.Services.AddControllersWithViews()
     .AddViewLocalization()
     .AddDataAnnotationsLocalization();
 
+// ==================== SWAGGER/OPENAPI FOR API DOCUMENTATION ====================
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Title = "XenonClinic API",
+        Version = "v1",
+        Description = "REST API for XenonClinic Healthcare Management System - React SPA Integration",
+        Contact = new OpenApiContact
+        {
+            Name = "XenonClinic Team"
+        }
+    });
+
+    // Add JWT Authentication to Swagger
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Description = "JWT Authorization header using the Bearer scheme. Enter 'Bearer' [space] and then your token in the text input below.",
+        Name = "Authorization",
+        In = ParameterLocation.Header,
+        Type = SecuritySchemeType.ApiKey,
+        Scheme = "Bearer"
+    });
+
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            Array.Empty<string>()
+        }
+    });
+});
+
 var app = builder.Build();
 
 // Configure module routes
@@ -194,6 +277,17 @@ Console.WriteLine($"[System] Routes configured for {enabledModules.Count()} modu
 // Global exception handling middleware
 app.UseMiddleware<GlobalExceptionHandlerMiddleware>();
 
+// Swagger middleware
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "XenonClinic API v1");
+        c.RoutePrefix = "api/docs"; // Access Swagger at /api/docs
+    });
+}
+
 if (!app.Environment.IsDevelopment())
 {
     app.UseHsts();
@@ -203,6 +297,9 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseRouting();
+
+// Enable CORS
+app.UseCors("ReactApp");
 
 // Enable request localization
 var localizationOptions = app.Services.GetRequiredService<IOptions<RequestLocalizationOptions>>().Value;
