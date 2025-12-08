@@ -1,0 +1,370 @@
+using Microsoft.EntityFrameworkCore;
+using XenonClinic.Core.Entities;
+using XenonClinic.Core.Enums;
+using XenonClinic.Core.Interfaces;
+using XenonClinic.Infrastructure.Data;
+
+namespace XenonClinic.Infrastructure.Services;
+
+/// <summary>
+/// Service implementation for Appointment management
+/// </summary>
+public class AppointmentService : IAppointmentService
+{
+    private readonly ClinicDbContext _context;
+
+    public AppointmentService(ClinicDbContext context)
+    {
+        _context = context;
+    }
+
+    #region Appointment Management
+
+    public async Task<Appointment?> GetAppointmentByIdAsync(int id)
+    {
+        return await _context.Appointments
+            .Include(a => a.Patient)
+            .Include(a => a.Branch)
+            .Include(a => a.Provider)
+            .FirstOrDefaultAsync(a => a.Id == id);
+    }
+
+    public async Task<IEnumerable<Appointment>> GetAppointmentsByBranchIdAsync(int branchId)
+    {
+        return await _context.Appointments
+            .Include(a => a.Patient)
+            .Include(a => a.Provider)
+            .Where(a => a.BranchId == branchId)
+            .OrderBy(a => a.StartTime)
+            .ToListAsync();
+    }
+
+    public async Task<IEnumerable<Appointment>> GetAppointmentsByPatientIdAsync(int patientId)
+    {
+        return await _context.Appointments
+            .Include(a => a.Branch)
+            .Include(a => a.Provider)
+            .Where(a => a.PatientId == patientId)
+            .OrderByDescending(a => a.StartTime)
+            .ToListAsync();
+    }
+
+    public async Task<IEnumerable<Appointment>> GetAppointmentsByProviderIdAsync(int providerId)
+    {
+        return await _context.Appointments
+            .Include(a => a.Patient)
+            .Include(a => a.Branch)
+            .Where(a => a.ProviderId == providerId)
+            .OrderBy(a => a.StartTime)
+            .ToListAsync();
+    }
+
+    public async Task<IEnumerable<Appointment>> GetAppointmentsByDateAsync(int branchId, DateTime date)
+    {
+        var startOfDay = date.Date;
+        var endOfDay = startOfDay.AddDays(1);
+
+        return await _context.Appointments
+            .Include(a => a.Patient)
+            .Include(a => a.Provider)
+            .Where(a => a.BranchId == branchId &&
+                   a.StartTime >= startOfDay &&
+                   a.StartTime < endOfDay)
+            .OrderBy(a => a.StartTime)
+            .ToListAsync();
+    }
+
+    public async Task<IEnumerable<Appointment>> GetAppointmentsByDateRangeAsync(int branchId, DateTime startDate, DateTime endDate)
+    {
+        return await _context.Appointments
+            .Include(a => a.Patient)
+            .Include(a => a.Provider)
+            .Where(a => a.BranchId == branchId &&
+                   a.StartTime >= startDate &&
+                   a.StartTime <= endDate)
+            .OrderBy(a => a.StartTime)
+            .ToListAsync();
+    }
+
+    public async Task<IEnumerable<Appointment>> GetAppointmentsByStatusAsync(int branchId, AppointmentStatus status)
+    {
+        return await _context.Appointments
+            .Include(a => a.Patient)
+            .Include(a => a.Provider)
+            .Where(a => a.BranchId == branchId && a.Status == status)
+            .OrderBy(a => a.StartTime)
+            .ToListAsync();
+    }
+
+    public async Task<IEnumerable<Appointment>> GetTodayAppointmentsAsync(int branchId)
+    {
+        return await GetAppointmentsByDateAsync(branchId, DateTime.UtcNow.Date);
+    }
+
+    public async Task<IEnumerable<Appointment>> GetUpcomingAppointmentsAsync(int branchId, int days = 7)
+    {
+        var today = DateTime.UtcNow.Date;
+        var futureDate = today.AddDays(days);
+
+        return await _context.Appointments
+            .Include(a => a.Patient)
+            .Include(a => a.Provider)
+            .Where(a => a.BranchId == branchId &&
+                   a.StartTime >= today &&
+                   a.StartTime < futureDate &&
+                   a.Status != AppointmentStatus.Cancelled &&
+                   a.Status != AppointmentStatus.Completed)
+            .OrderBy(a => a.StartTime)
+            .ToListAsync();
+    }
+
+    public async Task<Appointment> CreateAppointmentAsync(Appointment appointment)
+    {
+        _context.Appointments.Add(appointment);
+        await _context.SaveChangesAsync();
+        return appointment;
+    }
+
+    public async Task UpdateAppointmentAsync(Appointment appointment)
+    {
+        _context.Appointments.Update(appointment);
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task DeleteAppointmentAsync(int id)
+    {
+        var appointment = await _context.Appointments.FindAsync(id);
+        if (appointment != null)
+        {
+            _context.Appointments.Remove(appointment);
+            await _context.SaveChangesAsync();
+        }
+    }
+
+    #endregion
+
+    #region Appointment Status Management
+
+    public async Task ConfirmAppointmentAsync(int appointmentId)
+    {
+        var appointment = await _context.Appointments.FindAsync(appointmentId);
+        if (appointment == null)
+            throw new KeyNotFoundException($"Appointment with ID {appointmentId} not found");
+
+        appointment.Status = AppointmentStatus.Confirmed;
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task CancelAppointmentAsync(int appointmentId, string? reason)
+    {
+        var appointment = await _context.Appointments.FindAsync(appointmentId);
+        if (appointment == null)
+            throw new KeyNotFoundException($"Appointment with ID {appointmentId} not found");
+
+        appointment.Status = AppointmentStatus.Cancelled;
+        if (!string.IsNullOrWhiteSpace(reason))
+        {
+            appointment.Notes = string.IsNullOrWhiteSpace(appointment.Notes)
+                ? $"Cancelled: {reason}"
+                : $"{appointment.Notes}\nCancelled: {reason}";
+        }
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task CheckInAppointmentAsync(int appointmentId)
+    {
+        var appointment = await _context.Appointments.FindAsync(appointmentId);
+        if (appointment == null)
+            throw new KeyNotFoundException($"Appointment with ID {appointmentId} not found");
+
+        appointment.Status = AppointmentStatus.CheckedIn;
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task CompleteAppointmentAsync(int appointmentId)
+    {
+        var appointment = await _context.Appointments.FindAsync(appointmentId);
+        if (appointment == null)
+            throw new KeyNotFoundException($"Appointment with ID {appointmentId} not found");
+
+        appointment.Status = AppointmentStatus.Completed;
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task NoShowAppointmentAsync(int appointmentId)
+    {
+        var appointment = await _context.Appointments.FindAsync(appointmentId);
+        if (appointment == null)
+            throw new KeyNotFoundException($"Appointment with ID {appointmentId} not found");
+
+        appointment.Status = AppointmentStatus.NoShow;
+        await _context.SaveChangesAsync();
+    }
+
+    #endregion
+
+    #region Appointment Scheduling
+
+    public async Task<bool> IsTimeSlotAvailableAsync(int branchId, int? providerId, DateTime startTime, DateTime endTime, int? excludeAppointmentId = null)
+    {
+        var query = _context.Appointments
+            .Where(a => a.BranchId == branchId &&
+                   a.Status != AppointmentStatus.Cancelled &&
+                   a.Status != AppointmentStatus.NoShow &&
+                   ((a.StartTime < endTime && a.EndTime > startTime)));
+
+        if (providerId.HasValue)
+        {
+            query = query.Where(a => a.ProviderId == providerId.Value);
+        }
+
+        if (excludeAppointmentId.HasValue)
+        {
+            query = query.Where(a => a.Id != excludeAppointmentId.Value);
+        }
+
+        var conflictingAppointments = await query.CountAsync();
+        return conflictingAppointments == 0;
+    }
+
+    public async Task<IEnumerable<DateTime>> GetAvailableSlotsAsync(int branchId, int? providerId, DateTime date, int durationMinutes = 30)
+    {
+        var availableSlots = new List<DateTime>();
+        var startOfDay = date.Date.AddHours(8); // Start at 8 AM
+        var endOfDay = date.Date.AddHours(18); // End at 6 PM
+
+        var currentSlot = startOfDay;
+        while (currentSlot.AddMinutes(durationMinutes) <= endOfDay)
+        {
+            var slotEnd = currentSlot.AddMinutes(durationMinutes);
+            if (await IsTimeSlotAvailableAsync(branchId, providerId, currentSlot, slotEnd))
+            {
+                availableSlots.Add(currentSlot);
+            }
+            currentSlot = currentSlot.AddMinutes(durationMinutes);
+        }
+
+        return availableSlots;
+    }
+
+    public async Task<Appointment> RescheduleAppointmentAsync(int appointmentId, DateTime newStartTime, DateTime newEndTime)
+    {
+        var appointment = await _context.Appointments.FindAsync(appointmentId);
+        if (appointment == null)
+            throw new KeyNotFoundException($"Appointment with ID {appointmentId} not found");
+
+        // Check if new time slot is available
+        if (!await IsTimeSlotAvailableAsync(appointment.BranchId, appointment.ProviderId, newStartTime, newEndTime, appointmentId))
+        {
+            throw new InvalidOperationException("The requested time slot is not available");
+        }
+
+        appointment.StartTime = newStartTime;
+        appointment.EndTime = newEndTime;
+        await _context.SaveChangesAsync();
+
+        return appointment;
+    }
+
+    #endregion
+
+    #region Statistics & Reporting
+
+    public async Task<int> GetTotalAppointmentsCountAsync(int branchId)
+    {
+        return await _context.Appointments
+            .CountAsync(a => a.BranchId == branchId);
+    }
+
+    public async Task<int> GetTodayAppointmentsCountAsync(int branchId)
+    {
+        var today = DateTime.UtcNow.Date;
+        var tomorrow = today.AddDays(1);
+
+        return await _context.Appointments
+            .CountAsync(a => a.BranchId == branchId &&
+                        a.StartTime >= today &&
+                        a.StartTime < tomorrow);
+    }
+
+    public async Task<int> GetUpcomingAppointmentsCountAsync(int branchId)
+    {
+        var now = DateTime.UtcNow;
+
+        return await _context.Appointments
+            .CountAsync(a => a.BranchId == branchId &&
+                        a.StartTime >= now &&
+                        a.Status != AppointmentStatus.Cancelled &&
+                        a.Status != AppointmentStatus.Completed);
+    }
+
+    public async Task<int> GetCompletedAppointmentsCountAsync(int branchId, DateTime startDate, DateTime endDate)
+    {
+        return await _context.Appointments
+            .CountAsync(a => a.BranchId == branchId &&
+                        a.Status == AppointmentStatus.Completed &&
+                        a.StartTime >= startDate &&
+                        a.StartTime <= endDate);
+    }
+
+    public async Task<int> GetCancelledAppointmentsCountAsync(int branchId, DateTime startDate, DateTime endDate)
+    {
+        return await _context.Appointments
+            .CountAsync(a => a.BranchId == branchId &&
+                        a.Status == AppointmentStatus.Cancelled &&
+                        a.StartTime >= startDate &&
+                        a.StartTime <= endDate);
+    }
+
+    public async Task<int> GetNoShowAppointmentsCountAsync(int branchId, DateTime startDate, DateTime endDate)
+    {
+        return await _context.Appointments
+            .CountAsync(a => a.BranchId == branchId &&
+                        a.Status == AppointmentStatus.NoShow &&
+                        a.StartTime >= startDate &&
+                        a.StartTime <= endDate);
+    }
+
+    public async Task<Dictionary<AppointmentStatus, int>> GetAppointmentStatusDistributionAsync(int branchId)
+    {
+        var distribution = await _context.Appointments
+            .Where(a => a.BranchId == branchId)
+            .GroupBy(a => a.Status)
+            .Select(g => new { Status = g.Key, Count = g.Count() })
+            .ToListAsync();
+
+        return distribution.ToDictionary(x => x.Status, x => x.Count);
+    }
+
+    public async Task<Dictionary<AppointmentType, int>> GetAppointmentTypeDistributionAsync(int branchId)
+    {
+        var distribution = await _context.Appointments
+            .Where(a => a.BranchId == branchId)
+            .GroupBy(a => a.Type)
+            .Select(g => new { Type = g.Key, Count = g.Count() })
+            .ToListAsync();
+
+        return distribution.ToDictionary(x => x.Type, x => x.Count);
+    }
+
+    public async Task<decimal> GetAppointmentCompletionRateAsync(int branchId, DateTime startDate, DateTime endDate)
+    {
+        var totalAppointments = await _context.Appointments
+            .CountAsync(a => a.BranchId == branchId &&
+                        a.StartTime >= startDate &&
+                        a.StartTime <= endDate);
+
+        if (totalAppointments == 0)
+            return 0;
+
+        var completedAppointments = await _context.Appointments
+            .CountAsync(a => a.BranchId == branchId &&
+                        a.Status == AppointmentStatus.Completed &&
+                        a.StartTime >= startDate &&
+                        a.StartTime <= endDate);
+
+        return Math.Round((decimal)completedAppointments / totalAppointments * 100, 2);
+    }
+
+    #endregion
+}

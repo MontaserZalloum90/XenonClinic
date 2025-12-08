@@ -7,13 +7,9 @@ public class CaseNote
 {
     public int Id { get; set; }
     public int CaseId { get; set; }
+    public int CaseNoteTypeId { get; set; }
 
     public string Content { get; set; } = string.Empty;
-
-    /// <summary>
-    /// Type of note: General, Clinical, Administrative, FollowUp
-    /// </summary>
-    public CaseNoteType NoteType { get; set; } = CaseNoteType.General;
 
     /// <summary>
     /// Whether this note is visible to the patient (for patient portal)
@@ -32,13 +28,5 @@ public class CaseNote
 
     // Navigation properties
     public Case Case { get; set; } = null!;
-}
-
-public enum CaseNoteType
-{
-    General = 1,
-    Clinical = 2,
-    Administrative = 3,
-    FollowUp = 4,
-    Important = 5
+    public Lookups.CaseNoteTypeLookup CaseNoteType { get; set; } = null!;
 }

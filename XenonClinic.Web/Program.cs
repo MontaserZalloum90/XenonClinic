@@ -1,15 +1,25 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Localization;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 using System.Globalization;
+using System.Text;
+using XenonClinic.Core.Abstractions;
 using XenonClinic.Core.Entities;
 using XenonClinic.Core.Interfaces;
 using XenonClinic.Infrastructure.Data;
+using XenonClinic.Infrastructure.Modules;
 using XenonClinic.Infrastructure.Services;
 using XenonClinic.Web.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
+
+Console.WriteLine("================================================================================");
+Console.WriteLine("  XenonClinic - Modular Healthcare Management System");
+Console.WriteLine("================================================================================");
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
     ?? "Server=(localdb)\\mssqllocaldb;Database=XenonClinic;Trusted_Connection=True;MultipleActiveResultSets=true";
@@ -34,6 +44,44 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.AccessDeniedPath = "/Account/AccessDenied";
     options.ExpireTimeSpan = TimeSpan.FromDays(14);
     options.SlidingExpiration = true;
+});
+
+// ==================== JWT AUTHENTICATION FOR SPA ====================
+var jwtSettings = builder.Configuration.GetSection("JwtSettings");
+var jwtKey = jwtSettings["SecretKey"] ?? "XenonClinic-SecureKey-12345678901234567890123456789012"; // Min 32 chars
+var jwtIssuer = jwtSettings["Issuer"] ?? "XenonClinic";
+var jwtAudience = jwtSettings["Audience"] ?? "XenonClinicReact";
+
+builder.Services.AddAuthentication(options =>
+{
+    // Keep cookie auth as default for MVC
+    options.DefaultScheme = IdentityConstants.ApplicationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = jwtIssuer,
+        ValidAudience = jwtAudience,
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
+        ClockSkew = TimeSpan.Zero
+    };
+});
+
+// ==================== CORS FOR REACT SPA ====================
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("ReactApp", policy =>
+    {
+        policy.WithOrigins("http://localhost:5173", "http://localhost:3000") // Vite default + CRA default
+              .AllowAnyMethod()
+              .AllowAnyHeader()
+              .AllowCredentials();
+    });
 });
 
 // Register services
@@ -81,6 +129,76 @@ builder.Services.AddScoped<IThemeService, ThemeService>();
 // Lookup services
 builder.Services.AddScoped<ILookupService, LookupService>();
 
+// License validation services
+builder.Services.AddSingleton<ILicenseValidator, LicenseValidator>();
+
+// ==================== MODULE SYSTEM ====================
+Console.WriteLine("\n[System] Initializing Module System...");
+
+// Register Module Manager
+builder.Services.AddSingleton<IModuleManager, ModuleManager>();
+
+// Discover and register modules
+var licenseValidator = new LicenseValidator(builder.Configuration);
+var moduleManager = new ModuleManager(builder.Configuration, licenseValidator);
+var availableModules = new List<IModule>
+{
+    new CaseManagementModule(),
+    new AudiologyModule(),
+    new LaboratoryModule(),
+    new HRModule(),
+    new FinancialModule(),
+    new InventoryModule(),
+    new SalesModule(),
+    new ProcurementModule()
+};
+
+Console.WriteLine($"[System] Found {availableModules.Count} available modules");
+
+foreach (var module in availableModules)
+{
+    try
+    {
+        // Register module with manager
+        moduleManager.RegisterModule(module);
+
+        // Check if module is enabled
+        if (moduleManager.IsModuleEnabled(module.Name))
+        {
+            Console.WriteLine($"[System] Loading module: {module.DisplayName} v{module.Version}");
+
+            // Initialize module
+            await module.OnInitializingAsync(builder.Services.BuildServiceProvider());
+
+            // Configure module services
+            module.ConfigureServices(builder.Services, builder.Configuration);
+
+            // Store module for later use
+            builder.Services.AddSingleton(module);
+        }
+        else
+        {
+            Console.WriteLine($"[System] Module disabled: {module.DisplayName} (skipped)");
+        }
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"[ERROR] Failed to load module {module.DisplayName}: {ex.Message}");
+        if (module.IsRequired)
+        {
+            throw new Exception($"Required module {module.DisplayName} failed to load", ex);
+        }
+    }
+}
+
+// Store module manager
+builder.Services.AddSingleton(moduleManager);
+
+Console.WriteLine($"[System] Module system initialized - {moduleManager.GetEnabledModules().Count()} modules enabled");
+Console.WriteLine("================================================================================\n");
+
+// ==================== END MODULE SYSTEM ====================
+
 // Configure localization
 builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
 
@@ -104,10 +222,71 @@ builder.Services.AddControllersWithViews()
     .AddViewLocalization()
     .AddDataAnnotationsLocalization();
 
+// ==================== SWAGGER/OPENAPI FOR API DOCUMENTATION ====================
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Title = "XenonClinic API",
+        Version = "v1",
+        Description = "REST API for XenonClinic Healthcare Management System - React SPA Integration",
+        Contact = new OpenApiContact
+        {
+            Name = "XenonClinic Team"
+        }
+    });
+
+    // Add JWT Authentication to Swagger
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Description = "JWT Authorization header using the Bearer scheme. Enter 'Bearer' [space] and then your token in the text input below.",
+        Name = "Authorization",
+        In = ParameterLocation.Header,
+        Type = SecuritySchemeType.ApiKey,
+        Scheme = "Bearer"
+    });
+
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            Array.Empty<string>()
+        }
+    });
+});
+
 var app = builder.Build();
+
+// Configure module routes
+Console.WriteLine("\n[System] Configuring module routes...");
+var enabledModules = app.Services.GetServices<IModule>();
+foreach (var module in enabledModules)
+{
+    module.ConfigureRoutes(app);
+}
+Console.WriteLine($"[System] Routes configured for {enabledModules.Count()} modules\n");
 
 // Global exception handling middleware
 app.UseMiddleware<GlobalExceptionHandlerMiddleware>();
+
+// Swagger middleware
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "XenonClinic API v1");
+        c.RoutePrefix = "api/docs"; // Access Swagger at /api/docs
+    });
+}
 
 if (!app.Environment.IsDevelopment())
 {
@@ -118,6 +297,9 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseRouting();
+
+// Enable CORS
+app.UseCors("ReactApp");
 
 // Enable request localization
 var localizationOptions = app.Services.GetRequiredService<IOptions<RequestLocalizationOptions>>().Value;
@@ -131,6 +313,9 @@ app.UseAuthorization();
 
 // Tenant resolution middleware - must be after authentication
 app.UseTenantResolution();
+
+// License validation middleware - validates module licenses
+app.UseLicenseValidation();
 
 app.MapControllerRoute(
     name: "default",

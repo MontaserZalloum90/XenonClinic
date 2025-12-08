@@ -1,0 +1,138 @@
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { AuthProvider } from './contexts/AuthContext';
+import { ProtectedRoute } from './components/ProtectedRoute';
+import { Layout } from './components/layout/Layout';
+import { Login } from './pages/Login';
+import { Dashboard } from './pages/Dashboard';
+import { AppointmentsList } from './pages/Appointments/AppointmentsList';
+import { PatientsList } from './pages/Patients/PatientsList';
+import { LaboratoryList } from './pages/Laboratory/LaboratoryList';
+import { HRList } from './pages/HR/HRList';
+import { FinancialList } from './pages/Financial/FinancialList';
+import { InventoryList } from './pages/Inventory/InventoryList';
+import { PharmacyList } from './pages/Pharmacy/PharmacyList';
+import { RadiologyList } from './pages/Radiology/RadiologyList';
+
+// Create React Query client
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+      retry: 1,
+      staleTime: 5 * 60 * 1000, // 5 minutes
+    },
+  },
+});
+
+function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <BrowserRouter>
+          <Routes>
+            {/* Public Routes */}
+            <Route path="/login" element={<Login />} />
+
+            {/* Protected Routes with Layout */}
+            <Route
+              path="/"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <Dashboard />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/appointments"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <AppointmentsList />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/patients"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <PatientsList />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/laboratory"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <LaboratoryList />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/hr"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <HRList />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/financial"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <FinancialList />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/inventory"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <InventoryList />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/pharmacy"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <PharmacyList />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/radiology"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <RadiologyList />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Catch all - redirect to home */}
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </BrowserRouter>
+      </AuthProvider>
+    </QueryClientProvider>
+  );
+}
+
+export default App;

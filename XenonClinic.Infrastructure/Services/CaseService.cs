@@ -100,8 +100,9 @@ public class CaseService : ICaseService
             .Include(c => c.Branch)
             .Include(c => c.CaseType)
             .Include(c => c.CaseStatus)
+            .Include(c => c.CasePriority)
             .Where(c => c.AssignedToUserId == userId && c.ClosedDate == null)
-            .OrderByDescending(c => c.Priority)
+            .OrderByDescending(c => c.CasePriority.DisplayOrder)
             .ThenBy(c => c.TargetDate)
             .ToListAsync();
     }
@@ -151,14 +152,21 @@ public class CaseService : ICaseService
 
         if (notes != null)
         {
-            var note = new CaseNote
+            // Get Administrative note type lookup
+            var adminNoteType = await _context.CaseNoteTypeLookups
+                .FirstOrDefaultAsync(t => t.Code == "ADMINISTRATIVE" && t.IsActive);
+
+            if (adminNoteType != null)
             {
-                CaseId = caseId,
-                Content = notes,
-                NoteType = CaseNoteType.Administrative,
-                CreatedAt = DateTime.UtcNow
-            };
-            _context.CaseNotes.Add(note);
+                var note = new CaseNote
+                {
+                    CaseId = caseId,
+                    Content = notes,
+                    CaseNoteTypeId = adminNoteType.Id,
+                    CreatedAt = DateTime.UtcNow
+                };
+                _context.CaseNotes.Add(note);
+            }
         }
 
         await _context.SaveChangesAsync();
@@ -202,7 +210,7 @@ public class CaseService : ICaseService
 
         // Find an open status
         var openStatus = await _context.CaseStatuses
-            .Where(s => s.Category == CaseStatusCategory.Open || s.Category == CaseStatusCategory.InProgress)
+            .Where(s => s.Category == "Open" || s.Category == "InProgress")
             .FirstOrDefaultAsync();
 
         if (openStatus != null)
@@ -300,29 +308,42 @@ public class CaseService : ICaseService
     {
         return await _context.CaseActivities
             .Include(a => a.AssignedToUser)
+            .Include(a => a.CaseActivityStatus)
             .Where(a => a.CaseId == caseId)
-            .OrderBy(a => a.Status)
+            .OrderBy(a => a.CaseActivityStatus.DisplayOrder)
             .ThenBy(a => a.DueDate)
             .ToListAsync();
     }
 
     public async Task<List<CaseActivity>> GetPendingActivitiesAsync(int caseId)
     {
+        // Get Pending status lookup
+        var pendingStatus = await _context.CaseActivityStatusLookups
+            .FirstOrDefaultAsync(s => s.Code == "PENDING" && s.IsActive);
+
+        if (pendingStatus == null)
+            return new List<CaseActivity>();
+
         return await _context.CaseActivities
             .Include(a => a.AssignedToUser)
-            .Where(a => a.CaseId == caseId && a.Status == CaseActivityStatus.Pending)
+            .Where(a => a.CaseId == caseId && a.CaseActivityStatusId == pendingStatus.Id)
             .OrderBy(a => a.DueDate)
             .ToListAsync();
     }
 
     public async Task<List<CaseActivity>> GetOverdueActivitiesAsync(int caseId)
     {
+        // Get Completed and Cancelled status lookups
+        var completedCancelledStatuses = await _context.CaseActivityStatusLookups
+            .Where(s => (s.Code == "COMPLETED" || s.Code == "CANCELLED") && s.IsActive)
+            .Select(s => s.Id)
+            .ToListAsync();
+
         var today = DateTime.UtcNow.Date;
         return await _context.CaseActivities
             .Include(a => a.AssignedToUser)
             .Where(a => a.CaseId == caseId &&
-                       a.Status != CaseActivityStatus.Completed &&
-                       a.Status != CaseActivityStatus.Cancelled &&
+                       !completedCancelledStatuses.Contains(a.CaseActivityStatusId) &&
                        a.DueDate.HasValue &&
                        a.DueDate.Value.Date < today)
             .OrderBy(a => a.DueDate)
@@ -335,7 +356,14 @@ public class CaseService : ICaseService
         if (activity == null)
             return false;
 
-        activity.Status = CaseActivityStatus.Completed;
+        // Get Completed status lookup
+        var completedStatus = await _context.CaseActivityStatusLookups
+            .FirstOrDefaultAsync(s => s.Code == "COMPLETED" && s.IsActive);
+
+        if (completedStatus == null)
+            return false;
+
+        activity.CaseActivityStatusId = completedStatus.Id;
         activity.CompletedDate = DateTime.UtcNow;
         activity.Result = result;
         activity.UpdatedAt = DateTime.UtcNow;
@@ -416,6 +444,12 @@ public class CaseService : ICaseService
     {
         var stats = new Dictionary<string, int>();
 
+        // Get High and Urgent priority IDs
+        var highPriorityIds = await _context.CasePriorityLookups
+            .Where(p => (p.Code == "HIGH" || p.Code == "URGENT") && p.IsActive)
+            .Select(p => p.Id)
+            .ToListAsync();
+
         var cases = await _context.Cases
             .Where(c => c.BranchId == branchId)
             .ToListAsync();
@@ -423,7 +457,7 @@ public class CaseService : ICaseService
         stats["Total"] = cases.Count;
         stats["Open"] = cases.Count(c => c.ClosedDate == null);
         stats["Closed"] = cases.Count(c => c.ClosedDate != null);
-        stats["High Priority"] = cases.Count(c => c.Priority == CasePriority.High || c.Priority == CasePriority.Urgent);
+        stats["High Priority"] = cases.Count(c => highPriorityIds.Contains(c.CasePriorityId));
         stats["Overdue"] = cases.Count(c => c.TargetDate.HasValue && c.TargetDate.Value < DateTime.UtcNow && c.ClosedDate == null);
 
         return stats;

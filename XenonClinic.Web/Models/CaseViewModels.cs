@@ -41,8 +41,9 @@ public class CaseFormViewModel
     [DataType(DataType.MultilineText)]
     public string? Description { get; set; }
 
+    [Required(ErrorMessage = "Priority is required")]
     [Display(Name = "Priority")]
-    public CasePriority Priority { get; set; } = CasePriority.Medium;
+    public int CasePriorityId { get; set; }
 
     [Display(Name = "Chief Complaint")]
     [DataType(DataType.MultilineText)]
@@ -74,7 +75,8 @@ public class CaseListItemViewModel
     public string CaseTypeName { get; set; } = string.Empty;
     public string CaseStatusName { get; set; } = string.Empty;
     public string? AssignedToName { get; set; }
-    public CasePriority Priority { get; set; }
+    public string PriorityName { get; set; } = string.Empty;
+    public string? PriorityColorCode { get; set; }
     public DateTime OpenedDate { get; set; }
     public DateTime? ClosedDate { get; set; }
     public DateTime? TargetDate { get; set; }
@@ -115,8 +117,9 @@ public class CaseNoteFormViewModel
     [DataType(DataType.MultilineText)]
     public string Content { get; set; } = string.Empty;
 
+    [Required(ErrorMessage = "Note type is required")]
     [Display(Name = "Note Type")]
-    public CaseNoteType NoteType { get; set; } = CaseNoteType.General;
+    public int CaseNoteTypeId { get; set; }
 
     [Display(Name = "Visible to Patient")]
     public bool IsVisibleToPatient { get; set; } = false;
@@ -144,11 +147,13 @@ public class CaseActivityFormViewModel
     [DataType(DataType.MultilineText)]
     public string? Description { get; set; }
 
+    [Required(ErrorMessage = "Activity type is required")]
     [Display(Name = "Activity Type")]
-    public CaseActivityType ActivityType { get; set; } = CaseActivityType.Task;
+    public int CaseActivityTypeId { get; set; }
 
+    [Required(ErrorMessage = "Status is required")]
     [Display(Name = "Status")]
-    public CaseActivityStatus Status { get; set; } = CaseActivityStatus.Pending;
+    public int CaseActivityStatusId { get; set; }
 
     [Display(Name = "Assigned To")]
     public string? AssignedToUserId { get; set; }
@@ -157,8 +162,9 @@ public class CaseActivityFormViewModel
     [DataType(DataType.Date)]
     public DateTime? DueDate { get; set; }
 
+    [Required(ErrorMessage = "Priority is required")]
     [Display(Name = "Priority")]
-    public CasePriority Priority { get; set; } = CasePriority.Medium;
+    public int CasePriorityId { get; set; }
 
     [Display(Name = "Result")]
     [DataType(DataType.MultilineText)]
@@ -234,7 +240,7 @@ public class CaseStatusSelectItem
     public int Id { get; set; }
     public string Name { get; set; } = string.Empty;
     public string? ColorCode { get; set; }
-    public CaseStatusCategory Category { get; set; }
+    public string Category { get; set; } = string.Empty;
 }
 
 public class PatientSelectItem

@@ -16,6 +16,7 @@ public class Case
     public int BranchId { get; set; }
     public int CaseTypeId { get; set; }
     public int CaseStatusId { get; set; }
+    public int CasePriorityId { get; set; }
 
     /// <summary>
     /// Primary provider/audiologist assigned to this case
@@ -24,11 +25,6 @@ public class Case
 
     public string Title { get; set; } = string.Empty;
     public string? Description { get; set; }
-
-    /// <summary>
-    /// Priority level: Low, Medium, High, Urgent
-    /// </summary>
-    public CasePriority Priority { get; set; } = CasePriority.Medium;
 
     /// <summary>
     /// Chief complaint or reason for the case
@@ -66,16 +62,9 @@ public class Case
     public Branch Branch { get; set; } = null!;
     public CaseType CaseType { get; set; } = null!;
     public CaseStatus CaseStatus { get; set; } = null!;
+    public Lookups.CasePriorityLookup CasePriority { get; set; } = null!;
     public ApplicationUser? AssignedToUser { get; set; }
 
     public ICollection<CaseNote> Notes { get; set; } = new List<CaseNote>();
     public ICollection<CaseActivity> Activities { get; set; } = new List<CaseActivity>();
-}
-
-public enum CasePriority
-{
-    Low = 1,
-    Medium = 2,
-    High = 3,
-    Urgent = 4
 }

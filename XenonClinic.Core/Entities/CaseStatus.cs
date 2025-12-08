@@ -14,7 +14,7 @@ public class CaseStatus
     /// <summary>
     /// Category for grouping statuses: Open, InProgress, Closed, Cancelled
     /// </summary>
-    public CaseStatusCategory Category { get; set; } = CaseStatusCategory.Open;
+    public string Category { get; set; } = "Open";
 
     /// <summary>
     /// Color code for visual identification (e.g., "#1F6FEB")
@@ -46,13 +46,4 @@ public class CaseStatus
     // Navigation properties
     public Tenant Tenant { get; set; } = null!;
     public ICollection<Case> Cases { get; set; } = new List<Case>();
-}
-
-public enum CaseStatusCategory
-{
-    Open = 1,
-    InProgress = 2,
-    OnHold = 3,
-    Closed = 4,
-    Cancelled = 5
 }

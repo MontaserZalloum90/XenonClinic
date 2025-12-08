@@ -39,6 +39,9 @@ public static class SeedData
             }
         }
 
+        // Seed Lookup Values (system-wide defaults)
+        await LookupSeeder.SeedLookupsAsync(context);
+
         // Seed Tenants
         if (!await context.Tenants.AnyAsync())
         {
