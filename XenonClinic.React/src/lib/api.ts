@@ -102,4 +102,75 @@ export const laboratoryApi = {
   getStatistics: () => api.get('/api/LaboratoryApi/statistics'),
 };
 
+export const hrApi = {
+  getAll: () => api.get('/api/HRApi/employees'),
+  getById: (id: number) => api.get(`/api/HRApi/employees/${id}`),
+  search: (searchTerm: string) => api.get(`/api/HRApi/employees/search?searchTerm=${encodeURIComponent(searchTerm)}`),
+  getByDepartment: (department: string) => api.get(`/api/HRApi/employees/department/${encodeURIComponent(department)}`),
+  getActive: () => api.get('/api/HRApi/employees/active'),
+  create: (data: any) => api.post('/api/HRApi/employees', data),
+  update: (id: number, data: any) => api.put(`/api/HRApi/employees/${id}`, data),
+  delete: (id: number) => api.delete(`/api/HRApi/employees/${id}`),
+  getStatistics: () => api.get('/api/HRApi/statistics'),
+};
+
+export const financialApi = {
+  getAllInvoices: () => api.get('/api/FinancialApi/invoices'),
+  getById: (id: number) => api.get(`/api/FinancialApi/invoices/${id}`),
+  search: (searchTerm: string) => api.get(`/api/FinancialApi/invoices/search?searchTerm=${encodeURIComponent(searchTerm)}`),
+  getUnpaid: () => api.get('/api/FinancialApi/invoices/unpaid'),
+  getOverdue: () => api.get('/api/FinancialApi/invoices/overdue'),
+  getByPatient: (patientId: number) => api.get(`/api/FinancialApi/invoices/patient/${patientId}`),
+  create: (data: any) => api.post('/api/FinancialApi/invoices', data),
+  update: (id: number, data: any) => api.put(`/api/FinancialApi/invoices/${id}`, data),
+  delete: (id: number) => api.delete(`/api/FinancialApi/invoices/${id}`),
+  recordPayment: (id: number, amount: number, method: number) =>
+    api.post(`/api/FinancialApi/invoices/${id}/payment`, { amount, method }),
+  getStatistics: () => api.get('/api/FinancialApi/statistics'),
+};
+
+export const inventoryApi = {
+  getAllItems: () => api.get('/api/InventoryApi/items'),
+  getById: (id: number) => api.get(`/api/InventoryApi/items/${id}`),
+  search: (searchTerm: string) => api.get(`/api/InventoryApi/items/search?searchTerm=${encodeURIComponent(searchTerm)}`),
+  getLowStock: () => api.get('/api/InventoryApi/items/low-stock'),
+  getOutOfStock: () => api.get('/api/InventoryApi/items/out-of-stock'),
+  getByCategory: (category: number) => api.get(`/api/InventoryApi/items/category/${category}`),
+  create: (data: any) => api.post('/api/InventoryApi/items', data),
+  update: (id: number, data: any) => api.put(`/api/InventoryApi/items/${id}`, data),
+  delete: (id: number) => api.delete(`/api/InventoryApi/items/${id}`),
+  adjustStock: (id: number, quantity: number, reason: string) =>
+    api.post(`/api/InventoryApi/items/${id}/adjust`, { quantity, reason }),
+  getStatistics: () => api.get('/api/InventoryApi/statistics'),
+};
+
+export const pharmacyApi = {
+  getAllPrescriptions: () => api.get('/api/PharmacyApi/prescriptions'),
+  getById: (id: number) => api.get(`/api/PharmacyApi/prescriptions/${id}`),
+  search: (searchTerm: string) => api.get(`/api/PharmacyApi/prescriptions/search?searchTerm=${encodeURIComponent(searchTerm)}`),
+  getPending: () => api.get('/api/PharmacyApi/prescriptions/pending'),
+  getByPatient: (patientId: number) => api.get(`/api/PharmacyApi/prescriptions/patient/${patientId}`),
+  create: (data: any) => api.post('/api/PharmacyApi/prescriptions', data),
+  update: (id: number, data: any) => api.put(`/api/PharmacyApi/prescriptions/${id}`, data),
+  delete: (id: number) => api.delete(`/api/PharmacyApi/prescriptions/${id}`),
+  dispense: (id: number, dispensedBy: string) =>
+    api.post(`/api/PharmacyApi/prescriptions/${id}/dispense`, { dispensedBy }),
+  getStatistics: () => api.get('/api/PharmacyApi/statistics'),
+};
+
+export const radiologyApi = {
+  getAllOrders: () => api.get('/api/RadiologyApi/orders'),
+  getById: (id: number) => api.get(`/api/RadiologyApi/orders/${id}`),
+  search: (searchTerm: string) => api.get(`/api/RadiologyApi/orders/search?searchTerm=${encodeURIComponent(searchTerm)}`),
+  getPending: () => api.get('/api/RadiologyApi/orders/pending'),
+  getScheduled: () => api.get('/api/RadiologyApi/orders/scheduled'),
+  getByPatient: (patientId: number) => api.get(`/api/RadiologyApi/orders/patient/${patientId}`),
+  create: (data: any) => api.post('/api/RadiologyApi/orders', data),
+  update: (id: number, data: any) => api.put(`/api/RadiologyApi/orders/${id}`, data),
+  delete: (id: number) => api.delete(`/api/RadiologyApi/orders/${id}`),
+  updateStatus: (id: number, status: number) =>
+    api.post(`/api/RadiologyApi/orders/${id}/status`, { status }),
+  getStatistics: () => api.get('/api/RadiologyApi/statistics'),
+};
+
 export default api;
