@@ -101,6 +101,77 @@ public class AppointmentsController : Controller
         }
     }
 
+    // GET: Appointments/Calendar
+    public IActionResult Calendar()
+    {
+        return View();
+    }
+
+    // GET: Appointments/GetAppointmentsJson
+    [HttpGet]
+    public async Task<IActionResult> GetAppointmentsJson(DateTime start, DateTime end, int? providerId)
+    {
+        try
+        {
+            var branchIds = await _branchService.GetUserBranchIdsAsync();
+            var query = _db.Appointments
+                .Include(a => a.Patient)
+                .Include(a => a.Provider)
+                .Where(a => branchIds.Contains(a.BranchId)
+                    && a.StartTime >= start
+                    && a.StartTime <= end);
+
+            // Filter by provider if specified
+            if (providerId.HasValue)
+            {
+                query = query.Where(a => a.ProviderId == providerId.Value);
+            }
+
+            var appointments = await query
+                .Select(a => new
+                {
+                    id = a.Id,
+                    title = a.Patient != null ? a.Patient.FullNameEn : "Unknown Patient",
+                    start = a.StartTime.ToString("yyyy-MM-ddTHH:mm:ss"),
+                    end = a.EndTime.ToString("yyyy-MM-ddTHH:mm:ss"),
+                    backgroundColor = a.Status switch
+                    {
+                        AppointmentStatus.Booked => "#0d6efd",      // Blue
+                        AppointmentStatus.Completed => "#198754",   // Green
+                        AppointmentStatus.Cancelled => "#dc3545",   // Red
+                        AppointmentStatus.NoShow => "#ffc107",      // Yellow
+                        _ => "#6c757d"                              // Gray
+                    },
+                    borderColor = a.Status switch
+                    {
+                        AppointmentStatus.Booked => "#0d6efd",
+                        AppointmentStatus.Completed => "#198754",
+                        AppointmentStatus.Cancelled => "#dc3545",
+                        AppointmentStatus.NoShow => "#ffc107",
+                        _ => "#6c757d"
+                    },
+                    extendedProps = new
+                    {
+                        patientId = a.PatientId,
+                        patientName = a.Patient != null ? a.Patient.FullNameEn : "Unknown",
+                        providerId = a.ProviderId,
+                        providerName = a.Provider != null ? a.Provider.FullNameEn : null,
+                        type = a.Type.ToString(),
+                        status = a.Status.ToString(),
+                        notes = a.Notes
+                    }
+                })
+                .ToListAsync();
+
+            return Json(appointments);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error loading appointments for calendar");
+            return StatusCode(500, new { error = "Error loading appointments" });
+        }
+    }
+
     // GET: Appointments/Details/5
     public async Task<IActionResult> Details(int id)
     {
