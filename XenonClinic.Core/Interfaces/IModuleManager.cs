@@ -62,4 +62,9 @@ public class ModuleDescriptor
     public DateTime? InstalledDate { get; set; }
     public string? LicenseKey { get; set; }
     public DateTime? LicenseExpiryDate { get; set; }
+    public bool IsLicensed { get; set; }
+    public bool IsLicenseExpired { get; set; }
+    public bool IsLicenseValid { get; set; }
+    public int? DaysUntilLicenseExpiry { get; set; }
+    public int? MaxUsers { get; set; }
 }

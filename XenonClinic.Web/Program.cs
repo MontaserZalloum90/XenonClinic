@@ -87,6 +87,9 @@ builder.Services.AddScoped<IThemeService, ThemeService>();
 // Lookup services
 builder.Services.AddScoped<ILookupService, LookupService>();
 
+// License validation services
+builder.Services.AddSingleton<ILicenseValidator, LicenseValidator>();
+
 // ==================== MODULE SYSTEM ====================
 Console.WriteLine("\n[System] Initializing Module System...");
 
@@ -94,7 +97,8 @@ Console.WriteLine("\n[System] Initializing Module System...");
 builder.Services.AddSingleton<IModuleManager, ModuleManager>();
 
 // Discover and register modules
-var moduleManager = new ModuleManager(builder.Configuration);
+var licenseValidator = new LicenseValidator(builder.Configuration);
+var moduleManager = new ModuleManager(builder.Configuration, licenseValidator);
 var availableModules = new List<IModule>
 {
     new CaseManagementModule(),
@@ -212,6 +216,9 @@ app.UseAuthorization();
 
 // Tenant resolution middleware - must be after authentication
 app.UseTenantResolution();
+
+// License validation middleware - validates module licenses
+app.UseLicenseValidation();
 
 app.MapControllerRoute(
     name: "default",

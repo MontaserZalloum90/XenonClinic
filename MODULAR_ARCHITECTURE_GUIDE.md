@@ -462,10 +462,100 @@ Each module can have its own license configuration:
 - `ExpiryDate`: License expiration date (null = perpetual)
 - `MaxUsers`: Maximum concurrent users allowed (0 = unlimited)
 
-**Future Enhancement:**
-- Add `ILicenseValidator` service for runtime validation
-- Create license validation middleware
-- Add module marketplace UI for license management
+### License Validation (✅ Implemented)
+
+The system now includes **automatic license validation** that runs on every request:
+
+**Features:**
+- ✅ Validates license keys for all module-specific routes
+- ✅ Checks license expiration dates
+- ✅ Blocks access to expired or unlicensed modules
+- ✅ Logs warnings for licenses expiring within 30 days
+- ✅ Returns user-friendly error messages
+
+**Components:**
+
+1. **ILicenseValidator Service** - Validates module licenses programmatically:
+
+```csharp
+// Inject ILicenseValidator
+private readonly ILicenseValidator _licenseValidator;
+
+// Validate a module's license
+var result = _licenseValidator.ValidateModuleLicense("CaseManagement");
+
+if (result.IsValid)
+{
+    // License is valid
+    Console.WriteLine($"License expires in {result.DaysUntilExpiry} days");
+}
+else
+{
+    // License is invalid, expired, or missing
+    Console.WriteLine($"License issue: {result.ValidationMessage}");
+}
+
+// Check specific license properties
+bool isLicensed = _licenseValidator.IsModuleLicensed("Laboratory");
+bool isExpired = _licenseValidator.IsLicenseExpired("HR");
+int? maxUsers = _licenseValidator.GetMaxUsers("Financial");
+```
+
+2. **LicenseValidationMiddleware** - Automatically validates licenses for module routes:
+
+```csharp
+// Registered in Program.cs
+app.UseLicenseValidation();
+```
+
+**Controller-to-Module Mapping:**
+
+The middleware automatically maps controllers to modules:
+- `Cases`, `CaseActivities`, `CaseNotes` → CaseManagement
+- `AudiologyVisits`, `Audiograms`, `HearingDevices` → Audiology
+- `Lab`, `LabOrders`, `LabResults` → Laboratory
+- `HR`, `Employees`, `Attendance` → HR
+- And so on...
+
+**Access Denial Behavior:**
+
+When a user tries to access a module without a valid license:
+
+```
+403 Forbidden
+Access denied: The Laboratory module license expired on 2024-12-01.
+Please contact your administrator to renew the license.
+```
+
+**Expiry Warnings:**
+
+The system logs warnings when licenses are expiring soon:
+
+```
+[Warning] Module 'Financial' license will expire in 15 days on 2025-01-15
+```
+
+**Skip Validation for:**
+- Static files (CSS, JS, images)
+- Authentication pages (/account/)
+- Home page
+- Module Management UI (so admins can always manage licenses)
+
+### Testing License Validation
+
+**Test Expired License:**
+1. Set `ExpiryDate` to a past date in appsettings.json
+2. Try to access the module
+3. Verify 403 Forbidden response
+
+**Test Unlicensed Module:**
+1. Remove or empty the `LicenseKey` in appsettings.json
+2. Try to access the module
+3. Verify "not licensed" error message
+
+**Test Valid License:**
+1. Configure valid license with future expiry date
+2. Access should be granted normally
 
 ## 📦 Module Packaging Options
 

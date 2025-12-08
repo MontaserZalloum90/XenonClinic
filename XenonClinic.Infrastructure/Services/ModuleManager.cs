@@ -12,10 +12,12 @@ public class ModuleManager : IModuleManager
     private readonly List<IModule> _modules = new();
     private readonly IConfiguration _configuration;
     private readonly HashSet<string> _enabledModules = new();
+    private readonly ILicenseValidator? _licenseValidator;
 
-    public ModuleManager(IConfiguration configuration)
+    public ModuleManager(IConfiguration configuration, ILicenseValidator? licenseValidator = null)
     {
         _configuration = configuration;
+        _licenseValidator = licenseValidator;
         LoadEnabledModules();
     }
 
@@ -79,7 +81,14 @@ public class ModuleManager : IModuleManager
     {
         var licenseSection = _configuration.GetSection($"Modules:Licenses:{module.Name}");
 
-        return new ModuleDescriptor
+        // Get license validation information
+        LicenseValidationResult? validationResult = null;
+        if (_licenseValidator != null)
+        {
+            validationResult = _licenseValidator.ValidateModuleLicense(module.Name);
+        }
+
+        var descriptor = new ModuleDescriptor
         {
             Name = module.Name,
             DisplayName = module.DisplayName,
@@ -97,5 +106,26 @@ public class ModuleManager : IModuleManager
                 ? DateTime.Parse(licenseSection["ExpiryDate"]!)
                 : null
         };
+
+        // Populate license validation fields
+        if (validationResult != null)
+        {
+            descriptor.IsLicensed = validationResult.IsLicensed;
+            descriptor.IsLicenseExpired = validationResult.IsExpired;
+            descriptor.IsLicenseValid = validationResult.IsValid;
+            descriptor.DaysUntilLicenseExpiry = validationResult.DaysUntilExpiry;
+            descriptor.MaxUsers = validationResult.MaxUsers;
+        }
+        else
+        {
+            // Fallback if validator is not available
+            descriptor.IsLicensed = !string.IsNullOrEmpty(descriptor.LicenseKey);
+            descriptor.IsLicenseExpired = false;
+            descriptor.IsLicenseValid = descriptor.IsLicensed;
+            descriptor.DaysUntilLicenseExpiry = null;
+            descriptor.MaxUsers = licenseSection.GetValue<int?>("MaxUsers");
+        }
+
+        return descriptor;
     }
 }
