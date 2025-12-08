@@ -75,6 +75,9 @@ builder.Services.AddScoped<IEmailService, EmailService>();
 // Case Management services
 builder.Services.AddScoped<ICaseService, CaseService>();
 
+// Theme services
+builder.Services.AddScoped<IThemeService, ThemeService>();
+
 // Configure localization
 builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
 

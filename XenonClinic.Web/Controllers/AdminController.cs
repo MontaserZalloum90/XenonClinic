@@ -19,6 +19,7 @@ public class AdminController : Controller
     private readonly ICompanyAuthConfigService _authConfigService;
     private readonly ISecretEncryptionService _encryptionService;
     private readonly IConfigurationResolverService _configResolver;
+    private readonly IThemeService _themeService;
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly RoleManager<IdentityRole> _roleManager;
     private readonly ClinicDbContext _context;
@@ -30,6 +31,7 @@ public class AdminController : Controller
         ICompanyAuthConfigService authConfigService,
         ISecretEncryptionService encryptionService,
         IConfigurationResolverService configResolver,
+        IThemeService themeService,
         UserManager<ApplicationUser> userManager,
         RoleManager<IdentityRole> roleManager,
         ClinicDbContext context)
@@ -40,6 +42,7 @@ public class AdminController : Controller
         _authConfigService = authConfigService;
         _encryptionService = encryptionService;
         _configResolver = configResolver;
+        _themeService = themeService;
         _userManager = userManager;
         _roleManager = roleManager;
         _context = context;
@@ -1681,5 +1684,222 @@ public class AdminController : Controller
             .ToListAsync();
 
         return Json(branches);
+    }
+
+    // ==================== Theme Color Management ====================
+
+    [Authorize(Roles = "SuperAdmin,TenantAdmin")]
+    public async Task<IActionResult> TenantTheme(int? tenantId)
+    {
+        int effectiveTenantId;
+
+        if (await _tenantService.IsSuperAdminAsync() && tenantId.HasValue)
+        {
+            effectiveTenantId = tenantId.Value;
+        }
+        else
+        {
+            var currentTenantId = await _tenantService.GetCurrentTenantIdAsync();
+            if (!currentTenantId.HasValue)
+            {
+                return Forbid();
+            }
+            effectiveTenantId = currentTenantId.Value;
+        }
+
+        var tenant = await _tenantService.GetTenantByIdAsync(effectiveTenantId);
+        if (tenant == null)
+        {
+            return NotFound();
+        }
+
+        var model = new TenantThemeViewModel
+        {
+            TenantId = effectiveTenantId,
+            TenantName = tenant.Name,
+            PrimaryColor = tenant.PrimaryColor ?? "#1F6FEB",
+            SecondaryColor = tenant.SecondaryColor ?? "#6B7280"
+        };
+
+        return View(model);
+    }
+
+    [Authorize(Roles = "SuperAdmin,TenantAdmin")]
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> TenantTheme(TenantThemeViewModel model)
+    {
+        if (!ModelState.IsValid)
+        {
+            var tenant = await _tenantService.GetTenantByIdAsync(model.TenantId);
+            model.TenantName = tenant?.Name ?? "";
+            return View(model);
+        }
+
+        await _themeService.UpdateTenantThemeColorsAsync(model.TenantId, model.PrimaryColor, model.SecondaryColor);
+        TempData["Success"] = "Tenant theme colors updated successfully.";
+
+        return RedirectToAction(nameof(TenantTheme), new { tenantId = model.TenantId });
+    }
+
+    [Authorize(Roles = "SuperAdmin,TenantAdmin,CompanyAdmin")]
+    public async Task<IActionResult> CompanyTheme(int companyId)
+    {
+        if (!await _companyService.HasAccessToCompanyAsync(companyId))
+        {
+            return Forbid();
+        }
+
+        var company = await _context.Companies
+            .Include(c => c.Tenant)
+            .FirstOrDefaultAsync(c => c.Id == companyId);
+
+        if (company == null)
+        {
+            return NotFound();
+        }
+
+        var themeColors = await _themeService.GetCompanyThemeColorsAsync(companyId);
+
+        var model = new CompanyThemeViewModel
+        {
+            CompanyId = companyId,
+            CompanyName = company.Name,
+            TenantName = company.Tenant?.Name ?? "",
+            PrimaryColor = !string.IsNullOrEmpty(company.PrimaryColor) ? company.PrimaryColor : null,
+            SecondaryColor = !string.IsNullOrEmpty(company.SecondaryColor) ? company.SecondaryColor : null,
+            UseTenantTheme = string.IsNullOrEmpty(company.PrimaryColor) || string.IsNullOrEmpty(company.SecondaryColor),
+            TenantPrimaryColor = company.Tenant?.PrimaryColor ?? "#1F6FEB",
+            TenantSecondaryColor = company.Tenant?.SecondaryColor ?? "#6B7280",
+            EffectivePrimaryColor = themeColors.PrimaryColor,
+            EffectiveSecondaryColor = themeColors.SecondaryColor,
+            ColorSource = themeColors.Source
+        };
+
+        return View(model);
+    }
+
+    [Authorize(Roles = "SuperAdmin,TenantAdmin,CompanyAdmin")]
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> CompanyTheme(CompanyThemeViewModel model)
+    {
+        if (!await _companyService.HasAccessToCompanyAsync(model.CompanyId))
+        {
+            return Forbid();
+        }
+
+        if (!ModelState.IsValid)
+        {
+            var company = await _companyService.GetCompanyByIdAsync(model.CompanyId);
+            model.CompanyName = company?.Name ?? "";
+            return View(model);
+        }
+
+        if (model.UseTenantTheme)
+        {
+            // Reset to use tenant theme
+            await _themeService.ResetCompanyThemeColorsAsync(model.CompanyId);
+        }
+        else
+        {
+            // Use custom colors
+            if (string.IsNullOrEmpty(model.PrimaryColor) || string.IsNullOrEmpty(model.SecondaryColor))
+            {
+                ModelState.AddModelError("", "Both primary and secondary colors are required for custom theme.");
+                var company = await _companyService.GetCompanyByIdAsync(model.CompanyId);
+                model.CompanyName = company?.Name ?? "";
+                return View(model);
+            }
+
+            await _themeService.UpdateCompanyThemeColorsAsync(model.CompanyId, model.PrimaryColor, model.SecondaryColor);
+        }
+
+        TempData["Success"] = "Company theme colors updated successfully.";
+        return RedirectToAction(nameof(CompanyTheme), new { companyId = model.CompanyId });
+    }
+
+    [Authorize(Roles = "SuperAdmin,TenantAdmin,CompanyAdmin")]
+    public async Task<IActionResult> BranchTheme(int branchId)
+    {
+        var branch = await _context.Branches
+            .Include(b => b.Company)
+                .ThenInclude(c => c.Tenant)
+            .FirstOrDefaultAsync(b => b.Id == branchId);
+
+        if (branch == null)
+        {
+            return NotFound();
+        }
+
+        if (!await _companyService.HasAccessToCompanyAsync(branch.CompanyId))
+        {
+            return Forbid();
+        }
+
+        var themeColors = await _themeService.GetBranchThemeColorsAsync(branchId);
+        var inheritedColors = await _themeService.GetCompanyThemeColorsAsync(branch.CompanyId);
+
+        var model = new BranchThemeViewModel
+        {
+            BranchId = branchId,
+            BranchName = branch.Name,
+            CompanyName = branch.Company.Name,
+            TenantName = branch.Company.Tenant?.Name ?? "",
+            PrimaryColor = !string.IsNullOrEmpty(branch.PrimaryColor) ? branch.PrimaryColor : null,
+            SecondaryColor = !string.IsNullOrEmpty(branch.SecondaryColor) ? branch.SecondaryColor : null,
+            UseInheritedTheme = string.IsNullOrEmpty(branch.PrimaryColor) || string.IsNullOrEmpty(branch.SecondaryColor),
+            InheritedPrimaryColor = inheritedColors.PrimaryColor,
+            InheritedSecondaryColor = inheritedColors.SecondaryColor,
+            EffectivePrimaryColor = themeColors.PrimaryColor,
+            EffectiveSecondaryColor = themeColors.SecondaryColor,
+            ColorSource = themeColors.Source
+        };
+
+        return View(model);
+    }
+
+    [Authorize(Roles = "SuperAdmin,TenantAdmin,CompanyAdmin")]
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> BranchTheme(BranchThemeViewModel model)
+    {
+        var branch = await _context.Branches.FindAsync(model.BranchId);
+        if (branch == null)
+        {
+            return NotFound();
+        }
+
+        if (!await _companyService.HasAccessToCompanyAsync(branch.CompanyId))
+        {
+            return Forbid();
+        }
+
+        if (!ModelState.IsValid)
+        {
+            model.BranchName = branch.Name;
+            return View(model);
+        }
+
+        if (model.UseInheritedTheme)
+        {
+            // Reset to use inherited theme
+            await _themeService.ResetBranchThemeColorsAsync(model.BranchId);
+        }
+        else
+        {
+            // Use custom colors
+            if (string.IsNullOrEmpty(model.PrimaryColor) || string.IsNullOrEmpty(model.SecondaryColor))
+            {
+                ModelState.AddModelError("", "Both primary and secondary colors are required for custom theme.");
+                model.BranchName = branch.Name;
+                return View(model);
+            }
+
+            await _themeService.UpdateBranchThemeColorsAsync(model.BranchId, model.PrimaryColor, model.SecondaryColor);
+        }
+
+        TempData["Success"] = "Branch theme colors updated successfully.";
+        return RedirectToAction(nameof(BranchTheme), new { branchId = model.BranchId });
     }
 }
