@@ -149,6 +149,16 @@
                     <i class="bi bi-receipt"></i> @Localizer["Invoices"] <span class="badge bg-warning">@Model.Invoices.Count</span>
                 </button>
             </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="medical-history-tab" data-bs-toggle="tab" data-bs-target="#medicalHistory" type="button" role="tab">
+                    <i class="bi bi-heart-pulse"></i> @Localizer["MedicalHistory"]
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="documents-tab" data-bs-toggle="tab" data-bs-target="#documents" type="button" role="tab">
+                    <i class="bi bi-file-earmark-text"></i> @Localizer["Documents"] <span class="badge bg-secondary">@Model.Documents.Count</span>
+                </button>
+            </li>
         </ul>
 
         <!-- Tab Content -->
@@ -320,9 +330,195 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Medical History Tab -->
+            <div class="tab-pane fade" id="medicalHistory" role="tabpanel">
+                <div class="card card-rounded">
+                    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0">@Localizer["MedicalHistory"]</h6>
+                        <a asp-action="MedicalHistory" asp-route-id="@Model.Id" class="btn btn-sm btn-primary">
+                            <i class="bi bi-pencil"></i> @Localizer["EditMedicalHistory"]
+                        </a>
+                    </div>
+                    <div class="card-body">
+                        @if (Model.MedicalHistory != null)
+                        {
+                            <div class="row g-3">
+                                @if (!string.IsNullOrEmpty(Model.MedicalHistory.ChronicConditions))
+                                {
+                                    <div class="col-md-6">
+                                        <label class="text-muted small fw-bold">@Localizer["ChronicConditions"]</label>
+                                        <p class="mb-0">@Model.MedicalHistory.ChronicConditions</p>
+                                    </div>
+                                }
+                                @if (!string.IsNullOrEmpty(Model.MedicalHistory.Allergies))
+                                {
+                                    <div class="col-md-6">
+                                        <label class="text-muted small fw-bold">@Localizer["Allergies"]</label>
+                                        <p class="mb-0">@Model.MedicalHistory.Allergies</p>
+                                        @if (!string.IsNullOrEmpty(Model.MedicalHistory.AllergyReactions))
+                                        {
+                                            <small class="text-muted">Reactions: @Model.MedicalHistory.AllergyReactions</small>
+                                        }
+                                    </div>
+                                }
+                                @if (!string.IsNullOrEmpty(Model.MedicalHistory.CurrentMedications))
+                                {
+                                    <div class="col-md-6">
+                                        <label class="text-muted small fw-bold">@Localizer["CurrentMedications"]</label>
+                                        <p class="mb-0">@Model.MedicalHistory.CurrentMedications</p>
+                                    </div>
+                                }
+                                @if (!string.IsNullOrEmpty(Model.MedicalHistory.PastMedicalHistory))
+                                {
+                                    <div class="col-md-6">
+                                        <label class="text-muted small fw-bold">@Localizer["PastMedicalHistory"]</label>
+                                        <p class="mb-0">@Model.MedicalHistory.PastMedicalHistory</p>
+                                    </div>
+                                }
+                                @if (!string.IsNullOrEmpty(Model.MedicalHistory.SurgicalHistory))
+                                {
+                                    <div class="col-md-6">
+                                        <label class="text-muted small fw-bold">@Localizer["SurgicalHistory"]</label>
+                                        <p class="mb-0">@Model.MedicalHistory.SurgicalHistory</p>
+                                    </div>
+                                }
+                                @if (!string.IsNullOrEmpty(Model.MedicalHistory.FamilyHistory))
+                                {
+                                    <div class="col-md-6">
+                                        <label class="text-muted small fw-bold">@Localizer["FamilyHistory"]</label>
+                                        <p class="mb-0">@Model.MedicalHistory.FamilyHistory</p>
+                                    </div>
+                                }
+                                @if (Model.MedicalHistory.IsSmoker || Model.MedicalHistory.ConsumesAlcohol)
+                                {
+                                    <div class="col-md-6">
+                                        <label class="text-muted small fw-bold">@Localizer["SocialHistory"]</label>
+                                        <p class="mb-0">
+                                            @if (Model.MedicalHistory.IsSmoker)
+                                            {
+                                                <span class="badge bg-warning me-1">Smoker</span>
+                                            }
+                                            @if (Model.MedicalHistory.ConsumesAlcohol)
+                                            {
+                                                <span class="badge bg-warning">Consumes Alcohol</span>
+                                            }
+                                        </p>
+                                    </div>
+                                }
+                                @if (!string.IsNullOrEmpty(Model.MedicalHistory.NoiseExposureHistory))
+                                {
+                                    <div class="col-md-6">
+                                        <label class="text-muted small fw-bold">@Localizer["NoiseExposureHistory"]</label>
+                                        <p class="mb-0">@Model.MedicalHistory.NoiseExposureHistory</p>
+                                    </div>
+                                }
+                                @if (!string.IsNullOrEmpty(Model.MedicalHistory.TinnitusHistory))
+                                {
+                                    <div class="col-md-6">
+                                        <label class="text-muted small fw-bold">@Localizer["TinnitusHistory"]</label>
+                                        <p class="mb-0">@Model.MedicalHistory.TinnitusHistory</p>
+                                    </div>
+                                }
+                                @if (!string.IsNullOrEmpty(Model.MedicalHistory.AdditionalNotes))
+                                {
+                                    <div class="col-12">
+                                        <label class="text-muted small fw-bold">@Localizer["AdditionalNotes"]</label>
+                                        <p class="mb-0">@Model.MedicalHistory.AdditionalNotes</p>
+                                    </div>
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            <p class="text-muted text-center py-4 mb-0">
+                                @Localizer["NoMedicalHistoryAvailable"]
+                                <br />
+                                <a asp-action="MedicalHistory" asp-route-id="@Model.Id" class="btn btn-sm btn-primary mt-2">
+                                    <i class="bi bi-plus-lg"></i> @Localizer["AddMedicalHistory"]
+                                </a>
+                            </p>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Documents Tab -->
+            <div class="tab-pane fade" id="documents" role="tabpanel">
+                <div class="card card-rounded">
+                    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0">@Localizer["Documents"]</h6>
+                        <a asp-action="UploadDocument" asp-route-id="@Model.Id" class="btn btn-sm btn-primary">
+                            <i class="bi bi-upload"></i> @Localizer["UploadDocument"]
+                        </a>
+                    </div>
+                    <div class="card-body">
+                        @if (Model.Documents.Any())
+                        {
+                            <div class="table-responsive">
+                                <table class="table table-sm table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>@Localizer["DocumentName"]</th>
+                                            <th>@Localizer["Type"]</th>
+                                            <th>@Localizer["UploadDate"]</th>
+                                            <th>@Localizer["Size"]</th>
+                                            <th class="text-end">@Localizer["Actions"]</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var document in Model.Documents)
+                                        {
+                                            <tr>
+                                                <td>
+                                                    <i class="bi bi-file-earmark-pdf text-danger"></i>
+                                                    @document.DocumentName
+                                                    @if (!string.IsNullOrEmpty(document.Description))
+                                                    {
+                                                        <br /><small class="text-muted">@document.Description</small>
+                                                    }
+                                                </td>
+                                                <td><span class="badge bg-secondary">@document.DocumentType</span></td>
+                                                <td>@document.UploadDate.ToString("dd/MM/yyyy HH:mm")</td>
+                                                <td>@((document.FileSizeBytes / 1024.0).ToString("N0")) KB</td>
+                                                <td class="text-end">
+                                                    <div class="btn-group btn-group-sm">
+                                                        <a asp-action="DownloadDocument" asp-route-id="@document.Id" class="btn btn-outline-primary" title="@Localizer["Download"]">
+                                                            <i class="bi bi-download"></i>
+                                                        </a>
+                                                        <button type="button" class="btn btn-outline-danger" onclick="confirmDeleteDocument(@document.Id)" title="@Localizer["Delete"]">
+                                                            <i class="bi bi-trash"></i>
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                        else
+                        {
+                            <p class="text-muted text-center py-4 mb-0">
+                                @Localizer["NoDocumentsAvailable"]
+                                <br />
+                                <a asp-action="UploadDocument" asp-route-id="@Model.Id" class="btn btn-sm btn-primary mt-2">
+                                    <i class="bi bi-upload"></i> @Localizer["UploadDocument"]
+                                </a>
+                            </p>
+                        }
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
+
+<!-- Delete Document Form (Hidden) -->
+<form id="deleteDocumentForm" asp-action="DeleteDocument" method="post" style="display:none;">
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="id" id="deleteDocumentId" />
+</form>
 
 <!-- Delete Confirmation Modal -->
 <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
@@ -348,3 +544,14 @@
         </div>
     </div>
 </div>
+
+@section Scripts {
+<script>
+    function confirmDeleteDocument(documentId) {
+        if (confirm('@Localizer["ConfirmDeleteDocument"]')) {
+            document.getElementById('deleteDocumentId').value = documentId;
+            document.getElementById('deleteDocumentForm').submit();
+        }
+    }
+</script>
+}
