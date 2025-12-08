@@ -1,12 +1,21 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { appointmentsApi } from '../../lib/api';
-import { Appointment, AppointmentStatus } from '../../types/appointment';
+import type { Appointment } from '../../types/appointment';
+import { AppointmentStatus } from '../../types/appointment';
 import { StatusBadge } from '../../components/ui/StatusBadge';
+import { Modal } from '../../components/ui/Modal';
+import { AppointmentForm } from '../../components/AppointmentForm';
+import { Calendar } from '../../components/Calendar';
 import { format } from 'date-fns';
+
+type ViewMode = 'list' | 'calendar';
 
 export const AppointmentsList = () => {
   const [selectedDate, setSelectedDate] = useState<string>('');
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedAppointment, setSelectedAppointment] = useState<Appointment | undefined>(undefined);
+  const [viewMode, setViewMode] = useState<ViewMode>('list');
   const queryClient = useQueryClient();
 
   // Fetch appointments
@@ -56,6 +65,36 @@ export const AppointmentsList = () => {
     },
   });
 
+  // Modal handlers
+  const handleOpenCreateModal = () => {
+    setSelectedAppointment(undefined);
+    setIsModalOpen(true);
+  };
+
+  const handleOpenEditModal = (appointment: Appointment) => {
+    setSelectedAppointment(appointment);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedAppointment(undefined);
+  };
+
+  const handleFormSuccess = () => {
+    handleCloseModal();
+  };
+
+  const handleAppointmentClick = (appointment: Appointment) => {
+    handleOpenEditModal(appointment);
+  };
+
+  const handleDateClick = (date: Date) => {
+    // When clicking a date in calendar, switch to list view filtered by that date
+    setSelectedDate(format(date, 'yyyy-MM-dd'));
+    setViewMode('list');
+  };
+
   const formatDateTime = (dateString: string) => {
     try {
       return format(new Date(dateString), 'MMM dd, yyyy HH:mm');
@@ -88,12 +127,47 @@ export const AppointmentsList = () => {
           <h1 className="text-2xl font-bold text-gray-900">Appointments</h1>
           <p className="text-gray-600 mt-1">Manage patient appointments and schedules</p>
         </div>
-        <button className="btn btn-primary">
-          <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
-          New Appointment
-        </button>
+        <div className="flex items-center gap-3">
+          {/* View Toggle */}
+          <div className="flex bg-gray-100 rounded-lg p-1">
+            <button
+              onClick={() => setViewMode('list')}
+              className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                viewMode === 'list'
+                  ? 'bg-white text-gray-900 shadow-sm'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              <div className="flex items-center">
+                <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                </svg>
+                List
+              </div>
+            </button>
+            <button
+              onClick={() => setViewMode('calendar')}
+              className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                viewMode === 'calendar'
+                  ? 'bg-white text-gray-900 shadow-sm'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              <div className="flex items-center">
+                <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                Calendar
+              </div>
+            </button>
+          </div>
+          <button onClick={handleOpenCreateModal} className="btn btn-primary">
+            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            New Appointment
+          </button>
+        </div>
       </div>
 
       {/* Filters */}
@@ -145,15 +219,22 @@ export const AppointmentsList = () => {
         </div>
       </div>
 
-      {/* Table */}
-      <div className="card overflow-hidden p-0">
-        {isLoading ? (
-          <div className="p-8 text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto"></div>
-            <p className="text-gray-600 mt-2">Loading appointments...</p>
-          </div>
-        ) : appointments && appointments.length > 0 ? (
-          <div className="overflow-x-auto">
+      {/* Calendar or Table View */}
+      {viewMode === 'calendar' ? (
+        <Calendar
+          appointments={appointments || []}
+          onAppointmentClick={handleAppointmentClick}
+          onDateClick={handleDateClick}
+        />
+      ) : (
+        <div className="card overflow-hidden p-0">
+          {isLoading ? (
+            <div className="p-8 text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto"></div>
+              <p className="text-gray-600 mt-2">Loading appointments...</p>
+            </div>
+          ) : appointments && appointments.length > 0 ? (
+            <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
@@ -199,6 +280,25 @@ export const AppointmentsList = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       <div className="flex items-center gap-2">
+                        {/* Edit button - available for non-completed/cancelled appointments */}
+                        {(appointment.status !== AppointmentStatus.Completed &&
+                          appointment.status !== AppointmentStatus.Cancelled &&
+                          appointment.status !== AppointmentStatus.NoShow) && (
+                          <button
+                            onClick={() => handleOpenEditModal(appointment)}
+                            className="text-gray-600 hover:text-gray-900"
+                            title="Edit appointment"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                              />
+                            </svg>
+                          </button>
+                        )}
                         {appointment.status === AppointmentStatus.Booked && (
                           <button
                             onClick={() => confirmMutation.mutate(appointment.id)}
@@ -262,7 +362,22 @@ export const AppointmentsList = () => {
             <p className="mt-1 text-sm text-gray-500">Get started by creating a new appointment.</p>
           </div>
         )}
-      </div>
+        </div>
+      )}
+
+      {/* Create/Edit Modal */}
+      <Modal
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        title={selectedAppointment ? 'Edit Appointment' : 'New Appointment'}
+        size="lg"
+      >
+        <AppointmentForm
+          appointment={selectedAppointment}
+          onSuccess={handleFormSuccess}
+          onCancel={handleCloseModal}
+        />
+      </Modal>
     </div>
   );
 };

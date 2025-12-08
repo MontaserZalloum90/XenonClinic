@@ -1,20 +1,24 @@
 // Appointment Types matching backend entities
 
-export enum AppointmentStatus {
-  Booked = 0,
-  Confirmed = 1,
-  CheckedIn = 2,
-  Completed = 3,
-  Cancelled = 4,
-  NoShow = 5,
-}
+export const AppointmentStatus = {
+  Booked: 0,
+  Confirmed: 1,
+  CheckedIn: 2,
+  Completed: 3,
+  Cancelled: 4,
+  NoShow: 5,
+} as const;
 
-export enum AppointmentType {
-  Consultation = 0,
-  FollowUp = 1,
-  Procedure = 2,
-  Emergency = 3,
-}
+export type AppointmentStatus = typeof AppointmentStatus[keyof typeof AppointmentStatus];
+
+export const AppointmentType = {
+  Consultation: 0,
+  FollowUp: 1,
+  Procedure: 2,
+  Emergency: 3,
+} as const;
+
+export type AppointmentType = typeof AppointmentType[keyof typeof AppointmentType];
 
 export interface Appointment {
   id: number;

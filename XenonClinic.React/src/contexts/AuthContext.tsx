@@ -1,5 +1,6 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { User, LoginRequest, AuthState } from '../types/auth';
+import { createContext, useContext, useState, useEffect } from 'react';
+import type { ReactNode } from 'react';
+import type { User, LoginRequest, AuthState } from '../types/auth';
 import { authApi } from '../lib/api';
 import { AxiosError } from 'axios';
 
