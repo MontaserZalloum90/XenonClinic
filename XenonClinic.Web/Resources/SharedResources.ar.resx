@@ -212,4 +212,228 @@
   <data name="Status">
     <value>الحالة</value>
   </data>
+
+  <!-- Inventory Module -->
+  <data name="Inventory">
+    <value>المخزون</value>
+  </data>
+  <data name="InventoryItems">
+    <value>عناصر المخزون</value>
+  </data>
+  <data name="InventoryTransactions">
+    <value>حركات المخزون</value>
+  </data>
+  <data name="NewItem">
+    <value>صنف جديد</value>
+  </data>
+  <data name="NewInventoryItem">
+    <value>صنف مخزون جديد</value>
+  </data>
+  <data name="EditItem">
+    <value>تعديل الصنف</value>
+  </data>
+  <data name="EditInventoryItem">
+    <value>تعديل صنف المخزون</value>
+  </data>
+  <data name="NewTransaction">
+    <value>حركة جديدة</value>
+  </data>
+  <data name="NewInventoryTransaction">
+    <value>حركة مخزون جديدة</value>
+  </data>
+  <data name="ItemCode">
+    <value>رمز الصنف</value>
+  </data>
+  <data name="Description">
+    <value>الوصف</value>
+  </data>
+  <data name="Supplier">
+    <value>المورد</value>
+  </data>
+  <data name="Stock">
+    <value>الكمية</value>
+  </data>
+  <data name="CostPrice">
+    <value>سعر التكلفة</value>
+  </data>
+  <data name="SellingPrice">
+    <value>سعر البيع</value>
+  </data>
+  <data name="Reorder">
+    <value>إعادة الطلب</value>
+  </data>
+  <data name="ReorderLevel">
+    <value>مستوى إعادة الطلب</value>
+  </data>
+  <data name="MaxStockLevel">
+    <value>الحد الأقصى للمخزون</value>
+  </data>
+  <data name="InitialQuantity">
+    <value>الكمية الأولية</value>
+  </data>
+  <data name="CurrentQuantity">
+    <value>الكمية الحالية</value>
+  </data>
+  <data name="SupplierPartNumber">
+    <value>رقم القطعة للمورد</value>
+  </data>
+  <data name="Barcode">
+    <value>الباركود</value>
+  </data>
+  <data name="Location">
+    <value>الموقع</value>
+  </data>
+  <data name="ExpiryDate">
+    <value>تاريخ الانتهاء</value>
+  </data>
+  <data name="IsActive">
+    <value>نشط</value>
+  </data>
+  <data name="TotalItems">
+    <value>إجمالي الأصناف</value>
+  </data>
+  <data name="LowStockItems">
+    <value>أصناف قليلة المخزون</value>
+  </data>
+  <data name="OutOfStockItems">
+    <value>أصناف نفذت من المخزون</value>
+  </data>
+  <data name="TotalValue">
+    <value>القيمة الإجمالية</value>
+  </data>
+  <data name="LowStockAlerts">
+    <value>تنبيهات قلة المخزون</value>
+  </data>
+  <data name="RecentTransactions">
+    <value>الحركات الأخيرة</value>
+  </data>
+  <data name="RecentlyAdded">
+    <value>المضافة حديثاً</value>
+  </data>
+  <data name="ViewAll">
+    <value>عرض الكل</value>
+  </data>
+  <data name="NoLowStockItems">
+    <value>لا توجد أصناف قليلة المخزون</value>
+  </data>
+  <data name="NoTransactions">
+    <value>لا توجد حركات</value>
+  </data>
+  <data name="NoItems">
+    <value>لا توجد أصناف</value>
+  </data>
+  <data name="items">
+    <value>أصناف</value>
+  </data>
+  <data name="transactions">
+    <value>حركات</value>
+  </data>
+  <data name="AllCategories">
+    <value>جميع الفئات</value>
+  </data>
+  <data name="SearchByItemCodeOrName">
+    <value>البحث برمز الصنف أو الاسم</value>
+  </data>
+  <data name="Filter">
+    <value>تصفية</value>
+  </data>
+  <data name="OutOfStock">
+    <value>نفذ من المخزون</value>
+  </data>
+  <data name="LowStock">
+    <value>مخزون قليل</value>
+  </data>
+  <data name="Transaction">
+    <value>حركة</value>
+  </data>
+  <data name="History">
+    <value>السجل</value>
+  </data>
+  <data name="NoItemsFound">
+    <value>لم يتم العثور على أصناف</value>
+  </data>
+  <data name="SelectBranch">
+    <value>اختر الفرع</value>
+  </data>
+  <data name="SelectSupplier">
+    <value>اختر المورد</value>
+  </data>
+  <data name="BranchCannotBeChanged">
+    <value>لا يمكن تغيير الفرع</value>
+  </data>
+  <data name="UseTransactionsToChangeStock">
+    <value>استخدم الحركات لتغيير المخزون</value>
+  </data>
+  <data name="InventoryItem">
+    <value>صنف المخزون</value>
+  </data>
+  <data name="SelectItem">
+    <value>اختر الصنف</value>
+  </data>
+  <data name="TransactionType">
+    <value>نوع الحركة</value>
+  </data>
+  <data name="TransactionDate">
+    <value>تاريخ الحركة</value>
+  </data>
+  <data name="Quantity">
+    <value>الكمية</value>
+  </data>
+  <data name="QuantityHelp">
+    <value>للمبيعات والتحويلات، سيتم تقليل المخزون</value>
+  </data>
+  <data name="UnitPrice">
+    <value>سعر الوحدة</value>
+  </data>
+  <data name="ReferenceNumber">
+    <value>رقم المرجع</value>
+  </data>
+  <data name="InvoiceOrPONumber">
+    <value>رقم الفاتورة أو أمر الشراء</value>
+  </data>
+  <data name="SelectPatient">
+    <value>اختر المريض</value>
+  </data>
+  <data name="RequiredForSaleOrReturn">
+    <value>مطلوب لحركات البيع أو الإرجاع</value>
+  </data>
+  <data name="TransferToBranch">
+    <value>تحويل إلى الفرع</value>
+  </data>
+  <data name="RequiredForTransfer">
+    <value>مطلوب لحركات التحويل</value>
+  </data>
+  <data name="FromDate">
+    <value>من تاريخ</value>
+  </data>
+  <data name="ToDate">
+    <value>إلى تاريخ</value>
+  </data>
+  <data name="Date">
+    <value>التاريخ</value>
+  </data>
+  <data name="Item">
+    <value>الصنف</value>
+  </data>
+  <data name="Qty">
+    <value>الكمية</value>
+  </data>
+  <data name="Total">
+    <value>الإجمالي</value>
+  </data>
+  <data name="AfterQty">
+    <value>الكمية بعد</value>
+  </data>
+  <data name="Reference">
+    <value>المرجع</value>
+  </data>
+  <data name="TransferTo">
+    <value>تحويل إلى</value>
+  </data>
+  <data name="By">
+    <value>بواسطة</value>
+  </data>
+  <data name="NoTransactionsFound">
+    <value>لم يتم العثور على حركات</value>
+  </data>
 </root>

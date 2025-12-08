@@ -19,6 +19,9 @@ public class ClinicDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<Audiogram> Audiograms => Set<Audiogram>();
     public DbSet<HearingDevice> HearingDevices => Set<HearingDevice>();
     public DbSet<Invoice> Invoices => Set<Invoice>();
+    public DbSet<Supplier> Suppliers => Set<Supplier>();
+    public DbSet<InventoryItem> InventoryItems => Set<InventoryItem>();
+    public DbSet<InventoryTransaction> InventoryTransactions => Set<InventoryTransaction>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -130,5 +133,82 @@ public class ClinicDbContext : IdentityDbContext<ApplicationUser>
             .HasOne(i => i.Branch)
             .WithMany(b => b.Invoices)
             .HasForeignKey(i => i.BranchId);
+
+        // Supplier configuration
+        builder.Entity<Supplier>()
+            .HasIndex(s => s.Name);
+
+        // InventoryItem configuration
+        builder.Entity<InventoryItem>()
+            .HasIndex(i => i.ItemCode)
+            .IsUnique();
+
+        builder.Entity<InventoryItem>()
+            .HasIndex(i => i.Name);
+
+        builder.Entity<InventoryItem>()
+            .HasIndex(i => i.BranchId);
+
+        builder.Entity<InventoryItem>()
+            .HasIndex(i => i.Category);
+
+        builder.Entity<InventoryItem>()
+            .HasIndex(i => new { i.BranchId, i.Category });
+
+        builder.Entity<InventoryItem>()
+            .HasOne(i => i.Branch)
+            .WithMany()
+            .HasForeignKey(i => i.BranchId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<InventoryItem>()
+            .HasOne(i => i.Supplier)
+            .WithMany(s => s.InventoryItems)
+            .HasForeignKey(i => i.SupplierId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        builder.Entity<InventoryItem>()
+            .Property(i => i.CostPrice)
+            .HasPrecision(18, 2);
+
+        builder.Entity<InventoryItem>()
+            .Property(i => i.SellingPrice)
+            .HasPrecision(18, 2);
+
+        // InventoryTransaction configuration
+        builder.Entity<InventoryTransaction>()
+            .HasIndex(t => t.TransactionDate);
+
+        builder.Entity<InventoryTransaction>()
+            .HasIndex(t => t.InventoryItemId);
+
+        builder.Entity<InventoryTransaction>()
+            .HasIndex(t => new { t.InventoryItemId, t.TransactionDate });
+
+        builder.Entity<InventoryTransaction>()
+            .HasOne(t => t.InventoryItem)
+            .WithMany(i => i.Transactions)
+            .HasForeignKey(t => t.InventoryItemId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<InventoryTransaction>()
+            .HasOne(t => t.Patient)
+            .WithMany()
+            .HasForeignKey(t => t.PatientId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        builder.Entity<InventoryTransaction>()
+            .HasOne(t => t.TransferToBranch)
+            .WithMany()
+            .HasForeignKey(t => t.TransferToBranchId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        builder.Entity<InventoryTransaction>()
+            .Property(t => t.UnitPrice)
+            .HasPrecision(18, 2);
+
+        builder.Entity<InventoryTransaction>()
+            .Property(t => t.TotalAmount)
+            .HasPrecision(18, 2);
     }
 }
