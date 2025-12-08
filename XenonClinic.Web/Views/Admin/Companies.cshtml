@@ -79,6 +79,12 @@
                                     <a asp-action="Branches" asp-route-companyId="@company.Id" class="btn btn-outline-secondary" title="@Localizer["Branches"]">
                                         <i class="bi bi-geo-alt"></i>
                                     </a>
+                                    <a asp-action="CompanyTheme" asp-route-companyId="@company.Id" class="btn btn-outline-info" title="@Localizer["ThemeColors"]">
+                                        <i class="bi bi-palette"></i>
+                                    </a>
+                                    <a asp-action="CompanyCommunicationSettings" asp-route-companyId="@company.Id" class="btn btn-outline-success" title="@Localizer["CommunicationSettings"]">
+                                        <i class="bi bi-envelope"></i>
+                                    </a>
                                 </div>
                             </td>
                         </tr>
