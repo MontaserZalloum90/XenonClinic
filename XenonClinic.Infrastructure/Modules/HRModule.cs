@@ -5,6 +5,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using XenonClinic.Core.Abstractions;
 using XenonClinic.Core.Constants;
+using XenonClinic.Core.Interfaces;
+using XenonClinic.Infrastructure.Services;
 
 namespace XenonClinic.Infrastructure.Modules;
 
@@ -24,9 +26,7 @@ public class HRModule : ModuleBase
     public override void ConfigureServices(IServiceCollection services, IConfiguration configuration)
     {
         // Register HR services
-        // services.AddScoped<IEmployeeService, EmployeeService>();
-        // services.AddScoped<IAttendanceService, AttendanceService>();
-        // services.AddScoped<ILeaveService, LeaveService>();
+        services.AddScoped<IHRService, HRService>();
         Console.WriteLine($"[Module] {DisplayName} v{Version} - Services registered");
     }
 
