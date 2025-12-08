@@ -1465,4 +1465,242 @@
   <data name="SpecimenType_Other">
     <value>أخرى</value>
   </data>
+  <!-- Finance Module -->
+  <data name="Finance_Dashboard">
+    <value>لوحة المعلومات المالية</value>
+  </data>
+  <data name="Chart_of_Accounts">
+    <value>دليل الحسابات</value>
+  </data>
+  <data name="Account_Code">
+    <value>رمز الحساب</value>
+  </data>
+  <data name="Account_Name">
+    <value>اسم الحساب</value>
+  </data>
+  <data name="Account_Type">
+    <value>نوع الحساب</value>
+  </data>
+  <data name="Parent_Account">
+    <value>الحساب الأساسي</value>
+  </data>
+  <data name="Opening_Balance">
+    <value>الرصيد الافتتاحي</value>
+  </data>
+  <data name="New_Account">
+    <value>حساب جديد</value>
+  </data>
+  <data name="Create_First_Account">
+    <value>إنشاء أول حساب</value>
+  </data>
+  <data name="Get_Started_Create_Account">
+    <value>ابدأ بإنشاء أول حساب</value>
+  </data>
+  <data name="No_Accounts_Found">
+    <value>لا توجد حسابات</value>
+  </data>
+  <data name="Sub_Accounts">
+    <value>الحسابات الفرعية</value>
+  </data>
+  <data name="AccountType_Asset">
+    <value>أصول</value>
+  </data>
+  <data name="AccountType_Liability">
+    <value>خصوم</value>
+  </data>
+  <data name="AccountType_Equity">
+    <value>حقوق ملكية</value>
+  </data>
+  <data name="AccountType_Revenue">
+    <value>إيرادات</value>
+  </data>
+  <data name="AccountType_Expense">
+    <value>مصروفات</value>
+  </data>
+  <data name="Total_Assets">
+    <value>إجمالي الأصول</value>
+  </data>
+  <data name="Total_Liabilities">
+    <value>إجمالي الخصوم</value>
+  </data>
+  <data name="Total_Equity">
+    <value>إجمالي حقوق الملكية</value>
+  </data>
+  <data name="Total_Revenue">
+    <value>إجمالي الإيرادات</value>
+  </data>
+  <data name="Total_Expenses">
+    <value>إجمالي المصروفات</value>
+  </data>
+  <data name="Net_Profit">
+    <value>صافي الربح</value>
+  </data>
+  <data name="Monthly_Revenue">
+    <value>الإيرادات الشهرية</value>
+  </data>
+  <data name="Monthly_Expenses">
+    <value>المصروفات الشهرية</value>
+  </data>
+  <data name="Expense_Categories">
+    <value>فئات المصروفات</value>
+  </data>
+  <data name="Category_Name">
+    <value>اسم الفئة</value>
+  </data>
+  <data name="New_Category">
+    <value>فئة جديدة</value>
+  </data>
+  <data name="Create_First_Category">
+    <value>إنشاء أول فئة</value>
+  </data>
+  <data name="Get_Started_Create_Category">
+    <value>ابدأ بإنشاء أول فئة مصروفات</value>
+  </data>
+  <data name="No_Categories_Found">
+    <value>لا توجد فئات</value>
+  </data>
+  <data name="Expense_Count">
+    <value>عدد المصروفات</value>
+  </data>
+  <data name="Expenses">
+    <value>المصروفات</value>
+  </data>
+  <data name="All_Expenses">
+    <value>جميع المصروفات</value>
+  </data>
+  <data name="Pending_Expenses">
+    <value>المصروفات المعلقة</value>
+  </data>
+  <data name="No_Pending_Expenses">
+    <value>لا توجد مصروفات معلقة</value>
+  </data>
+  <data name="Pending_Count">
+    <value>عدد المعلقة</value>
+  </data>
+  <data name="Expense_Number">
+    <value>رقم المصروف</value>
+  </data>
+  <data name="Expense_Date">
+    <value>تاريخ المصروف</value>
+  </data>
+  <data name="Expense_Category">
+    <value>فئة المصروف</value>
+  </data>
+  <data name="New_Expense">
+    <value>مصروف جديد</value>
+  </data>
+  <data name="No_Expenses_Found">
+    <value>لا توجد مصروفات</value>
+  </data>
+  <data name="Confirm_Approve_Expense">
+    <value>هل أنت متأكد من الموافقة على هذا المصروف؟</value>
+  </data>
+  <data name="Confirm_Pay_Expense">
+    <value>هل أنت متأكد من تسجيل هذا المصروف كمدفوع؟</value>
+  </data>
+  <data name="Approve">
+    <value>موافقة</value>
+  </data>
+  <data name="Pay">
+    <value>دفع</value>
+  </data>
+  <data name="Vendor">
+    <value>المورد</value>
+  </data>
+  <data name="Invoice_Number">
+    <value>رقم الفاتورة</value>
+  </data>
+  <data name="Invoice_Date">
+    <value>تاريخ الفاتورة</value>
+  </data>
+  <data name="Reference_Number">
+    <value>الرقم المرجعي</value>
+  </data>
+  <data name="Payment_Date">
+    <value>تاريخ الدفع</value>
+  </data>
+  <data name="ExpenseStatus_Pending">
+    <value>معلق</value>
+  </data>
+  <data name="ExpenseStatus_Approved">
+    <value>موافق عليه</value>
+  </data>
+  <data name="ExpenseStatus_Paid">
+    <value>مدفوع</value>
+  </data>
+  <data name="ExpenseStatus_Rejected">
+    <value>مرفوض</value>
+  </data>
+  <data name="Transactions">
+    <value>العمليات</value>
+  </data>
+  <data name="All_Transactions">
+    <value>جميع العمليات</value>
+  </data>
+  <data name="Recent_Transactions">
+    <value>العمليات الأخيرة</value>
+  </data>
+  <data name="Transaction_Number">
+    <value>رقم العملية</value>
+  </data>
+  <data name="Transaction_Date">
+    <value>تاريخ العملية</value>
+  </data>
+  <data name="Transaction_Type">
+    <value>نوع العملية</value>
+  </data>
+  <data name="New_Transaction">
+    <value>عملية جديدة</value>
+  </data>
+  <data name="No_Transactions_Found">
+    <value>لا توجد عمليات</value>
+  </data>
+  <data name="Get_Started_Create_Transaction">
+    <value>ابدأ بإنشاء أول عملية</value>
+  </data>
+  <data name="Create_First_Transaction">
+    <value>إنشاء أول عملية</value>
+  </data>
+  <data name="Manual_Entry">
+    <value>إدخال يدوي</value>
+  </data>
+  <data name="TransactionType_Debit">
+    <value>مدين</value>
+  </data>
+  <data name="TransactionType_Credit">
+    <value>دائن</value>
+  </data>
+  <data name="VoucherStatus_Draft">
+    <value>مسودة</value>
+  </data>
+  <data name="VoucherStatus_Approved">
+    <value>موافق عليه</value>
+  </data>
+  <data name="VoucherStatus_Posted">
+    <value>مرحل</value>
+  </data>
+  <data name="VoucherStatus_Cancelled">
+    <value>ملغى</value>
+  </data>
+  <data name="Quick_Actions">
+    <value>إجراءات سريعة</value>
+  </data>
+  <data name="Top_Expense_Categories">
+    <value>أعلى فئات المصروفات</value>
+  </data>
+  <data name="This_Month">
+    <value>هذا الشهر</value>
+  </data>
+  <data name="Percentage">
+    <value>النسبة المئوية</value>
+  </data>
+  <data name="Ref">
+    <value>مرجع</value>
+  </data>
+  <data name="By">
+    <value>بواسطة</value>
+  </data>
+  <data name="Finance">
+    <value>المالية</value>
+  </data>
 </root>
