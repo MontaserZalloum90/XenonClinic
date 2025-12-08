@@ -1,69 +1,70 @@
-@model IEnumerable<XenonClinic.Core.Entities.Appointment>
+@using Microsoft.AspNetCore.Mvc.Localization
+@inject IViewLocalizer Localizer
+@model XenonClinic.Web.Models.DashboardViewModel
 @{
-    ViewData["Title"] = "Dashboard";
-    var visits = ViewBag.VisitsSeries as IEnumerable<dynamic> ?? Enumerable.Empty<dynamic>();
+    ViewData["Title"] = Localizer["Dashboard"];
 }
 <div class="row g-3">
-    <div class="col-md-3">
+    <div class="col-md-3 col-sm-6">
         <div class="card card-rounded">
             <div class="card-body">
-                <div class="text-muted small">Appointments Today</div>
-                <div class="fs-3 fw-bold text-primary">@ViewBag.AppointmentsToday</div>
+                <div class="text-muted small">@Localizer["AppointmentsToday"]</div>
+                <div class="fs-3 fw-bold text-primary">@Model.AppointmentsToday</div>
             </div>
         </div>
     </div>
-    <div class="col-md-3">
+    <div class="col-md-3 col-sm-6">
         <div class="card card-rounded">
             <div class="card-body">
-                <div class="text-muted small">Active Patients</div>
-                <div class="fs-3 fw-bold text-success">@ViewBag.ActivePatients</div>
+                <div class="text-muted small">@Localizer["ActivePatients"]</div>
+                <div class="fs-3 fw-bold text-success">@Model.ActivePatients</div>
             </div>
         </div>
     </div>
-    <div class="col-md-3">
+    <div class="col-md-3 col-sm-6">
         <div class="card card-rounded">
             <div class="card-body">
-                <div class="text-muted small">Visits This Week</div>
-                <div class="fs-3 fw-bold text-info">@ViewBag.VisitsThisWeek</div>
+                <div class="text-muted small">@Localizer["VisitsThisWeek"]</div>
+                <div class="fs-3 fw-bold text-info">@Model.VisitsThisWeek</div>
             </div>
         </div>
     </div>
-    <div class="col-md-3">
+    <div class="col-md-3 col-sm-6">
         <div class="card card-rounded">
             <div class="card-body">
-                <div class="text-muted small">Revenue This Month</div>
-                <div class="fs-3 fw-bold text-warning">AED @ViewBag.RevenueThisMonth</div>
+                <div class="text-muted small">@Localizer["RevenueThisMonth"]</div>
+                <div class="fs-3 fw-bold text-warning">AED @Model.RevenueThisMonth.ToString("N2")</div>
             </div>
         </div>
     </div>
 </div>
 
 <div class="row g-3 mt-2">
-    <div class="col-lg-8">
+    <div class="col-lg-8 col-md-12">
         <div class="card card-rounded">
             <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center mb-2">
-                    <h5 class="mb-0">Upcoming Appointments</h5>
-                    <a class="btn btn-sm btn-primary" asp-controller="Patients" asp-action="Index">Manage Patients</a>
+                <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center mb-2 gap-2">
+                    <h5 class="mb-0">@Localizer["UpcomingAppointments"]</h5>
+                    <a class="btn btn-sm btn-primary" asp-controller="Patients" asp-action="Index">@Localizer["ManagePatients"]</a>
                 </div>
                 <div class="table-responsive">
                     <table class="table table-hover table-xenon align-middle">
                         <thead>
                             <tr>
-                                <th>When</th>
-                                <th>Type</th>
-                                <th>Status</th>
-                                <th>Notes</th>
+                                <th>@Localizer["When"]</th>
+                                <th>@Localizer["Type"]</th>
+                                <th>@Localizer["Status"]</th>
+                                <th class="d-none d-md-table-cell">@Localizer["Notes"]</th>
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach (var item in Model)
+                            @foreach (var item in Model.UpcomingAppointments)
                             {
                                 <tr>
                                     <td>@item.StartTime.ToString("dd MMM HH:mm")</td>
                                     <td>@item.Type</td>
                                     <td><span class="badge bg-secondary">@item.Status</span></td>
-                                    <td>@item.Notes</td>
+                                    <td class="d-none d-md-table-cell">@item.Notes</td>
                                 </tr>
                             }
                         </tbody>
@@ -72,10 +73,10 @@
             </div>
         </div>
     </div>
-    <div class="col-lg-4">
+    <div class="col-lg-4 col-md-12">
         <div class="card card-rounded">
             <div class="card-body">
-                <h5 class="mb-3">Visits (Last 7 days)</h5>
+                <h5 class="mb-3">@Localizer["VisitsLast7Days"]</h5>
                 <canvas id="visitsChart" height="220"></canvas>
             </div>
         </div>
@@ -84,8 +85,8 @@
 
 @section Scripts {
     <script>
-        const visitsLabels = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(visits.Select(v => ((DateTime)v.Date).ToString("dd MMM"))));
-        const visitsData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(visits.Select(v => (int)v.Count)));
+        const visitsLabels = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.VisitsSeries.Select(v => v.Date.ToString("dd MMM"))));
+        const visitsData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.VisitsSeries.Select(v => v.Count)));
         const ctx = document.getElementById('visitsChart');
         if (ctx) {
             new Chart(ctx, {

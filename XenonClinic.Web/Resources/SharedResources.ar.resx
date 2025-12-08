@@ -1,0 +1,439 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+
+  <!-- Navigation -->
+  <data name="Dashboard">
+    <value>لوحة التحكم</value>
+  </data>
+  <data name="Patients">
+    <value>المرضى</value>
+  </data>
+  <data name="Analytics">
+    <value>التحليلات</value>
+  </data>
+  <data name="Audiology">
+    <value>السمعيات</value>
+  </data>
+  <data name="Settings">
+    <value>الإعدادات</value>
+  </data>
+
+  <!-- Dashboard -->
+  <data name="AppointmentsToday">
+    <value>المواعيد اليوم</value>
+  </data>
+  <data name="ActivePatients">
+    <value>المرضى النشطون</value>
+  </data>
+  <data name="VisitsThisWeek">
+    <value>الزيارات هذا الأسبوع</value>
+  </data>
+  <data name="RevenueThisMonth">
+    <value>الإيرادات هذا الشهر</value>
+  </data>
+  <data name="UpcomingAppointments">
+    <value>المواعيد القادمة</value>
+  </data>
+  <data name="ManagePatients">
+    <value>إدارة المرضى</value>
+  </data>
+  <data name="VisitsLast7Days">
+    <value>الزيارات (آخر 7 أيام)</value>
+  </data>
+
+  <!-- Patients -->
+  <data name="NewPatient">
+    <value>مريض جديد</value>
+  </data>
+  <data name="SearchPatients">
+    <value>البحث عن المرضى</value>
+  </data>
+  <data name="Search">
+    <value>بحث</value>
+  </data>
+  <data name="Name">
+    <value>الاسم</value>
+  </data>
+  <data name="EmiratesID">
+    <value>الهوية الإماراتية</value>
+  </data>
+  <data name="Branch">
+    <value>الفرع</value>
+  </data>
+  <data name="Phone">
+    <value>الهاتف</value>
+  </data>
+  <data name="HearingLoss">
+    <value>فقدان السمع</value>
+  </data>
+  <data name="TotalPatients">
+    <value>إجمالي المرضى</value>
+  </data>
+  <data name="Previous">
+    <value>السابق</value>
+  </data>
+  <data name="Next">
+    <value>التالي</value>
+  </data>
+  <data name="Page">
+    <value>صفحة</value>
+  </data>
+  <data name="Of">
+    <value>من</value>
+  </data>
+  <data name="Showing">
+    <value>عرض</value>
+  </data>
+
+  <!-- Patient Form -->
+  <data name="FullNameEnglish">
+    <value>الاسم الكامل (إنجليزي)</value>
+  </data>
+  <data name="FullNameArabic">
+    <value>الاسم الكامل (عربي)</value>
+  </data>
+  <data name="DateOfBirth">
+    <value>تاريخ الميلاد</value>
+  </data>
+  <data name="Gender">
+    <value>الجنس</value>
+  </data>
+  <data name="Male">
+    <value>ذكر</value>
+  </data>
+  <data name="Female">
+    <value>أنثى</value>
+  </data>
+  <data name="Email">
+    <value>البريد الإلكتروني</value>
+  </data>
+  <data name="HearingLossType">
+    <value>نوع فقدان السمع</value>
+  </data>
+  <data name="Notes">
+    <value>ملاحظات</value>
+  </data>
+  <data name="Save">
+    <value>حفظ</value>
+  </data>
+  <data name="Cancel">
+    <value>إلغاء</value>
+  </data>
+  <data name="ReadEmiratesID">
+    <value>قراءة الهوية الإماراتية</value>
+  </data>
+
+  <!-- Common -->
+  <data name="Language">
+    <value>اللغة</value>
+  </data>
+  <data name="English">
+    <value>English</value>
+  </data>
+  <data name="Arabic">
+    <value>العربية</value>
+  </data>
+  <data name="Logout">
+    <value>تسجيل الخروج</value>
+  </data>
+  <data name="Profile">
+    <value>الملف الشخصي</value>
+  </data>
+
+  <!-- Appointment Types -->
+  <data name="HearingTest">
+    <value>فحص السمع</value>
+  </data>
+  <data name="Fitting">
+    <value>تركيب السماعة</value>
+  </data>
+  <data name="Consultation">
+    <value>استشارة</value>
+  </data>
+  <data name="Repair">
+    <value>إصلاح</value>
+  </data>
+  <data name="FollowUp">
+    <value>متابعة</value>
+  </data>
+
+  <!-- Hearing Loss Types -->
+  <data name="Normal">
+    <value>طبيعي</value>
+  </data>
+  <data name="Sensorineural">
+    <value>حسي عصبي</value>
+  </data>
+  <data name="Conductive">
+    <value>توصيلي</value>
+  </data>
+  <data name="Mixed">
+    <value>مختلط</value>
+  </data>
+
+  <!-- Status -->
+  <data name="Booked">
+    <value>محجوز</value>
+  </data>
+  <data name="Completed">
+    <value>مكتمل</value>
+  </data>
+  <data name="Cancelled">
+    <value>ملغي</value>
+  </data>
+  <data name="NoShow">
+    <value>عدم الحضور</value>
+  </data>
+
+  <!-- Table Headers -->
+  <data name="When">
+    <value>متى</value>
+  </data>
+  <data name="Type">
+    <value>النوع</value>
+  </data>
+  <data name="Status">
+    <value>الحالة</value>
+  </data>
+
+  <!-- Inventory Module -->
+  <data name="Inventory">
+    <value>المخزون</value>
+  </data>
+  <data name="InventoryItems">
+    <value>عناصر المخزون</value>
+  </data>
+  <data name="InventoryTransactions">
+    <value>حركات المخزون</value>
+  </data>
+  <data name="NewItem">
+    <value>صنف جديد</value>
+  </data>
+  <data name="NewInventoryItem">
+    <value>صنف مخزون جديد</value>
+  </data>
+  <data name="EditItem">
+    <value>تعديل الصنف</value>
+  </data>
+  <data name="EditInventoryItem">
+    <value>تعديل صنف المخزون</value>
+  </data>
+  <data name="NewTransaction">
+    <value>حركة جديدة</value>
+  </data>
+  <data name="NewInventoryTransaction">
+    <value>حركة مخزون جديدة</value>
+  </data>
+  <data name="ItemCode">
+    <value>رمز الصنف</value>
+  </data>
+  <data name="Description">
+    <value>الوصف</value>
+  </data>
+  <data name="Supplier">
+    <value>المورد</value>
+  </data>
+  <data name="Stock">
+    <value>الكمية</value>
+  </data>
+  <data name="CostPrice">
+    <value>سعر التكلفة</value>
+  </data>
+  <data name="SellingPrice">
+    <value>سعر البيع</value>
+  </data>
+  <data name="Reorder">
+    <value>إعادة الطلب</value>
+  </data>
+  <data name="ReorderLevel">
+    <value>مستوى إعادة الطلب</value>
+  </data>
+  <data name="MaxStockLevel">
+    <value>الحد الأقصى للمخزون</value>
+  </data>
+  <data name="InitialQuantity">
+    <value>الكمية الأولية</value>
+  </data>
+  <data name="CurrentQuantity">
+    <value>الكمية الحالية</value>
+  </data>
+  <data name="SupplierPartNumber">
+    <value>رقم القطعة للمورد</value>
+  </data>
+  <data name="Barcode">
+    <value>الباركود</value>
+  </data>
+  <data name="Location">
+    <value>الموقع</value>
+  </data>
+  <data name="ExpiryDate">
+    <value>تاريخ الانتهاء</value>
+  </data>
+  <data name="IsActive">
+    <value>نشط</value>
+  </data>
+  <data name="TotalItems">
+    <value>إجمالي الأصناف</value>
+  </data>
+  <data name="LowStockItems">
+    <value>أصناف قليلة المخزون</value>
+  </data>
+  <data name="OutOfStockItems">
+    <value>أصناف نفذت من المخزون</value>
+  </data>
+  <data name="TotalValue">
+    <value>القيمة الإجمالية</value>
+  </data>
+  <data name="LowStockAlerts">
+    <value>تنبيهات قلة المخزون</value>
+  </data>
+  <data name="RecentTransactions">
+    <value>الحركات الأخيرة</value>
+  </data>
+  <data name="RecentlyAdded">
+    <value>المضافة حديثاً</value>
+  </data>
+  <data name="ViewAll">
+    <value>عرض الكل</value>
+  </data>
+  <data name="NoLowStockItems">
+    <value>لا توجد أصناف قليلة المخزون</value>
+  </data>
+  <data name="NoTransactions">
+    <value>لا توجد حركات</value>
+  </data>
+  <data name="NoItems">
+    <value>لا توجد أصناف</value>
+  </data>
+  <data name="items">
+    <value>أصناف</value>
+  </data>
+  <data name="transactions">
+    <value>حركات</value>
+  </data>
+  <data name="AllCategories">
+    <value>جميع الفئات</value>
+  </data>
+  <data name="SearchByItemCodeOrName">
+    <value>البحث برمز الصنف أو الاسم</value>
+  </data>
+  <data name="Filter">
+    <value>تصفية</value>
+  </data>
+  <data name="OutOfStock">
+    <value>نفذ من المخزون</value>
+  </data>
+  <data name="LowStock">
+    <value>مخزون قليل</value>
+  </data>
+  <data name="Transaction">
+    <value>حركة</value>
+  </data>
+  <data name="History">
+    <value>السجل</value>
+  </data>
+  <data name="NoItemsFound">
+    <value>لم يتم العثور على أصناف</value>
+  </data>
+  <data name="SelectBranch">
+    <value>اختر الفرع</value>
+  </data>
+  <data name="SelectSupplier">
+    <value>اختر المورد</value>
+  </data>
+  <data name="BranchCannotBeChanged">
+    <value>لا يمكن تغيير الفرع</value>
+  </data>
+  <data name="UseTransactionsToChangeStock">
+    <value>استخدم الحركات لتغيير المخزون</value>
+  </data>
+  <data name="InventoryItem">
+    <value>صنف المخزون</value>
+  </data>
+  <data name="SelectItem">
+    <value>اختر الصنف</value>
+  </data>
+  <data name="TransactionType">
+    <value>نوع الحركة</value>
+  </data>
+  <data name="TransactionDate">
+    <value>تاريخ الحركة</value>
+  </data>
+  <data name="Quantity">
+    <value>الكمية</value>
+  </data>
+  <data name="QuantityHelp">
+    <value>للمبيعات والتحويلات، سيتم تقليل المخزون</value>
+  </data>
+  <data name="UnitPrice">
+    <value>سعر الوحدة</value>
+  </data>
+  <data name="ReferenceNumber">
+    <value>رقم المرجع</value>
+  </data>
+  <data name="InvoiceOrPONumber">
+    <value>رقم الفاتورة أو أمر الشراء</value>
+  </data>
+  <data name="SelectPatient">
+    <value>اختر المريض</value>
+  </data>
+  <data name="RequiredForSaleOrReturn">
+    <value>مطلوب لحركات البيع أو الإرجاع</value>
+  </data>
+  <data name="TransferToBranch">
+    <value>تحويل إلى الفرع</value>
+  </data>
+  <data name="RequiredForTransfer">
+    <value>مطلوب لحركات التحويل</value>
+  </data>
+  <data name="FromDate">
+    <value>من تاريخ</value>
+  </data>
+  <data name="ToDate">
+    <value>إلى تاريخ</value>
+  </data>
+  <data name="Date">
+    <value>التاريخ</value>
+  </data>
+  <data name="Item">
+    <value>الصنف</value>
+  </data>
+  <data name="Qty">
+    <value>الكمية</value>
+  </data>
+  <data name="Total">
+    <value>الإجمالي</value>
+  </data>
+  <data name="AfterQty">
+    <value>الكمية بعد</value>
+  </data>
+  <data name="Reference">
+    <value>المرجع</value>
+  </data>
+  <data name="TransferTo">
+    <value>تحويل إلى</value>
+  </data>
+  <data name="By">
+    <value>بواسطة</value>
+  </data>
+  <data name="NoTransactionsFound">
+    <value>لم يتم العثور على حركات</value>
+  </data>
+</root>
