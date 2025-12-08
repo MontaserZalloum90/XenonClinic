@@ -127,6 +127,9 @@
                 <div class="card-body">
                     <h5 class="mb-3">@Localizer["Configuration"]</h5>
                     <div class="d-grid gap-2">
+                        <a asp-controller="LookupManagement" asp-action="Index" class="btn btn-outline-secondary">
+                            <i class="bi bi-list-ul me-2"></i>@Localizer["Lookup Management"]
+                        </a>
                         <a asp-action="CommunicationSettings" class="btn btn-outline-secondary">
                             <i class="bi bi-envelope me-2"></i>@Localizer["CommunicationSettings"]
                         </a>
@@ -203,6 +206,9 @@ else if (Model.CurrentTenantStats != null)
                     <div class="d-grid gap-2">
                         <a asp-action="Settings" class="btn btn-outline-secondary">
                             <i class="bi bi-gear me-2"></i>@Localizer["TenantSettings"]
+                        </a>
+                        <a asp-controller="LookupManagement" asp-action="Index" class="btn btn-outline-secondary">
+                            <i class="bi bi-list-ul me-2"></i>@Localizer["Lookup Management"]
                         </a>
                         <a asp-action="CommunicationSettings" class="btn btn-outline-secondary">
                             <i class="bi bi-envelope me-2"></i>@Localizer["CommunicationSettings"]
