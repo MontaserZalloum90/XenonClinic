@@ -271,35 +271,69 @@
             <!-- Hearing Devices Tab -->
             <div class="tab-pane fade" id="devices" role="tabpanel">
                 <div class="card card-rounded">
-                    <div class="card-header bg-white">
+                    <div class="card-header bg-white d-flex justify-content-between align-items-center">
                         <h6 class="mb-0">@Localizer["HearingDevices"]</h6>
+                        <a asp-controller="HearingDevices" asp-action="Create" asp-route-patientId="@Model.Id" class="btn btn-sm btn-success">
+                            <i class="bi bi-plus-lg"></i> @Localizer["AddDevice"]
+                        </a>
                     </div>
                     <div class="card-body">
                         @if (Model.Devices.Any())
                         {
-                            <div class="table-responsive">
-                                <table class="table table-sm">
-                                    <thead>
-                                        <tr>
-                                            <th>@Localizer["Model"]</th>
-                                            <th>@Localizer["SerialNumber"]</th>
-                                            <th>@Localizer["Ear"]</th>
-                                            <th>@Localizer["PurchaseDate"]</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @foreach (var device in Model.Devices)
-                                        {
-                                            <tr>
-                                                <td>@device.Model</td>
-                                                <td>@device.SerialNumber</td>
-                                                <td>@device.Ear</td>
-                                                <td>@device.PurchaseDate.ToString("dd/MM/yyyy")</td>
-                                            </tr>
-                                        }
-                                    </tbody>
-                                </table>
+                            <div class="list-group list-group-flush">
+                                @foreach (var device in Model.Devices.Where(d => d.IsActive).OrderByDescending(d => d.PurchaseDate).Take(10))
+                                {
+                                    var isWarrantyExpired = device.WarrantyExpiryDate != null && device.WarrantyExpiryDate < DateTime.Now;
+                                    var isWarrantyExpiringSoon = device.WarrantyExpiryDate != null &&
+                                                                 device.WarrantyExpiryDate >= DateTime.Now &&
+                                                                 device.WarrantyExpiryDate <= DateTime.Now.AddMonths(3);
+
+                                    <a asp-controller="HearingDevices" asp-action="Details" asp-route-id="@device.Id" class="list-group-item list-group-item-action">
+                                        <div class="d-flex justify-content-between align-items-start">
+                                            <div class="flex-grow-1">
+                                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                                    <h6 class="mb-0">@device.ModelName</h6>
+                                                    @if (isWarrantyExpired)
+                                                    {
+                                                        <span class="badge bg-danger ms-2">
+                                                            <i class="bi bi-exclamation-triangle"></i> @Localizer["WarrantyExpired"]
+                                                        </span>
+                                                    }
+                                                    else if (isWarrantyExpiringSoon)
+                                                    {
+                                                        <span class="badge bg-warning ms-2">
+                                                            <i class="bi bi-exclamation-circle"></i> @Localizer["WarrantyExpiringSoon"]
+                                                        </span>
+                                                    }
+                                                    else if (device.IsActive)
+                                                    {
+                                                        <span class="badge bg-success ms-2">@Localizer["Active"]</span>
+                                                    }
+                                                </div>
+                                                <p class="mb-1 small"><strong>@Localizer["SerialNumber"]:</strong> @device.SerialNumber</p>
+                                                <p class="mb-0 small text-muted">
+                                                    <i class="bi bi-calendar"></i> @Localizer["PurchasedOn"]: @device.PurchaseDate.ToString("dd MMM yyyy")
+                                                    @if (device.WarrantyExpiryDate != null)
+                                                    {
+                                                        <span class="ms-2">
+                                                            <i class="bi bi-shield-check"></i> @Localizer["WarrantyUntil"]: @device.WarrantyExpiryDate.Value.ToString("dd MMM yyyy")
+                                                        </span>
+                                                    }
+                                                </p>
+                                            </div>
+                                            <i class="bi bi-chevron-right text-muted ms-2"></i>
+                                        </div>
+                                    </a>
+                                }
                             </div>
+                            @if (Model.Devices.Count(d => d.IsActive) > 10)
+                            {
+                                <div class="card-footer bg-white text-center">
+                                    <a asp-controller="HearingDevices" asp-action="Index" class="btn btn-sm btn-outline-primary">
+                                        @Localizer["ViewAllDevices"] (@Model.Devices.Count(d => d.IsActive))
+                                    </a>
+                                </div>
+                            }
                         }
                         else
                         {
