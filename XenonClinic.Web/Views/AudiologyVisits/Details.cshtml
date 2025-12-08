@@ -173,13 +173,18 @@
     }
 
     <!-- Audiogram Section -->
-    @if (Model.Audiogram != null)
-    {
-        <div class="col-12">
+    <div class="col-12">
+        @if (Model.Audiogram != null)
+        {
             <div class="card card-rounded">
                 <div class="card-header bg-white d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0"><i class="bi bi-graph-up text-warning"></i> @Localizer["Audiogram"]</h5>
-                    <span class="badge bg-info">@Localizer["AudiogramID"]: #@Model.Audiogram.Id</span>
+                    <div>
+                        <h5 class="mb-0"><i class="bi bi-graph-up text-warning"></i> @Localizer["Audiogram"]</h5>
+                        <small class="text-muted">@Localizer["AudiogramID"]: #@Model.Audiogram.Id</small>
+                    </div>
+                    <a asp-controller="Audiograms" asp-action="Edit" asp-route-id="@Model.Audiogram.Id" class="btn btn-sm btn-primary">
+                        <i class="bi bi-pencil"></i> @Localizer["EditAudiogram"]
+                    </a>
                 </div>
                 <div class="card-body">
                     @if (!string.IsNullOrEmpty(Model.Audiogram.Notes))
@@ -189,21 +194,28 @@
                             <p class="mb-0">@Model.Audiogram.Notes</p>
                         </div>
                     }
-                    <div class="alert alert-info mb-0">
-                        <i class="bi bi-info-circle"></i> @Localizer["AudiogramDataAvailable"]
+                    <div class="alert alert-success mb-0">
+                        <i class="bi bi-check-circle"></i> @Localizer["AudiogramDataRecorded"]
                     </div>
                 </div>
             </div>
-        </div>
-    }
-    else
-    {
-        <div class="col-12">
-            <div class="alert alert-warning">
-                <i class="bi bi-exclamation-triangle"></i> @Localizer["NoAudiogramRecordedForThisVisit"]
+        }
+        else
+        {
+            <div class="card card-rounded">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0"><i class="bi bi-graph-up text-muted"></i> @Localizer["Audiogram"]</h5>
+                </div>
+                <div class="card-body text-center py-4">
+                    <i class="bi bi-graph-up display-4 text-muted"></i>
+                    <p class="text-muted mt-3 mb-3">@Localizer["NoAudiogramRecordedForThisVisit"]</p>
+                    <a asp-controller="Audiograms" asp-action="Create" asp-route-visitId="@Model.Id" class="btn btn-primary">
+                        <i class="bi bi-plus-lg"></i> @Localizer["RecordAudiogram"]
+                    </a>
+                </div>
             </div>
-        </div>
-    }
+        }
+    </div>
 </div>
 
 <!-- Delete Confirmation Modal -->
