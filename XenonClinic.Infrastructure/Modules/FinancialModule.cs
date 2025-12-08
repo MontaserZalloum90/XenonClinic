@@ -5,6 +5,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using XenonClinic.Core.Abstractions;
 using XenonClinic.Core.Constants;
+using XenonClinic.Core.Interfaces;
+using XenonClinic.Infrastructure.Services;
 
 namespace XenonClinic.Infrastructure.Modules;
 
@@ -24,9 +26,7 @@ public class FinancialModule : ModuleBase
     public override void ConfigureServices(IServiceCollection services, IConfiguration configuration)
     {
         // Register Financial services
-        // services.AddScoped<IAccountingService, AccountingService>();
-        // services.AddScoped<IInvoiceService, InvoiceService>();
-        // services.AddScoped<IExpenseService, ExpenseService>();
+        services.AddScoped<IFinancialService, FinancialService>();
         Console.WriteLine($"[Module] {DisplayName} v{Version} - Services registered");
     }
 
