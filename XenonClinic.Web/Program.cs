@@ -99,7 +99,12 @@ var availableModules = new List<IModule>
 {
     new CaseManagementModule(),
     new AudiologyModule(),
-    // Add more modules here as they're created
+    new LaboratoryModule(),
+    new HRModule(),
+    new FinancialModule(),
+    new InventoryModule(),
+    new SalesModule(),
+    new ProcurementModule()
 };
 
 Console.WriteLine($"[System] Found {availableModules.Count} available modules");
