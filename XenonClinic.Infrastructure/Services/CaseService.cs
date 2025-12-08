@@ -460,8 +460,8 @@ public class CaseService : ICaseService
         query = query.Where(c =>
             c.CaseNumber.Contains(searchTerm) ||
             c.Title.Contains(searchTerm) ||
-            c.Patient.FirstName.Contains(searchTerm) ||
-            c.Patient.LastName.Contains(searchTerm) ||
+            c.Patient.FullNameEn.Contains(searchTerm) ||
+            c.Patient.FullNameAr.Contains(searchTerm) ||
             (c.Description != null && c.Description.Contains(searchTerm)));
 
         return await query

@@ -78,6 +78,9 @@ builder.Services.AddScoped<ICaseService, CaseService>();
 // Theme services
 builder.Services.AddScoped<IThemeService, ThemeService>();
 
+// Lookup services
+builder.Services.AddScoped<ILookupService, LookupService>();
+
 // Configure localization
 builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
 

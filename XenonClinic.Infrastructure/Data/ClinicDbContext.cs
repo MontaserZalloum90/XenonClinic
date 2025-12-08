@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using XenonClinic.Core.Entities;
+using XenonClinic.Core.Entities.Lookups;
 
 namespace XenonClinic.Infrastructure.Data;
 
@@ -67,6 +68,36 @@ public class ClinicDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<CaseStatus> CaseStatuses => Set<CaseStatus>();
     public DbSet<CaseNote> CaseNotes => Set<CaseNote>();
     public DbSet<CaseActivity> CaseActivities => Set<CaseActivity>();
+
+    // Dynamic Lookup entities
+    public DbSet<AppointmentTypeLookup> AppointmentTypeLookups => Set<AppointmentTypeLookup>();
+    public DbSet<AppointmentStatusLookup> AppointmentStatusLookups => Set<AppointmentStatusLookup>();
+    public DbSet<PaymentMethodLookup> PaymentMethodLookups => Set<PaymentMethodLookup>();
+    public DbSet<PaymentStatusLookup> PaymentStatusLookups => Set<PaymentStatusLookup>();
+    public DbSet<CasePriorityLookup> CasePriorityLookups => Set<CasePriorityLookup>();
+    public DbSet<CaseActivityTypeLookup> CaseActivityTypeLookups => Set<CaseActivityTypeLookup>();
+    public DbSet<CaseActivityStatusLookup> CaseActivityStatusLookups => Set<CaseActivityStatusLookup>();
+    public DbSet<CaseNoteTypeLookup> CaseNoteTypeLookups => Set<CaseNoteTypeLookup>();
+    public DbSet<LeaveTypeLookup> LeaveTypeLookups => Set<LeaveTypeLookup>();
+    public DbSet<LeaveStatusLookup> LeaveStatusLookups => Set<LeaveStatusLookup>();
+    public DbSet<EmploymentStatusLookup> EmploymentStatusLookups => Set<EmploymentStatusLookup>();
+    public DbSet<InventoryCategoryLookup> InventoryCategoryLookups => Set<InventoryCategoryLookup>();
+    public DbSet<HearingLossTypeLookup> HearingLossTypeLookups => Set<HearingLossTypeLookup>();
+    public DbSet<AccountTypeLookup> AccountTypeLookups => Set<AccountTypeLookup>();
+    public DbSet<ExpenseStatusLookup> ExpenseStatusLookups => Set<ExpenseStatusLookup>();
+    public DbSet<QuotationStatusLookup> QuotationStatusLookups => Set<QuotationStatusLookup>();
+    public DbSet<SaleStatusLookup> SaleStatusLookups => Set<SaleStatusLookup>();
+    public DbSet<PurchaseOrderStatusLookup> PurchaseOrderStatusLookups => Set<PurchaseOrderStatusLookup>();
+    public DbSet<GoodsReceiptStatusLookup> GoodsReceiptStatusLookups => Set<GoodsReceiptStatusLookup>();
+    public DbSet<SupplierPaymentStatusLookup> SupplierPaymentStatusLookups => Set<SupplierPaymentStatusLookup>();
+    public DbSet<VoucherStatusLookup> VoucherStatusLookups => Set<VoucherStatusLookup>();
+    public DbSet<TransactionTypeLookup> TransactionTypeLookups => Set<TransactionTypeLookup>();
+    public DbSet<LabOrderStatusLookup> LabOrderStatusLookups => Set<LabOrderStatusLookup>();
+    public DbSet<LabResultStatusLookup> LabResultStatusLookups => Set<LabResultStatusLookup>();
+    public DbSet<SpecimenTypeLookup> SpecimenTypeLookups => Set<SpecimenTypeLookup>();
+    public DbSet<TestCategoryLookup> TestCategoryLookups => Set<TestCategoryLookup>();
+    public DbSet<InventoryTransactionTypeLookup> InventoryTransactionTypeLookups => Set<InventoryTransactionTypeLookup>();
+    public DbSet<AttendanceStatusLookup> AttendanceStatusLookups => Set<AttendanceStatusLookup>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
