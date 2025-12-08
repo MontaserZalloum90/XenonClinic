@@ -1703,4 +1703,351 @@
   <data name="Finance">
     <value>المالية</value>
   </data>
+
+  <!-- Admin Module -->
+  <data name="Admin">
+    <value>الإدارة</value>
+  </data>
+  <data name="Administration">
+    <value>الإدارة</value>
+  </data>
+  <data name="AdminDashboard">
+    <value>لوحة الإدارة</value>
+  </data>
+  <data name="Tenants">
+    <value>المستأجرون</value>
+  </data>
+  <data name="Tenant">
+    <value>المستأجر</value>
+  </data>
+  <data name="CreateTenant">
+    <value>إنشاء مستأجر</value>
+  </data>
+  <data name="EditTenant">
+    <value>تعديل المستأجر</value>
+  </data>
+  <data name="TenantDetails">
+    <value>تفاصيل المستأجر</value>
+  </data>
+  <data name="TenantInformation">
+    <value>معلومات المستأجر</value>
+  </data>
+  <data name="TenantName">
+    <value>اسم المستأجر</value>
+  </data>
+  <data name="TenantCode">
+    <value>رمز المستأجر</value>
+  </data>
+  <data name="TenantSettings">
+    <value>إعدادات المستأجر</value>
+  </data>
+  <data name="Companies">
+    <value>الشركات</value>
+  </data>
+  <data name="Company">
+    <value>الشركة</value>
+  </data>
+  <data name="CreateCompany">
+    <value>إنشاء شركة</value>
+  </data>
+  <data name="EditCompany">
+    <value>تعديل الشركة</value>
+  </data>
+  <data name="CompanyName">
+    <value>اسم الشركة</value>
+  </data>
+  <data name="CompanyCode">
+    <value>رمز الشركة</value>
+  </data>
+  <data name="Branches">
+    <value>الفروع</value>
+  </data>
+  <data name="CreateBranch">
+    <value>إنشاء فرع</value>
+  </data>
+  <data name="EditBranch">
+    <value>تعديل الفرع</value>
+  </data>
+  <data name="BranchName">
+    <value>اسم الفرع</value>
+  </data>
+  <data name="BranchCode">
+    <value>رمز الفرع</value>
+  </data>
+  <data name="MainBranch">
+    <value>الفرع الرئيسي</value>
+  </data>
+  <data name="Users">
+    <value>المستخدمون</value>
+  </data>
+  <data name="User">
+    <value>المستخدم</value>
+  </data>
+  <data name="CreateUser">
+    <value>إنشاء مستخدم</value>
+  </data>
+  <data name="EditUser">
+    <value>تعديل المستخدم</value>
+  </data>
+  <data name="BackToList">
+    <value>العودة إلى القائمة</value>
+  </data>
+  <data name="BackToDashboard">
+    <value>العودة إلى لوحة التحكم</value>
+  </data>
+  <data name="Inactive">
+    <value>غير نشط</value>
+  </data>
+  <data name="Plan">
+    <value>الخطة</value>
+  </data>
+  <data name="Expires">
+    <value>تنتهي</value>
+  </data>
+  <data name="Contact">
+    <value>جهة الاتصال</value>
+  </data>
+  <data name="Limits">
+    <value>الحدود</value>
+  </data>
+  <data name="MaxCompanies">
+    <value>الحد الأقصى للشركات</value>
+  </data>
+  <data name="MaxBranchesPerCompany">
+    <value>الحد الأقصى للفروع لكل شركة</value>
+  </data>
+  <data name="MaxUsers">
+    <value>الحد الأقصى للمستخدمين</value>
+  </data>
+  <data name="AddCompany">
+    <value>إضافة شركة</value>
+  </data>
+  <data name="ViewUsers">
+    <value>عرض المستخدمين</value>
+  </data>
+  <data name="RegionalSettings">
+    <value>الإعدادات الإقليمية</value>
+  </data>
+  <data name="DefaultLanguage">
+    <value>اللغة الافتراضية</value>
+  </data>
+  <data name="DefaultCurrency">
+    <value>العملة الافتراضية</value>
+  </data>
+  <data name="DateFormat">
+    <value>صيغة التاريخ</value>
+  </data>
+  <data name="TimeFormat">
+    <value>صيغة الوقت</value>
+  </data>
+  <data name="InvoiceSettings">
+    <value>إعدادات الفواتير</value>
+  </data>
+  <data name="InvoicePrefix">
+    <value>بادئة الفاتورة</value>
+  </data>
+  <data name="QuotationPrefix">
+    <value>بادئة عرض السعر</value>
+  </data>
+  <data name="SalePrefix">
+    <value>بادئة المبيعات</value>
+  </data>
+  <data name="POPrefix">
+    <value>بادئة أمر الشراء</value>
+  </data>
+  <data name="DefaultTaxRate">
+    <value>معدل الضريبة الافتراضي</value>
+  </data>
+  <data name="ShowTaxOnInvoice">
+    <value>إظهار الضريبة في الفاتورة</value>
+  </data>
+  <data name="AppointmentSettings">
+    <value>إعدادات المواعيد</value>
+  </data>
+  <data name="DefaultDuration">
+    <value>المدة الافتراضية</value>
+  </data>
+  <data name="ReminderHours">
+    <value>ساعات التذكير قبل الموعد</value>
+  </data>
+  <data name="SendReminders">
+    <value>إرسال تذكيرات المواعيد</value>
+  </data>
+  <data name="EnableOnlineBooking">
+    <value>تفعيل الحجز عبر الإنترنت</value>
+  </data>
+  <data name="BusinessSettings">
+    <value>إعدادات العمل</value>
+  </data>
+  <data name="ExpenseApprovalThreshold">
+    <value>حد موافقة المصروفات</value>
+  </data>
+  <data name="RequireExpenseApproval">
+    <value>يتطلب موافقة للمصروفات</value>
+  </data>
+  <data name="EnableMultiCurrency">
+    <value>تفعيل العملات المتعددة</value>
+  </data>
+  <data name="EnableMultiLanguage">
+    <value>تفعيل اللغات المتعددة</value>
+  </data>
+  <data name="ModuleAccess">
+    <value>الوصول للوحدات</value>
+  </data>
+  <data name="LabModule">
+    <value>وحدة المختبر</value>
+  </data>
+  <data name="InventoryModule">
+    <value>وحدة المخزون</value>
+  </data>
+  <data name="HRModule">
+    <value>وحدة الموارد البشرية</value>
+  </data>
+  <data name="FinanceModule">
+    <value>وحدة المالية</value>
+  </data>
+  <data name="ProcurementModule">
+    <value>وحدة المشتريات</value>
+  </data>
+  <data name="SalesModule">
+    <value>وحدة المبيعات</value>
+  </data>
+  <data name="AnalyticsModule">
+    <value>وحدة التحليلات</value>
+  </data>
+  <data name="PatientPortal">
+    <value>بوابة المرضى</value>
+  </data>
+  <data name="AuditSettings">
+    <value>إعدادات التدقيق</value>
+  </data>
+  <data name="EnableAuditLogging">
+    <value>تفعيل سجل التدقيق</value>
+  </data>
+  <data name="AuditRetentionDays">
+    <value>أيام الاحتفاظ بالسجلات</value>
+  </data>
+  <data name="SaveSettings">
+    <value>حفظ الإعدادات</value>
+  </data>
+  <data name="BasicInformation">
+    <value>المعلومات الأساسية</value>
+  </data>
+  <data name="OrganizationAssignment">
+    <value>التعيين التنظيمي</value>
+  </data>
+  <data name="Roles">
+    <value>الأدوار</value>
+  </data>
+  <data name="Security">
+    <value>الأمان</value>
+  </data>
+  <data name="FirstName">
+    <value>الاسم الأول</value>
+  </data>
+  <data name="LastName">
+    <value>اسم العائلة</value>
+  </data>
+  <data name="DisplayName">
+    <value>الاسم المعروض</value>
+  </data>
+  <data name="Password">
+    <value>كلمة المرور</value>
+  </data>
+  <data name="ConfirmPassword">
+    <value>تأكيد كلمة المرور</value>
+  </data>
+  <data name="PrimaryBranch">
+    <value>الفرع الرئيسي</value>
+  </data>
+  <data name="AdditionalBranches">
+    <value>الفروع الإضافية</value>
+  </data>
+  <data name="SuperAdmin">
+    <value>مدير النظام</value>
+  </data>
+  <data name="TenantAdmin">
+    <value>مدير المستأجر</value>
+  </data>
+  <data name="CompanyAdmin">
+    <value>مدير الشركة</value>
+  </data>
+  <data name="BranchAdmin">
+    <value>مدير الفرع</value>
+  </data>
+  <data name="LeaveBlankToKeep">
+    <value>اترك فارغاً للإبقاء على الحالي</value>
+  </data>
+  <data name="ShowInactive">
+    <value>إظهار غير النشط</value>
+  </data>
+  <data name="LastLogin">
+    <value>آخر تسجيل دخول</value>
+  </data>
+  <data name="Never">
+    <value>أبداً</value>
+  </data>
+  <data name="OpeningTime">
+    <value>وقت الافتتاح</value>
+  </data>
+  <data name="ClosingTime">
+    <value>وقت الإغلاق</value>
+  </data>
+  <data name="ManagerName">
+    <value>اسم المدير</value>
+  </data>
+  <data name="ManagerPhone">
+    <value>هاتف المدير</value>
+  </data>
+  <data name="WorkingHours">
+    <value>ساعات العمل</value>
+  </data>
+  <data name="SubscriptionPlan">
+    <value>خطة الاشتراك</value>
+  </data>
+  <data name="SubscriptionEnd">
+    <value>تاريخ انتهاء الاشتراك</value>
+  </data>
+  <data name="ContactEmail">
+    <value>البريد الإلكتروني للتواصل</value>
+  </data>
+  <data name="ContactPhone">
+    <value>هاتف التواصل</value>
+  </data>
+  <data name="None">
+    <value>لا شيء</value>
+  </data>
+  <data name="City">
+    <value>المدينة</value>
+  </data>
+  <data name="Country">
+    <value>الدولة</value>
+  </data>
+  <data name="TotalTenants">
+    <value>إجمالي المستأجرين</value>
+  </data>
+  <data name="TotalCompanies">
+    <value>إجمالي الشركات</value>
+  </data>
+  <data name="TotalBranches">
+    <value>إجمالي الفروع</value>
+  </data>
+  <data name="TotalUsers">
+    <value>إجمالي المستخدمين</value>
+  </data>
+  <data name="ActiveTenants">
+    <value>المستأجرون النشطون</value>
+  </data>
+  <data name="SystemOverview">
+    <value>نظرة عامة على النظام</value>
+  </data>
+  <data name="ManageTenants">
+    <value>إدارة المستأجرين</value>
+  </data>
+  <data name="ManageCompanies">
+    <value>إدارة الشركات</value>
+  </data>
+  <data name="ManageUsers">
+    <value>إدارة المستخدمين</value>
+  </data>
 </root>

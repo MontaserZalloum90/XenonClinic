@@ -10,6 +10,12 @@ public class ClinicDbContext : IdentityDbContext<ApplicationUser>
     {
     }
 
+    // Multi-tenancy entities
+    public DbSet<Tenant> Tenants => Set<Tenant>();
+    public DbSet<Company> Companies => Set<Company>();
+    public DbSet<TenantSettings> TenantSettings => Set<TenantSettings>();
+
+    // Existing entities
     public DbSet<Branch> Branches => Set<Branch>();
     public DbSet<LicenseConfig> LicenseConfigs => Set<LicenseConfig>();
     public DbSet<UserBranch> UserBranches => Set<UserBranch>();
@@ -51,6 +57,112 @@ public class ClinicDbContext : IdentityDbContext<ApplicationUser>
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
+
+        // ========================================
+        // Multi-tenancy Configuration
+        // ========================================
+
+        // Tenant configuration
+        builder.Entity<Tenant>()
+            .HasIndex(t => t.Code)
+            .IsUnique();
+
+        builder.Entity<Tenant>()
+            .HasIndex(t => t.Name);
+
+        builder.Entity<Tenant>()
+            .HasIndex(t => t.IsActive);
+
+        builder.Entity<Tenant>()
+            .HasMany(t => t.Companies)
+            .WithOne(c => c.Tenant)
+            .HasForeignKey(c => c.TenantId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<Tenant>()
+            .HasMany(t => t.Users)
+            .WithOne(u => u.Tenant)
+            .HasForeignKey(u => u.TenantId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        builder.Entity<Tenant>()
+            .HasOne(t => t.Settings)
+            .WithOne(s => s.Tenant)
+            .HasForeignKey<TenantSettings>(s => s.TenantId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // Company configuration
+        builder.Entity<Company>()
+            .HasIndex(c => c.Code)
+            .IsUnique();
+
+        builder.Entity<Company>()
+            .HasIndex(c => c.Name);
+
+        builder.Entity<Company>()
+            .HasIndex(c => c.TenantId);
+
+        builder.Entity<Company>()
+            .HasIndex(c => c.IsActive);
+
+        builder.Entity<Company>()
+            .HasIndex(c => new { c.TenantId, c.Code });
+
+        builder.Entity<Company>()
+            .HasMany(c => c.Branches)
+            .WithOne(b => b.Company)
+            .HasForeignKey(b => b.CompanyId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<Company>()
+            .HasMany(c => c.Users)
+            .WithOne(u => u.Company)
+            .HasForeignKey(u => u.CompanyId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        // TenantSettings configuration
+        builder.Entity<TenantSettings>()
+            .HasIndex(ts => ts.TenantId)
+            .IsUnique();
+
+        builder.Entity<TenantSettings>()
+            .Property(ts => ts.ExpenseApprovalThreshold)
+            .HasPrecision(18, 2);
+
+        builder.Entity<TenantSettings>()
+            .Property(ts => ts.DefaultTaxRate)
+            .HasPrecision(5, 2);
+
+        // Branch configuration - add company relationship
+        builder.Entity<Branch>()
+            .HasIndex(b => b.Code)
+            .IsUnique();
+
+        builder.Entity<Branch>()
+            .HasIndex(b => b.CompanyId);
+
+        builder.Entity<Branch>()
+            .HasIndex(b => b.IsActive);
+
+        builder.Entity<Branch>()
+            .HasIndex(b => new { b.CompanyId, b.Code });
+
+        // ApplicationUser multi-tenancy relationships
+        builder.Entity<ApplicationUser>()
+            .HasIndex(u => u.TenantId);
+
+        builder.Entity<ApplicationUser>()
+            .HasIndex(u => u.CompanyId);
+
+        builder.Entity<ApplicationUser>()
+            .HasIndex(u => u.IsActive);
+
+        builder.Entity<ApplicationUser>()
+            .HasIndex(u => u.IsSuperAdmin);
+
+        // ========================================
+        // Existing Entity Configuration
+        // ========================================
 
         builder.Entity<UserBranch>().HasKey(ub => new { ub.UserId, ub.BranchId });
         builder.Entity<UserBranch>()

@@ -1703,4 +1703,351 @@
   <data name="Finance">
     <value>Finance</value>
   </data>
+
+  <!-- Admin Module -->
+  <data name="Admin">
+    <value>Admin</value>
+  </data>
+  <data name="Administration">
+    <value>Administration</value>
+  </data>
+  <data name="AdminDashboard">
+    <value>Admin Dashboard</value>
+  </data>
+  <data name="Tenants">
+    <value>Tenants</value>
+  </data>
+  <data name="Tenant">
+    <value>Tenant</value>
+  </data>
+  <data name="CreateTenant">
+    <value>Create Tenant</value>
+  </data>
+  <data name="EditTenant">
+    <value>Edit Tenant</value>
+  </data>
+  <data name="TenantDetails">
+    <value>Tenant Details</value>
+  </data>
+  <data name="TenantInformation">
+    <value>Tenant Information</value>
+  </data>
+  <data name="TenantName">
+    <value>Tenant Name</value>
+  </data>
+  <data name="TenantCode">
+    <value>Tenant Code</value>
+  </data>
+  <data name="TenantSettings">
+    <value>Tenant Settings</value>
+  </data>
+  <data name="Companies">
+    <value>Companies</value>
+  </data>
+  <data name="Company">
+    <value>Company</value>
+  </data>
+  <data name="CreateCompany">
+    <value>Create Company</value>
+  </data>
+  <data name="EditCompany">
+    <value>Edit Company</value>
+  </data>
+  <data name="CompanyName">
+    <value>Company Name</value>
+  </data>
+  <data name="CompanyCode">
+    <value>Company Code</value>
+  </data>
+  <data name="Branches">
+    <value>Branches</value>
+  </data>
+  <data name="CreateBranch">
+    <value>Create Branch</value>
+  </data>
+  <data name="EditBranch">
+    <value>Edit Branch</value>
+  </data>
+  <data name="BranchName">
+    <value>Branch Name</value>
+  </data>
+  <data name="BranchCode">
+    <value>Branch Code</value>
+  </data>
+  <data name="MainBranch">
+    <value>Main Branch</value>
+  </data>
+  <data name="Users">
+    <value>Users</value>
+  </data>
+  <data name="User">
+    <value>User</value>
+  </data>
+  <data name="CreateUser">
+    <value>Create User</value>
+  </data>
+  <data name="EditUser">
+    <value>Edit User</value>
+  </data>
+  <data name="BackToList">
+    <value>Back to List</value>
+  </data>
+  <data name="BackToDashboard">
+    <value>Back to Dashboard</value>
+  </data>
+  <data name="Inactive">
+    <value>Inactive</value>
+  </data>
+  <data name="Plan">
+    <value>Plan</value>
+  </data>
+  <data name="Expires">
+    <value>Expires</value>
+  </data>
+  <data name="Contact">
+    <value>Contact</value>
+  </data>
+  <data name="Limits">
+    <value>Limits</value>
+  </data>
+  <data name="MaxCompanies">
+    <value>Max Companies</value>
+  </data>
+  <data name="MaxBranchesPerCompany">
+    <value>Max Branches Per Company</value>
+  </data>
+  <data name="MaxUsers">
+    <value>Max Users</value>
+  </data>
+  <data name="AddCompany">
+    <value>Add Company</value>
+  </data>
+  <data name="ViewUsers">
+    <value>View Users</value>
+  </data>
+  <data name="RegionalSettings">
+    <value>Regional Settings</value>
+  </data>
+  <data name="DefaultLanguage">
+    <value>Default Language</value>
+  </data>
+  <data name="DefaultCurrency">
+    <value>Default Currency</value>
+  </data>
+  <data name="DateFormat">
+    <value>Date Format</value>
+  </data>
+  <data name="TimeFormat">
+    <value>Time Format</value>
+  </data>
+  <data name="InvoiceSettings">
+    <value>Invoice Settings</value>
+  </data>
+  <data name="InvoicePrefix">
+    <value>Invoice Prefix</value>
+  </data>
+  <data name="QuotationPrefix">
+    <value>Quotation Prefix</value>
+  </data>
+  <data name="SalePrefix">
+    <value>Sale Prefix</value>
+  </data>
+  <data name="POPrefix">
+    <value>PO Prefix</value>
+  </data>
+  <data name="DefaultTaxRate">
+    <value>Default Tax Rate</value>
+  </data>
+  <data name="ShowTaxOnInvoice">
+    <value>Show Tax on Invoice</value>
+  </data>
+  <data name="AppointmentSettings">
+    <value>Appointment Settings</value>
+  </data>
+  <data name="DefaultDuration">
+    <value>Default Duration</value>
+  </data>
+  <data name="ReminderHours">
+    <value>Reminder Hours Before</value>
+  </data>
+  <data name="SendReminders">
+    <value>Send Appointment Reminders</value>
+  </data>
+  <data name="EnableOnlineBooking">
+    <value>Enable Online Booking</value>
+  </data>
+  <data name="BusinessSettings">
+    <value>Business Settings</value>
+  </data>
+  <data name="ExpenseApprovalThreshold">
+    <value>Expense Approval Threshold</value>
+  </data>
+  <data name="RequireExpenseApproval">
+    <value>Require Approval for Expenses</value>
+  </data>
+  <data name="EnableMultiCurrency">
+    <value>Enable Multi-Currency</value>
+  </data>
+  <data name="EnableMultiLanguage">
+    <value>Enable Multi-Language</value>
+  </data>
+  <data name="ModuleAccess">
+    <value>Module Access</value>
+  </data>
+  <data name="LabModule">
+    <value>Lab Module</value>
+  </data>
+  <data name="InventoryModule">
+    <value>Inventory Module</value>
+  </data>
+  <data name="HRModule">
+    <value>HR Module</value>
+  </data>
+  <data name="FinanceModule">
+    <value>Finance Module</value>
+  </data>
+  <data name="ProcurementModule">
+    <value>Procurement Module</value>
+  </data>
+  <data name="SalesModule">
+    <value>Sales Module</value>
+  </data>
+  <data name="AnalyticsModule">
+    <value>Analytics Module</value>
+  </data>
+  <data name="PatientPortal">
+    <value>Patient Portal</value>
+  </data>
+  <data name="AuditSettings">
+    <value>Audit Settings</value>
+  </data>
+  <data name="EnableAuditLogging">
+    <value>Enable Audit Logging</value>
+  </data>
+  <data name="AuditRetentionDays">
+    <value>Audit Log Retention (Days)</value>
+  </data>
+  <data name="SaveSettings">
+    <value>Save Settings</value>
+  </data>
+  <data name="BasicInformation">
+    <value>Basic Information</value>
+  </data>
+  <data name="OrganizationAssignment">
+    <value>Organization Assignment</value>
+  </data>
+  <data name="Roles">
+    <value>Roles</value>
+  </data>
+  <data name="Security">
+    <value>Security</value>
+  </data>
+  <data name="FirstName">
+    <value>First Name</value>
+  </data>
+  <data name="LastName">
+    <value>Last Name</value>
+  </data>
+  <data name="DisplayName">
+    <value>Display Name</value>
+  </data>
+  <data name="Password">
+    <value>Password</value>
+  </data>
+  <data name="ConfirmPassword">
+    <value>Confirm Password</value>
+  </data>
+  <data name="PrimaryBranch">
+    <value>Primary Branch</value>
+  </data>
+  <data name="AdditionalBranches">
+    <value>Additional Branches</value>
+  </data>
+  <data name="SuperAdmin">
+    <value>Super Admin</value>
+  </data>
+  <data name="TenantAdmin">
+    <value>Tenant Admin</value>
+  </data>
+  <data name="CompanyAdmin">
+    <value>Company Admin</value>
+  </data>
+  <data name="BranchAdmin">
+    <value>Branch Admin</value>
+  </data>
+  <data name="LeaveBlankToKeep">
+    <value>Leave blank to keep current</value>
+  </data>
+  <data name="ShowInactive">
+    <value>Show Inactive</value>
+  </data>
+  <data name="LastLogin">
+    <value>Last Login</value>
+  </data>
+  <data name="Never">
+    <value>Never</value>
+  </data>
+  <data name="OpeningTime">
+    <value>Opening Time</value>
+  </data>
+  <data name="ClosingTime">
+    <value>Closing Time</value>
+  </data>
+  <data name="ManagerName">
+    <value>Manager Name</value>
+  </data>
+  <data name="ManagerPhone">
+    <value>Manager Phone</value>
+  </data>
+  <data name="WorkingHours">
+    <value>Working Hours</value>
+  </data>
+  <data name="SubscriptionPlan">
+    <value>Subscription Plan</value>
+  </data>
+  <data name="SubscriptionEnd">
+    <value>Subscription End Date</value>
+  </data>
+  <data name="ContactEmail">
+    <value>Contact Email</value>
+  </data>
+  <data name="ContactPhone">
+    <value>Contact Phone</value>
+  </data>
+  <data name="None">
+    <value>None</value>
+  </data>
+  <data name="City">
+    <value>City</value>
+  </data>
+  <data name="Country">
+    <value>Country</value>
+  </data>
+  <data name="TotalTenants">
+    <value>Total Tenants</value>
+  </data>
+  <data name="TotalCompanies">
+    <value>Total Companies</value>
+  </data>
+  <data name="TotalBranches">
+    <value>Total Branches</value>
+  </data>
+  <data name="TotalUsers">
+    <value>Total Users</value>
+  </data>
+  <data name="ActiveTenants">
+    <value>Active Tenants</value>
+  </data>
+  <data name="SystemOverview">
+    <value>System Overview</value>
+  </data>
+  <data name="ManageTenants">
+    <value>Manage Tenants</value>
+  </data>
+  <data name="ManageCompanies">
+    <value>Manage Companies</value>
+  </data>
+  <data name="ManageUsers">
+    <value>Manage Users</value>
+  </data>
 </root>
