@@ -20,6 +20,8 @@ public class ClinicDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<LicenseConfig> LicenseConfigs => Set<LicenseConfig>();
     public DbSet<UserBranch> UserBranches => Set<UserBranch>();
     public DbSet<Patient> Patients => Set<Patient>();
+    public DbSet<PatientMedicalHistory> PatientMedicalHistories => Set<PatientMedicalHistory>();
+    public DbSet<PatientDocument> PatientDocuments => Set<PatientDocument>();
     public DbSet<Appointment> Appointments => Set<Appointment>();
     public DbSet<AudiologyVisit> AudiologyVisits => Set<AudiologyVisit>();
     public DbSet<Audiogram> Audiograms => Set<Audiogram>();
@@ -199,6 +201,39 @@ public class ClinicDbContext : IdentityDbContext<ApplicationUser>
             .HasOne(p => p.Branch)
             .WithMany(b => b.Patients)
             .HasForeignKey(p => p.BranchId);
+
+        // PatientMedicalHistory configuration
+        builder.Entity<PatientMedicalHistory>()
+            .HasIndex(m => m.PatientId)
+            .IsUnique();
+
+        builder.Entity<PatientMedicalHistory>()
+            .HasOne(m => m.Patient)
+            .WithOne(p => p.MedicalHistory)
+            .HasForeignKey<PatientMedicalHistory>(m => m.PatientId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // PatientDocument configuration
+        builder.Entity<PatientDocument>()
+            .HasIndex(d => d.PatientId);
+
+        builder.Entity<PatientDocument>()
+            .HasIndex(d => d.UploadDate);
+
+        builder.Entity<PatientDocument>()
+            .HasIndex(d => d.DocumentType);
+
+        builder.Entity<PatientDocument>()
+            .HasIndex(d => d.IsActive);
+
+        builder.Entity<PatientDocument>()
+            .HasIndex(d => new { d.PatientId, d.UploadDate });
+
+        builder.Entity<PatientDocument>()
+            .HasOne(d => d.Patient)
+            .WithMany(p => p.Documents)
+            .HasForeignKey(d => d.PatientId)
+            .OnDelete(DeleteBehavior.Cascade);
 
         // Appointment indexes
         builder.Entity<Appointment>()
