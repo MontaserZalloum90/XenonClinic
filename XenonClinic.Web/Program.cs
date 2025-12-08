@@ -1,21 +1,28 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Serilog;
 using System.Globalization;
 using System.Text;
+using System.Threading.RateLimiting;
 using XenonClinic.Core.Abstractions;
 using XenonClinic.Core.Entities;
 using XenonClinic.Core.Interfaces;
 using XenonClinic.Infrastructure.Data;
 using XenonClinic.Infrastructure.Modules;
 using XenonClinic.Infrastructure.Services;
+using XenonClinic.Web.Configuration;
 using XenonClinic.Web.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// ==================== SERILOG CONFIGURATION ====================
+builder.AddSerilogLogging();
 
 Console.WriteLine("================================================================================");
 Console.WriteLine("  XenonClinic - Modular Healthcare Management System");
@@ -91,8 +98,34 @@ builder.Services.AddHttpContextAccessor();
 // Add Data Protection for encryption
 builder.Services.AddDataProtection();
 
+// ==================== RATE LIMITING ====================
+builder.Services.AddCustomRateLimiting(builder.Configuration);
+
+// ==================== REDIS/DISTRIBUTED CACHING ====================
+var redisOptions = builder.Configuration.GetSection("Redis").Get<RedisCacheOptions>() ?? new RedisCacheOptions();
+if (redisOptions.Enabled && !string.IsNullOrEmpty(redisOptions.ConnectionString) && redisOptions.ConnectionString != "localhost:6379")
+{
+    // Use Redis for distributed caching (production)
+    builder.Services.AddStackExchangeRedisCache(options =>
+    {
+        options.Configuration = redisOptions.ConnectionString;
+        options.InstanceName = redisOptions.InstanceName;
+    });
+    Console.WriteLine("[System] Redis distributed cache configured");
+}
+else
+{
+    // Use in-memory distributed cache (development/fallback)
+    builder.Services.AddDistributedMemoryCache();
+    Console.WriteLine("[System] In-memory distributed cache configured (Redis disabled or not configured)");
+}
+builder.Services.AddScoped<ICacheService, RedisCacheService>();
+
+// ==================== AUDIT SERVICE ====================
+builder.Services.AddScoped<IAuditService, AuditService>();
+
 // Add session support (for company context)
-builder.Services.AddDistributedMemoryCache();
+// Note: Distributed cache is already configured above
 builder.Services.AddSession(options =>
 {
     options.IdleTimeout = TimeSpan.FromMinutes(30);
@@ -274,8 +307,31 @@ foreach (var module in enabledModules)
 }
 Console.WriteLine($"[System] Routes configured for {enabledModules.Count()} modules\n");
 
-// Global exception handling middleware
+// ==================== MIDDLEWARE PIPELINE ====================
+// Order matters! Security headers should be early in the pipeline
+
+// 1. Request/Response Logging with Correlation IDs (earliest to capture all requests)
+app.UseRequestResponseLogging();
+
+// 2. Global exception handling middleware
 app.UseMiddleware<GlobalExceptionHandlerMiddleware>();
+
+// 3. Security headers (should be added to all responses)
+app.UseSecurityHeaders(options =>
+{
+    // In development, be more lenient with CSP for hot reload, Swagger, etc.
+    if (app.Environment.IsDevelopment())
+    {
+        options.EnableContentSecurityPolicy = false;
+        options.EnableHsts = false;
+    }
+});
+
+// 4. Serilog request logging
+app.UseSerilogRequestLogging();
+
+// 5. Rate limiting
+app.UseRateLimiter();
 
 // Swagger middleware
 if (app.Environment.IsDevelopment())
