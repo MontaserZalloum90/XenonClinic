@@ -78,12 +78,13 @@ public class CasesController : Controller
                 CaseTypeName = c.CaseType.Name,
                 CaseStatusName = c.CaseStatus.Name,
                 AssignedToName = c.AssignedToUser?.DisplayName,
-                Priority = c.Priority,
+                PriorityName = c.CasePriority.Name,
+                PriorityColorCode = c.CasePriority.ColorCode,
                 OpenedDate = c.OpenedDate,
                 ClosedDate = c.ClosedDate,
                 TargetDate = c.TargetDate,
                 StatusColorCode = c.CaseStatus.ColorCode,
-                PendingActivitiesCount = c.Activities.Count(a => a.Status == CaseActivityStatus.Pending),
+                PendingActivitiesCount = c.Activities.Count(a => a.CaseActivityStatus.Code == "PENDING"),
                 NotesCount = c.Notes.Count
             }).ToList(),
             Statistics = await _caseService.GetCaseStatisticsByBranchAsync(currentBranchId)
@@ -530,11 +531,12 @@ public class CasesController : Controller
                 BranchName = c.Branch.Name,
                 CaseTypeName = c.CaseType.Name,
                 CaseStatusName = c.CaseStatus.Name,
-                Priority = c.Priority,
+                PriorityName = c.CasePriority.Name,
+                PriorityColorCode = c.CasePriority.ColorCode,
                 OpenedDate = c.OpenedDate,
                 TargetDate = c.TargetDate,
                 StatusColorCode = c.CaseStatus.ColorCode,
-                PendingActivitiesCount = c.Activities.Count(a => a.Status == CaseActivityStatus.Pending),
+                PendingActivitiesCount = c.Activities.Count(a => a.CaseActivityStatus.Code == "PENDING"),
                 NotesCount = c.Notes.Count
             }).ToList()
         };
