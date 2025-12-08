@@ -28,6 +28,11 @@ public class ClinicDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<Attendance> Attendances => Set<Attendance>();
     public DbSet<LeaveRequest> LeaveRequests => Set<LeaveRequest>();
     public DbSet<PerformanceReview> PerformanceReviews => Set<PerformanceReview>();
+    public DbSet<Sale> Sales => Set<Sale>();
+    public DbSet<SaleItem> SaleItems => Set<SaleItem>();
+    public DbSet<Payment> Payments => Set<Payment>();
+    public DbSet<Quotation> Quotations => Set<Quotation>();
+    public DbSet<QuotationItem> QuotationItems => Set<QuotationItem>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -363,5 +368,210 @@ public class ClinicDbContext : IdentityDbContext<ApplicationUser>
         builder.Entity<PerformanceReview>()
             .Property(p => p.OverallRating)
             .HasPrecision(3, 2);
+
+        // Sale configuration
+        builder.Entity<Sale>()
+            .HasIndex(s => s.InvoiceNumber)
+            .IsUnique();
+
+        builder.Entity<Sale>()
+            .HasIndex(s => s.SaleDate);
+
+        builder.Entity<Sale>()
+            .HasIndex(s => s.BranchId);
+
+        builder.Entity<Sale>()
+            .HasIndex(s => s.PatientId);
+
+        builder.Entity<Sale>()
+            .HasIndex(s => s.Status);
+
+        builder.Entity<Sale>()
+            .HasIndex(s => s.PaymentStatus);
+
+        builder.Entity<Sale>()
+            .HasIndex(s => new { s.BranchId, s.SaleDate });
+
+        builder.Entity<Sale>()
+            .HasOne(s => s.Patient)
+            .WithMany()
+            .HasForeignKey(s => s.PatientId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<Sale>()
+            .HasOne(s => s.Branch)
+            .WithMany()
+            .HasForeignKey(s => s.BranchId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<Sale>()
+            .HasOne(s => s.Quotation)
+            .WithMany(q => q.Sales)
+            .HasForeignKey(s => s.QuotationId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        builder.Entity<Sale>()
+            .Property(s => s.SubTotal)
+            .HasPrecision(18, 2);
+
+        builder.Entity<Sale>()
+            .Property(s => s.DiscountAmount)
+            .HasPrecision(18, 2);
+
+        builder.Entity<Sale>()
+            .Property(s => s.TaxAmount)
+            .HasPrecision(18, 2);
+
+        builder.Entity<Sale>()
+            .Property(s => s.Total)
+            .HasPrecision(18, 2);
+
+        builder.Entity<Sale>()
+            .Property(s => s.PaidAmount)
+            .HasPrecision(18, 2);
+
+        // SaleItem configuration
+        builder.Entity<SaleItem>()
+            .HasIndex(i => i.SaleId);
+
+        builder.Entity<SaleItem>()
+            .HasOne(i => i.Sale)
+            .WithMany(s => s.Items)
+            .HasForeignKey(i => i.SaleId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<SaleItem>()
+            .HasOne(i => i.InventoryItem)
+            .WithMany()
+            .HasForeignKey(i => i.InventoryItemId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        builder.Entity<SaleItem>()
+            .Property(i => i.UnitPrice)
+            .HasPrecision(18, 2);
+
+        builder.Entity<SaleItem>()
+            .Property(i => i.DiscountAmount)
+            .HasPrecision(18, 2);
+
+        builder.Entity<SaleItem>()
+            .Property(i => i.Subtotal)
+            .HasPrecision(18, 2);
+
+        builder.Entity<SaleItem>()
+            .Property(i => i.TaxAmount)
+            .HasPrecision(18, 2);
+
+        builder.Entity<SaleItem>()
+            .Property(i => i.Total)
+            .HasPrecision(18, 2);
+
+        // Payment configuration
+        builder.Entity<Payment>()
+            .HasIndex(p => p.PaymentNumber)
+            .IsUnique();
+
+        builder.Entity<Payment>()
+            .HasIndex(p => p.PaymentDate);
+
+        builder.Entity<Payment>()
+            .HasIndex(p => p.SaleId);
+
+        builder.Entity<Payment>()
+            .HasIndex(p => new { p.SaleId, p.PaymentDate });
+
+        builder.Entity<Payment>()
+            .HasOne(p => p.Sale)
+            .WithMany(s => s.Payments)
+            .HasForeignKey(p => p.SaleId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<Payment>()
+            .Property(p => p.Amount)
+            .HasPrecision(18, 2);
+
+        // Quotation configuration
+        builder.Entity<Quotation>()
+            .HasIndex(q => q.QuotationNumber)
+            .IsUnique();
+
+        builder.Entity<Quotation>()
+            .HasIndex(q => q.QuotationDate);
+
+        builder.Entity<Quotation>()
+            .HasIndex(q => q.BranchId);
+
+        builder.Entity<Quotation>()
+            .HasIndex(q => q.PatientId);
+
+        builder.Entity<Quotation>()
+            .HasIndex(q => q.Status);
+
+        builder.Entity<Quotation>()
+            .HasIndex(q => new { q.BranchId, q.QuotationDate });
+
+        builder.Entity<Quotation>()
+            .HasOne(q => q.Patient)
+            .WithMany()
+            .HasForeignKey(q => q.PatientId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<Quotation>()
+            .HasOne(q => q.Branch)
+            .WithMany()
+            .HasForeignKey(q => q.BranchId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<Quotation>()
+            .Property(q => q.SubTotal)
+            .HasPrecision(18, 2);
+
+        builder.Entity<Quotation>()
+            .Property(q => q.DiscountAmount)
+            .HasPrecision(18, 2);
+
+        builder.Entity<Quotation>()
+            .Property(q => q.TaxAmount)
+            .HasPrecision(18, 2);
+
+        builder.Entity<Quotation>()
+            .Property(q => q.Total)
+            .HasPrecision(18, 2);
+
+        // QuotationItem configuration
+        builder.Entity<QuotationItem>()
+            .HasIndex(i => i.QuotationId);
+
+        builder.Entity<QuotationItem>()
+            .HasOne(i => i.Quotation)
+            .WithMany(q => q.Items)
+            .HasForeignKey(i => i.QuotationId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<QuotationItem>()
+            .HasOne(i => i.InventoryItem)
+            .WithMany()
+            .HasForeignKey(i => i.InventoryItemId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        builder.Entity<QuotationItem>()
+            .Property(i => i.UnitPrice)
+            .HasPrecision(18, 2);
+
+        builder.Entity<QuotationItem>()
+            .Property(i => i.DiscountAmount)
+            .HasPrecision(18, 2);
+
+        builder.Entity<QuotationItem>()
+            .Property(i => i.Subtotal)
+            .HasPrecision(18, 2);
+
+        builder.Entity<QuotationItem>()
+            .Property(i => i.TaxAmount)
+            .HasPrecision(18, 2);
+
+        builder.Entity<QuotationItem>()
+            .Property(i => i.Total)
+            .HasPrecision(18, 2);
     }
 }
