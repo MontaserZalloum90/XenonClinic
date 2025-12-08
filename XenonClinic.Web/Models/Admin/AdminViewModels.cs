@@ -395,3 +395,63 @@ public class TenantSettingsFormViewModel
     public bool EnableAuditLogging { get; set; } = true;
     public int AuditLogRetentionDays { get; set; } = 365;
 }
+
+// ==================== Module Management ====================
+
+public class ModuleListViewModel
+{
+    public List<ModuleItemViewModel> Modules { get; set; } = new();
+    public int TotalModules { get; set; }
+    public int EnabledModules { get; set; }
+    public int DisabledModules { get; set; }
+}
+
+public class ModuleItemViewModel
+{
+    public string Name { get; set; } = string.Empty;
+    public string DisplayName { get; set; } = string.Empty;
+    public string Version { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
+    public string Category { get; set; } = string.Empty;
+    public string? IconClass { get; set; }
+    public int DisplayOrder { get; set; }
+    public bool IsEnabled { get; set; }
+    public bool IsRequired { get; set; }
+    public string[]? Dependencies { get; set; }
+
+    // License information
+    public string? LicenseKey { get; set; }
+    public DateTime? LicenseExpiryDate { get; set; }
+    public int? MaxUsers { get; set; }
+    public bool IsLicenseValid => !string.IsNullOrEmpty(LicenseKey);
+    public bool IsLicenseExpired => LicenseExpiryDate.HasValue && LicenseExpiryDate.Value < DateTime.UtcNow;
+    public int? DaysUntilExpiry => LicenseExpiryDate.HasValue
+        ? (int?)(LicenseExpiryDate.Value - DateTime.UtcNow).TotalDays
+        : null;
+}
+
+public class ModuleDetailsViewModel
+{
+    public string Name { get; set; } = string.Empty;
+    public string DisplayName { get; set; } = string.Empty;
+    public string Version { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
+    public string Category { get; set; } = string.Empty;
+    public string? IconClass { get; set; }
+    public int DisplayOrder { get; set; }
+    public bool IsEnabled { get; set; }
+    public bool IsRequired { get; set; }
+    public string[]? Dependencies { get; set; }
+
+    // License details
+    public string? LicenseKey { get; set; }
+    public DateTime? LicenseExpiryDate { get; set; }
+    public int? MaxUsers { get; set; }
+    public bool IsLicenseValid { get; set; }
+    public bool IsLicenseExpired { get; set; }
+    public int? DaysUntilExpiry { get; set; }
+
+    // Statistics (can be expanded later)
+    public int? TotalUsers { get; set; }
+    public DateTime? LastUsed { get; set; }
+}
