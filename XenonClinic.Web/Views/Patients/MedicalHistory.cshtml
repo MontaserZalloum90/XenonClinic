@@ -1,0 +1,172 @@
+@model XenonClinic.Core.Entities.PatientMedicalHistory
+@inject IStringLocalizer<XenonClinic.Web.Resources.SharedResource> Localizer
+
+@{
+    ViewData["Title"] = Localizer["MedicalHistory"];
+    var patientId = ViewContext.RouteData.Values["id"];
+}
+
+<nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">@Localizer["Home"]</a></li>
+        <li class="breadcrumb-item"><a asp-controller="Patients" asp-action="Index">@Localizer["Patients"]</a></li>
+        <li class="breadcrumb-item"><a asp-controller="Patients" asp-action="Details" asp-route-id="@patientId">@Localizer["PatientDetails"]</a></li>
+        <li class="breadcrumb-item active" aria-current="page">@Localizer["MedicalHistory"]</li>
+    </ol>
+</nav>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h3 class="mb-0">@Localizer["MedicalHistory"]</h3>
+</div>
+
+<form asp-action="MedicalHistory" asp-route-id="@patientId" method="post" class="card card-rounded p-3 p-md-4">
+    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+    <!-- General Medical History Section -->
+    <div class="mb-4">
+        <h5 class="border-bottom pb-2 mb-3">@Localizer["GeneralMedicalHistory"]</h5>
+
+        <div class="row g-3">
+            <div class="col-md-6 col-12">
+                <label asp-for="ChronicConditions" class="form-label">@Localizer["ChronicConditions"]</label>
+                <textarea asp-for="ChronicConditions" class="form-control" rows="3" placeholder="@Localizer["EnterChronicConditions"]"></textarea>
+                <span asp-validation-for="ChronicConditions" class="text-danger"></span>
+            </div>
+
+            <div class="col-md-6 col-12">
+                <label asp-for="PastMedicalHistory" class="form-label">@Localizer["PastMedicalHistory"]</label>
+                <textarea asp-for="PastMedicalHistory" class="form-control" rows="3" placeholder="@Localizer["EnterPastMedicalHistory"]"></textarea>
+                <span asp-validation-for="PastMedicalHistory" class="text-danger"></span>
+            </div>
+
+            <div class="col-md-6 col-12">
+                <label asp-for="SurgicalHistory" class="form-label">@Localizer["SurgicalHistory"]</label>
+                <textarea asp-for="SurgicalHistory" class="form-control" rows="3" placeholder="@Localizer["EnterSurgicalHistory"]"></textarea>
+                <span asp-validation-for="SurgicalHistory" class="text-danger"></span>
+            </div>
+
+            <div class="col-md-6 col-12">
+                <label asp-for="FamilyHistory" class="form-label">@Localizer["FamilyHistory"]</label>
+                <textarea asp-for="FamilyHistory" class="form-control" rows="3" placeholder="@Localizer["EnterFamilyHistory"]"></textarea>
+                <span asp-validation-for="FamilyHistory" class="text-danger"></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Allergies Section -->
+    <div class="mb-4">
+        <h5 class="border-bottom pb-2 mb-3">@Localizer["Allergies"]</h5>
+
+        <div class="row g-3">
+            <div class="col-md-6 col-12">
+                <label asp-for="Allergies" class="form-label">@Localizer["Allergies"]</label>
+                <textarea asp-for="Allergies" class="form-control" rows="3" placeholder="@Localizer["EnterAllergies"]"></textarea>
+                <span asp-validation-for="Allergies" class="text-danger"></span>
+            </div>
+
+            <div class="col-md-6 col-12">
+                <label asp-for="AllergyReactions" class="form-label">@Localizer["AllergyReactions"]</label>
+                <textarea asp-for="AllergyReactions" class="form-control" rows="3" placeholder="@Localizer["EnterAllergyReactions"]"></textarea>
+                <span asp-validation-for="AllergyReactions" class="text-danger"></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Current Medications Section -->
+    <div class="mb-4">
+        <h5 class="border-bottom pb-2 mb-3">@Localizer["Medications"]</h5>
+
+        <div class="row g-3">
+            <div class="col-12">
+                <label asp-for="CurrentMedications" class="form-label">@Localizer["CurrentMedications"]</label>
+                <textarea asp-for="CurrentMedications" class="form-control" rows="4" placeholder="@Localizer["EnterCurrentMedications"]"></textarea>
+                <span asp-validation-for="CurrentMedications" class="text-danger"></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Social History Section -->
+    <div class="mb-4">
+        <h5 class="border-bottom pb-2 mb-3">@Localizer["SocialHistory"]</h5>
+
+        <div class="row g-3">
+            <div class="col-md-6 col-12">
+                <div class="form-check">
+                    <input asp-for="IsSmoker" class="form-check-input" type="checkbox" />
+                    <label asp-for="IsSmoker" class="form-check-label">@Localizer["IsSmoker"]</label>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-12">
+                <div class="form-check">
+                    <input asp-for="ConsumesAlcohol" class="form-check-input" type="checkbox" />
+                    <label asp-for="ConsumesAlcohol" class="form-check-label">@Localizer["ConsumesAlcohol"]</label>
+                </div>
+            </div>
+
+            <div class="col-12">
+                <label asp-for="OccupationalExposure" class="form-label">@Localizer["OccupationalExposure"]</label>
+                <textarea asp-for="OccupationalExposure" class="form-control" rows="2" placeholder="@Localizer["EnterOccupationalExposure"]"></textarea>
+                <span asp-validation-for="OccupationalExposure" class="text-danger"></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hearing-Specific History Section -->
+    <div class="mb-4">
+        <h5 class="border-bottom pb-2 mb-3">@Localizer["HearingSpecificHistory"]</h5>
+
+        <div class="row g-3">
+            <div class="col-md-6 col-12">
+                <label asp-for="NoiseExposureHistory" class="form-label">@Localizer["NoiseExposureHistory"]</label>
+                <textarea asp-for="NoiseExposureHistory" class="form-control" rows="3" placeholder="@Localizer["EnterNoiseExposureHistory"]"></textarea>
+                <span asp-validation-for="NoiseExposureHistory" class="text-danger"></span>
+            </div>
+
+            <div class="col-md-6 col-12">
+                <label asp-for="PreviousHearingAids" class="form-label">@Localizer["PreviousHearingAids"]</label>
+                <textarea asp-for="PreviousHearingAids" class="form-control" rows="3" placeholder="@Localizer["EnterPreviousHearingAids"]"></textarea>
+                <span asp-validation-for="PreviousHearingAids" class="text-danger"></span>
+            </div>
+
+            <div class="col-md-6 col-12">
+                <label asp-for="TinnitusHistory" class="form-label">@Localizer["TinnitusHistory"]</label>
+                <textarea asp-for="TinnitusHistory" class="form-control" rows="3" placeholder="@Localizer["EnterTinnitusHistory"]"></textarea>
+                <span asp-validation-for="TinnitusHistory" class="text-danger"></span>
+            </div>
+
+            <div class="col-md-6 col-12">
+                <label asp-for="BalanceProblems" class="form-label">@Localizer["BalanceProblems"]</label>
+                <textarea asp-for="BalanceProblems" class="form-control" rows="3" placeholder="@Localizer["EnterBalanceProblems"]"></textarea>
+                <span asp-validation-for="BalanceProblems" class="text-danger"></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Additional Notes Section -->
+    <div class="mb-4">
+        <h5 class="border-bottom pb-2 mb-3">@Localizer["AdditionalNotes"]</h5>
+
+        <div class="row g-3">
+            <div class="col-12">
+                <label asp-for="AdditionalNotes" class="form-label">@Localizer["AdditionalNotes"]</label>
+                <textarea asp-for="AdditionalNotes" class="form-control" rows="4" placeholder="@Localizer["EnterAdditionalNotes"]"></textarea>
+                <span asp-validation-for="AdditionalNotes" class="text-danger"></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Form Buttons -->
+    <div class="mt-4 d-flex flex-column flex-sm-row justify-content-end gap-2">
+        <a asp-action="Details" asp-route-id="@patientId" class="btn btn-outline-secondary">
+            <i class="bi bi-x-lg"></i> @Localizer["Cancel"]
+        </a>
+        <button type="submit" class="btn btn-xenon">
+            <i class="bi bi-check-lg"></i> @Localizer["SaveMedicalHistory"]
+        </button>
+    </div>
+</form>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}
