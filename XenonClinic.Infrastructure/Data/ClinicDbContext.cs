@@ -14,6 +14,7 @@ public class ClinicDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<Tenant> Tenants => Set<Tenant>();
     public DbSet<Company> Companies => Set<Company>();
     public DbSet<TenantSettings> TenantSettings => Set<TenantSettings>();
+    public DbSet<CompanySettings> CompanySettings => Set<CompanySettings>();
 
     // Existing entities
     public DbSet<Branch> Branches => Set<Branch>();
@@ -138,6 +139,17 @@ public class ClinicDbContext : IdentityDbContext<ApplicationUser>
         builder.Entity<TenantSettings>()
             .Property(ts => ts.DefaultTaxRate)
             .HasPrecision(5, 2);
+
+        // CompanySettings configuration
+        builder.Entity<CompanySettings>()
+            .HasIndex(cs => cs.CompanyId)
+            .IsUnique();
+
+        builder.Entity<CompanySettings>()
+            .HasOne(cs => cs.Company)
+            .WithOne(c => c.Settings)
+            .HasForeignKey<CompanySettings>(cs => cs.CompanyId)
+            .OnDelete(DeleteBehavior.Cascade);
 
         // Branch configuration - add company relationship
         builder.Entity<Branch>()

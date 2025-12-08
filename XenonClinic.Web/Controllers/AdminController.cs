@@ -18,6 +18,7 @@ public class AdminController : Controller
     private readonly IAdminService _adminService;
     private readonly ICompanyAuthConfigService _authConfigService;
     private readonly ISecretEncryptionService _encryptionService;
+    private readonly IConfigurationResolverService _configResolver;
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly RoleManager<IdentityRole> _roleManager;
     private readonly ClinicDbContext _context;
@@ -28,6 +29,7 @@ public class AdminController : Controller
         IAdminService adminService,
         ICompanyAuthConfigService authConfigService,
         ISecretEncryptionService encryptionService,
+        IConfigurationResolverService configResolver,
         UserManager<ApplicationUser> userManager,
         RoleManager<IdentityRole> roleManager,
         ClinicDbContext context)
@@ -37,6 +39,7 @@ public class AdminController : Controller
         _adminService = adminService;
         _authConfigService = authConfigService;
         _encryptionService = encryptionService;
+        _configResolver = configResolver;
         _userManager = userManager;
         _roleManager = roleManager;
         _context = context;
@@ -992,6 +995,257 @@ public class AdminController : Controller
         TempData["Success"] = "Settings saved successfully.";
 
         return RedirectToAction(nameof(Settings), new { tenantId = model.TenantId });
+    }
+
+    // ==================== Communication Settings (WhatsApp & Email) ====================
+
+    [Authorize(Roles = "SuperAdmin,TenantAdmin")]
+    public async Task<IActionResult> CommunicationSettings(int? tenantId)
+    {
+        int effectiveTenantId;
+
+        if (await _tenantService.IsSuperAdminAsync() && tenantId.HasValue)
+        {
+            effectiveTenantId = tenantId.Value;
+        }
+        else
+        {
+            var currentTenantId = await _tenantService.GetCurrentTenantIdAsync();
+            if (!currentTenantId.HasValue)
+            {
+                return Forbid();
+            }
+            effectiveTenantId = currentTenantId.Value;
+        }
+
+        var tenant = await _tenantService.GetTenantByIdAsync(effectiveTenantId);
+        if (tenant == null)
+        {
+            return NotFound();
+        }
+
+        var settings = tenant.Settings ?? new TenantSettings { TenantId = effectiveTenantId };
+
+        var model = new CommunicationSettingsViewModel
+        {
+            TenantId = effectiveTenantId,
+            ConfigurationLevel = "Tenant",
+
+            // Email settings
+            SmtpHost = settings.SmtpHost,
+            SmtpPort = settings.SmtpPort,
+            SmtpUsername = settings.SmtpUsername,
+            SmtpPassword = null, // Don't expose password
+            SmtpUseSsl = settings.SmtpUseSsl,
+            DefaultSenderEmail = settings.DefaultSenderEmail,
+            DefaultSenderName = settings.DefaultSenderName,
+
+            // WhatsApp settings
+            EnableWhatsApp = settings.EnableWhatsApp,
+            WhatsAppProvider = settings.WhatsAppProvider,
+            WhatsAppAccountSid = settings.WhatsAppAccountSid,
+            WhatsAppAuthToken = null, // Don't expose token
+            WhatsAppPhoneNumber = settings.WhatsAppPhoneNumber,
+            WhatsAppBusinessApiToken = null, // Don't expose token
+            WhatsAppBusinessPhoneNumberId = settings.WhatsAppBusinessPhoneNumberId,
+
+            // Reminder settings
+            SendAppointmentReminders = settings.SendAppointmentReminders,
+            ReminderHoursBeforeAppointment = settings.ReminderHoursBeforeAppointment
+        };
+
+        ViewBag.TenantName = tenant.Name;
+        return View(model);
+    }
+
+    [Authorize(Roles = "SuperAdmin,TenantAdmin")]
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> CommunicationSettings(CommunicationSettingsViewModel model)
+    {
+        if (!ModelState.IsValid)
+        {
+            var tenant = await _tenantService.GetTenantByIdAsync(model.TenantId!.Value);
+            ViewBag.TenantName = tenant?.Name;
+            return View(model);
+        }
+
+        var existingSettings = await _context.TenantSettings
+            .FirstOrDefaultAsync(ts => ts.TenantId == model.TenantId);
+
+        if (existingSettings == null)
+        {
+            existingSettings = new TenantSettings { TenantId = model.TenantId!.Value };
+            _context.TenantSettings.Add(existingSettings);
+        }
+
+        // Update email settings
+        if (!string.IsNullOrEmpty(model.SmtpHost))
+        {
+            existingSettings.SmtpHost = model.SmtpHost;
+            existingSettings.SmtpPort = model.SmtpPort ?? 587;
+            existingSettings.SmtpUsername = model.SmtpUsername;
+            existingSettings.SmtpUseSsl = model.SmtpUseSsl ?? true;
+            existingSettings.DefaultSenderEmail = model.DefaultSenderEmail;
+            existingSettings.DefaultSenderName = model.DefaultSenderName;
+
+            // Only update password if provided
+            if (!string.IsNullOrEmpty(model.SmtpPassword))
+            {
+                existingSettings.SmtpPassword = model.SmtpPassword;
+            }
+        }
+
+        // Update WhatsApp settings
+        existingSettings.EnableWhatsApp = model.EnableWhatsApp ?? false;
+        existingSettings.WhatsAppProvider = model.WhatsAppProvider;
+        existingSettings.WhatsAppAccountSid = model.WhatsAppAccountSid;
+        existingSettings.WhatsAppPhoneNumber = model.WhatsAppPhoneNumber;
+        existingSettings.WhatsAppBusinessPhoneNumberId = model.WhatsAppBusinessPhoneNumberId;
+
+        // Only update tokens if provided
+        if (!string.IsNullOrEmpty(model.WhatsAppAuthToken))
+        {
+            existingSettings.WhatsAppAuthToken = model.WhatsAppAuthToken;
+        }
+        if (!string.IsNullOrEmpty(model.WhatsAppBusinessApiToken))
+        {
+            existingSettings.WhatsAppBusinessApiToken = model.WhatsAppBusinessApiToken;
+        }
+
+        // Update reminder settings
+        existingSettings.SendAppointmentReminders = model.SendAppointmentReminders ?? false;
+        existingSettings.ReminderHoursBeforeAppointment = model.ReminderHoursBeforeAppointment ?? 24;
+
+        await _tenantService.UpdateTenantSettingsAsync(existingSettings);
+        TempData["Success"] = "Communication settings saved successfully.";
+
+        return RedirectToAction(nameof(CommunicationSettings), new { tenantId = model.TenantId });
+    }
+
+    [Authorize(Roles = "SuperAdmin,TenantAdmin,CompanyAdmin")]
+    public async Task<IActionResult> CompanyCommunicationSettings(int companyId)
+    {
+        if (!await _companyService.HasAccessToCompanyAsync(companyId))
+        {
+            return Forbid();
+        }
+
+        var company = await _context.Companies
+            .Include(c => c.Settings)
+            .Include(c => c.Tenant)
+                .ThenInclude(t => t.Settings)
+            .FirstOrDefaultAsync(c => c.Id == companyId);
+
+        if (company == null)
+        {
+            return NotFound();
+        }
+
+        var companySettings = company.Settings;
+        var tenantSettings = company.Tenant?.Settings;
+
+        var model = new CommunicationSettingsViewModel
+        {
+            CompanyId = companyId,
+            ConfigurationLevel = "Company",
+
+            // Email settings (show company override or tenant default)
+            SmtpHost = companySettings?.SmtpHost ?? tenantSettings?.SmtpHost,
+            SmtpPort = companySettings?.SmtpPort ?? tenantSettings?.SmtpPort,
+            SmtpUsername = companySettings?.SmtpUsername ?? tenantSettings?.SmtpUsername,
+            SmtpPassword = null, // Don't expose password
+            SmtpUseSsl = companySettings?.SmtpUseSsl ?? tenantSettings?.SmtpUseSsl,
+            DefaultSenderEmail = companySettings?.DefaultSenderEmail ?? tenantSettings?.DefaultSenderEmail,
+            DefaultSenderName = companySettings?.DefaultSenderName ?? tenantSettings?.DefaultSenderName,
+
+            // WhatsApp settings (show company override or tenant default)
+            EnableWhatsApp = companySettings?.EnableWhatsApp ?? tenantSettings?.EnableWhatsApp,
+            WhatsAppProvider = companySettings?.WhatsAppProvider ?? tenantSettings?.WhatsAppProvider,
+            WhatsAppAccountSid = companySettings?.WhatsAppAccountSid ?? tenantSettings?.WhatsAppAccountSid,
+            WhatsAppAuthToken = null, // Don't expose token
+            WhatsAppPhoneNumber = companySettings?.WhatsAppPhoneNumber ?? tenantSettings?.WhatsAppPhoneNumber,
+            WhatsAppBusinessApiToken = null, // Don't expose token
+            WhatsAppBusinessPhoneNumberId = companySettings?.WhatsAppBusinessPhoneNumberId ?? tenantSettings?.WhatsAppBusinessPhoneNumberId,
+
+            // Reminder settings
+            SendAppointmentReminders = companySettings?.SendAppointmentReminders ?? tenantSettings?.SendAppointmentReminders,
+            ReminderHoursBeforeAppointment = companySettings?.ReminderHoursBeforeAppointment ?? tenantSettings?.ReminderHoursBeforeAppointment
+        };
+
+        ViewBag.CompanyName = company.Name;
+        ViewBag.TenantName = company.Tenant?.Name;
+        return View(model);
+    }
+
+    [Authorize(Roles = "SuperAdmin,TenantAdmin,CompanyAdmin")]
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> CompanyCommunicationSettings(CommunicationSettingsViewModel model)
+    {
+        if (!await _companyService.HasAccessToCompanyAsync(model.CompanyId!.Value))
+        {
+            return Forbid();
+        }
+
+        if (!ModelState.IsValid)
+        {
+            var company = await _companyService.GetCompanyByIdAsync(model.CompanyId.Value);
+            ViewBag.CompanyName = company?.Name;
+            return View(model);
+        }
+
+        var existingSettings = await _context.CompanySettings
+            .FirstOrDefaultAsync(cs => cs.CompanyId == model.CompanyId);
+
+        if (existingSettings == null)
+        {
+            existingSettings = new CompanySettings { CompanyId = model.CompanyId.Value };
+            _context.CompanySettings.Add(existingSettings);
+        }
+
+        // Update email settings (null means use tenant default)
+        existingSettings.SmtpHost = model.SmtpHost;
+        existingSettings.SmtpPort = model.SmtpPort;
+        existingSettings.SmtpUsername = model.SmtpUsername;
+        existingSettings.SmtpUseSsl = model.SmtpUseSsl;
+        existingSettings.DefaultSenderEmail = model.DefaultSenderEmail;
+        existingSettings.DefaultSenderName = model.DefaultSenderName;
+
+        // Only update password if provided
+        if (!string.IsNullOrEmpty(model.SmtpPassword))
+        {
+            existingSettings.SmtpPassword = model.SmtpPassword;
+        }
+
+        // Update WhatsApp settings
+        existingSettings.EnableWhatsApp = model.EnableWhatsApp;
+        existingSettings.WhatsAppProvider = model.WhatsAppProvider;
+        existingSettings.WhatsAppAccountSid = model.WhatsAppAccountSid;
+        existingSettings.WhatsAppPhoneNumber = model.WhatsAppPhoneNumber;
+        existingSettings.WhatsAppBusinessPhoneNumberId = model.WhatsAppBusinessPhoneNumberId;
+
+        // Only update tokens if provided
+        if (!string.IsNullOrEmpty(model.WhatsAppAuthToken))
+        {
+            existingSettings.WhatsAppAuthToken = model.WhatsAppAuthToken;
+        }
+        if (!string.IsNullOrEmpty(model.WhatsAppBusinessApiToken))
+        {
+            existingSettings.WhatsAppBusinessApiToken = model.WhatsAppBusinessApiToken;
+        }
+
+        // Update reminder settings
+        existingSettings.SendAppointmentReminders = model.SendAppointmentReminders;
+        existingSettings.ReminderHoursBeforeAppointment = model.ReminderHoursBeforeAppointment;
+
+        existingSettings.LastModifiedAt = DateTime.UtcNow;
+        existingSettings.LastModifiedBy = User.Identity?.Name;
+
+        await _context.SaveChangesAsync();
+        TempData["Success"] = "Company communication settings saved successfully.";
+
+        return RedirectToAction(nameof(CompanyCommunicationSettings), new { companyId = model.CompanyId });
     }
 
     // ==================== Company Authentication Settings ====================

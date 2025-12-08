@@ -45,6 +45,15 @@ public class TenantSettings
     public string? DefaultSenderEmail { get; set; }
     public string? DefaultSenderName { get; set; }
 
+    // WhatsApp settings (using Twilio or WhatsApp Business API)
+    public bool EnableWhatsApp { get; set; } = false;
+    public string? WhatsAppProvider { get; set; } // "Twilio" or "WhatsAppBusiness"
+    public string? WhatsAppAccountSid { get; set; } // For Twilio
+    public string? WhatsAppAuthToken { get; set; } // For Twilio
+    public string? WhatsAppPhoneNumber { get; set; } // Sender phone number (format: +1234567890)
+    public string? WhatsAppBusinessApiToken { get; set; } // For WhatsApp Business API
+    public string? WhatsAppBusinessPhoneNumberId { get; set; } // For WhatsApp Business API
+
     // Feature flags
     public bool EnableLabModule { get; set; } = true;
     public bool EnableInventoryModule { get; set; } = true;

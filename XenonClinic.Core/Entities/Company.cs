@@ -40,4 +40,9 @@ public class Company
     /// Authentication settings for this company
     /// </summary>
     public CompanyAuthSettings? AuthSettings { get; set; }
+
+    /// <summary>
+    /// Company-specific configuration settings (can override tenant settings)
+    /// </summary>
+    public CompanySettings? Settings { get; set; }
 }
