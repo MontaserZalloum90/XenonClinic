@@ -1703,4 +1703,650 @@
   <data name="Finance">
     <value>Finance</value>
   </data>
+
+  <!-- Admin Module -->
+  <data name="Admin">
+    <value>Admin</value>
+  </data>
+  <data name="Administration">
+    <value>Administration</value>
+  </data>
+  <data name="AdminDashboard">
+    <value>Admin Dashboard</value>
+  </data>
+  <data name="Tenants">
+    <value>Tenants</value>
+  </data>
+  <data name="Tenant">
+    <value>Tenant</value>
+  </data>
+  <data name="CreateTenant">
+    <value>Create Tenant</value>
+  </data>
+  <data name="EditTenant">
+    <value>Edit Tenant</value>
+  </data>
+  <data name="TenantDetails">
+    <value>Tenant Details</value>
+  </data>
+  <data name="TenantInformation">
+    <value>Tenant Information</value>
+  </data>
+  <data name="TenantName">
+    <value>Tenant Name</value>
+  </data>
+  <data name="TenantCode">
+    <value>Tenant Code</value>
+  </data>
+  <data name="TenantSettings">
+    <value>Tenant Settings</value>
+  </data>
+  <data name="Companies">
+    <value>Companies</value>
+  </data>
+  <data name="Company">
+    <value>Company</value>
+  </data>
+  <data name="CreateCompany">
+    <value>Create Company</value>
+  </data>
+  <data name="EditCompany">
+    <value>Edit Company</value>
+  </data>
+  <data name="CompanyName">
+    <value>Company Name</value>
+  </data>
+  <data name="CompanyCode">
+    <value>Company Code</value>
+  </data>
+  <data name="Branches">
+    <value>Branches</value>
+  </data>
+  <data name="CreateBranch">
+    <value>Create Branch</value>
+  </data>
+  <data name="EditBranch">
+    <value>Edit Branch</value>
+  </data>
+  <data name="BranchName">
+    <value>Branch Name</value>
+  </data>
+  <data name="BranchCode">
+    <value>Branch Code</value>
+  </data>
+  <data name="MainBranch">
+    <value>Main Branch</value>
+  </data>
+  <data name="Users">
+    <value>Users</value>
+  </data>
+  <data name="User">
+    <value>User</value>
+  </data>
+  <data name="CreateUser">
+    <value>Create User</value>
+  </data>
+  <data name="EditUser">
+    <value>Edit User</value>
+  </data>
+  <data name="BackToList">
+    <value>Back to List</value>
+  </data>
+  <data name="BackToDashboard">
+    <value>Back to Dashboard</value>
+  </data>
+  <data name="Inactive">
+    <value>Inactive</value>
+  </data>
+  <data name="Plan">
+    <value>Plan</value>
+  </data>
+  <data name="Expires">
+    <value>Expires</value>
+  </data>
+  <data name="Contact">
+    <value>Contact</value>
+  </data>
+  <data name="Limits">
+    <value>Limits</value>
+  </data>
+  <data name="MaxCompanies">
+    <value>Max Companies</value>
+  </data>
+  <data name="MaxBranchesPerCompany">
+    <value>Max Branches Per Company</value>
+  </data>
+  <data name="MaxUsers">
+    <value>Max Users</value>
+  </data>
+  <data name="AddCompany">
+    <value>Add Company</value>
+  </data>
+  <data name="ViewUsers">
+    <value>View Users</value>
+  </data>
+  <data name="RegionalSettings">
+    <value>Regional Settings</value>
+  </data>
+  <data name="DefaultLanguage">
+    <value>Default Language</value>
+  </data>
+  <data name="DefaultCurrency">
+    <value>Default Currency</value>
+  </data>
+  <data name="DateFormat">
+    <value>Date Format</value>
+  </data>
+  <data name="TimeFormat">
+    <value>Time Format</value>
+  </data>
+  <data name="InvoiceSettings">
+    <value>Invoice Settings</value>
+  </data>
+  <data name="InvoicePrefix">
+    <value>Invoice Prefix</value>
+  </data>
+  <data name="QuotationPrefix">
+    <value>Quotation Prefix</value>
+  </data>
+  <data name="SalePrefix">
+    <value>Sale Prefix</value>
+  </data>
+  <data name="POPrefix">
+    <value>PO Prefix</value>
+  </data>
+  <data name="DefaultTaxRate">
+    <value>Default Tax Rate</value>
+  </data>
+  <data name="ShowTaxOnInvoice">
+    <value>Show Tax on Invoice</value>
+  </data>
+  <data name="AppointmentSettings">
+    <value>Appointment Settings</value>
+  </data>
+  <data name="DefaultDuration">
+    <value>Default Duration</value>
+  </data>
+  <data name="ReminderHours">
+    <value>Reminder Hours Before</value>
+  </data>
+  <data name="SendReminders">
+    <value>Send Appointment Reminders</value>
+  </data>
+  <data name="EnableOnlineBooking">
+    <value>Enable Online Booking</value>
+  </data>
+  <data name="BusinessSettings">
+    <value>Business Settings</value>
+  </data>
+  <data name="ExpenseApprovalThreshold">
+    <value>Expense Approval Threshold</value>
+  </data>
+  <data name="RequireExpenseApproval">
+    <value>Require Approval for Expenses</value>
+  </data>
+  <data name="EnableMultiCurrency">
+    <value>Enable Multi-Currency</value>
+  </data>
+  <data name="EnableMultiLanguage">
+    <value>Enable Multi-Language</value>
+  </data>
+  <data name="ModuleAccess">
+    <value>Module Access</value>
+  </data>
+  <data name="LabModule">
+    <value>Lab Module</value>
+  </data>
+  <data name="InventoryModule">
+    <value>Inventory Module</value>
+  </data>
+  <data name="HRModule">
+    <value>HR Module</value>
+  </data>
+  <data name="FinanceModule">
+    <value>Finance Module</value>
+  </data>
+  <data name="ProcurementModule">
+    <value>Procurement Module</value>
+  </data>
+  <data name="SalesModule">
+    <value>Sales Module</value>
+  </data>
+  <data name="AnalyticsModule">
+    <value>Analytics Module</value>
+  </data>
+  <data name="PatientPortal">
+    <value>Patient Portal</value>
+  </data>
+  <data name="AuditSettings">
+    <value>Audit Settings</value>
+  </data>
+  <data name="EnableAuditLogging">
+    <value>Enable Audit Logging</value>
+  </data>
+  <data name="AuditRetentionDays">
+    <value>Audit Log Retention (Days)</value>
+  </data>
+  <data name="SaveSettings">
+    <value>Save Settings</value>
+  </data>
+  <data name="BasicInformation">
+    <value>Basic Information</value>
+  </data>
+  <data name="OrganizationAssignment">
+    <value>Organization Assignment</value>
+  </data>
+  <data name="Roles">
+    <value>Roles</value>
+  </data>
+  <data name="Security">
+    <value>Security</value>
+  </data>
+  <data name="FirstName">
+    <value>First Name</value>
+  </data>
+  <data name="LastName">
+    <value>Last Name</value>
+  </data>
+  <data name="DisplayName">
+    <value>Display Name</value>
+  </data>
+  <data name="Password">
+    <value>Password</value>
+  </data>
+  <data name="ConfirmPassword">
+    <value>Confirm Password</value>
+  </data>
+  <data name="PrimaryBranch">
+    <value>Primary Branch</value>
+  </data>
+  <data name="AdditionalBranches">
+    <value>Additional Branches</value>
+  </data>
+  <data name="SuperAdmin">
+    <value>Super Admin</value>
+  </data>
+  <data name="TenantAdmin">
+    <value>Tenant Admin</value>
+  </data>
+  <data name="CompanyAdmin">
+    <value>Company Admin</value>
+  </data>
+  <data name="BranchAdmin">
+    <value>Branch Admin</value>
+  </data>
+  <data name="LeaveBlankToKeep">
+    <value>Leave blank to keep current</value>
+  </data>
+  <data name="ShowInactive">
+    <value>Show Inactive</value>
+  </data>
+  <data name="LastLogin">
+    <value>Last Login</value>
+  </data>
+  <data name="Never">
+    <value>Never</value>
+  </data>
+  <data name="OpeningTime">
+    <value>Opening Time</value>
+  </data>
+  <data name="ClosingTime">
+    <value>Closing Time</value>
+  </data>
+  <data name="ManagerName">
+    <value>Manager Name</value>
+  </data>
+  <data name="ManagerPhone">
+    <value>Manager Phone</value>
+  </data>
+  <data name="WorkingHours">
+    <value>Working Hours</value>
+  </data>
+  <data name="SubscriptionPlan">
+    <value>Subscription Plan</value>
+  </data>
+  <data name="SubscriptionEnd">
+    <value>Subscription End Date</value>
+  </data>
+  <data name="ContactEmail">
+    <value>Contact Email</value>
+  </data>
+  <data name="ContactPhone">
+    <value>Contact Phone</value>
+  </data>
+  <data name="None">
+    <value>None</value>
+  </data>
+  <data name="City">
+    <value>City</value>
+  </data>
+  <data name="Country">
+    <value>Country</value>
+  </data>
+  <data name="TotalTenants">
+    <value>Total Tenants</value>
+  </data>
+  <data name="TotalCompanies">
+    <value>Total Companies</value>
+  </data>
+  <data name="TotalBranches">
+    <value>Total Branches</value>
+  </data>
+  <data name="TotalUsers">
+    <value>Total Users</value>
+  </data>
+  <data name="ActiveTenants">
+    <value>Active Tenants</value>
+  </data>
+  <data name="SystemOverview">
+    <value>System Overview</value>
+  </data>
+  <data name="ManageTenants">
+    <value>Manage Tenants</value>
+  </data>
+  <data name="ManageCompanies">
+    <value>Manage Companies</value>
+  </data>
+  <data name="ManageUsers">
+    <value>Manage Users</value>
+  </data>
+
+  <!-- Authentication Settings -->
+  <data name="Login">
+    <value>Login</value>
+  </data>
+  <data name="SignIn">
+    <value>Sign In</value>
+  </data>
+  <data name="SigningInTo">
+    <value>Signing in to</value>
+  </data>
+  <data name="SelectCompany">
+    <value>Select Company</value>
+  </data>
+  <data name="Or">
+    <value>or</value>
+  </data>
+  <data name="OrSignInWithEmail">
+    <value>or sign in with email</value>
+  </data>
+  <data name="RememberMe">
+    <value>Remember me</value>
+  </data>
+  <data name="ForgotPassword">
+    <value>Forgot password?</value>
+  </data>
+  <data name="NotYourCompany">
+    <value>Not your company?</value>
+  </data>
+  <data name="ChangeCompany">
+    <value>Change company</value>
+  </data>
+  <data name="NoLoginMethodsAvailable">
+    <value>No login methods are available. Please contact your administrator.</value>
+  </data>
+  <data name="PoweredBy">
+    <value>Powered by</value>
+  </data>
+  <data name="AccountLocked">
+    <value>Account Locked</value>
+  </data>
+  <data name="AccountLockedMessage">
+    <value>Your account has been locked due to multiple failed login attempts. Please try again later.</value>
+  </data>
+  <data name="BackToLogin">
+    <value>Back to Login</value>
+  </data>
+  <data name="AccessDenied">
+    <value>Access Denied</value>
+  </data>
+  <data name="AccessDeniedMessage">
+    <value>You do not have permission to access this resource.</value>
+  </data>
+  <data name="GoHome">
+    <value>Go Home</value>
+  </data>
+  <data name="AuthenticationSettings">
+    <value>Authentication Settings</value>
+  </data>
+  <data name="AuthenticationMode">
+    <value>Authentication Mode</value>
+  </data>
+  <data name="AuthMode">
+    <value>Auth Mode</value>
+  </data>
+  <data name="EnableCustomAuthSettings">
+    <value>Enable Custom Authentication Settings</value>
+  </data>
+  <data name="EnableCustomAuthSettingsHelp">
+    <value>When enabled, this company will use custom authentication settings instead of the default local login.</value>
+  </data>
+  <data name="AllowLocalLogin">
+    <value>Allow Local Login</value>
+  </data>
+  <data name="AllowExternalLogin">
+    <value>Allow External Login (SSO)</value>
+  </data>
+  <data name="UserProvisioning">
+    <value>User Provisioning</value>
+  </data>
+  <data name="AutoProvisionUsers">
+    <value>Auto-Provision External Users</value>
+  </data>
+  <data name="AutoProvisionUsersHelp">
+    <value>Automatically create user accounts for users who authenticate via external providers.</value>
+  </data>
+  <data name="DefaultRole">
+    <value>Default Role</value>
+  </data>
+  <data name="DefaultProvider">
+    <value>Default Provider</value>
+  </data>
+  <data name="LoginPageCustomization">
+    <value>Login Page Customization</value>
+  </data>
+  <data name="LoginMessage">
+    <value>Login Message</value>
+  </data>
+  <data name="PostLoginRedirect">
+    <value>Post-Login Redirect URL</value>
+  </data>
+  <data name="PostLogoutRedirect">
+    <value>Post-Logout Redirect URL</value>
+  </data>
+  <data name="IdentityProviders">
+    <value>Identity Providers</value>
+  </data>
+  <data name="CreateIdentityProvider">
+    <value>Create Identity Provider</value>
+  </data>
+  <data name="EditIdentityProvider">
+    <value>Edit Identity Provider</value>
+  </data>
+  <data name="Default">
+    <value>Default</value>
+  </data>
+  <data name="Disabled">
+    <value>Disabled</value>
+  </data>
+  <data name="ConfirmDeleteProvider">
+    <value>Are you sure you want to delete this identity provider?</value>
+  </data>
+  <data name="NoIdentityProviders">
+    <value>No identity providers configured</value>
+  </data>
+  <data name="AddFirstProvider">
+    <value>Add your first provider</value>
+  </data>
+  <data name="LoginURL">
+    <value>Login URL</value>
+  </data>
+  <data name="CompanyLoginURLHelp">
+    <value>Share this URL with users to access your company's login page.</value>
+  </data>
+  <data name="BackToAuthSettings">
+    <value>Back to Auth Settings</value>
+  </data>
+  <data name="BackToCompanies">
+    <value>Back to Companies</value>
+  </data>
+  <data name="InternalName">
+    <value>Internal Name</value>
+  </data>
+  <data name="InternalNameHelp">
+    <value>Unique identifier for this provider (e.g., ADFS-OIDC)</value>
+  </data>
+  <data name="ProviderType">
+    <value>Provider Type</value>
+  </data>
+  <data name="DisplayOrder">
+    <value>Display Order</value>
+  </data>
+  <data name="Enabled">
+    <value>Enabled</value>
+  </data>
+  <data name="IconClass">
+    <value>Icon CSS Class</value>
+  </data>
+  <data name="IconClassHelp">
+    <value>Bootstrap Icons class (e.g., bi bi-microsoft)</value>
+  </data>
+  <data name="ButtonClass">
+    <value>Button CSS Class</value>
+  </data>
+  <data name="OIDCConfiguration">
+    <value>OpenID Connect Configuration</value>
+  </data>
+  <data name="AuthorityURL">
+    <value>Authority URL</value>
+  </data>
+  <data name="AuthorityURLHelp">
+    <value>The OIDC authority URL (e.g., https://login.microsoftonline.com/{tenant}/v2.0)</value>
+  </data>
+  <data name="ClientID">
+    <value>Client ID</value>
+  </data>
+  <data name="ClientSecret">
+    <value>Client Secret</value>
+  </data>
+  <data name="ResponseType">
+    <value>Response Type</value>
+  </data>
+  <data name="Scopes">
+    <value>Scopes</value>
+  </data>
+  <data name="ScopesHelp">
+    <value>Comma-separated scopes (e.g., openid,profile,email)</value>
+  </data>
+  <data name="CallbackPath">
+    <value>Callback Path</value>
+  </data>
+  <data name="SignedOutCallbackPath">
+    <value>Signed Out Callback Path</value>
+  </data>
+  <data name="UsePKCE">
+    <value>Use PKCE</value>
+  </data>
+  <data name="RequireHTTPS">
+    <value>Require HTTPS</value>
+  </data>
+  <data name="GetUserInfoClaims">
+    <value>Get Claims from UserInfo</value>
+  </data>
+  <data name="SAML2Configuration">
+    <value>SAML 2.0 Configuration</value>
+  </data>
+  <data name="SPEntityID">
+    <value>SP Entity ID</value>
+  </data>
+  <data name="IdPEntityID">
+    <value>IdP Entity ID</value>
+  </data>
+  <data name="IdPMetadataURL">
+    <value>IdP Metadata URL</value>
+  </data>
+  <data name="ACSPath">
+    <value>ACS Path</value>
+  </data>
+  <data name="SLOPath">
+    <value>SLO Path</value>
+  </data>
+  <data name="ClockSkewMinutes">
+    <value>Clock Skew (minutes)</value>
+  </data>
+  <data name="SignRequests">
+    <value>Sign Requests</value>
+  </data>
+  <data name="WantAssertionsSigned">
+    <value>Want Assertions Signed</value>
+  </data>
+  <data name="SPCertificate">
+    <value>SP Certificate</value>
+  </data>
+  <data name="CertificatePassword">
+    <value>Certificate Password</value>
+  </data>
+  <data name="WSFedConfiguration">
+    <value>WS-Federation Configuration</value>
+  </data>
+  <data name="MetadataAddress">
+    <value>Metadata Address</value>
+  </data>
+  <data name="Wtrealm">
+    <value>Wtrealm</value>
+  </data>
+  <data name="ReplyURL">
+    <value>Reply URL</value>
+  </data>
+  <data name="ClaimMappings">
+    <value>Claim Mappings</value>
+  </data>
+  <data name="EmailClaimType">
+    <value>Email Claim Type</value>
+  </data>
+  <data name="UPNClaimType">
+    <value>UPN Claim Type</value>
+  </data>
+  <data name="NameClaimType">
+    <value>Name Claim Type</value>
+  </data>
+  <data name="FirstNameClaimType">
+    <value>First Name Claim Type</value>
+  </data>
+  <data name="LastNameClaimType">
+    <value>Last Name Claim Type</value>
+  </data>
+  <data name="GroupsClaimType">
+    <value>Groups Claim Type</value>
+  </data>
+  <data name="ExtraConfigJSON">
+    <value>Extra Configuration (JSON)</value>
+  </data>
+  <data name="ExtraConfigJSONHelp">
+    <value>Additional provider-specific configuration in JSON format</value>
+  </data>
+  <data name="Help">
+    <value>Help</value>
+  </data>
+  <data name="OIDCHelp">
+    <value>OpenID Connect</value>
+  </data>
+  <data name="OIDCHelpText">
+    <value>OpenID Connect is recommended for most modern identity providers. Common authorities:</value>
+  </data>
+  <data name="SAML2Help">
+    <value>SAML 2.0</value>
+  </data>
+  <data name="SAML2HelpText">
+    <value>SAML 2.0 is supported by many enterprise identity providers including ADFS, Okta, and OneLogin.</value>
+  </data>
+  <data name="WSFedHelp">
+    <value>WS-Federation</value>
+  </data>
+  <data name="WSFedHelpText">
+    <value>WS-Federation is a legacy protocol primarily used with older ADFS installations.</value>
+  </data>
+  <data name="Delete">
+    <value>Delete</value>
+  </data>
 </root>

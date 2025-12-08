@@ -1,0 +1,220 @@
+@using Microsoft.AspNetCore.Localization
+@using Microsoft.AspNetCore.Mvc.Localization
+@inject IViewLocalizer Localizer
+@model XenonClinic.Web.Models.Account.LoginViewModel
+@{
+    Layout = null;
+    var requestCulture = Context.Features.Get<IRequestCultureFeature>();
+    var currentCulture = requestCulture?.RequestCulture.Culture.Name ?? "en";
+    var isRtl = currentCulture == "ar";
+    var dir = isRtl ? "rtl" : "ltr";
+}
+<!DOCTYPE html>
+<html lang="@currentCulture" dir="@dir">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@Localizer["Login"] - XENON Clinic</title>
+    @if (isRtl)
+    {
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.rtl.min.css" />
+    }
+    else
+    {
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" />
+    }
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" />
+    <style>
+        body {
+            background: linear-gradient(135deg, #1F6FEB 0%, #0f172a 100%);
+            min-height: 100vh;
+        }
+        .login-card {
+            max-width: 420px;
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+        .logo-container {
+            background: linear-gradient(135deg, #1F6FEB 0%, #0d47a1 100%);
+            border-radius: 16px 16px 0 0;
+            padding: 2rem;
+        }
+        .btn-sso {
+            transition: all 0.2s ease;
+        }
+        .btn-sso:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+        .divider {
+            display: flex;
+            align-items: center;
+            text-align: center;
+            color: #6c757d;
+        }
+        .divider::before,
+        .divider::after {
+            content: '';
+            flex: 1;
+            border-bottom: 1px solid #dee2e6;
+        }
+        .divider::before {
+            margin-right: 1rem;
+        }
+        .divider::after {
+            margin-left: 1rem;
+        }
+        .company-card {
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .company-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body class="d-flex align-items-center justify-content-center py-4">
+    <div class="login-card card border-0 w-100 mx-3">
+        <div class="logo-container text-center text-white">
+            <img src="/images/xenon-default-logo.svg" alt="XENON Clinic" class="mb-3" style="height: 60px; filter: brightness(0) invert(1);" />
+            <h4 class="mb-0 fw-bold">XENON Clinic</h4>
+            <small class="text-white-50">Audiology CRM</small>
+            @if (!string.IsNullOrEmpty(Model.CompanyName))
+            {
+                <div class="mt-3 pt-3 border-top border-light border-opacity-25">
+                    <small class="text-white-50">@Localizer["SigningInTo"]</small>
+                    <div class="fw-semibold">@Model.CompanyName</div>
+                </div>
+            }
+        </div>
+
+        <div class="card-body p-4">
+            @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+            {
+                <div class="alert alert-danger" role="alert">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>@Model.ErrorMessage
+                </div>
+            }
+
+            @* Custom Login Message *@
+            @if (!string.IsNullOrEmpty(isRtl ? Model.LoginPageMessageAr : Model.LoginPageMessage))
+            {
+                <div class="alert alert-info" role="alert">
+                    <i class="bi bi-info-circle me-2"></i>@(isRtl ? Model.LoginPageMessageAr : Model.LoginPageMessage)
+                </div>
+            }
+
+            @* Company Selection *@
+            @if (Model.ShowCompanySelector && Model.AvailableCompanies.Any())
+            {
+                <h6 class="text-center mb-3">@Localizer["SelectCompany"]</h6>
+                <div class="list-group mb-4">
+                    @foreach (var company in Model.AvailableCompanies)
+                    {
+                        <a asp-action="SelectCompany" asp-route-code="@company.Code" asp-route-returnUrl="@Model.ReturnUrl"
+                           class="list-group-item list-group-item-action company-card d-flex justify-content-between align-items-center">
+                            <div>
+                                <div class="fw-semibold">@company.Name</div>
+                                <small class="text-muted">@company.TenantName</small>
+                            </div>
+                            <i class="bi bi-chevron-right text-muted"></i>
+                        </a>
+                    }
+                </div>
+                <div class="divider mb-3">@Localizer["Or"]</div>
+            }
+
+            @* External Login Providers *@
+            @if (Model.ShowExternalLogin && Model.ExternalProviders.Any())
+            {
+                <div class="d-grid gap-2 mb-4">
+                    @foreach (var provider in Model.ExternalProviders.OrderByDescending(p => p.IsDefault))
+                    {
+                        <a asp-action="ExternalLogin" asp-route-provider="@provider.Id" asp-route-returnUrl="@Model.ReturnUrl"
+                           class="btn @provider.ButtonClass btn-sso btn-lg">
+                            <i class="@provider.IconClass me-2"></i>@provider.DisplayName
+                        </a>
+                    }
+                </div>
+
+                @if (Model.ShowLocalLogin)
+                {
+                    <div class="divider mb-4">@Localizer["OrSignInWithEmail"]</div>
+                }
+            }
+
+            @* Local Login Form *@
+            @if (Model.ShowLocalLogin)
+            {
+                <form asp-action="Login" method="post">
+                    <input type="hidden" asp-for="ReturnUrl" />
+                    <input type="hidden" asp-for="CompanyId" />
+                    <input type="hidden" asp-for="CompanyCode" />
+                    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                    <div class="mb-3">
+                        <label asp-for="Email" class="form-label">@Localizer["Email"]</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+                            <input asp-for="Email" class="form-control" placeholder="name@example.com" autocomplete="email" required />
+                        </div>
+                        <span asp-validation-for="Email" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Password" class="form-label">@Localizer["Password"]</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                            <input asp-for="Password" class="form-control" autocomplete="current-password" required />
+                        </div>
+                        <span asp-validation-for="Password" class="text-danger"></span>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <div class="form-check">
+                            <input asp-for="RememberMe" class="form-check-input" />
+                            <label asp-for="RememberMe" class="form-check-label">@Localizer["RememberMe"]</label>
+                        </div>
+                        <a href="#" class="text-decoration-none small">@Localizer["ForgotPassword"]</a>
+                    </div>
+
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="bi bi-box-arrow-in-right me-2"></i>@Localizer["SignIn"]
+                        </button>
+                    </div>
+                </form>
+            }
+            else if (!Model.ShowExternalLogin)
+            {
+                <div class="text-center text-muted">
+                    <i class="bi bi-shield-lock fs-1 mb-3 d-block"></i>
+                    <p>@Localizer["NoLoginMethodsAvailable"]</p>
+                </div>
+            }
+
+            @* Change Company Link *@
+            @if (!string.IsNullOrEmpty(Model.CompanyCode))
+            {
+                <div class="text-center mt-4 pt-3 border-top">
+                    <small class="text-muted">
+                        @Localizer["NotYourCompany"]
+                        <a asp-action="Login" asp-route-returnUrl="@Model.ReturnUrl" class="text-decoration-none">
+                            @Localizer["ChangeCompany"]
+                        </a>
+                    </small>
+                </div>
+            }
+        </div>
+
+        <div class="card-footer bg-light text-center py-3 border-0" style="border-radius: 0 0 16px 16px;">
+            <small class="text-muted">
+                @Localizer["PoweredBy"] <strong>XENON Technologies</strong>
+            </small>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

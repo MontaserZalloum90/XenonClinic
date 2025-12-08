@@ -1,0 +1,132 @@
+@using Microsoft.AspNetCore.Mvc.Localization
+@inject IViewLocalizer Localizer
+@model XenonClinic.Web.Models.Admin.CompanyFormViewModel
+@{
+    ViewData["Title"] = Model.IsEdit ? Localizer["EditCompany"] : Localizer["CreateCompany"];
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="mb-0">@ViewData["Title"]</h4>
+    <a asp-action="Companies" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i>@Localizer["BackToList"]
+    </a>
+</div>
+
+<div class="card card-rounded">
+    <div class="card-body">
+        <form asp-action="@(Model.IsEdit ? "EditCompany" : "CreateCompany")" method="post">
+            <input type="hidden" asp-for="Id" />
+
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label asp-for="TenantId" class="form-label">@Localizer["Tenant"] *</label>
+                    <select asp-for="TenantId" asp-items="@(new SelectList(Model.AvailableTenants, "Id", "Name"))" class="form-select" required>
+                        <option value="">@Localizer["SelectTenant"]</option>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="Code" class="form-label">@Localizer["Code"] *</label>
+                    <input asp-for="Code" class="form-control" required />
+                </div>
+            </div>
+
+            <div class="row g-3 mt-2">
+                <div class="col-12">
+                    <label asp-for="Name" class="form-label">@Localizer["Name"] *</label>
+                    <input asp-for="Name" class="form-control" required />
+                </div>
+            </div>
+
+            <div class="row g-3 mt-2">
+                <div class="col-12">
+                    <label asp-for="Description" class="form-label">@Localizer["Description"]</label>
+                    <textarea asp-for="Description" class="form-control" rows="2"></textarea>
+                </div>
+            </div>
+
+            <h6 class="mt-4 mb-3 border-bottom pb-2">@Localizer["LegalInformation"]</h6>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label asp-for="TradeLicenseNumber" class="form-label">@Localizer["TradeLicenseNumber"]</label>
+                    <input asp-for="TradeLicenseNumber" class="form-control" />
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="TaxRegistrationNumber" class="form-label">@Localizer["TaxRegistrationNumber"]</label>
+                    <input asp-for="TaxRegistrationNumber" class="form-control" />
+                </div>
+            </div>
+
+            <h6 class="mt-4 mb-3 border-bottom pb-2">@Localizer["ContactInformation"]</h6>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label asp-for="ContactEmail" class="form-label">@Localizer["Email"]</label>
+                    <input asp-for="ContactEmail" type="email" class="form-control" />
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="ContactPhone" class="form-label">@Localizer["Phone"]</label>
+                    <input asp-for="ContactPhone" class="form-control" />
+                </div>
+                <div class="col-md-8">
+                    <label asp-for="Address" class="form-label">@Localizer["Address"]</label>
+                    <input asp-for="Address" class="form-control" />
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="City" class="form-label">@Localizer["City"]</label>
+                    <input asp-for="City" class="form-control" />
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="Country" class="form-label">@Localizer["Country"]</label>
+                    <input asp-for="Country" class="form-control" />
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="PostalCode" class="form-label">@Localizer["PostalCode"]</label>
+                    <input asp-for="PostalCode" class="form-control" />
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="Website" class="form-label">@Localizer["Website"]</label>
+                    <input asp-for="Website" type="url" class="form-control" />
+                </div>
+            </div>
+
+            <h6 class="mt-4 mb-3 border-bottom pb-2">@Localizer["Settings"]</h6>
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label asp-for="Currency" class="form-label">@Localizer["Currency"]</label>
+                    <select asp-for="Currency" class="form-select">
+                        <option value="AED">AED - UAE Dirham</option>
+                        <option value="USD">USD - US Dollar</option>
+                        <option value="EUR">EUR - Euro</option>
+                        <option value="SAR">SAR - Saudi Riyal</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="Timezone" class="form-label">@Localizer["Timezone"]</label>
+                    <select asp-for="Timezone" class="form-select">
+                        <option value="Arabian Standard Time">Arabian Standard Time (UTC+4)</option>
+                        <option value="UTC">UTC</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="PrimaryColor" class="form-label">@Localizer["PrimaryColor"]</label>
+                    <input asp-for="PrimaryColor" type="color" class="form-control form-control-color w-100" />
+                </div>
+            </div>
+
+            <div class="row g-3 mt-3">
+                <div class="col-12">
+                    <div class="form-check">
+                        <input asp-for="IsActive" class="form-check-input" type="checkbox" />
+                        <label asp-for="IsActive" class="form-check-label">@Localizer["Active"]</label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-4 d-flex gap-2">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-check-circle me-1"></i>@Localizer["Save"]
+                </button>
+                <a asp-action="Companies" class="btn btn-outline-secondary">@Localizer["Cancel"]</a>
+            </div>
+        </form>
+    </div>
+</div>

@@ -1703,4 +1703,662 @@
   <data name="Finance">
     <value>المالية</value>
   </data>
+
+  <!-- Admin Module -->
+  <data name="Admin">
+    <value>الإدارة</value>
+  </data>
+  <data name="Administration">
+    <value>الإدارة</value>
+  </data>
+  <data name="AdminDashboard">
+    <value>لوحة الإدارة</value>
+  </data>
+  <data name="Tenants">
+    <value>المستأجرون</value>
+  </data>
+  <data name="Tenant">
+    <value>المستأجر</value>
+  </data>
+  <data name="CreateTenant">
+    <value>إنشاء مستأجر</value>
+  </data>
+  <data name="EditTenant">
+    <value>تعديل المستأجر</value>
+  </data>
+  <data name="TenantDetails">
+    <value>تفاصيل المستأجر</value>
+  </data>
+  <data name="TenantInformation">
+    <value>معلومات المستأجر</value>
+  </data>
+  <data name="TenantName">
+    <value>اسم المستأجر</value>
+  </data>
+  <data name="TenantCode">
+    <value>رمز المستأجر</value>
+  </data>
+  <data name="TenantSettings">
+    <value>إعدادات المستأجر</value>
+  </data>
+  <data name="Companies">
+    <value>الشركات</value>
+  </data>
+  <data name="Company">
+    <value>الشركة</value>
+  </data>
+  <data name="CreateCompany">
+    <value>إنشاء شركة</value>
+  </data>
+  <data name="EditCompany">
+    <value>تعديل الشركة</value>
+  </data>
+  <data name="CompanyName">
+    <value>اسم الشركة</value>
+  </data>
+  <data name="CompanyCode">
+    <value>رمز الشركة</value>
+  </data>
+  <data name="Branches">
+    <value>الفروع</value>
+  </data>
+  <data name="CreateBranch">
+    <value>إنشاء فرع</value>
+  </data>
+  <data name="EditBranch">
+    <value>تعديل الفرع</value>
+  </data>
+  <data name="BranchName">
+    <value>اسم الفرع</value>
+  </data>
+  <data name="BranchCode">
+    <value>رمز الفرع</value>
+  </data>
+  <data name="MainBranch">
+    <value>الفرع الرئيسي</value>
+  </data>
+  <data name="Users">
+    <value>المستخدمون</value>
+  </data>
+  <data name="User">
+    <value>المستخدم</value>
+  </data>
+  <data name="CreateUser">
+    <value>إنشاء مستخدم</value>
+  </data>
+  <data name="EditUser">
+    <value>تعديل المستخدم</value>
+  </data>
+  <data name="BackToList">
+    <value>العودة إلى القائمة</value>
+  </data>
+  <data name="BackToDashboard">
+    <value>العودة إلى لوحة التحكم</value>
+  </data>
+  <data name="Inactive">
+    <value>غير نشط</value>
+  </data>
+  <data name="Plan">
+    <value>الخطة</value>
+  </data>
+  <data name="Expires">
+    <value>تنتهي</value>
+  </data>
+  <data name="Contact">
+    <value>جهة الاتصال</value>
+  </data>
+  <data name="Limits">
+    <value>الحدود</value>
+  </data>
+  <data name="MaxCompanies">
+    <value>الحد الأقصى للشركات</value>
+  </data>
+  <data name="MaxBranchesPerCompany">
+    <value>الحد الأقصى للفروع لكل شركة</value>
+  </data>
+  <data name="MaxUsers">
+    <value>الحد الأقصى للمستخدمين</value>
+  </data>
+  <data name="AddCompany">
+    <value>إضافة شركة</value>
+  </data>
+  <data name="ViewUsers">
+    <value>عرض المستخدمين</value>
+  </data>
+  <data name="RegionalSettings">
+    <value>الإعدادات الإقليمية</value>
+  </data>
+  <data name="DefaultLanguage">
+    <value>اللغة الافتراضية</value>
+  </data>
+  <data name="DefaultCurrency">
+    <value>العملة الافتراضية</value>
+  </data>
+  <data name="DateFormat">
+    <value>صيغة التاريخ</value>
+  </data>
+  <data name="TimeFormat">
+    <value>صيغة الوقت</value>
+  </data>
+  <data name="InvoiceSettings">
+    <value>إعدادات الفواتير</value>
+  </data>
+  <data name="InvoicePrefix">
+    <value>بادئة الفاتورة</value>
+  </data>
+  <data name="QuotationPrefix">
+    <value>بادئة عرض السعر</value>
+  </data>
+  <data name="SalePrefix">
+    <value>بادئة المبيعات</value>
+  </data>
+  <data name="POPrefix">
+    <value>بادئة أمر الشراء</value>
+  </data>
+  <data name="DefaultTaxRate">
+    <value>معدل الضريبة الافتراضي</value>
+  </data>
+  <data name="ShowTaxOnInvoice">
+    <value>إظهار الضريبة في الفاتورة</value>
+  </data>
+  <data name="AppointmentSettings">
+    <value>إعدادات المواعيد</value>
+  </data>
+  <data name="DefaultDuration">
+    <value>المدة الافتراضية</value>
+  </data>
+  <data name="ReminderHours">
+    <value>ساعات التذكير قبل الموعد</value>
+  </data>
+  <data name="SendReminders">
+    <value>إرسال تذكيرات المواعيد</value>
+  </data>
+  <data name="EnableOnlineBooking">
+    <value>تفعيل الحجز عبر الإنترنت</value>
+  </data>
+  <data name="BusinessSettings">
+    <value>إعدادات العمل</value>
+  </data>
+  <data name="ExpenseApprovalThreshold">
+    <value>حد موافقة المصروفات</value>
+  </data>
+  <data name="RequireExpenseApproval">
+    <value>يتطلب موافقة للمصروفات</value>
+  </data>
+  <data name="EnableMultiCurrency">
+    <value>تفعيل العملات المتعددة</value>
+  </data>
+  <data name="EnableMultiLanguage">
+    <value>تفعيل اللغات المتعددة</value>
+  </data>
+  <data name="ModuleAccess">
+    <value>الوصول للوحدات</value>
+  </data>
+  <data name="LabModule">
+    <value>وحدة المختبر</value>
+  </data>
+  <data name="InventoryModule">
+    <value>وحدة المخزون</value>
+  </data>
+  <data name="HRModule">
+    <value>وحدة الموارد البشرية</value>
+  </data>
+  <data name="FinanceModule">
+    <value>وحدة المالية</value>
+  </data>
+  <data name="ProcurementModule">
+    <value>وحدة المشتريات</value>
+  </data>
+  <data name="SalesModule">
+    <value>وحدة المبيعات</value>
+  </data>
+  <data name="AnalyticsModule">
+    <value>وحدة التحليلات</value>
+  </data>
+  <data name="PatientPortal">
+    <value>بوابة المرضى</value>
+  </data>
+  <data name="AuditSettings">
+    <value>إعدادات التدقيق</value>
+  </data>
+  <data name="EnableAuditLogging">
+    <value>تفعيل سجل التدقيق</value>
+  </data>
+  <data name="AuditRetentionDays">
+    <value>أيام الاحتفاظ بالسجلات</value>
+  </data>
+  <data name="SaveSettings">
+    <value>حفظ الإعدادات</value>
+  </data>
+  <data name="BasicInformation">
+    <value>المعلومات الأساسية</value>
+  </data>
+  <data name="OrganizationAssignment">
+    <value>التعيين التنظيمي</value>
+  </data>
+  <data name="Roles">
+    <value>الأدوار</value>
+  </data>
+  <data name="Security">
+    <value>الأمان</value>
+  </data>
+  <data name="FirstName">
+    <value>الاسم الأول</value>
+  </data>
+  <data name="LastName">
+    <value>اسم العائلة</value>
+  </data>
+  <data name="DisplayName">
+    <value>الاسم المعروض</value>
+  </data>
+  <data name="Password">
+    <value>كلمة المرور</value>
+  </data>
+  <data name="ConfirmPassword">
+    <value>تأكيد كلمة المرور</value>
+  </data>
+  <data name="PrimaryBranch">
+    <value>الفرع الرئيسي</value>
+  </data>
+  <data name="AdditionalBranches">
+    <value>الفروع الإضافية</value>
+  </data>
+  <data name="SuperAdmin">
+    <value>مدير النظام</value>
+  </data>
+  <data name="TenantAdmin">
+    <value>مدير المستأجر</value>
+  </data>
+  <data name="CompanyAdmin">
+    <value>مدير الشركة</value>
+  </data>
+  <data name="BranchAdmin">
+    <value>مدير الفرع</value>
+  </data>
+  <data name="LeaveBlankToKeep">
+    <value>اترك فارغاً للإبقاء على الحالي</value>
+  </data>
+  <data name="ShowInactive">
+    <value>إظهار غير النشط</value>
+  </data>
+  <data name="LastLogin">
+    <value>آخر تسجيل دخول</value>
+  </data>
+  <data name="Never">
+    <value>أبداً</value>
+  </data>
+  <data name="OpeningTime">
+    <value>وقت الافتتاح</value>
+  </data>
+  <data name="ClosingTime">
+    <value>وقت الإغلاق</value>
+  </data>
+  <data name="ManagerName">
+    <value>اسم المدير</value>
+  </data>
+  <data name="ManagerPhone">
+    <value>هاتف المدير</value>
+  </data>
+  <data name="WorkingHours">
+    <value>ساعات العمل</value>
+  </data>
+  <data name="SubscriptionPlan">
+    <value>خطة الاشتراك</value>
+  </data>
+  <data name="SubscriptionEnd">
+    <value>تاريخ انتهاء الاشتراك</value>
+  </data>
+  <data name="ContactEmail">
+    <value>البريد الإلكتروني للتواصل</value>
+  </data>
+  <data name="ContactPhone">
+    <value>هاتف التواصل</value>
+  </data>
+  <data name="None">
+    <value>لا شيء</value>
+  </data>
+  <data name="City">
+    <value>المدينة</value>
+  </data>
+  <data name="Country">
+    <value>الدولة</value>
+  </data>
+  <data name="TotalTenants">
+    <value>إجمالي المستأجرين</value>
+  </data>
+  <data name="TotalCompanies">
+    <value>إجمالي الشركات</value>
+  </data>
+  <data name="TotalBranches">
+    <value>إجمالي الفروع</value>
+  </data>
+  <data name="TotalUsers">
+    <value>إجمالي المستخدمين</value>
+  </data>
+  <data name="ActiveTenants">
+    <value>المستأجرون النشطون</value>
+  </data>
+  <data name="SystemOverview">
+    <value>نظرة عامة على النظام</value>
+  </data>
+  <data name="ManageTenants">
+    <value>إدارة المستأجرين</value>
+  </data>
+  <data name="ManageCompanies">
+    <value>إدارة الشركات</value>
+  </data>
+  <data name="ManageUsers">
+    <value>إدارة المستخدمين</value>
+  </data>
+
+  <!-- Authentication -->
+  <data name="SignIn">
+    <value>تسجيل الدخول</value>
+  </data>
+  <data name="SignInToYourAccount">
+    <value>تسجيل الدخول إلى حسابك</value>
+  </data>
+  <data name="SignInWithSSO">
+    <value>تسجيل الدخول باستخدام تسجيل الدخول الموحد</value>
+  </data>
+  <data name="SignInWith">
+    <value>تسجيل الدخول باستخدام {0}</value>
+  </data>
+  <data name="RememberMe">
+    <value>تذكرني</value>
+  </data>
+  <data name="ForgotPassword">
+    <value>نسيت كلمة المرور؟</value>
+  </data>
+  <data name="Or">
+    <value>أو</value>
+  </data>
+  <data name="SelectCompany">
+    <value>اختر الشركة</value>
+  </data>
+  <data name="SelectCompanyToContinue">
+    <value>اختر شركتك للمتابعة</value>
+  </data>
+  <data name="Continue">
+    <value>متابعة</value>
+  </data>
+  <data name="ChangeCompany">
+    <value>تغيير الشركة</value>
+  </data>
+  <data name="InvalidLoginAttempt">
+    <value>محاولة تسجيل دخول غير صالحة.</value>
+  </data>
+  <data name="AccountLockedOut">
+    <value>تم قفل الحساب</value>
+  </data>
+  <data name="AccountLockedMessage">
+    <value>تم قفل حسابك. يرجى المحاولة مرة أخرى لاحقاً أو الاتصال بالمسؤول.</value>
+  </data>
+  <data name="AccessDenied">
+    <value>الوصول مرفوض</value>
+  </data>
+  <data name="AccessDeniedMessage">
+    <value>ليس لديك صلاحية الوصول إلى هذا المورد.</value>
+  </data>
+  <data name="ReturnToHome">
+    <value>العودة إلى الصفحة الرئيسية</value>
+  </data>
+  <data name="ExternalLoginError">
+    <value>حدث خطأ أثناء تسجيل الدخول الخارجي.</value>
+  </data>
+  <data name="SsoOnlyMessage">
+    <value>هذه الشركة تتطلب تسجيل الدخول الموحد. يرجى استخدام أحد أزرار تسجيل الدخول الموحد.</value>
+  </data>
+  <data name="LocalLoginDisabled">
+    <value>تسجيل الدخول المحلي معطل لهذه الشركة.</value>
+  </data>
+  <data name="UserNotProvisioned">
+    <value>لم يتم تزويد حسابك للوصول إلى هذا النظام. يرجى الاتصال بالمسؤول.</value>
+  </data>
+
+  <!-- Authentication Settings Admin -->
+  <data name="AuthenticationSettings">
+    <value>إعدادات المصادقة</value>
+  </data>
+  <data name="AuthMode">
+    <value>وضع المصادقة</value>
+  </data>
+  <data name="AuthMode_LocalOnly">
+    <value>محلي فقط</value>
+  </data>
+  <data name="AuthMode_SsoOnly">
+    <value>تسجيل دخول موحد فقط</value>
+  </data>
+  <data name="AuthMode_Hybrid">
+    <value>هجين</value>
+  </data>
+  <data name="AllowLocalLogin">
+    <value>السماح بتسجيل الدخول المحلي</value>
+  </data>
+  <data name="AllowExternalLogin">
+    <value>السماح بتسجيل الدخول الخارجي</value>
+  </data>
+  <data name="AutoProvisionUsers">
+    <value>إنشاء المستخدمين تلقائياً</value>
+  </data>
+  <data name="AutoProvisionUsersHelp">
+    <value>إنشاء حسابات مستخدمين جديدة تلقائياً لمستخدمي تسجيل الدخول الموحد</value>
+  </data>
+  <data name="DefaultRoleOnAutoProvision">
+    <value>الدور الافتراضي للمستخدمين الجدد</value>
+  </data>
+  <data name="AuthenticationBehavior">
+    <value>سلوك المصادقة</value>
+  </data>
+  <data name="IdentityProviders">
+    <value>موفرو الهوية</value>
+  </data>
+  <data name="AddIdentityProvider">
+    <value>إضافة موفر هوية</value>
+  </data>
+  <data name="EditIdentityProvider">
+    <value>تعديل موفر الهوية</value>
+  </data>
+  <data name="CreateIdentityProvider">
+    <value>إنشاء موفر هوية</value>
+  </data>
+  <data name="NoIdentityProviders">
+    <value>لم يتم تكوين موفري هوية</value>
+  </data>
+  <data name="ProviderName">
+    <value>اسم الموفر</value>
+  </data>
+  <data name="ProviderType">
+    <value>نوع الموفر</value>
+  </data>
+  <data name="Enabled">
+    <value>مفعل</value>
+  </data>
+  <data name="Disabled">
+    <value>معطل</value>
+  </data>
+  <data name="DisplayOrder">
+    <value>ترتيب العرض</value>
+  </data>
+  <data name="ButtonLabel">
+    <value>نص الزر</value>
+  </data>
+  <data name="ButtonLabelHelp">
+    <value>النص المعروض على زر تسجيل الدخول (مثل: تسجيل الدخول باستخدام Azure AD)</value>
+  </data>
+  <data name="IconCssClass">
+    <value>رمز CSS</value>
+  </data>
+  <data name="IconCssClassHelp">
+    <value>فئة CSS للرمز (مثل: fa-microsoft)</value>
+  </data>
+
+  <!-- OIDC Configuration -->
+  <data name="OIDCConfiguration">
+    <value>تكوين OpenID Connect</value>
+  </data>
+  <data name="Authority">
+    <value>السلطة</value>
+  </data>
+  <data name="AuthorityHelp">
+    <value>عنوان URL لسلطة OpenID Connect (مثل: https://login.microsoftonline.com/{tenant})</value>
+  </data>
+  <data name="ClientId">
+    <value>معرف العميل</value>
+  </data>
+  <data name="ClientIdHelp">
+    <value>معرف العميل من موفر الهوية</value>
+  </data>
+  <data name="ClientSecret">
+    <value>سر العميل</value>
+  </data>
+  <data name="ClientSecretHelp">
+    <value>سر العميل (اتركه فارغاً للإبقاء على القيمة الحالية)</value>
+  </data>
+  <data name="Scopes">
+    <value>النطاقات</value>
+  </data>
+  <data name="ScopesHelp">
+    <value>النطاقات المطلوبة من موفر الهوية (مفصولة بمسافات)</value>
+  </data>
+  <data name="ResponseType">
+    <value>نوع الاستجابة</value>
+  </data>
+  <data name="ResponseTypeHelp">
+    <value>نوع استجابة OAuth2 (مثل: code)</value>
+  </data>
+  <data name="UsePkce">
+    <value>استخدام PKCE</value>
+  </data>
+  <data name="UsePkceHelp">
+    <value>تفعيل مفتاح الإثبات لتبادل الكود (موصى به)</value>
+  </data>
+  <data name="GetClaimsFromUserInfo">
+    <value>جلب المطالبات من UserInfo</value>
+  </data>
+  <data name="GetClaimsFromUserInfoHelp">
+    <value>جلب مطالبات إضافية من نقطة نهاية UserInfo</value>
+  </data>
+
+  <!-- SAML2 Configuration -->
+  <data name="SAML2Configuration">
+    <value>تكوين SAML 2.0</value>
+  </data>
+  <data name="EntityId">
+    <value>معرف الكيان</value>
+  </data>
+  <data name="EntityIdHelp">
+    <value>معرف الكيان الفريد لمزود الخدمة (عادة عنوان URL للتطبيق)</value>
+  </data>
+  <data name="MetadataUrl">
+    <value>عنوان البيانات الوصفية</value>
+  </data>
+  <data name="MetadataUrlHelp">
+    <value>عنوان URL للبيانات الوصفية لموفر الهوية</value>
+  </data>
+  <data name="IdpEntityId">
+    <value>معرف كيان موفر الهوية</value>
+  </data>
+  <data name="IdpEntityIdHelp">
+    <value>معرف الكيان لموفر الهوية</value>
+  </data>
+  <data name="IdpSsoUrl">
+    <value>عنوان تسجيل الدخول الموحد</value>
+  </data>
+  <data name="IdpSsoUrlHelp">
+    <value>عنوان URL لخدمة تسجيل الدخول الموحد لموفر الهوية</value>
+  </data>
+  <data name="IdpCertificate">
+    <value>شهادة موفر الهوية</value>
+  </data>
+  <data name="IdpCertificateHelp">
+    <value>الشهادة X.509 بترميز Base64 من موفر الهوية</value>
+  </data>
+  <data name="SpCertificate">
+    <value>شهادة مزود الخدمة</value>
+  </data>
+  <data name="SpCertificateHelp">
+    <value>شهادة مزود الخدمة (اختياري، للتوقيع)</value>
+  </data>
+  <data name="SpCertificatePassword">
+    <value>كلمة مرور الشهادة</value>
+  </data>
+  <data name="SpCertificatePasswordHelp">
+    <value>كلمة المرور لشهادة مزود الخدمة</value>
+  </data>
+  <data name="SignRequests">
+    <value>توقيع الطلبات</value>
+  </data>
+  <data name="SignRequestsHelp">
+    <value>توقيع طلبات SAML</value>
+  </data>
+  <data name="WantAssertionsSigned">
+    <value>تأكيدات موقعة</value>
+  </data>
+  <data name="WantAssertionsSignedHelp">
+    <value>طلب تأكيدات موقعة من موفر الهوية</value>
+  </data>
+
+  <!-- WS-Federation Configuration -->
+  <data name="WSFedConfiguration">
+    <value>تكوين WS-Federation</value>
+  </data>
+  <data name="MetadataAddress">
+    <value>عنوان البيانات الوصفية</value>
+  </data>
+  <data name="MetadataAddressHelp">
+    <value>عنوان URL للبيانات الوصفية لـ WS-Federation (مثل: https://adfs.example.com/FederationMetadata/2007-06/FederationMetadata.xml)</value>
+  </data>
+  <data name="Wtrealm">
+    <value>Wtrealm</value>
+  </data>
+  <data name="WtrealmHelp">
+    <value>معرف مجال الطرف المعتمد (عادة عنوان URL للتطبيق)</value>
+  </data>
+  <data name="Wreply">
+    <value>Wreply</value>
+  </data>
+  <data name="WreplyHelp">
+    <value>عنوان URL للرد (اختياري، يتم تعيينه تلقائياً إذا كان فارغاً)</value>
+  </data>
+
+  <!-- Claim Mappings -->
+  <data name="ClaimMappings">
+    <value>تعيينات المطالبات</value>
+  </data>
+  <data name="ClaimMappingsHelp">
+    <value>تعيين مطالبات موفر الهوية إلى سمات المستخدم</value>
+  </data>
+  <data name="EmailClaimType">
+    <value>نوع مطالبة البريد الإلكتروني</value>
+  </data>
+  <data name="UPNClaimType">
+    <value>نوع مطالبة UPN</value>
+  </data>
+  <data name="NameClaimType">
+    <value>نوع مطالبة الاسم</value>
+  </data>
+  <data name="FirstNameClaimType">
+    <value>نوع مطالبة الاسم الأول</value>
+  </data>
+  <data name="LastNameClaimType">
+    <value>نوع مطالبة اسم العائلة</value>
+  </data>
+  <data name="GroupsClaimType">
+    <value>نوع مطالبة المجموعات</value>
+  </data>
+  <data name="DefaultClaimTypes">
+    <value>أنواع المطالبات الافتراضية</value>
+  </data>
+  <data name="LeaveEmptyForDefaults">
+    <value>اتركه فارغاً لاستخدام أنواع المطالبات القياسية</value>
+  </data>
+
+  <!-- General -->
+  <data name="SaveChanges">
+    <value>حفظ التغييرات</value>
+  </data>
+  <data name="Delete">
+    <value>حذف</value>
+  </data>
 </root>
