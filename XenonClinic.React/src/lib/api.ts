@@ -75,4 +75,17 @@ export const appointmentsApi = {
     api.get('/api/AppointmentsApi/statistics', { params: { startDate, endDate } }),
 };
 
+export const patientsApi = {
+  getAll: () => api.get('/api/PatientsApi'),
+  getById: (id: number) => api.get(`/api/PatientsApi/${id}`),
+  search: (searchTerm: string) => api.get(`/api/PatientsApi/search?searchTerm=${encodeURIComponent(searchTerm)}`),
+  getByEmiratesId: (emiratesId: string) => api.get(`/api/PatientsApi/emirates/${encodeURIComponent(emiratesId)}`),
+  create: (data: any) => api.post('/api/PatientsApi', data),
+  update: (id: number, data: any) => api.put(`/api/PatientsApi/${id}`, data),
+  delete: (id: number) => api.delete(`/api/PatientsApi/${id}`),
+  getMedicalHistory: (id: number) => api.get(`/api/PatientsApi/${id}/medical-history`),
+  getDocuments: (id: number) => api.get(`/api/PatientsApi/${id}/documents`),
+  getStatistics: () => api.get('/api/PatientsApi/statistics'),
+};
+
 export default api;
