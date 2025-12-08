@@ -436,4 +436,400 @@
   <data name="NoTransactionsFound">
     <value>No transactions found</value>
   </data>
+
+  <!-- HR Module -->
+  <data name="HR">
+    <value>Human Resources</value>
+  </data>
+  <data name="HR_Dashboard">
+    <value>HR Dashboard</value>
+  </data>
+  <data name="Employees">
+    <value>Employees</value>
+  </data>
+  <data name="Add_Employee">
+    <value>Add Employee</value>
+  </data>
+  <data name="Total_Employees">
+    <value>Total Employees</value>
+  </data>
+  <data name="Active_Employees">
+    <value>Active Employees</value>
+  </data>
+  <data name="Present_Today">
+    <value>Present Today</value>
+  </data>
+  <data name="On_Leave_Today">
+    <value>On Leave Today</value>
+  </data>
+  <data name="Pending_Leave_Requests">
+    <value>Pending Leave Requests</value>
+  </data>
+  <data name="Recent_Hires">
+    <value>Recent Hires</value>
+  </data>
+  <data name="No_Recent_Hires">
+    <value>No recent hires</value>
+  </data>
+  <data name="No_Pending_Requests">
+    <value>No pending requests</value>
+  </data>
+  <data name="Todays_Attendance">
+    <value>Today's Attendance</value>
+  </data>
+  <data name="No_Attendance_Records">
+    <value>No attendance records</value>
+  </data>
+  <data name="Pending_Approvals">
+    <value>Pending Approvals</value>
+  </data>
+  <data name="Pending_Leave_Count">
+    <value>You have {0} pending leave request(s) awaiting approval</value>
+  </data>
+
+  <!-- Employee Management -->
+  <data name="Employee_Code">
+    <value>Employee Code</value>
+  </data>
+  <data name="Employee_Name">
+    <value>Employee Name</value>
+  </data>
+  <data name="Employee">
+    <value>Employee</value>
+  </data>
+  <data name="First_Name">
+    <value>First Name</value>
+  </data>
+  <data name="Last_Name">
+    <value>Last Name</value>
+  </data>
+  <data name="Full_Name">
+    <value>Full Name</value>
+  </data>
+  <data name="Date_of_Birth">
+    <value>Date of Birth</value>
+  </data>
+  <data name="Emirates_ID">
+    <value>Emirates ID</value>
+  </data>
+  <data name="Nationality">
+    <value>Nationality</value>
+  </data>
+  <data name="Address">
+    <value>Address</value>
+  </data>
+  <data name="Department">
+    <value>Department</value>
+  </data>
+  <data name="All_Departments">
+    <value>All Departments</value>
+  </data>
+  <data name="Select_Department">
+    <value>Select Department</value>
+  </data>
+  <data name="Position">
+    <value>Position</value>
+  </data>
+  <data name="Select_Position">
+    <value>Select Position</value>
+  </data>
+  <data name="Hire_Date">
+    <value>Hire Date</value>
+  </data>
+  <data name="Employment_Status">
+    <value>Employment Status</value>
+  </data>
+  <data name="All_Statuses">
+    <value>All Statuses</value>
+  </data>
+  <data name="Work_Start_Time">
+    <value>Work Start Time</value>
+  </data>
+  <data name="Work_End_Time">
+    <value>Work End Time</value>
+  </data>
+  <data name="Basic_Salary">
+    <value>Basic Salary</value>
+  </data>
+  <data name="Housing_Allowance">
+    <value>Housing Allowance</value>
+  </data>
+  <data name="Transport_Allowance">
+    <value>Transport Allowance</value>
+  </data>
+  <data name="Other_Allowances">
+    <value>Other Allowances</value>
+  </data>
+  <data name="Total_Salary">
+    <value>Total Salary</value>
+  </data>
+  <data name="Personal_Information">
+    <value>Personal Information</value>
+  </data>
+  <data name="Contact_Information">
+    <value>Contact Information</value>
+  </data>
+  <data name="Employment_Details">
+    <value>Employment Details</value>
+  </data>
+  <data name="Compensation">
+    <value>Compensation</value>
+  </data>
+  <data name="Employee_Details">
+    <value>Employee Details</value>
+  </data>
+  <data name="No_Employees_Found">
+    <value>No employees found</value>
+  </data>
+  <data name="Try_Different_Filters">
+    <value>Try adjusting your search or filters</value>
+  </data>
+  <data name="Add_First_Employee">
+    <value>Add First Employee</value>
+  </data>
+  <data name="Employee_Code_Help">
+    <value>Unique identifier for the employee</value>
+  </data>
+  <data name="Years">
+    <value>years</value>
+  </data>
+  <data name="Search_Placeholder">
+    <value>Search by name, code, or Emirates ID</value>
+  </data>
+
+  <!-- Employment Status -->
+  <data name="EmploymentStatus_Active">
+    <value>Active</value>
+  </data>
+  <data name="EmploymentStatus_OnLeave">
+    <value>On Leave</value>
+  </data>
+  <data name="EmploymentStatus_Suspended">
+    <value>Suspended</value>
+  </data>
+  <data name="EmploymentStatus_Terminated">
+    <value>Terminated</value>
+  </data>
+  <data name="EmploymentStatus_Resigned">
+    <value>Resigned</value>
+  </data>
+
+  <!-- Leave Management -->
+  <data name="Leave_Requests">
+    <value>Leave Requests</value>
+  </data>
+  <data name="New_Leave_Request">
+    <value>New Leave Request</value>
+  </data>
+  <data name="Leave_Type">
+    <value>Leave Type</value>
+  </data>
+  <data name="All_Types">
+    <value>All Types</value>
+  </data>
+  <data name="Start_Date">
+    <value>Start Date</value>
+  </data>
+  <data name="End_Date">
+    <value>End Date</value>
+  </data>
+  <data name="Total_Days">
+    <value>Total Days</value>
+  </data>
+  <data name="Days">
+    <value>days</value>
+  </data>
+  <data name="Reason">
+    <value>Reason</value>
+  </data>
+  <data name="Leave_Request_Details">
+    <value>Leave Request Details</value>
+  </data>
+  <data name="Duration">
+    <value>Duration</value>
+  </data>
+  <data name="Approved_By">
+    <value>Approved By</value>
+  </data>
+  <data name="Approval_Date">
+    <value>Approval Date</value>
+  </data>
+  <data name="Rejection_Reason">
+    <value>Rejection Reason</value>
+  </data>
+  <data name="Approve">
+    <value>Approve</value>
+  </data>
+  <data name="Reject">
+    <value>Reject</value>
+  </data>
+  <data name="Reject_Leave_Request">
+    <value>Reject Leave Request</value>
+  </data>
+  <data name="Active">
+    <value>Active</value>
+  </data>
+  <data name="Currently_On_Leave">
+    <value>Currently on leave</value>
+  </data>
+  <data name="No_Leave_Requests_Found">
+    <value>No leave requests found</value>
+  </data>
+  <data name="Create_First_Leave_Request">
+    <value>Create First Leave Request</value>
+  </data>
+  <data name="Select_Employee">
+    <value>Select Employee</value>
+  </data>
+  <data name="Leave_Reason_Placeholder">
+    <value>Please provide a detailed reason for your leave request</value>
+  </data>
+  <data name="Leave_Reason_Help">
+    <value>Provide a clear and detailed explanation</value>
+  </data>
+  <data name="Note">
+    <value>Note</value>
+  </data>
+  <data name="Leave_Request_Note">
+    <value>Your leave request will be reviewed by management. You will be notified once it's approved or rejected.</value>
+  </data>
+  <data name="Submit">
+    <value>Submit</value>
+  </data>
+  <data name="Leave_Types_Guide">
+    <value>Leave Types Guide</value>
+  </data>
+  <data name="End_Date_Must_Be_After_Start">
+    <value>End date must be after or equal to start date</value>
+  </data>
+
+  <!-- Leave Types -->
+  <data name="LeaveType_Annual">
+    <value>Annual Leave</value>
+  </data>
+  <data name="LeaveType_Annual_Description">
+    <value>Regular paid time off for vacation and personal matters</value>
+  </data>
+  <data name="LeaveType_Sick">
+    <value>Sick Leave</value>
+  </data>
+  <data name="LeaveType_Sick_Description">
+    <value>Leave for medical reasons and health recovery</value>
+  </data>
+  <data name="LeaveType_Emergency">
+    <value>Emergency Leave</value>
+  </data>
+  <data name="LeaveType_Emergency_Description">
+    <value>Urgent leave for unexpected situations</value>
+  </data>
+  <data name="LeaveType_Maternity">
+    <value>Maternity Leave</value>
+  </data>
+  <data name="LeaveType_Maternity_Description">
+    <value>Leave for childbirth and postnatal care</value>
+  </data>
+  <data name="LeaveType_Paternity">
+    <value>Paternity Leave</value>
+  </data>
+  <data name="LeaveType_Paternity_Description">
+    <value>Leave for fathers following childbirth</value>
+  </data>
+  <data name="LeaveType_Unpaid">
+    <value>Unpaid Leave</value>
+  </data>
+  <data name="LeaveType_Unpaid_Description">
+    <value>Leave without pay for personal reasons</value>
+  </data>
+  <data name="LeaveType_Study">
+    <value>Study Leave</value>
+  </data>
+  <data name="LeaveType_Study_Description">
+    <value>Leave for educational purposes and training</value>
+  </data>
+  <data name="LeaveType_Hajj">
+    <value>Hajj Leave</value>
+  </data>
+  <data name="LeaveType_Hajj_Description">
+    <value>Leave for performing the Hajj pilgrimage</value>
+  </data>
+  <data name="LeaveType_Other">
+    <value>Other</value>
+  </data>
+
+  <!-- Leave Status -->
+  <data name="LeaveStatus_Pending">
+    <value>Pending</value>
+  </data>
+  <data name="LeaveStatus_Approved">
+    <value>Approved</value>
+  </data>
+  <data name="LeaveStatus_Rejected">
+    <value>Rejected</value>
+  </data>
+  <data name="LeaveStatus_Cancelled">
+    <value>Cancelled</value>
+  </data>
+
+  <!-- Attendance -->
+  <data name="Attendance">
+    <value>Attendance</value>
+  </data>
+  <data name="Check_In">
+    <value>Check In</value>
+  </data>
+  <data name="Check_Out">
+    <value>Check Out</value>
+  </data>
+  <data name="Late_Minutes">
+    <value>Late Minutes</value>
+  </data>
+  <data name="Worked_Hours">
+    <value>Worked Hours</value>
+  </data>
+  <data name="Hours">
+    <value>hours</value>
+  </data>
+  <data name="Minutes">
+    <value>minutes</value>
+  </data>
+
+  <!-- Attendance Status -->
+  <data name="AttendanceStatus_Present">
+    <value>Present</value>
+  </data>
+  <data name="AttendanceStatus_Absent">
+    <value>Absent</value>
+  </data>
+  <data name="AttendanceStatus_Late">
+    <value>Late</value>
+  </data>
+  <data name="AttendanceStatus_HalfDay">
+    <value>Half Day</value>
+  </data>
+  <data name="AttendanceStatus_OnLeave">
+    <value>On Leave</value>
+  </data>
+  <data name="AttendanceStatus_Holiday">
+    <value>Holiday</value>
+  </data>
+
+  <!-- Common Actions -->
+  <data name="Actions">
+    <value>Actions</value>
+  </data>
+  <data name="View">
+    <value>View</value>
+  </data>
+  <data name="Edit">
+    <value>Edit</value>
+  </data>
+  <data name="Close">
+    <value>Close</value>
+  </data>
+  <data name="Back_to_List">
+    <value>Back to List</value>
+  </data>
+  <data name="Clear">
+    <value>Clear</value>
+  </data>
 </root>

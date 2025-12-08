@@ -22,6 +22,12 @@ public class ClinicDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<Supplier> Suppliers => Set<Supplier>();
     public DbSet<InventoryItem> InventoryItems => Set<InventoryItem>();
     public DbSet<InventoryTransaction> InventoryTransactions => Set<InventoryTransaction>();
+    public DbSet<Department> Departments => Set<Department>();
+    public DbSet<JobPosition> JobPositions => Set<JobPosition>();
+    public DbSet<Employee> Employees => Set<Employee>();
+    public DbSet<Attendance> Attendances => Set<Attendance>();
+    public DbSet<LeaveRequest> LeaveRequests => Set<LeaveRequest>();
+    public DbSet<PerformanceReview> PerformanceReviews => Set<PerformanceReview>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -210,5 +216,152 @@ public class ClinicDbContext : IdentityDbContext<ApplicationUser>
         builder.Entity<InventoryTransaction>()
             .Property(t => t.TotalAmount)
             .HasPrecision(18, 2);
+
+        // Department configuration
+        builder.Entity<Department>()
+            .HasIndex(d => d.Name);
+
+        builder.Entity<Department>()
+            .HasIndex(d => d.BranchId);
+
+        builder.Entity<Department>()
+            .HasOne(d => d.Branch)
+            .WithMany()
+            .HasForeignKey(d => d.BranchId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<Department>()
+            .HasOne(d => d.Manager)
+            .WithMany()
+            .HasForeignKey(d => d.ManagerId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        // JobPosition configuration
+        builder.Entity<JobPosition>()
+            .HasIndex(j => j.Title);
+
+        builder.Entity<JobPosition>()
+            .Property(j => j.MinSalary)
+            .HasPrecision(18, 2);
+
+        builder.Entity<JobPosition>()
+            .Property(j => j.MaxSalary)
+            .HasPrecision(18, 2);
+
+        // Employee configuration
+        builder.Entity<Employee>()
+            .HasIndex(e => e.EmployeeCode)
+            .IsUnique();
+
+        builder.Entity<Employee>()
+            .HasIndex(e => e.EmiratesId)
+            .IsUnique();
+
+        builder.Entity<Employee>()
+            .HasIndex(e => e.Email);
+
+        builder.Entity<Employee>()
+            .HasIndex(e => e.BranchId);
+
+        builder.Entity<Employee>()
+            .HasIndex(e => e.DepartmentId);
+
+        builder.Entity<Employee>()
+            .HasIndex(e => new { e.BranchId, e.DepartmentId });
+
+        builder.Entity<Employee>()
+            .HasOne(e => e.Branch)
+            .WithMany()
+            .HasForeignKey(e => e.BranchId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<Employee>()
+            .HasOne(e => e.Department)
+            .WithMany(d => d.Employees)
+            .HasForeignKey(e => e.DepartmentId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<Employee>()
+            .HasOne(e => e.JobPosition)
+            .WithMany(j => j.Employees)
+            .HasForeignKey(e => e.JobPositionId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<Employee>()
+            .HasOne(e => e.User)
+            .WithMany()
+            .HasForeignKey(e => e.UserId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        builder.Entity<Employee>()
+            .Property(e => e.BasicSalary)
+            .HasPrecision(18, 2);
+
+        builder.Entity<Employee>()
+            .Property(e => e.HousingAllowance)
+            .HasPrecision(18, 2);
+
+        builder.Entity<Employee>()
+            .Property(e => e.TransportAllowance)
+            .HasPrecision(18, 2);
+
+        builder.Entity<Employee>()
+            .Property(e => e.OtherAllowances)
+            .HasPrecision(18, 2);
+
+        // Attendance configuration
+        builder.Entity<Attendance>()
+            .HasIndex(a => a.Date);
+
+        builder.Entity<Attendance>()
+            .HasIndex(a => a.EmployeeId);
+
+        builder.Entity<Attendance>()
+            .HasIndex(a => new { a.EmployeeId, a.Date });
+
+        builder.Entity<Attendance>()
+            .HasOne(a => a.Employee)
+            .WithMany(e => e.Attendances)
+            .HasForeignKey(a => a.EmployeeId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // LeaveRequest configuration
+        builder.Entity<LeaveRequest>()
+            .HasIndex(l => l.StartDate);
+
+        builder.Entity<LeaveRequest>()
+            .HasIndex(l => l.EmployeeId);
+
+        builder.Entity<LeaveRequest>()
+            .HasIndex(l => l.Status);
+
+        builder.Entity<LeaveRequest>()
+            .HasIndex(l => new { l.EmployeeId, l.Status });
+
+        builder.Entity<LeaveRequest>()
+            .HasOne(l => l.Employee)
+            .WithMany(e => e.LeaveRequests)
+            .HasForeignKey(l => l.EmployeeId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // PerformanceReview configuration
+        builder.Entity<PerformanceReview>()
+            .HasIndex(p => p.ReviewDate);
+
+        builder.Entity<PerformanceReview>()
+            .HasIndex(p => p.EmployeeId);
+
+        builder.Entity<PerformanceReview>()
+            .HasIndex(p => new { p.EmployeeId, p.ReviewDate });
+
+        builder.Entity<PerformanceReview>()
+            .HasOne(p => p.Employee)
+            .WithMany(e => e.PerformanceReviews)
+            .HasForeignKey(p => p.EmployeeId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<PerformanceReview>()
+            .Property(p => p.OverallRating)
+            .HasPrecision(3, 2);
     }
 }

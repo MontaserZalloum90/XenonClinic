@@ -1,0 +1,247 @@
+@model IEnumerable<XenonClinic.Web.Models.EmployeeDto>
+@using Microsoft.Extensions.Localization
+@inject IStringLocalizer<SharedResources> Localizer
+
+@{
+    ViewData["Title"] = Localizer["Employees"];
+}
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>@Localizer["Employees"]</h2>
+        <a asp-action="CreateEmployee" class="btn btn-primary">
+            <i class="bi bi-person-plus"></i> @Localizer["Add_Employee"]
+        </a>
+    </div>
+
+    <!-- Filters -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label">@Localizer["Search"]</label>
+                    <input type="text" name="search" class="form-control" placeholder="@Localizer["Search_Placeholder"]" value="@Context.Request.Query["search"]">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">@Localizer["Department"]</label>
+                    <select name="departmentId" class="form-select">
+                        <option value="">@Localizer["All_Departments"]</option>
+                        @foreach (var dept in ViewBag.Departments as SelectList)
+                        {
+                            <option value="@dept.Value" selected="@(dept.Selected ? "selected" : null)">@dept.Text</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">@Localizer["Employment_Status"]</label>
+                    <select name="status" class="form-select">
+                        <option value="">@Localizer["All_Statuses"]</option>
+                        @foreach (var status in Enum.GetValues<XenonClinic.Core.Enums.EmploymentStatus>())
+                        {
+                            <option value="@status" selected="@(Context.Request.Query["status"] == status.ToString() ? "selected" : null)">
+                                @Localizer[$"EmploymentStatus_{status}"]
+                            </option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-3 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary me-2">
+                        <i class="bi bi-search"></i> @Localizer["Search"]
+                    </button>
+                    <a asp-action="Employees" class="btn btn-outline-secondary">
+                        <i class="bi bi-x-circle"></i> @Localizer["Clear"]
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Employees Table -->
+    <div class="card">
+        <div class="card-body p-0">
+            @if (Model.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>@Localizer["Employee_Code"]</th>
+                                <th>@Localizer["Name"]</th>
+                                <th>@Localizer["Email"]</th>
+                                <th>@Localizer["Phone"]</th>
+                                <th>@Localizer["Department"]</th>
+                                <th>@Localizer["Position"]</th>
+                                <th>@Localizer["Hire_Date"]</th>
+                                <th>@Localizer["Status"]</th>
+                                <th>@Localizer["Actions"]</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var employee in Model)
+                            {
+                                <tr>
+                                    <td><strong>@employee.EmployeeCode</strong></td>
+                                    <td>
+                                        <div>@employee.FullName</div>
+                                        @if (!string.IsNullOrEmpty(employee.EmiratesId))
+                                        {
+                                            <small class="text-muted">@Localizer["Emirates_ID"]: @employee.EmiratesId</small>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (!string.IsNullOrEmpty(employee.Email))
+                                        {
+                                            <a href="mailto:@employee.Email">@employee.Email</a>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">-</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (!string.IsNullOrEmpty(employee.Phone))
+                                        {
+                                            <a href="tel:@employee.Phone">@employee.Phone</a>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">-</span>
+                                        }
+                                    </td>
+                                    <td>@employee.DepartmentName</td>
+                                    <td>@employee.JobPositionTitle</td>
+                                    <td>@employee.HireDate.ToString("yyyy-MM-dd")</td>
+                                    <td>
+                                        @{
+                                            var statusClass = employee.Status switch
+                                            {
+                                                XenonClinic.Core.Enums.EmploymentStatus.Active => "success",
+                                                XenonClinic.Core.Enums.EmploymentStatus.OnLeave => "warning",
+                                                XenonClinic.Core.Enums.EmploymentStatus.Suspended => "danger",
+                                                XenonClinic.Core.Enums.EmploymentStatus.Terminated => "dark",
+                                                XenonClinic.Core.Enums.EmploymentStatus.Resigned => "secondary",
+                                                _ => "secondary"
+                                            };
+                                        }
+                                        <span class="badge bg-@statusClass">@Localizer[$"EmploymentStatus_{employee.Status}"]</span>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            <button type="button" class="btn btn-outline-info" data-bs-toggle="modal" data-bs-target="#viewModal@(employee.Id)" title="@Localizer["View"]">
+                                                <i class="bi bi-eye"></i>
+                                            </button>
+                                            <a asp-action="EditEmployee" asp-route-id="@employee.Id" class="btn btn-outline-warning" title="@Localizer["Edit"]">
+                                                <i class="bi bi-pencil"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+
+                                <!-- View Details Modal -->
+                                <div class="modal fade" id="viewModal@(employee.Id)" tabindex="-1">
+                                    <div class="modal-dialog modal-lg">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title">@Localizer["Employee_Details"]</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <div class="row">
+                                                    <div class="col-md-6 mb-3">
+                                                        <strong>@Localizer["Employee_Code"]:</strong>
+                                                        <p>@employee.EmployeeCode</p>
+                                                    </div>
+                                                    <div class="col-md-6 mb-3">
+                                                        <strong>@Localizer["Full_Name"]:</strong>
+                                                        <p>@employee.FullName</p>
+                                                    </div>
+                                                    <div class="col-md-6 mb-3">
+                                                        <strong>@Localizer["Date_of_Birth"]:</strong>
+                                                        <p>@employee.DateOfBirth.ToString("yyyy-MM-dd") (@employee.Age @Localizer["Years"])</p>
+                                                    </div>
+                                                    <div class="col-md-6 mb-3">
+                                                        <strong>@Localizer["Emirates_ID"]:</strong>
+                                                        <p>@(employee.EmiratesId ?? "-")</p>
+                                                    </div>
+                                                    <div class="col-md-6 mb-3">
+                                                        <strong>@Localizer["Email"]:</strong>
+                                                        <p>@(employee.Email ?? "-")</p>
+                                                    </div>
+                                                    <div class="col-md-6 mb-3">
+                                                        <strong>@Localizer["Phone"]:</strong>
+                                                        <p>@(employee.Phone ?? "-")</p>
+                                                    </div>
+                                                    <div class="col-md-6 mb-3">
+                                                        <strong>@Localizer["Department"]:</strong>
+                                                        <p>@employee.DepartmentName</p>
+                                                    </div>
+                                                    <div class="col-md-6 mb-3">
+                                                        <strong>@Localizer["Position"]:</strong>
+                                                        <p>@employee.JobPositionTitle</p>
+                                                    </div>
+                                                    <div class="col-md-6 mb-3">
+                                                        <strong>@Localizer["Hire_Date"]:</strong>
+                                                        <p>@employee.HireDate.ToString("yyyy-MM-dd") (@employee.YearsOfService @Localizer["Years"])</p>
+                                                    </div>
+                                                    <div class="col-md-6 mb-3">
+                                                        <strong>@Localizer["Status"]:</strong>
+                                                        <p><span class="badge bg-@statusClass">@Localizer[$"EmploymentStatus_{employee.Status}"]</span></p>
+                                                    </div>
+                                                    <div class="col-md-6 mb-3">
+                                                        <strong>@Localizer["Basic_Salary"]:</strong>
+                                                        <p>@employee.BasicSalary.ToString("N2") AED</p>
+                                                    </div>
+                                                    <div class="col-md-6 mb-3">
+                                                        <strong>@Localizer["Total_Salary"]:</strong>
+                                                        <p><strong>@employee.TotalSalary.ToString("N2") AED</strong></p>
+                                                    </div>
+                                                    <div class="col-md-6 mb-3">
+                                                        <strong>@Localizer["Housing_Allowance"]:</strong>
+                                                        <p>@((employee.HousingAllowance ?? 0).ToString("N2")) AED</p>
+                                                    </div>
+                                                    <div class="col-md-6 mb-3">
+                                                        <strong>@Localizer["Transport_Allowance"]:</strong>
+                                                        <p>@((employee.TransportAllowance ?? 0).ToString("N2")) AED</p>
+                                                    </div>
+                                                    <div class="col-md-6 mb-3">
+                                                        <strong>@Localizer["Other_Allowances"]:</strong>
+                                                        <p>@((employee.OtherAllowances ?? 0).ToString("N2")) AED</p>
+                                                    </div>
+                                                    <div class="col-md-6 mb-3">
+                                                        <strong>@Localizer["Branch"]:</strong>
+                                                        <p>@employee.BranchName</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">@Localizer["Close"]</button>
+                                                <a asp-action="EditEmployee" asp-route-id="@employee.Id" class="btn btn-warning">@Localizer["Edit"]</a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="card-footer">
+                    <div class="text-muted">
+                        @Localizer["Total"]: @Model.Count() @Localizer["Employees"]
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="text-center py-5">
+                    <i class="bi bi-inbox fs-1 d-block mb-3 text-muted"></i>
+                    <h5 class="text-muted">@Localizer["No_Employees_Found"]</h5>
+                    <p class="text-muted">@Localizer["Try_Different_Filters"]</p>
+                    <a asp-action="CreateEmployee" class="btn btn-primary mt-3">
+                        <i class="bi bi-person-plus"></i> @Localizer["Add_First_Employee"]
+                    </a>
+                </div>
+            }
+        </div>
+    </div>
+</div>
