@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using XenonClinic.Core.Constants;
 using XenonClinic.Core.Entities;
 using XenonClinic.Core.Interfaces;
 using XenonClinic.Infrastructure.Data;
@@ -86,7 +87,7 @@ public class AdminController : Controller
 
     // ==================== Tenant Management ====================
 
-    [Authorize(Roles = "SuperAdmin")]
+    [Authorize(Roles = RoleConstants.SuperAdmin)]
     public async Task<IActionResult> Tenants(bool includeInactive = false)
     {
         var tenants = await _adminService.GetTenantsAsync(includeInactive);
@@ -117,13 +118,13 @@ public class AdminController : Controller
         return View(model);
     }
 
-    [Authorize(Roles = "SuperAdmin")]
+    [Authorize(Roles = RoleConstants.SuperAdmin)]
     public IActionResult CreateTenant()
     {
         return View("TenantForm", new TenantFormViewModel());
     }
 
-    [Authorize(Roles = "SuperAdmin")]
+    [Authorize(Roles = RoleConstants.SuperAdmin)]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> CreateTenant(TenantFormViewModel model)
@@ -159,7 +160,7 @@ public class AdminController : Controller
         return RedirectToAction(nameof(Tenants));
     }
 
-    [Authorize(Roles = "SuperAdmin")]
+    [Authorize(Roles = RoleConstants.SuperAdmin)]
     public async Task<IActionResult> EditTenant(int id)
     {
         var tenant = await _tenantService.GetTenantByIdAsync(id);
@@ -192,7 +193,7 @@ public class AdminController : Controller
         return View("TenantForm", model);
     }
 
-    [Authorize(Roles = "SuperAdmin")]
+    [Authorize(Roles = RoleConstants.SuperAdmin)]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> EditTenant(TenantFormViewModel model)
@@ -231,7 +232,7 @@ public class AdminController : Controller
         return RedirectToAction(nameof(Tenants));
     }
 
-    [Authorize(Roles = "SuperAdmin")]
+    [Authorize(Roles = RoleConstants.SuperAdmin)]
     public async Task<IActionResult> TenantDetails(int id)
     {
         var tenant = await _tenantService.GetTenantByIdAsync(id);
@@ -271,7 +272,7 @@ public class AdminController : Controller
 
     // ==================== Company Management ====================
 
-    [Authorize(Roles = "SuperAdmin,TenantAdmin")]
+    [Authorize(Roles = RoleConstants.Combined.SuperAndTenantAdmin)]
     public async Task<IActionResult> Companies(int? tenantId, bool includeInactive = false)
     {
         List<Company> companies;
@@ -334,7 +335,7 @@ public class AdminController : Controller
         return View(model);
     }
 
-    [Authorize(Roles = "SuperAdmin,TenantAdmin")]
+    [Authorize(Roles = RoleConstants.Combined.SuperAndTenantAdmin)]
     public async Task<IActionResult> CreateCompany(int? tenantId)
     {
         var model = new CompanyFormViewModel
@@ -351,7 +352,7 @@ public class AdminController : Controller
         return View("CompanyForm", model);
     }
 
-    [Authorize(Roles = "SuperAdmin,TenantAdmin")]
+    [Authorize(Roles = RoleConstants.Combined.SuperAndTenantAdmin)]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> CreateCompany(CompanyFormViewModel model)
@@ -391,7 +392,7 @@ public class AdminController : Controller
         return RedirectToAction(nameof(Companies), new { tenantId = model.TenantId });
     }
 
-    [Authorize(Roles = "SuperAdmin,TenantAdmin")]
+    [Authorize(Roles = RoleConstants.Combined.SuperAndTenantAdmin)]
     public async Task<IActionResult> EditCompany(int id)
     {
         var company = await _companyService.GetCompanyByIdAsync(id);
@@ -428,7 +429,7 @@ public class AdminController : Controller
         return View("CompanyForm", model);
     }
 
-    [Authorize(Roles = "SuperAdmin,TenantAdmin")]
+    [Authorize(Roles = RoleConstants.Combined.SuperAndTenantAdmin)]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> EditCompany(CompanyFormViewModel model)
@@ -472,7 +473,7 @@ public class AdminController : Controller
 
     // ==================== Branch Management ====================
 
-    [Authorize(Roles = "SuperAdmin,TenantAdmin,CompanyAdmin")]
+    [Authorize(Roles = RoleConstants.Combined.SuperTenantAndCompanyAdmin)]
     public async Task<IActionResult> Branches(int? companyId, bool includeInactive = false)
     {
         List<Branch> branches;
@@ -526,7 +527,7 @@ public class AdminController : Controller
         return View(model);
     }
 
-    [Authorize(Roles = "SuperAdmin,TenantAdmin,CompanyAdmin")]
+    [Authorize(Roles = RoleConstants.Combined.SuperTenantAndCompanyAdmin)]
     public async Task<IActionResult> CreateBranch(int? companyId)
     {
         var model = new BranchFormViewModel
@@ -538,7 +539,7 @@ public class AdminController : Controller
         return View("BranchForm", model);
     }
 
-    [Authorize(Roles = "SuperAdmin,TenantAdmin,CompanyAdmin")]
+    [Authorize(Roles = RoleConstants.Combined.SuperTenantAndCompanyAdmin)]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> CreateBranch(BranchFormViewModel model)
@@ -576,7 +577,7 @@ public class AdminController : Controller
         return RedirectToAction(nameof(Branches), new { companyId = model.CompanyId });
     }
 
-    [Authorize(Roles = "SuperAdmin,TenantAdmin,CompanyAdmin")]
+    [Authorize(Roles = RoleConstants.Combined.SuperTenantAndCompanyAdmin)]
     public async Task<IActionResult> EditBranch(int id)
     {
         var branch = await _context.Branches
@@ -619,7 +620,7 @@ public class AdminController : Controller
         return View("BranchForm", model);
     }
 
-    [Authorize(Roles = "SuperAdmin,TenantAdmin,CompanyAdmin")]
+    [Authorize(Roles = RoleConstants.Combined.SuperTenantAndCompanyAdmin)]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> EditBranch(BranchFormViewModel model)
@@ -666,7 +667,7 @@ public class AdminController : Controller
 
     // ==================== User Management ====================
 
-    [Authorize(Roles = "SuperAdmin,TenantAdmin,CompanyAdmin,BranchAdmin")]
+    [Authorize(Roles = RoleConstants.Combined.AllAdmins)]
     public async Task<IActionResult> Users(int? tenantId, int? companyId, int? branchId, bool includeInactive = false)
     {
         List<ApplicationUser> users;
@@ -732,7 +733,7 @@ public class AdminController : Controller
         return View(model);
     }
 
-    [Authorize(Roles = "SuperAdmin,TenantAdmin,CompanyAdmin")]
+    [Authorize(Roles = RoleConstants.Combined.SuperTenantAndCompanyAdmin)]
     public async Task<IActionResult> CreateUser()
     {
         var model = new UserFormViewModel
@@ -746,7 +747,7 @@ public class AdminController : Controller
         return View("UserForm", model);
     }
 
-    [Authorize(Roles = "SuperAdmin,TenantAdmin,CompanyAdmin")]
+    [Authorize(Roles = RoleConstants.Combined.SuperTenantAndCompanyAdmin)]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> CreateUser(UserFormViewModel model)
@@ -787,7 +788,7 @@ public class AdminController : Controller
         return RedirectToAction(nameof(Users));
     }
 
-    [Authorize(Roles = "SuperAdmin,TenantAdmin,CompanyAdmin")]
+    [Authorize(Roles = RoleConstants.Combined.SuperTenantAndCompanyAdmin)]
     public async Task<IActionResult> EditUser(string id)
     {
         var user = await _context.Users
@@ -825,7 +826,7 @@ public class AdminController : Controller
         return View("UserForm", model);
     }
 
-    [Authorize(Roles = "SuperAdmin,TenantAdmin,CompanyAdmin")]
+    [Authorize(Roles = RoleConstants.Combined.SuperTenantAndCompanyAdmin)]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> EditUser(UserFormViewModel model)
@@ -878,7 +879,7 @@ public class AdminController : Controller
 
     // ==================== Settings ====================
 
-    [Authorize(Roles = "SuperAdmin,TenantAdmin")]
+    [Authorize(Roles = RoleConstants.Combined.SuperAndTenantAdmin)]
     public async Task<IActionResult> Settings(int? tenantId)
     {
         int effectiveTenantId;
@@ -944,7 +945,7 @@ public class AdminController : Controller
         return View(model);
     }
 
-    [Authorize(Roles = "SuperAdmin,TenantAdmin")]
+    [Authorize(Roles = RoleConstants.Combined.SuperAndTenantAdmin)]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Settings(TenantSettingsFormViewModel model)
@@ -1002,7 +1003,7 @@ public class AdminController : Controller
 
     // ==================== Communication Settings (WhatsApp & Email) ====================
 
-    [Authorize(Roles = "SuperAdmin,TenantAdmin")]
+    [Authorize(Roles = RoleConstants.Combined.SuperAndTenantAdmin)]
     public async Task<IActionResult> CommunicationSettings(int? tenantId)
     {
         int effectiveTenantId;
@@ -1061,7 +1062,7 @@ public class AdminController : Controller
         return View(model);
     }
 
-    [Authorize(Roles = "SuperAdmin,TenantAdmin")]
+    [Authorize(Roles = RoleConstants.Combined.SuperAndTenantAdmin)]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> CommunicationSettings(CommunicationSettingsViewModel model)
@@ -1126,7 +1127,7 @@ public class AdminController : Controller
         return RedirectToAction(nameof(CommunicationSettings), new { tenantId = model.TenantId });
     }
 
-    [Authorize(Roles = "SuperAdmin,TenantAdmin,CompanyAdmin")]
+    [Authorize(Roles = RoleConstants.Combined.SuperTenantAndCompanyAdmin)]
     public async Task<IActionResult> CompanyCommunicationSettings(int companyId)
     {
         if (!await _companyService.HasAccessToCompanyAsync(companyId))
@@ -1181,7 +1182,7 @@ public class AdminController : Controller
         return View(model);
     }
 
-    [Authorize(Roles = "SuperAdmin,TenantAdmin,CompanyAdmin")]
+    [Authorize(Roles = RoleConstants.Combined.SuperTenantAndCompanyAdmin)]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> CompanyCommunicationSettings(CommunicationSettingsViewModel model)
@@ -1253,7 +1254,7 @@ public class AdminController : Controller
 
     // ==================== Company Authentication Settings ====================
 
-    [Authorize(Roles = "SuperAdmin,TenantAdmin,CompanyAdmin")]
+    [Authorize(Roles = RoleConstants.Combined.SuperTenantAndCompanyAdmin)]
     public async Task<IActionResult> AuthSettings(int companyId)
     {
         if (!await _companyService.HasAccessToCompanyAsync(companyId))
@@ -1308,7 +1309,7 @@ public class AdminController : Controller
         return View(model);
     }
 
-    [Authorize(Roles = "SuperAdmin,TenantAdmin,CompanyAdmin")]
+    [Authorize(Roles = RoleConstants.Combined.SuperTenantAndCompanyAdmin)]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> AuthSettings(CompanyAuthSettingsViewModel model)
@@ -1357,7 +1358,7 @@ public class AdminController : Controller
         return RedirectToAction(nameof(AuthSettings), new { companyId = model.CompanyId });
     }
 
-    [Authorize(Roles = "SuperAdmin,TenantAdmin,CompanyAdmin")]
+    [Authorize(Roles = RoleConstants.Combined.SuperTenantAndCompanyAdmin)]
     public async Task<IActionResult> CreateIdentityProvider(int companyId)
     {
         if (!await _companyService.HasAccessToCompanyAsync(companyId))
@@ -1392,7 +1393,7 @@ public class AdminController : Controller
         return View("IdentityProviderForm", model);
     }
 
-    [Authorize(Roles = "SuperAdmin,TenantAdmin,CompanyAdmin")]
+    [Authorize(Roles = RoleConstants.Combined.SuperTenantAndCompanyAdmin)]
     public async Task<IActionResult> EditIdentityProvider(int id)
     {
         var provider = await _authConfigService.GetIdentityProviderByIdAsync(id);
@@ -1462,7 +1463,7 @@ public class AdminController : Controller
         return View("IdentityProviderForm", model);
     }
 
-    [Authorize(Roles = "SuperAdmin,TenantAdmin,CompanyAdmin")]
+    [Authorize(Roles = RoleConstants.Combined.SuperTenantAndCompanyAdmin)]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> SaveIdentityProvider(IdentityProviderFormViewModel model)
@@ -1560,7 +1561,7 @@ public class AdminController : Controller
         return RedirectToAction(nameof(AuthSettings), new { companyId = model.CompanyId });
     }
 
-    [Authorize(Roles = "SuperAdmin,TenantAdmin,CompanyAdmin")]
+    [Authorize(Roles = RoleConstants.Combined.SuperTenantAndCompanyAdmin)]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteIdentityProvider(int id, int companyId)
@@ -1646,7 +1647,7 @@ public class AdminController : Controller
         // Non-super admins cannot assign SuperAdmin role
         if (!await _tenantService.IsSuperAdminAsync())
         {
-            allRoles.Remove("SuperAdmin");
+            allRoles.Remove(RoleConstants.SuperAdmin);
         }
 
         return allRoles;
@@ -1688,7 +1689,7 @@ public class AdminController : Controller
 
     // ==================== Theme Color Management ====================
 
-    [Authorize(Roles = "SuperAdmin,TenantAdmin")]
+    [Authorize(Roles = RoleConstants.Combined.SuperAndTenantAdmin)]
     public async Task<IActionResult> TenantTheme(int? tenantId)
     {
         int effectiveTenantId;
@@ -1724,7 +1725,7 @@ public class AdminController : Controller
         return View(model);
     }
 
-    [Authorize(Roles = "SuperAdmin,TenantAdmin")]
+    [Authorize(Roles = RoleConstants.Combined.SuperAndTenantAdmin)]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> TenantTheme(TenantThemeViewModel model)
@@ -1742,7 +1743,7 @@ public class AdminController : Controller
         return RedirectToAction(nameof(TenantTheme), new { tenantId = model.TenantId });
     }
 
-    [Authorize(Roles = "SuperAdmin,TenantAdmin,CompanyAdmin")]
+    [Authorize(Roles = RoleConstants.Combined.SuperTenantAndCompanyAdmin)]
     public async Task<IActionResult> CompanyTheme(int companyId)
     {
         if (!await _companyService.HasAccessToCompanyAsync(companyId))
@@ -1779,7 +1780,7 @@ public class AdminController : Controller
         return View(model);
     }
 
-    [Authorize(Roles = "SuperAdmin,TenantAdmin,CompanyAdmin")]
+    [Authorize(Roles = RoleConstants.Combined.SuperTenantAndCompanyAdmin)]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> CompanyTheme(CompanyThemeViewModel model)
@@ -1819,7 +1820,7 @@ public class AdminController : Controller
         return RedirectToAction(nameof(CompanyTheme), new { companyId = model.CompanyId });
     }
 
-    [Authorize(Roles = "SuperAdmin,TenantAdmin,CompanyAdmin")]
+    [Authorize(Roles = RoleConstants.Combined.SuperTenantAndCompanyAdmin)]
     public async Task<IActionResult> BranchTheme(int branchId)
     {
         var branch = await _context.Branches
@@ -1859,7 +1860,7 @@ public class AdminController : Controller
         return View(model);
     }
 
-    [Authorize(Roles = "SuperAdmin,TenantAdmin,CompanyAdmin")]
+    [Authorize(Roles = RoleConstants.Combined.SuperTenantAndCompanyAdmin)]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> BranchTheme(BranchThemeViewModel model)

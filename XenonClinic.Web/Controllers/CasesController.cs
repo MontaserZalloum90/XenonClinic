@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using XenonClinic.Core.Constants;
 using XenonClinic.Core.Entities;
 using XenonClinic.Core.Interfaces;
 using XenonClinic.Infrastructure.Data;
@@ -589,7 +590,7 @@ public class CasesController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [Authorize(Roles = "SuperAdmin,TenantAdmin,CompanyAdmin")]
+    [Authorize(Roles = RoleConstants.Combined.SuperTenantAndCompanyAdmin)]
     public async Task<IActionResult> Delete(int id)
     {
         var success = await _caseService.DeleteCaseAsync(id);

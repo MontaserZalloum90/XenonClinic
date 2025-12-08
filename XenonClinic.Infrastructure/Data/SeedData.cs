@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using XenonClinic.Core.Constants;
 using XenonClinic.Core.Entities;
 
 namespace XenonClinic.Infrastructure.Data;
@@ -30,19 +31,7 @@ public static class SeedData
         }
 
         // Seed Roles - including new multi-tenancy roles
-        var roles = new[]
-        {
-            "SuperAdmin",    // System-wide admin (cross-tenant)
-            "TenantAdmin",   // Tenant-level admin (can manage all companies in tenant)
-            "CompanyAdmin",  // Company-level admin (can manage all branches in company)
-            "Admin",         // Legacy admin (branch-level)
-            "BranchAdmin",   // Branch-level admin
-            "Audiologist",   // Clinical staff
-            "Receptionist",  // Frontend staff
-            "Technician"     // Support staff
-        };
-
-        foreach (var role in roles)
+        foreach (var role in RoleConstants.AllRoles)
         {
             if (!await roleManager.RoleExistsAsync(role))
             {
