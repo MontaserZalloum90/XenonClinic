@@ -4,6 +4,7 @@ export default {
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
+  darkMode: 'class',
   theme: {
     extend: {
       colors: {
@@ -20,7 +21,15 @@ export default {
           900: '#1e3a8a',
         },
       },
+      fontFamily: {
+        sans: ['Inter', 'system-ui', 'sans-serif'],
+        arabic: ['Cairo', 'Noto Sans Arabic', 'sans-serif'],
+      },
     },
   },
   plugins: [],
+  // RTL support
+  corePlugins: {
+    // Use logical properties for automatic RTL support
+  },
 }
