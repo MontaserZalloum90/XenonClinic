@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
+using XenonClinic.Core.Constants;
 using XenonClinic.Core.Entities;
 using XenonClinic.Core.Interfaces;
 using XenonClinic.Infrastructure.Data;
@@ -80,7 +81,7 @@ public class TenantService : ITenantService
         var user = await GetCurrentUserAsync();
         if (user == null) return false;
 
-        return user.IsSuperAdmin || await _userManager.IsInRoleAsync(user, "SuperAdmin");
+        return user.IsSuperAdmin || await _userManager.IsInRoleAsync(user, RoleConstants.SuperAdmin);
     }
 
     public async Task<List<Tenant>> GetAllTenantsAsync()

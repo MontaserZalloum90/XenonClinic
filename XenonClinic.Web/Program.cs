@@ -66,6 +66,21 @@ builder.Services.AddScoped<ICompanyAuthConfigService, CompanyAuthConfigService>(
 builder.Services.AddScoped<IExternalUserMapper, ExternalUserMapperService>();
 builder.Services.AddScoped<IDynamicAuthenticationService, DynamicAuthenticationService>();
 
+// Communication services (WhatsApp & Email)
+builder.Services.AddHttpClient(); // Required for WhatsApp API calls
+builder.Services.AddScoped<IConfigurationResolverService, ConfigurationResolverService>();
+builder.Services.AddScoped<IWhatsAppService, WhatsAppService>();
+builder.Services.AddScoped<IEmailService, EmailService>();
+
+// Case Management services
+builder.Services.AddScoped<ICaseService, CaseService>();
+
+// Theme services
+builder.Services.AddScoped<IThemeService, ThemeService>();
+
+// Lookup services
+builder.Services.AddScoped<ILookupService, LookupService>();
+
 // Configure localization
 builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
 

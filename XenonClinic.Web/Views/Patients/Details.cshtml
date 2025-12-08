@@ -1,0 +1,614 @@
+@using Microsoft.AspNetCore.Mvc.Localization
+@inject IViewLocalizer Localizer
+@model XenonClinic.Core.Entities.Patient
+@{
+    ViewData["Title"] = Localizer["PatientDetails"];
+    var age = DateTime.Now.Year - Model.DateOfBirth.Year;
+    if (DateTime.Now.DayOfYear < Model.DateOfBirth.DayOfYear) age--;
+}
+
+<!-- Alert Messages -->
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @TempData["SuccessMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        @TempData["ErrorMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+<!-- Page Header -->
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a asp-action="Index">@Localizer["Patients"]</a></li>
+                <li class="breadcrumb-item active" aria-current="page">@Model.FullNameEn</li>
+            </ol>
+        </nav>
+        <h2 class="mb-0">@Model.FullNameEn</h2>
+        @if (!string.IsNullOrEmpty(Model.FullNameAr))
+        {
+            <p class="text-muted mb-0">@Model.FullNameAr</p>
+        }
+    </div>
+    <div class="btn-group">
+        <a class="btn btn-primary" asp-action="Edit" asp-route-id="@Model.Id">
+            <i class="bi bi-pencil"></i> @Localizer["Edit"]
+        </a>
+        <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">
+            <i class="bi bi-trash"></i> @Localizer["Delete"]
+        </button>
+    </div>
+</div>
+
+<!-- Patient Information Card -->
+<div class="row">
+    <div class="col-lg-4 mb-4">
+        <div class="card card-rounded h-100">
+            <div class="card-body">
+                <h5 class="card-title border-bottom pb-2 mb-3">@Localizer["PatientInformation"]</h5>
+
+                <div class="mb-3">
+                    <label class="text-muted small">@Localizer["EmiratesID"]</label>
+                    <div class="fw-semibold">@Model.EmiratesId</div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="text-muted small">@Localizer["DateOfBirth"]</label>
+                    <div class="fw-semibold">@Model.DateOfBirth.ToString("dd/MM/yyyy") (@age @Localizer["YearsOld"])</div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="text-muted small">@Localizer["Gender"]</label>
+                    <div class="fw-semibold">
+                        @if (Model.Gender == "M")
+                        {
+                            <span><i class="bi bi-gender-male text-primary"></i> @Localizer["Male"]</span>
+                        }
+                        else
+                        {
+                            <span><i class="bi bi-gender-female text-danger"></i> @Localizer["Female"]</span>
+                        }
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="text-muted small">@Localizer["Branch"]</label>
+                    <div class="fw-semibold">@Model.Branch?.Name</div>
+                </div>
+
+                @if (!string.IsNullOrEmpty(Model.PhoneNumber))
+                {
+                    <div class="mb-3">
+                        <label class="text-muted small">@Localizer["Phone"]</label>
+                        <div class="fw-semibold">
+                            <i class="bi bi-telephone"></i> <a href="tel:@Model.PhoneNumber">@Model.PhoneNumber</a>
+                        </div>
+                    </div>
+                }
+
+                @if (!string.IsNullOrEmpty(Model.Email))
+                {
+                    <div class="mb-3">
+                        <label class="text-muted small">@Localizer["Email"]</label>
+                        <div class="fw-semibold">
+                            <i class="bi bi-envelope"></i> <a href="mailto:@Model.Email">@Model.Email</a>
+                        </div>
+                    </div>
+                }
+
+                @if (!string.IsNullOrEmpty(Model.HearingLossType))
+                {
+                    <div class="mb-3">
+                        <label class="text-muted small">@Localizer["HearingLossType"]</label>
+                        <div class="fw-semibold">
+                            <span class="badge bg-info">@Model.HearingLossType</span>
+                        </div>
+                    </div>
+                }
+
+                @if (!string.IsNullOrEmpty(Model.Notes))
+                {
+                    <div class="mb-0">
+                        <label class="text-muted small">@Localizer["Notes"]</label>
+                        <div class="fw-normal">@Model.Notes</div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Related Records -->
+    <div class="col-lg-8">
+        <!-- Tabs for Related Records -->
+        <ul class="nav nav-tabs mb-3" id="patientTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="appointments-tab" data-bs-toggle="tab" data-bs-target="#appointments" type="button" role="tab">
+                    <i class="bi bi-calendar-check"></i> @Localizer["Appointments"] <span class="badge bg-primary">@Model.Appointments.Count</span>
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="visits-tab" data-bs-toggle="tab" data-bs-target="#visits" type="button" role="tab">
+                    <i class="bi bi-clipboard2-pulse"></i> @Localizer["Visits"] <span class="badge bg-success">@Model.Visits.Count</span>
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="devices-tab" data-bs-toggle="tab" data-bs-target="#devices" type="button" role="tab">
+                    <i class="bi bi-ear"></i> @Localizer["HearingDevices"] <span class="badge bg-info">@Model.Devices.Count</span>
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="invoices-tab" data-bs-toggle="tab" data-bs-target="#invoices" type="button" role="tab">
+                    <i class="bi bi-receipt"></i> @Localizer["Invoices"] <span class="badge bg-warning">@Model.Invoices.Count</span>
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="medical-history-tab" data-bs-toggle="tab" data-bs-target="#medicalHistory" type="button" role="tab">
+                    <i class="bi bi-heart-pulse"></i> @Localizer["MedicalHistory"]
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="documents-tab" data-bs-toggle="tab" data-bs-target="#documents" type="button" role="tab">
+                    <i class="bi bi-file-earmark-text"></i> @Localizer["Documents"] <span class="badge bg-secondary">@Model.Documents.Count</span>
+                </button>
+            </li>
+        </ul>
+
+        <!-- Tab Content -->
+        <div class="tab-content" id="patientTabsContent">
+            <!-- Appointments Tab -->
+            <div class="tab-pane fade show active" id="appointments" role="tabpanel">
+                <div class="card card-rounded">
+                    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0">@Localizer["RecentAppointments"]</h6>
+                        <a asp-controller="Appointments" asp-action="Create" asp-route-patientId="@Model.Id" class="btn btn-sm btn-primary">
+                            <i class="bi bi-plus-lg"></i> @Localizer["BookAppointment"]
+                        </a>
+                    </div>
+                    <div class="card-body">
+                        @if (Model.Appointments.Any())
+                        {
+                            <div class="list-group list-group-flush">
+                                @foreach (var appointment in Model.Appointments.Take(10))
+                                {
+                                    <div class="list-group-item">
+                                        <div class="d-flex justify-content-between align-items-start">
+                                            <div>
+                                                <h6 class="mb-1">@appointment.Type</h6>
+                                                <p class="mb-1 text-muted small">
+                                                    <i class="bi bi-calendar"></i> @appointment.StartTime.ToString("dd/MM/yyyy HH:mm") - @appointment.EndTime.ToString("HH:mm")
+                                                </p>
+                                                @if (!string.IsNullOrEmpty(appointment.Notes))
+                                                {
+                                                    <p class="mb-0 small">@appointment.Notes</p>
+                                                }
+                                            </div>
+                                            <span class="badge @(appointment.Status == "Completed" ? "bg-success" : appointment.Status == "Cancelled" ? "bg-danger" : "bg-primary")">
+                                                @appointment.Status
+                                            </span>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            <p class="text-muted text-center py-4 mb-0">@Localizer["NoAppointments"]</p>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Visits Tab -->
+            <div class="tab-pane fade" id="visits" role="tabpanel">
+                <div class="card card-rounded">
+                    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0">@Localizer["RecentVisits"]</h6>
+                        <a asp-controller="AudiologyVisits" asp-action="Create" asp-route-patientId="@Model.Id" class="btn btn-sm btn-success">
+                            <i class="bi bi-plus-lg"></i> @Localizer["CreateVisit"]
+                        </a>
+                    </div>
+                    <div class="card-body">
+                        @if (Model.Visits.Any())
+                        {
+                            <div class="list-group list-group-flush">
+                                @foreach (var visit in Model.Visits.OrderByDescending(v => v.VisitDate).Take(10))
+                                {
+                                    <a asp-controller="AudiologyVisits" asp-action="Details" asp-route-id="@visit.Id" class="list-group-item list-group-item-action">
+                                        <div class="d-flex justify-content-between align-items-start">
+                                            <div class="flex-grow-1">
+                                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                                    <h6 class="mb-0">@Localizer["Visit"] - @visit.VisitDate.ToString("dd/MM/yyyy")</h6>
+                                                    @if (visit.Audiogram != null)
+                                                    {
+                                                        <span class="badge bg-info ms-2">
+                                                            <i class="bi bi-graph-up"></i> @Localizer["Audiogram"]
+                                                        </span>
+                                                    }
+                                                </div>
+                                                @if (!string.IsNullOrEmpty(visit.ChiefComplaint))
+                                                {
+                                                    <p class="mb-1 small"><strong>@Localizer["ChiefComplaint"]:</strong> @visit.ChiefComplaint</p>
+                                                }
+                                                @if (!string.IsNullOrEmpty(visit.Diagnosis))
+                                                {
+                                                    <p class="mb-1 small"><strong>@Localizer["Diagnosis"]:</strong> @visit.Diagnosis</p>
+                                                }
+                                                @if (!string.IsNullOrEmpty(visit.Plan))
+                                                {
+                                                    <p class="mb-0 small"><strong>@Localizer["Plan"]:</strong> @visit.Plan</p>
+                                                }
+                                            </div>
+                                            <i class="bi bi-chevron-right text-muted ms-2"></i>
+                                        </div>
+                                    </a>
+                                }
+                            </div>
+                            @if (Model.Visits.Count > 10)
+                            {
+                                <div class="card-footer bg-white text-center">
+                                    <a asp-controller="AudiologyVisits" asp-action="Index" class="btn btn-sm btn-outline-primary">
+                                        @Localizer["ViewAllVisits"] (@Model.Visits.Count)
+                                    </a>
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            <p class="text-muted text-center py-4 mb-0">@Localizer["NoVisits"]</p>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Hearing Devices Tab -->
+            <div class="tab-pane fade" id="devices" role="tabpanel">
+                <div class="card card-rounded">
+                    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0">@Localizer["HearingDevices"]</h6>
+                        <a asp-controller="HearingDevices" asp-action="Create" asp-route-patientId="@Model.Id" class="btn btn-sm btn-success">
+                            <i class="bi bi-plus-lg"></i> @Localizer["AddDevice"]
+                        </a>
+                    </div>
+                    <div class="card-body">
+                        @if (Model.Devices.Any())
+                        {
+                            <div class="list-group list-group-flush">
+                                @foreach (var device in Model.Devices.Where(d => d.IsActive).OrderByDescending(d => d.PurchaseDate).Take(10))
+                                {
+                                    var isWarrantyExpired = device.WarrantyExpiryDate != null && device.WarrantyExpiryDate < DateTime.Now;
+                                    var isWarrantyExpiringSoon = device.WarrantyExpiryDate != null &&
+                                                                 device.WarrantyExpiryDate >= DateTime.Now &&
+                                                                 device.WarrantyExpiryDate <= DateTime.Now.AddMonths(3);
+
+                                    <a asp-controller="HearingDevices" asp-action="Details" asp-route-id="@device.Id" class="list-group-item list-group-item-action">
+                                        <div class="d-flex justify-content-between align-items-start">
+                                            <div class="flex-grow-1">
+                                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                                    <h6 class="mb-0">@device.ModelName</h6>
+                                                    @if (isWarrantyExpired)
+                                                    {
+                                                        <span class="badge bg-danger ms-2">
+                                                            <i class="bi bi-exclamation-triangle"></i> @Localizer["WarrantyExpired"]
+                                                        </span>
+                                                    }
+                                                    else if (isWarrantyExpiringSoon)
+                                                    {
+                                                        <span class="badge bg-warning ms-2">
+                                                            <i class="bi bi-exclamation-circle"></i> @Localizer["WarrantyExpiringSoon"]
+                                                        </span>
+                                                    }
+                                                    else if (device.IsActive)
+                                                    {
+                                                        <span class="badge bg-success ms-2">@Localizer["Active"]</span>
+                                                    }
+                                                </div>
+                                                <p class="mb-1 small"><strong>@Localizer["SerialNumber"]:</strong> @device.SerialNumber</p>
+                                                <p class="mb-0 small text-muted">
+                                                    <i class="bi bi-calendar"></i> @Localizer["PurchasedOn"]: @device.PurchaseDate.ToString("dd MMM yyyy")
+                                                    @if (device.WarrantyExpiryDate != null)
+                                                    {
+                                                        <span class="ms-2">
+                                                            <i class="bi bi-shield-check"></i> @Localizer["WarrantyUntil"]: @device.WarrantyExpiryDate.Value.ToString("dd MMM yyyy")
+                                                        </span>
+                                                    }
+                                                </p>
+                                            </div>
+                                            <i class="bi bi-chevron-right text-muted ms-2"></i>
+                                        </div>
+                                    </a>
+                                }
+                            </div>
+                            @if (Model.Devices.Count(d => d.IsActive) > 10)
+                            {
+                                <div class="card-footer bg-white text-center">
+                                    <a asp-controller="HearingDevices" asp-action="Index" class="btn btn-sm btn-outline-primary">
+                                        @Localizer["ViewAllDevices"] (@Model.Devices.Count(d => d.IsActive))
+                                    </a>
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            <p class="text-muted text-center py-4 mb-0">@Localizer["NoDevices"]</p>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Invoices Tab -->
+            <div class="tab-pane fade" id="invoices" role="tabpanel">
+                <div class="card card-rounded">
+                    <div class="card-header bg-white">
+                        <h6 class="mb-0">@Localizer["Invoices"]</h6>
+                    </div>
+                    <div class="card-body">
+                        @if (Model.Invoices.Any())
+                        {
+                            <div class="table-responsive">
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>@Localizer["InvoiceNumber"]</th>
+                                            <th>@Localizer["Date"]</th>
+                                            <th>@Localizer["Amount"]</th>
+                                            <th>@Localizer["Status"]</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var invoice in Model.Invoices)
+                                        {
+                                            <tr>
+                                                <td>@invoice.InvoiceNumber</td>
+                                                <td>@invoice.InvoiceDate.ToString("dd/MM/yyyy")</td>
+                                                <td>@invoice.TotalAmount.ToString("N2") AED</td>
+                                                <td>
+                                                    <span class="badge @(invoice.IsPaid ? "bg-success" : "bg-warning")">
+                                                        @(invoice.IsPaid ? Localizer["Paid"] : Localizer["Pending"])
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                        else
+                        {
+                            <p class="text-muted text-center py-4 mb-0">@Localizer["NoInvoices"]</p>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Medical History Tab -->
+            <div class="tab-pane fade" id="medicalHistory" role="tabpanel">
+                <div class="card card-rounded">
+                    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0">@Localizer["MedicalHistory"]</h6>
+                        <a asp-action="MedicalHistory" asp-route-id="@Model.Id" class="btn btn-sm btn-primary">
+                            <i class="bi bi-pencil"></i> @Localizer["EditMedicalHistory"]
+                        </a>
+                    </div>
+                    <div class="card-body">
+                        @if (Model.MedicalHistory != null)
+                        {
+                            <div class="row g-3">
+                                @if (!string.IsNullOrEmpty(Model.MedicalHistory.ChronicConditions))
+                                {
+                                    <div class="col-md-6">
+                                        <label class="text-muted small fw-bold">@Localizer["ChronicConditions"]</label>
+                                        <p class="mb-0">@Model.MedicalHistory.ChronicConditions</p>
+                                    </div>
+                                }
+                                @if (!string.IsNullOrEmpty(Model.MedicalHistory.Allergies))
+                                {
+                                    <div class="col-md-6">
+                                        <label class="text-muted small fw-bold">@Localizer["Allergies"]</label>
+                                        <p class="mb-0">@Model.MedicalHistory.Allergies</p>
+                                        @if (!string.IsNullOrEmpty(Model.MedicalHistory.AllergyReactions))
+                                        {
+                                            <small class="text-muted">Reactions: @Model.MedicalHistory.AllergyReactions</small>
+                                        }
+                                    </div>
+                                }
+                                @if (!string.IsNullOrEmpty(Model.MedicalHistory.CurrentMedications))
+                                {
+                                    <div class="col-md-6">
+                                        <label class="text-muted small fw-bold">@Localizer["CurrentMedications"]</label>
+                                        <p class="mb-0">@Model.MedicalHistory.CurrentMedications</p>
+                                    </div>
+                                }
+                                @if (!string.IsNullOrEmpty(Model.MedicalHistory.PastMedicalHistory))
+                                {
+                                    <div class="col-md-6">
+                                        <label class="text-muted small fw-bold">@Localizer["PastMedicalHistory"]</label>
+                                        <p class="mb-0">@Model.MedicalHistory.PastMedicalHistory</p>
+                                    </div>
+                                }
+                                @if (!string.IsNullOrEmpty(Model.MedicalHistory.SurgicalHistory))
+                                {
+                                    <div class="col-md-6">
+                                        <label class="text-muted small fw-bold">@Localizer["SurgicalHistory"]</label>
+                                        <p class="mb-0">@Model.MedicalHistory.SurgicalHistory</p>
+                                    </div>
+                                }
+                                @if (!string.IsNullOrEmpty(Model.MedicalHistory.FamilyHistory))
+                                {
+                                    <div class="col-md-6">
+                                        <label class="text-muted small fw-bold">@Localizer["FamilyHistory"]</label>
+                                        <p class="mb-0">@Model.MedicalHistory.FamilyHistory</p>
+                                    </div>
+                                }
+                                @if (Model.MedicalHistory.IsSmoker || Model.MedicalHistory.ConsumesAlcohol)
+                                {
+                                    <div class="col-md-6">
+                                        <label class="text-muted small fw-bold">@Localizer["SocialHistory"]</label>
+                                        <p class="mb-0">
+                                            @if (Model.MedicalHistory.IsSmoker)
+                                            {
+                                                <span class="badge bg-warning me-1">Smoker</span>
+                                            }
+                                            @if (Model.MedicalHistory.ConsumesAlcohol)
+                                            {
+                                                <span class="badge bg-warning">Consumes Alcohol</span>
+                                            }
+                                        </p>
+                                    </div>
+                                }
+                                @if (!string.IsNullOrEmpty(Model.MedicalHistory.NoiseExposureHistory))
+                                {
+                                    <div class="col-md-6">
+                                        <label class="text-muted small fw-bold">@Localizer["NoiseExposureHistory"]</label>
+                                        <p class="mb-0">@Model.MedicalHistory.NoiseExposureHistory</p>
+                                    </div>
+                                }
+                                @if (!string.IsNullOrEmpty(Model.MedicalHistory.TinnitusHistory))
+                                {
+                                    <div class="col-md-6">
+                                        <label class="text-muted small fw-bold">@Localizer["TinnitusHistory"]</label>
+                                        <p class="mb-0">@Model.MedicalHistory.TinnitusHistory</p>
+                                    </div>
+                                }
+                                @if (!string.IsNullOrEmpty(Model.MedicalHistory.AdditionalNotes))
+                                {
+                                    <div class="col-12">
+                                        <label class="text-muted small fw-bold">@Localizer["AdditionalNotes"]</label>
+                                        <p class="mb-0">@Model.MedicalHistory.AdditionalNotes</p>
+                                    </div>
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            <p class="text-muted text-center py-4 mb-0">
+                                @Localizer["NoMedicalHistoryAvailable"]
+                                <br />
+                                <a asp-action="MedicalHistory" asp-route-id="@Model.Id" class="btn btn-sm btn-primary mt-2">
+                                    <i class="bi bi-plus-lg"></i> @Localizer["AddMedicalHistory"]
+                                </a>
+                            </p>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Documents Tab -->
+            <div class="tab-pane fade" id="documents" role="tabpanel">
+                <div class="card card-rounded">
+                    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0">@Localizer["Documents"]</h6>
+                        <a asp-action="UploadDocument" asp-route-id="@Model.Id" class="btn btn-sm btn-primary">
+                            <i class="bi bi-upload"></i> @Localizer["UploadDocument"]
+                        </a>
+                    </div>
+                    <div class="card-body">
+                        @if (Model.Documents.Any())
+                        {
+                            <div class="table-responsive">
+                                <table class="table table-sm table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>@Localizer["DocumentName"]</th>
+                                            <th>@Localizer["Type"]</th>
+                                            <th>@Localizer["UploadDate"]</th>
+                                            <th>@Localizer["Size"]</th>
+                                            <th class="text-end">@Localizer["Actions"]</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var document in Model.Documents)
+                                        {
+                                            <tr>
+                                                <td>
+                                                    <i class="bi bi-file-earmark-pdf text-danger"></i>
+                                                    @document.DocumentName
+                                                    @if (!string.IsNullOrEmpty(document.Description))
+                                                    {
+                                                        <br /><small class="text-muted">@document.Description</small>
+                                                    }
+                                                </td>
+                                                <td><span class="badge bg-secondary">@document.DocumentType</span></td>
+                                                <td>@document.UploadDate.ToString("dd/MM/yyyy HH:mm")</td>
+                                                <td>@((document.FileSizeBytes / 1024.0).ToString("N0")) KB</td>
+                                                <td class="text-end">
+                                                    <div class="btn-group btn-group-sm">
+                                                        <a asp-action="DownloadDocument" asp-route-id="@document.Id" class="btn btn-outline-primary" title="@Localizer["Download"]">
+                                                            <i class="bi bi-download"></i>
+                                                        </a>
+                                                        <button type="button" class="btn btn-outline-danger" onclick="confirmDeleteDocument(@document.Id)" title="@Localizer["Delete"]">
+                                                            <i class="bi bi-trash"></i>
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                        else
+                        {
+                            <p class="text-muted text-center py-4 mb-0">
+                                @Localizer["NoDocumentsAvailable"]
+                                <br />
+                                <a asp-action="UploadDocument" asp-route-id="@Model.Id" class="btn btn-sm btn-primary mt-2">
+                                    <i class="bi bi-upload"></i> @Localizer["UploadDocument"]
+                                </a>
+                            </p>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Document Form (Hidden) -->
+<form id="deleteDocumentForm" asp-action="DeleteDocument" method="post" style="display:none;">
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="id" id="deleteDocumentId" />
+</form>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel">@Localizer["ConfirmDelete"]</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>@Localizer["AreYouSureDeletePatient"] <strong>@Model.FullNameEn</strong>?</p>
+                <div class="alert alert-warning" role="alert">
+                    <i class="bi bi-exclamation-triangle"></i> @Localizer["PatientDeleteWarning"]
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">@Localizer["Cancel"]</button>
+                <form asp-action="Delete" asp-route-id="@Model.Id" method="post" class="d-inline">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-danger">@Localizer["DeleteConfirm"]</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    function confirmDeleteDocument(documentId) {
+        if (confirm('@Localizer["ConfirmDeleteDocument"]')) {
+            document.getElementById('deleteDocumentId').value = documentId;
+            document.getElementById('deleteDocumentForm').submit();
+        }
+    }
+</script>
+}

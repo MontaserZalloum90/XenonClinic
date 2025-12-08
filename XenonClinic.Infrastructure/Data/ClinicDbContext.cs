@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using XenonClinic.Core.Entities;
+using XenonClinic.Core.Entities.Lookups;
 
 namespace XenonClinic.Infrastructure.Data;
 
@@ -14,12 +15,15 @@ public class ClinicDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<Tenant> Tenants => Set<Tenant>();
     public DbSet<Company> Companies => Set<Company>();
     public DbSet<TenantSettings> TenantSettings => Set<TenantSettings>();
+    public DbSet<CompanySettings> CompanySettings => Set<CompanySettings>();
 
     // Existing entities
     public DbSet<Branch> Branches => Set<Branch>();
     public DbSet<LicenseConfig> LicenseConfigs => Set<LicenseConfig>();
     public DbSet<UserBranch> UserBranches => Set<UserBranch>();
     public DbSet<Patient> Patients => Set<Patient>();
+    public DbSet<PatientMedicalHistory> PatientMedicalHistories => Set<PatientMedicalHistory>();
+    public DbSet<PatientDocument> PatientDocuments => Set<PatientDocument>();
     public DbSet<Appointment> Appointments => Set<Appointment>();
     public DbSet<AudiologyVisit> AudiologyVisits => Set<AudiologyVisit>();
     public DbSet<Audiogram> Audiograms => Set<Audiogram>();
@@ -57,6 +61,43 @@ public class ClinicDbContext : IdentityDbContext<ApplicationUser>
     // Authentication configuration entities
     public DbSet<CompanyAuthSettings> CompanyAuthSettings => Set<CompanyAuthSettings>();
     public DbSet<CompanyIdentityProvider> CompanyIdentityProviders => Set<CompanyIdentityProvider>();
+
+    // Case Management entities
+    public DbSet<Case> Cases => Set<Case>();
+    public DbSet<CaseType> CaseTypes => Set<CaseType>();
+    public DbSet<CaseStatus> CaseStatuses => Set<CaseStatus>();
+    public DbSet<CaseNote> CaseNotes => Set<CaseNote>();
+    public DbSet<CaseActivity> CaseActivities => Set<CaseActivity>();
+
+    // Dynamic Lookup entities
+    public DbSet<AppointmentTypeLookup> AppointmentTypeLookups => Set<AppointmentTypeLookup>();
+    public DbSet<AppointmentStatusLookup> AppointmentStatusLookups => Set<AppointmentStatusLookup>();
+    public DbSet<PaymentMethodLookup> PaymentMethodLookups => Set<PaymentMethodLookup>();
+    public DbSet<PaymentStatusLookup> PaymentStatusLookups => Set<PaymentStatusLookup>();
+    public DbSet<CasePriorityLookup> CasePriorityLookups => Set<CasePriorityLookup>();
+    public DbSet<CaseActivityTypeLookup> CaseActivityTypeLookups => Set<CaseActivityTypeLookup>();
+    public DbSet<CaseActivityStatusLookup> CaseActivityStatusLookups => Set<CaseActivityStatusLookup>();
+    public DbSet<CaseNoteTypeLookup> CaseNoteTypeLookups => Set<CaseNoteTypeLookup>();
+    public DbSet<LeaveTypeLookup> LeaveTypeLookups => Set<LeaveTypeLookup>();
+    public DbSet<LeaveStatusLookup> LeaveStatusLookups => Set<LeaveStatusLookup>();
+    public DbSet<EmploymentStatusLookup> EmploymentStatusLookups => Set<EmploymentStatusLookup>();
+    public DbSet<InventoryCategoryLookup> InventoryCategoryLookups => Set<InventoryCategoryLookup>();
+    public DbSet<HearingLossTypeLookup> HearingLossTypeLookups => Set<HearingLossTypeLookup>();
+    public DbSet<AccountTypeLookup> AccountTypeLookups => Set<AccountTypeLookup>();
+    public DbSet<ExpenseStatusLookup> ExpenseStatusLookups => Set<ExpenseStatusLookup>();
+    public DbSet<QuotationStatusLookup> QuotationStatusLookups => Set<QuotationStatusLookup>();
+    public DbSet<SaleStatusLookup> SaleStatusLookups => Set<SaleStatusLookup>();
+    public DbSet<PurchaseOrderStatusLookup> PurchaseOrderStatusLookups => Set<PurchaseOrderStatusLookup>();
+    public DbSet<GoodsReceiptStatusLookup> GoodsReceiptStatusLookups => Set<GoodsReceiptStatusLookup>();
+    public DbSet<SupplierPaymentStatusLookup> SupplierPaymentStatusLookups => Set<SupplierPaymentStatusLookup>();
+    public DbSet<VoucherStatusLookup> VoucherStatusLookups => Set<VoucherStatusLookup>();
+    public DbSet<TransactionTypeLookup> TransactionTypeLookups => Set<TransactionTypeLookup>();
+    public DbSet<LabOrderStatusLookup> LabOrderStatusLookups => Set<LabOrderStatusLookup>();
+    public DbSet<LabResultStatusLookup> LabResultStatusLookups => Set<LabResultStatusLookup>();
+    public DbSet<SpecimenTypeLookup> SpecimenTypeLookups => Set<SpecimenTypeLookup>();
+    public DbSet<TestCategoryLookup> TestCategoryLookups => Set<TestCategoryLookup>();
+    public DbSet<InventoryTransactionTypeLookup> InventoryTransactionTypeLookups => Set<InventoryTransactionTypeLookup>();
+    public DbSet<AttendanceStatusLookup> AttendanceStatusLookups => Set<AttendanceStatusLookup>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -137,6 +178,17 @@ public class ClinicDbContext : IdentityDbContext<ApplicationUser>
             .Property(ts => ts.DefaultTaxRate)
             .HasPrecision(5, 2);
 
+        // CompanySettings configuration
+        builder.Entity<CompanySettings>()
+            .HasIndex(cs => cs.CompanyId)
+            .IsUnique();
+
+        builder.Entity<CompanySettings>()
+            .HasOne(cs => cs.Company)
+            .WithOne(c => c.Settings)
+            .HasForeignKey<CompanySettings>(cs => cs.CompanyId)
+            .OnDelete(DeleteBehavior.Cascade);
+
         // Branch configuration - add company relationship
         builder.Entity<Branch>()
             .HasIndex(b => b.Code)
@@ -200,6 +252,39 @@ public class ClinicDbContext : IdentityDbContext<ApplicationUser>
             .WithMany(b => b.Patients)
             .HasForeignKey(p => p.BranchId);
 
+        // PatientMedicalHistory configuration
+        builder.Entity<PatientMedicalHistory>()
+            .HasIndex(m => m.PatientId)
+            .IsUnique();
+
+        builder.Entity<PatientMedicalHistory>()
+            .HasOne(m => m.Patient)
+            .WithOne(p => p.MedicalHistory)
+            .HasForeignKey<PatientMedicalHistory>(m => m.PatientId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // PatientDocument configuration
+        builder.Entity<PatientDocument>()
+            .HasIndex(d => d.PatientId);
+
+        builder.Entity<PatientDocument>()
+            .HasIndex(d => d.UploadDate);
+
+        builder.Entity<PatientDocument>()
+            .HasIndex(d => d.DocumentType);
+
+        builder.Entity<PatientDocument>()
+            .HasIndex(d => d.IsActive);
+
+        builder.Entity<PatientDocument>()
+            .HasIndex(d => new { d.PatientId, d.UploadDate });
+
+        builder.Entity<PatientDocument>()
+            .HasOne(d => d.Patient)
+            .WithMany(p => p.Documents)
+            .HasForeignKey(d => d.PatientId)
+            .OnDelete(DeleteBehavior.Cascade);
+
         // Appointment indexes
         builder.Entity<Appointment>()
             .HasIndex(a => a.StartTime);
@@ -219,6 +304,15 @@ public class ClinicDbContext : IdentityDbContext<ApplicationUser>
             .HasOne(a => a.Branch)
             .WithMany(b => b.Appointments)
             .HasForeignKey(a => a.BranchId);
+
+        builder.Entity<Appointment>()
+            .HasIndex(a => a.ProviderId);
+
+        builder.Entity<Appointment>()
+            .HasOne(a => a.Provider)
+            .WithMany()
+            .HasForeignKey(a => a.ProviderId)
+            .OnDelete(DeleteBehavior.SetNull);
 
         // AudiologyVisit indexes
         builder.Entity<AudiologyVisit>()
@@ -1263,5 +1357,141 @@ public class ClinicDbContext : IdentityDbContext<ApplicationUser>
 
         builder.Entity<ApplicationUser>()
             .HasIndex(u => new { u.CompanyId, u.ExternalProviderName, u.ExternalUserId });
+
+        // ========================================
+        // Case Management Configuration
+        // ========================================
+
+        // Case configuration
+        builder.Entity<Case>()
+            .HasIndex(c => c.CaseNumber)
+            .IsUnique();
+
+        builder.Entity<Case>()
+            .HasIndex(c => c.PatientId);
+
+        builder.Entity<Case>()
+            .HasIndex(c => c.BranchId);
+
+        builder.Entity<Case>()
+            .HasIndex(c => c.CaseStatusId);
+
+        builder.Entity<Case>()
+            .HasIndex(c => c.AssignedToUserId);
+
+        builder.Entity<Case>()
+            .HasIndex(c => c.OpenedDate);
+
+        builder.Entity<Case>()
+            .HasIndex(c => new { c.BranchId, c.OpenedDate });
+
+        builder.Entity<Case>()
+            .HasOne(c => c.Patient)
+            .WithMany(p => p.Cases)
+            .HasForeignKey(c => c.PatientId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<Case>()
+            .HasOne(c => c.Branch)
+            .WithMany(b => b.Cases)
+            .HasForeignKey(c => c.BranchId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<Case>()
+            .HasOne(c => c.CaseType)
+            .WithMany(ct => ct.Cases)
+            .HasForeignKey(c => c.CaseTypeId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<Case>()
+            .HasOne(c => c.CaseStatus)
+            .WithMany(cs => cs.Cases)
+            .HasForeignKey(c => c.CaseStatusId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<Case>()
+            .HasOne(c => c.AssignedToUser)
+            .WithMany()
+            .HasForeignKey(c => c.AssignedToUserId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        // CaseType configuration
+        builder.Entity<CaseType>()
+            .HasIndex(ct => ct.TenantId);
+
+        builder.Entity<CaseType>()
+            .HasIndex(ct => ct.IsActive);
+
+        builder.Entity<CaseType>()
+            .HasIndex(ct => new { ct.TenantId, ct.Name });
+
+        builder.Entity<CaseType>()
+            .HasOne(ct => ct.Tenant)
+            .WithMany()
+            .HasForeignKey(ct => ct.TenantId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // CaseStatus configuration
+        builder.Entity<CaseStatus>()
+            .HasIndex(cs => cs.TenantId);
+
+        builder.Entity<CaseStatus>()
+            .HasIndex(cs => cs.IsActive);
+
+        builder.Entity<CaseStatus>()
+            .HasIndex(cs => cs.Category);
+
+        builder.Entity<CaseStatus>()
+            .HasIndex(cs => new { cs.TenantId, cs.Name });
+
+        builder.Entity<CaseStatus>()
+            .HasOne(cs => cs.Tenant)
+            .WithMany()
+            .HasForeignKey(cs => cs.TenantId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // CaseNote configuration
+        builder.Entity<CaseNote>()
+            .HasIndex(cn => cn.CaseId);
+
+        builder.Entity<CaseNote>()
+            .HasIndex(cn => cn.CreatedAt);
+
+        builder.Entity<CaseNote>()
+            .HasIndex(cn => cn.IsPinned);
+
+        builder.Entity<CaseNote>()
+            .HasOne(cn => cn.Case)
+            .WithMany(c => c.Notes)
+            .HasForeignKey(cn => cn.CaseId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // CaseActivity configuration
+        builder.Entity<CaseActivity>()
+            .HasIndex(ca => ca.CaseId);
+
+        builder.Entity<CaseActivity>()
+            .HasIndex(ca => ca.Status);
+
+        builder.Entity<CaseActivity>()
+            .HasIndex(ca => ca.AssignedToUserId);
+
+        builder.Entity<CaseActivity>()
+            .HasIndex(ca => ca.DueDate);
+
+        builder.Entity<CaseActivity>()
+            .HasIndex(ca => new { ca.CaseId, ca.Status });
+
+        builder.Entity<CaseActivity>()
+            .HasOne(ca => ca.Case)
+            .WithMany(c => c.Activities)
+            .HasForeignKey(ca => ca.CaseId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<CaseActivity>()
+            .HasOne(ca => ca.AssignedToUser)
+            .WithMany()
+            .HasForeignKey(ca => ca.AssignedToUserId)
+            .OnDelete(DeleteBehavior.SetNull);
     }
 }

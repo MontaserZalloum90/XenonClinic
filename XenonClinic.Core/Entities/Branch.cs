@@ -36,4 +36,5 @@ public class Branch
     public ICollection<AudiologyVisit> Visits { get; set; } = new List<AudiologyVisit>();
     public ICollection<HearingDevice> Devices { get; set; } = new List<HearingDevice>();
     public ICollection<Invoice> Invoices { get; set; } = new List<Invoice>();
+    public ICollection<Case> Cases { get; set; } = new List<Case>();
 }

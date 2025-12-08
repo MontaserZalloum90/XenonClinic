@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using XenonClinic.Core.Constants;
 using XenonClinic.Core.Entities;
 using XenonClinic.Core.Interfaces;
 using XenonClinic.Infrastructure.Data;
@@ -18,6 +19,8 @@ public class AdminController : Controller
     private readonly IAdminService _adminService;
     private readonly ICompanyAuthConfigService _authConfigService;
     private readonly ISecretEncryptionService _encryptionService;
+    private readonly IConfigurationResolverService _configResolver;
+    private readonly IThemeService _themeService;
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly RoleManager<IdentityRole> _roleManager;
     private readonly ClinicDbContext _context;
@@ -28,6 +31,8 @@ public class AdminController : Controller
         IAdminService adminService,
         ICompanyAuthConfigService authConfigService,
         ISecretEncryptionService encryptionService,
+        IConfigurationResolverService configResolver,
+        IThemeService themeService,
         UserManager<ApplicationUser> userManager,
         RoleManager<IdentityRole> roleManager,
         ClinicDbContext context)
@@ -37,6 +42,8 @@ public class AdminController : Controller
         _adminService = adminService;
         _authConfigService = authConfigService;
         _encryptionService = encryptionService;
+        _configResolver = configResolver;
+        _themeService = themeService;
         _userManager = userManager;
         _roleManager = roleManager;
         _context = context;
@@ -80,7 +87,7 @@ public class AdminController : Controller
 
     // ==================== Tenant Management ====================
 
-    [Authorize(Roles = "SuperAdmin")]
+    [Authorize(Roles = RoleConstants.SuperAdmin)]
     public async Task<IActionResult> Tenants(bool includeInactive = false)
     {
         var tenants = await _adminService.GetTenantsAsync(includeInactive);
@@ -111,13 +118,13 @@ public class AdminController : Controller
         return View(model);
     }
 
-    [Authorize(Roles = "SuperAdmin")]
+    [Authorize(Roles = RoleConstants.SuperAdmin)]
     public IActionResult CreateTenant()
     {
         return View("TenantForm", new TenantFormViewModel());
     }
 
-    [Authorize(Roles = "SuperAdmin")]
+    [Authorize(Roles = RoleConstants.SuperAdmin)]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> CreateTenant(TenantFormViewModel model)
@@ -153,7 +160,7 @@ public class AdminController : Controller
         return RedirectToAction(nameof(Tenants));
     }
 
-    [Authorize(Roles = "SuperAdmin")]
+    [Authorize(Roles = RoleConstants.SuperAdmin)]
     public async Task<IActionResult> EditTenant(int id)
     {
         var tenant = await _tenantService.GetTenantByIdAsync(id);
@@ -186,7 +193,7 @@ public class AdminController : Controller
         return View("TenantForm", model);
     }
 
-    [Authorize(Roles = "SuperAdmin")]
+    [Authorize(Roles = RoleConstants.SuperAdmin)]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> EditTenant(TenantFormViewModel model)
@@ -225,7 +232,7 @@ public class AdminController : Controller
         return RedirectToAction(nameof(Tenants));
     }
 
-    [Authorize(Roles = "SuperAdmin")]
+    [Authorize(Roles = RoleConstants.SuperAdmin)]
     public async Task<IActionResult> TenantDetails(int id)
     {
         var tenant = await _tenantService.GetTenantByIdAsync(id);
@@ -265,7 +272,7 @@ public class AdminController : Controller
 
     // ==================== Company Management ====================
 
-    [Authorize(Roles = "SuperAdmin,TenantAdmin")]
+    [Authorize(Roles = RoleConstants.Combined.SuperAndTenantAdmin)]
     public async Task<IActionResult> Companies(int? tenantId, bool includeInactive = false)
     {
         List<Company> companies;
@@ -328,7 +335,7 @@ public class AdminController : Controller
         return View(model);
     }
 
-    [Authorize(Roles = "SuperAdmin,TenantAdmin")]
+    [Authorize(Roles = RoleConstants.Combined.SuperAndTenantAdmin)]
     public async Task<IActionResult> CreateCompany(int? tenantId)
     {
         var model = new CompanyFormViewModel
@@ -345,7 +352,7 @@ public class AdminController : Controller
         return View("CompanyForm", model);
     }
 
-    [Authorize(Roles = "SuperAdmin,TenantAdmin")]
+    [Authorize(Roles = RoleConstants.Combined.SuperAndTenantAdmin)]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> CreateCompany(CompanyFormViewModel model)
@@ -385,7 +392,7 @@ public class AdminController : Controller
         return RedirectToAction(nameof(Companies), new { tenantId = model.TenantId });
     }
 
-    [Authorize(Roles = "SuperAdmin,TenantAdmin")]
+    [Authorize(Roles = RoleConstants.Combined.SuperAndTenantAdmin)]
     public async Task<IActionResult> EditCompany(int id)
     {
         var company = await _companyService.GetCompanyByIdAsync(id);
@@ -422,7 +429,7 @@ public class AdminController : Controller
         return View("CompanyForm", model);
     }
 
-    [Authorize(Roles = "SuperAdmin,TenantAdmin")]
+    [Authorize(Roles = RoleConstants.Combined.SuperAndTenantAdmin)]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> EditCompany(CompanyFormViewModel model)
@@ -466,7 +473,7 @@ public class AdminController : Controller
 
     // ==================== Branch Management ====================
 
-    [Authorize(Roles = "SuperAdmin,TenantAdmin,CompanyAdmin")]
+    [Authorize(Roles = RoleConstants.Combined.SuperTenantAndCompanyAdmin)]
     public async Task<IActionResult> Branches(int? companyId, bool includeInactive = false)
     {
         List<Branch> branches;
@@ -520,7 +527,7 @@ public class AdminController : Controller
         return View(model);
     }
 
-    [Authorize(Roles = "SuperAdmin,TenantAdmin,CompanyAdmin")]
+    [Authorize(Roles = RoleConstants.Combined.SuperTenantAndCompanyAdmin)]
     public async Task<IActionResult> CreateBranch(int? companyId)
     {
         var model = new BranchFormViewModel
@@ -532,7 +539,7 @@ public class AdminController : Controller
         return View("BranchForm", model);
     }
 
-    [Authorize(Roles = "SuperAdmin,TenantAdmin,CompanyAdmin")]
+    [Authorize(Roles = RoleConstants.Combined.SuperTenantAndCompanyAdmin)]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> CreateBranch(BranchFormViewModel model)
@@ -570,7 +577,7 @@ public class AdminController : Controller
         return RedirectToAction(nameof(Branches), new { companyId = model.CompanyId });
     }
 
-    [Authorize(Roles = "SuperAdmin,TenantAdmin,CompanyAdmin")]
+    [Authorize(Roles = RoleConstants.Combined.SuperTenantAndCompanyAdmin)]
     public async Task<IActionResult> EditBranch(int id)
     {
         var branch = await _context.Branches
@@ -613,7 +620,7 @@ public class AdminController : Controller
         return View("BranchForm", model);
     }
 
-    [Authorize(Roles = "SuperAdmin,TenantAdmin,CompanyAdmin")]
+    [Authorize(Roles = RoleConstants.Combined.SuperTenantAndCompanyAdmin)]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> EditBranch(BranchFormViewModel model)
@@ -660,7 +667,7 @@ public class AdminController : Controller
 
     // ==================== User Management ====================
 
-    [Authorize(Roles = "SuperAdmin,TenantAdmin,CompanyAdmin,BranchAdmin")]
+    [Authorize(Roles = RoleConstants.Combined.AllAdmins)]
     public async Task<IActionResult> Users(int? tenantId, int? companyId, int? branchId, bool includeInactive = false)
     {
         List<ApplicationUser> users;
@@ -726,7 +733,7 @@ public class AdminController : Controller
         return View(model);
     }
 
-    [Authorize(Roles = "SuperAdmin,TenantAdmin,CompanyAdmin")]
+    [Authorize(Roles = RoleConstants.Combined.SuperTenantAndCompanyAdmin)]
     public async Task<IActionResult> CreateUser()
     {
         var model = new UserFormViewModel
@@ -740,7 +747,7 @@ public class AdminController : Controller
         return View("UserForm", model);
     }
 
-    [Authorize(Roles = "SuperAdmin,TenantAdmin,CompanyAdmin")]
+    [Authorize(Roles = RoleConstants.Combined.SuperTenantAndCompanyAdmin)]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> CreateUser(UserFormViewModel model)
@@ -781,7 +788,7 @@ public class AdminController : Controller
         return RedirectToAction(nameof(Users));
     }
 
-    [Authorize(Roles = "SuperAdmin,TenantAdmin,CompanyAdmin")]
+    [Authorize(Roles = RoleConstants.Combined.SuperTenantAndCompanyAdmin)]
     public async Task<IActionResult> EditUser(string id)
     {
         var user = await _context.Users
@@ -819,7 +826,7 @@ public class AdminController : Controller
         return View("UserForm", model);
     }
 
-    [Authorize(Roles = "SuperAdmin,TenantAdmin,CompanyAdmin")]
+    [Authorize(Roles = RoleConstants.Combined.SuperTenantAndCompanyAdmin)]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> EditUser(UserFormViewModel model)
@@ -872,7 +879,7 @@ public class AdminController : Controller
 
     // ==================== Settings ====================
 
-    [Authorize(Roles = "SuperAdmin,TenantAdmin")]
+    [Authorize(Roles = RoleConstants.Combined.SuperAndTenantAdmin)]
     public async Task<IActionResult> Settings(int? tenantId)
     {
         int effectiveTenantId;
@@ -938,7 +945,7 @@ public class AdminController : Controller
         return View(model);
     }
 
-    [Authorize(Roles = "SuperAdmin,TenantAdmin")]
+    [Authorize(Roles = RoleConstants.Combined.SuperAndTenantAdmin)]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Settings(TenantSettingsFormViewModel model)
@@ -994,9 +1001,260 @@ public class AdminController : Controller
         return RedirectToAction(nameof(Settings), new { tenantId = model.TenantId });
     }
 
+    // ==================== Communication Settings (WhatsApp & Email) ====================
+
+    [Authorize(Roles = RoleConstants.Combined.SuperAndTenantAdmin)]
+    public async Task<IActionResult> CommunicationSettings(int? tenantId)
+    {
+        int effectiveTenantId;
+
+        if (await _tenantService.IsSuperAdminAsync() && tenantId.HasValue)
+        {
+            effectiveTenantId = tenantId.Value;
+        }
+        else
+        {
+            var currentTenantId = await _tenantService.GetCurrentTenantIdAsync();
+            if (!currentTenantId.HasValue)
+            {
+                return Forbid();
+            }
+            effectiveTenantId = currentTenantId.Value;
+        }
+
+        var tenant = await _tenantService.GetTenantByIdAsync(effectiveTenantId);
+        if (tenant == null)
+        {
+            return NotFound();
+        }
+
+        var settings = tenant.Settings ?? new TenantSettings { TenantId = effectiveTenantId };
+
+        var model = new CommunicationSettingsViewModel
+        {
+            TenantId = effectiveTenantId,
+            ConfigurationLevel = "Tenant",
+
+            // Email settings
+            SmtpHost = settings.SmtpHost,
+            SmtpPort = settings.SmtpPort,
+            SmtpUsername = settings.SmtpUsername,
+            SmtpPassword = null, // Don't expose password
+            SmtpUseSsl = settings.SmtpUseSsl,
+            DefaultSenderEmail = settings.DefaultSenderEmail,
+            DefaultSenderName = settings.DefaultSenderName,
+
+            // WhatsApp settings
+            EnableWhatsApp = settings.EnableWhatsApp,
+            WhatsAppProvider = settings.WhatsAppProvider,
+            WhatsAppAccountSid = settings.WhatsAppAccountSid,
+            WhatsAppAuthToken = null, // Don't expose token
+            WhatsAppPhoneNumber = settings.WhatsAppPhoneNumber,
+            WhatsAppBusinessApiToken = null, // Don't expose token
+            WhatsAppBusinessPhoneNumberId = settings.WhatsAppBusinessPhoneNumberId,
+
+            // Reminder settings
+            SendAppointmentReminders = settings.SendAppointmentReminders,
+            ReminderHoursBeforeAppointment = settings.ReminderHoursBeforeAppointment
+        };
+
+        ViewBag.TenantName = tenant.Name;
+        return View(model);
+    }
+
+    [Authorize(Roles = RoleConstants.Combined.SuperAndTenantAdmin)]
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> CommunicationSettings(CommunicationSettingsViewModel model)
+    {
+        if (!ModelState.IsValid)
+        {
+            var tenant = await _tenantService.GetTenantByIdAsync(model.TenantId!.Value);
+            ViewBag.TenantName = tenant?.Name;
+            return View(model);
+        }
+
+        var existingSettings = await _context.TenantSettings
+            .FirstOrDefaultAsync(ts => ts.TenantId == model.TenantId);
+
+        if (existingSettings == null)
+        {
+            existingSettings = new TenantSettings { TenantId = model.TenantId!.Value };
+            _context.TenantSettings.Add(existingSettings);
+        }
+
+        // Update email settings
+        if (!string.IsNullOrEmpty(model.SmtpHost))
+        {
+            existingSettings.SmtpHost = model.SmtpHost;
+            existingSettings.SmtpPort = model.SmtpPort ?? 587;
+            existingSettings.SmtpUsername = model.SmtpUsername;
+            existingSettings.SmtpUseSsl = model.SmtpUseSsl ?? true;
+            existingSettings.DefaultSenderEmail = model.DefaultSenderEmail;
+            existingSettings.DefaultSenderName = model.DefaultSenderName;
+
+            // Only update password if provided
+            if (!string.IsNullOrEmpty(model.SmtpPassword))
+            {
+                existingSettings.SmtpPassword = model.SmtpPassword;
+            }
+        }
+
+        // Update WhatsApp settings
+        existingSettings.EnableWhatsApp = model.EnableWhatsApp ?? false;
+        existingSettings.WhatsAppProvider = model.WhatsAppProvider;
+        existingSettings.WhatsAppAccountSid = model.WhatsAppAccountSid;
+        existingSettings.WhatsAppPhoneNumber = model.WhatsAppPhoneNumber;
+        existingSettings.WhatsAppBusinessPhoneNumberId = model.WhatsAppBusinessPhoneNumberId;
+
+        // Only update tokens if provided
+        if (!string.IsNullOrEmpty(model.WhatsAppAuthToken))
+        {
+            existingSettings.WhatsAppAuthToken = model.WhatsAppAuthToken;
+        }
+        if (!string.IsNullOrEmpty(model.WhatsAppBusinessApiToken))
+        {
+            existingSettings.WhatsAppBusinessApiToken = model.WhatsAppBusinessApiToken;
+        }
+
+        // Update reminder settings
+        existingSettings.SendAppointmentReminders = model.SendAppointmentReminders ?? false;
+        existingSettings.ReminderHoursBeforeAppointment = model.ReminderHoursBeforeAppointment ?? 24;
+
+        await _tenantService.UpdateTenantSettingsAsync(existingSettings);
+        TempData["Success"] = "Communication settings saved successfully.";
+
+        return RedirectToAction(nameof(CommunicationSettings), new { tenantId = model.TenantId });
+    }
+
+    [Authorize(Roles = RoleConstants.Combined.SuperTenantAndCompanyAdmin)]
+    public async Task<IActionResult> CompanyCommunicationSettings(int companyId)
+    {
+        if (!await _companyService.HasAccessToCompanyAsync(companyId))
+        {
+            return Forbid();
+        }
+
+        var company = await _context.Companies
+            .Include(c => c.Settings)
+            .Include(c => c.Tenant)
+                .ThenInclude(t => t.Settings)
+            .FirstOrDefaultAsync(c => c.Id == companyId);
+
+        if (company == null)
+        {
+            return NotFound();
+        }
+
+        var companySettings = company.Settings;
+        var tenantSettings = company.Tenant?.Settings;
+
+        var model = new CommunicationSettingsViewModel
+        {
+            CompanyId = companyId,
+            ConfigurationLevel = "Company",
+
+            // Email settings (show company override or tenant default)
+            SmtpHost = companySettings?.SmtpHost ?? tenantSettings?.SmtpHost,
+            SmtpPort = companySettings?.SmtpPort ?? tenantSettings?.SmtpPort,
+            SmtpUsername = companySettings?.SmtpUsername ?? tenantSettings?.SmtpUsername,
+            SmtpPassword = null, // Don't expose password
+            SmtpUseSsl = companySettings?.SmtpUseSsl ?? tenantSettings?.SmtpUseSsl,
+            DefaultSenderEmail = companySettings?.DefaultSenderEmail ?? tenantSettings?.DefaultSenderEmail,
+            DefaultSenderName = companySettings?.DefaultSenderName ?? tenantSettings?.DefaultSenderName,
+
+            // WhatsApp settings (show company override or tenant default)
+            EnableWhatsApp = companySettings?.EnableWhatsApp ?? tenantSettings?.EnableWhatsApp,
+            WhatsAppProvider = companySettings?.WhatsAppProvider ?? tenantSettings?.WhatsAppProvider,
+            WhatsAppAccountSid = companySettings?.WhatsAppAccountSid ?? tenantSettings?.WhatsAppAccountSid,
+            WhatsAppAuthToken = null, // Don't expose token
+            WhatsAppPhoneNumber = companySettings?.WhatsAppPhoneNumber ?? tenantSettings?.WhatsAppPhoneNumber,
+            WhatsAppBusinessApiToken = null, // Don't expose token
+            WhatsAppBusinessPhoneNumberId = companySettings?.WhatsAppBusinessPhoneNumberId ?? tenantSettings?.WhatsAppBusinessPhoneNumberId,
+
+            // Reminder settings
+            SendAppointmentReminders = companySettings?.SendAppointmentReminders ?? tenantSettings?.SendAppointmentReminders,
+            ReminderHoursBeforeAppointment = companySettings?.ReminderHoursBeforeAppointment ?? tenantSettings?.ReminderHoursBeforeAppointment
+        };
+
+        ViewBag.CompanyName = company.Name;
+        ViewBag.TenantName = company.Tenant?.Name;
+        return View(model);
+    }
+
+    [Authorize(Roles = RoleConstants.Combined.SuperTenantAndCompanyAdmin)]
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> CompanyCommunicationSettings(CommunicationSettingsViewModel model)
+    {
+        if (!await _companyService.HasAccessToCompanyAsync(model.CompanyId!.Value))
+        {
+            return Forbid();
+        }
+
+        if (!ModelState.IsValid)
+        {
+            var company = await _companyService.GetCompanyByIdAsync(model.CompanyId.Value);
+            ViewBag.CompanyName = company?.Name;
+            return View(model);
+        }
+
+        var existingSettings = await _context.CompanySettings
+            .FirstOrDefaultAsync(cs => cs.CompanyId == model.CompanyId);
+
+        if (existingSettings == null)
+        {
+            existingSettings = new CompanySettings { CompanyId = model.CompanyId.Value };
+            _context.CompanySettings.Add(existingSettings);
+        }
+
+        // Update email settings (null means use tenant default)
+        existingSettings.SmtpHost = model.SmtpHost;
+        existingSettings.SmtpPort = model.SmtpPort;
+        existingSettings.SmtpUsername = model.SmtpUsername;
+        existingSettings.SmtpUseSsl = model.SmtpUseSsl;
+        existingSettings.DefaultSenderEmail = model.DefaultSenderEmail;
+        existingSettings.DefaultSenderName = model.DefaultSenderName;
+
+        // Only update password if provided
+        if (!string.IsNullOrEmpty(model.SmtpPassword))
+        {
+            existingSettings.SmtpPassword = model.SmtpPassword;
+        }
+
+        // Update WhatsApp settings
+        existingSettings.EnableWhatsApp = model.EnableWhatsApp;
+        existingSettings.WhatsAppProvider = model.WhatsAppProvider;
+        existingSettings.WhatsAppAccountSid = model.WhatsAppAccountSid;
+        existingSettings.WhatsAppPhoneNumber = model.WhatsAppPhoneNumber;
+        existingSettings.WhatsAppBusinessPhoneNumberId = model.WhatsAppBusinessPhoneNumberId;
+
+        // Only update tokens if provided
+        if (!string.IsNullOrEmpty(model.WhatsAppAuthToken))
+        {
+            existingSettings.WhatsAppAuthToken = model.WhatsAppAuthToken;
+        }
+        if (!string.IsNullOrEmpty(model.WhatsAppBusinessApiToken))
+        {
+            existingSettings.WhatsAppBusinessApiToken = model.WhatsAppBusinessApiToken;
+        }
+
+        // Update reminder settings
+        existingSettings.SendAppointmentReminders = model.SendAppointmentReminders;
+        existingSettings.ReminderHoursBeforeAppointment = model.ReminderHoursBeforeAppointment;
+
+        existingSettings.LastModifiedAt = DateTime.UtcNow;
+        existingSettings.LastModifiedBy = User.Identity?.Name;
+
+        await _context.SaveChangesAsync();
+        TempData["Success"] = "Company communication settings saved successfully.";
+
+        return RedirectToAction(nameof(CompanyCommunicationSettings), new { companyId = model.CompanyId });
+    }
+
     // ==================== Company Authentication Settings ====================
 
-    [Authorize(Roles = "SuperAdmin,TenantAdmin,CompanyAdmin")]
+    [Authorize(Roles = RoleConstants.Combined.SuperTenantAndCompanyAdmin)]
     public async Task<IActionResult> AuthSettings(int companyId)
     {
         if (!await _companyService.HasAccessToCompanyAsync(companyId))
@@ -1051,7 +1309,7 @@ public class AdminController : Controller
         return View(model);
     }
 
-    [Authorize(Roles = "SuperAdmin,TenantAdmin,CompanyAdmin")]
+    [Authorize(Roles = RoleConstants.Combined.SuperTenantAndCompanyAdmin)]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> AuthSettings(CompanyAuthSettingsViewModel model)
@@ -1100,7 +1358,7 @@ public class AdminController : Controller
         return RedirectToAction(nameof(AuthSettings), new { companyId = model.CompanyId });
     }
 
-    [Authorize(Roles = "SuperAdmin,TenantAdmin,CompanyAdmin")]
+    [Authorize(Roles = RoleConstants.Combined.SuperTenantAndCompanyAdmin)]
     public async Task<IActionResult> CreateIdentityProvider(int companyId)
     {
         if (!await _companyService.HasAccessToCompanyAsync(companyId))
@@ -1135,7 +1393,7 @@ public class AdminController : Controller
         return View("IdentityProviderForm", model);
     }
 
-    [Authorize(Roles = "SuperAdmin,TenantAdmin,CompanyAdmin")]
+    [Authorize(Roles = RoleConstants.Combined.SuperTenantAndCompanyAdmin)]
     public async Task<IActionResult> EditIdentityProvider(int id)
     {
         var provider = await _authConfigService.GetIdentityProviderByIdAsync(id);
@@ -1205,7 +1463,7 @@ public class AdminController : Controller
         return View("IdentityProviderForm", model);
     }
 
-    [Authorize(Roles = "SuperAdmin,TenantAdmin,CompanyAdmin")]
+    [Authorize(Roles = RoleConstants.Combined.SuperTenantAndCompanyAdmin)]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> SaveIdentityProvider(IdentityProviderFormViewModel model)
@@ -1303,7 +1561,7 @@ public class AdminController : Controller
         return RedirectToAction(nameof(AuthSettings), new { companyId = model.CompanyId });
     }
 
-    [Authorize(Roles = "SuperAdmin,TenantAdmin,CompanyAdmin")]
+    [Authorize(Roles = RoleConstants.Combined.SuperTenantAndCompanyAdmin)]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteIdentityProvider(int id, int companyId)
@@ -1389,7 +1647,7 @@ public class AdminController : Controller
         // Non-super admins cannot assign SuperAdmin role
         if (!await _tenantService.IsSuperAdminAsync())
         {
-            allRoles.Remove("SuperAdmin");
+            allRoles.Remove(RoleConstants.SuperAdmin);
         }
 
         return allRoles;
@@ -1427,5 +1685,222 @@ public class AdminController : Controller
             .ToListAsync();
 
         return Json(branches);
+    }
+
+    // ==================== Theme Color Management ====================
+
+    [Authorize(Roles = RoleConstants.Combined.SuperAndTenantAdmin)]
+    public async Task<IActionResult> TenantTheme(int? tenantId)
+    {
+        int effectiveTenantId;
+
+        if (await _tenantService.IsSuperAdminAsync() && tenantId.HasValue)
+        {
+            effectiveTenantId = tenantId.Value;
+        }
+        else
+        {
+            var currentTenantId = await _tenantService.GetCurrentTenantIdAsync();
+            if (!currentTenantId.HasValue)
+            {
+                return Forbid();
+            }
+            effectiveTenantId = currentTenantId.Value;
+        }
+
+        var tenant = await _tenantService.GetTenantByIdAsync(effectiveTenantId);
+        if (tenant == null)
+        {
+            return NotFound();
+        }
+
+        var model = new TenantThemeViewModel
+        {
+            TenantId = effectiveTenantId,
+            TenantName = tenant.Name,
+            PrimaryColor = tenant.PrimaryColor ?? "#1F6FEB",
+            SecondaryColor = tenant.SecondaryColor ?? "#6B7280"
+        };
+
+        return View(model);
+    }
+
+    [Authorize(Roles = RoleConstants.Combined.SuperAndTenantAdmin)]
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> TenantTheme(TenantThemeViewModel model)
+    {
+        if (!ModelState.IsValid)
+        {
+            var tenant = await _tenantService.GetTenantByIdAsync(model.TenantId);
+            model.TenantName = tenant?.Name ?? "";
+            return View(model);
+        }
+
+        await _themeService.UpdateTenantThemeColorsAsync(model.TenantId, model.PrimaryColor, model.SecondaryColor);
+        TempData["Success"] = "Tenant theme colors updated successfully.";
+
+        return RedirectToAction(nameof(TenantTheme), new { tenantId = model.TenantId });
+    }
+
+    [Authorize(Roles = RoleConstants.Combined.SuperTenantAndCompanyAdmin)]
+    public async Task<IActionResult> CompanyTheme(int companyId)
+    {
+        if (!await _companyService.HasAccessToCompanyAsync(companyId))
+        {
+            return Forbid();
+        }
+
+        var company = await _context.Companies
+            .Include(c => c.Tenant)
+            .FirstOrDefaultAsync(c => c.Id == companyId);
+
+        if (company == null)
+        {
+            return NotFound();
+        }
+
+        var themeColors = await _themeService.GetCompanyThemeColorsAsync(companyId);
+
+        var model = new CompanyThemeViewModel
+        {
+            CompanyId = companyId,
+            CompanyName = company.Name,
+            TenantName = company.Tenant?.Name ?? "",
+            PrimaryColor = !string.IsNullOrEmpty(company.PrimaryColor) ? company.PrimaryColor : null,
+            SecondaryColor = !string.IsNullOrEmpty(company.SecondaryColor) ? company.SecondaryColor : null,
+            UseTenantTheme = string.IsNullOrEmpty(company.PrimaryColor) || string.IsNullOrEmpty(company.SecondaryColor),
+            TenantPrimaryColor = company.Tenant?.PrimaryColor ?? "#1F6FEB",
+            TenantSecondaryColor = company.Tenant?.SecondaryColor ?? "#6B7280",
+            EffectivePrimaryColor = themeColors.PrimaryColor,
+            EffectiveSecondaryColor = themeColors.SecondaryColor,
+            ColorSource = themeColors.Source
+        };
+
+        return View(model);
+    }
+
+    [Authorize(Roles = RoleConstants.Combined.SuperTenantAndCompanyAdmin)]
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> CompanyTheme(CompanyThemeViewModel model)
+    {
+        if (!await _companyService.HasAccessToCompanyAsync(model.CompanyId))
+        {
+            return Forbid();
+        }
+
+        if (!ModelState.IsValid)
+        {
+            var company = await _companyService.GetCompanyByIdAsync(model.CompanyId);
+            model.CompanyName = company?.Name ?? "";
+            return View(model);
+        }
+
+        if (model.UseTenantTheme)
+        {
+            // Reset to use tenant theme
+            await _themeService.ResetCompanyThemeColorsAsync(model.CompanyId);
+        }
+        else
+        {
+            // Use custom colors
+            if (string.IsNullOrEmpty(model.PrimaryColor) || string.IsNullOrEmpty(model.SecondaryColor))
+            {
+                ModelState.AddModelError("", "Both primary and secondary colors are required for custom theme.");
+                var company = await _companyService.GetCompanyByIdAsync(model.CompanyId);
+                model.CompanyName = company?.Name ?? "";
+                return View(model);
+            }
+
+            await _themeService.UpdateCompanyThemeColorsAsync(model.CompanyId, model.PrimaryColor, model.SecondaryColor);
+        }
+
+        TempData["Success"] = "Company theme colors updated successfully.";
+        return RedirectToAction(nameof(CompanyTheme), new { companyId = model.CompanyId });
+    }
+
+    [Authorize(Roles = RoleConstants.Combined.SuperTenantAndCompanyAdmin)]
+    public async Task<IActionResult> BranchTheme(int branchId)
+    {
+        var branch = await _context.Branches
+            .Include(b => b.Company)
+                .ThenInclude(c => c.Tenant)
+            .FirstOrDefaultAsync(b => b.Id == branchId);
+
+        if (branch == null)
+        {
+            return NotFound();
+        }
+
+        if (!await _companyService.HasAccessToCompanyAsync(branch.CompanyId))
+        {
+            return Forbid();
+        }
+
+        var themeColors = await _themeService.GetBranchThemeColorsAsync(branchId);
+        var inheritedColors = await _themeService.GetCompanyThemeColorsAsync(branch.CompanyId);
+
+        var model = new BranchThemeViewModel
+        {
+            BranchId = branchId,
+            BranchName = branch.Name,
+            CompanyName = branch.Company.Name,
+            TenantName = branch.Company.Tenant?.Name ?? "",
+            PrimaryColor = !string.IsNullOrEmpty(branch.PrimaryColor) ? branch.PrimaryColor : null,
+            SecondaryColor = !string.IsNullOrEmpty(branch.SecondaryColor) ? branch.SecondaryColor : null,
+            UseInheritedTheme = string.IsNullOrEmpty(branch.PrimaryColor) || string.IsNullOrEmpty(branch.SecondaryColor),
+            InheritedPrimaryColor = inheritedColors.PrimaryColor,
+            InheritedSecondaryColor = inheritedColors.SecondaryColor,
+            EffectivePrimaryColor = themeColors.PrimaryColor,
+            EffectiveSecondaryColor = themeColors.SecondaryColor,
+            ColorSource = themeColors.Source
+        };
+
+        return View(model);
+    }
+
+    [Authorize(Roles = RoleConstants.Combined.SuperTenantAndCompanyAdmin)]
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> BranchTheme(BranchThemeViewModel model)
+    {
+        var branch = await _context.Branches.FindAsync(model.BranchId);
+        if (branch == null)
+        {
+            return NotFound();
+        }
+
+        if (!await _companyService.HasAccessToCompanyAsync(branch.CompanyId))
+        {
+            return Forbid();
+        }
+
+        if (!ModelState.IsValid)
+        {
+            model.BranchName = branch.Name;
+            return View(model);
+        }
+
+        if (model.UseInheritedTheme)
+        {
+            // Reset to use inherited theme
+            await _themeService.ResetBranchThemeColorsAsync(model.BranchId);
+        }
+        else
+        {
+            // Use custom colors
+            if (string.IsNullOrEmpty(model.PrimaryColor) || string.IsNullOrEmpty(model.SecondaryColor))
+            {
+                ModelState.AddModelError("", "Both primary and secondary colors are required for custom theme.");
+                model.BranchName = branch.Name;
+                return View(model);
+            }
+
+            await _themeService.UpdateBranchThemeColorsAsync(model.BranchId, model.PrimaryColor, model.SecondaryColor);
+        }
+
+        TempData["Success"] = "Branch theme colors updated successfully.";
+        return RedirectToAction(nameof(BranchTheme), new { branchId = model.BranchId });
     }
 }

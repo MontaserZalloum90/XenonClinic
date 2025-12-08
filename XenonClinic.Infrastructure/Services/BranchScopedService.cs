@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using XenonClinic.Core.Constants;
 using XenonClinic.Core.Entities;
 using XenonClinic.Core.Interfaces;
 using XenonClinic.Infrastructure.Data;
@@ -35,7 +36,7 @@ public class BranchScopedService : IBranchScopedService
         if (user == null) return new List<int>();
 
         // Super admins have access to all branches
-        if (user.IsSuperAdmin || await _userManager.IsInRoleAsync(user, "SuperAdmin"))
+        if (user.IsSuperAdmin || await _userManager.IsInRoleAsync(user, RoleConstants.SuperAdmin))
         {
             return await _context.Branches
                 .Where(b => b.IsActive)
@@ -44,7 +45,7 @@ public class BranchScopedService : IBranchScopedService
         }
 
         // Tenant admins have access to all branches in their tenant
-        if (await _userManager.IsInRoleAsync(user, "TenantAdmin") && user.TenantId.HasValue)
+        if (await _userManager.IsInRoleAsync(user, RoleConstants.TenantAdmin) && user.TenantId.HasValue)
         {
             var companyIds = await _context.Companies
                 .Where(c => c.TenantId == user.TenantId && c.IsActive)
@@ -58,7 +59,7 @@ public class BranchScopedService : IBranchScopedService
         }
 
         // Company admins have access to all branches in their company
-        if (await _userManager.IsInRoleAsync(user, "CompanyAdmin") && user.CompanyId.HasValue)
+        if (await _userManager.IsInRoleAsync(user, RoleConstants.CompanyAdmin) && user.CompanyId.HasValue)
         {
             return await _context.Branches
                 .Where(b => b.CompanyId == user.CompanyId && b.IsActive)
@@ -67,7 +68,7 @@ public class BranchScopedService : IBranchScopedService
         }
 
         // Regular admins (branch level) have access to assigned branches
-        if (await _userManager.IsInRoleAsync(user, "Admin"))
+        if (await _userManager.IsInRoleAsync(user, RoleConstants.Admin))
         {
             return await _context.UserBranches
                 .Where(ub => ub.UserId == user.Id)
@@ -93,7 +94,7 @@ public class BranchScopedService : IBranchScopedService
         if (user == null) return false;
 
         // Super admins have access to all branches
-        if (user.IsSuperAdmin || await _userManager.IsInRoleAsync(user, "SuperAdmin"))
+        if (user.IsSuperAdmin || await _userManager.IsInRoleAsync(user, RoleConstants.SuperAdmin))
         {
             return true;
         }
@@ -106,19 +107,19 @@ public class BranchScopedService : IBranchScopedService
         if (branch == null || !branch.IsActive) return false;
 
         // Tenant admins have access to all branches in their tenant
-        if (await _userManager.IsInRoleAsync(user, "TenantAdmin") && user.TenantId.HasValue)
+        if (await _userManager.IsInRoleAsync(user, RoleConstants.TenantAdmin) && user.TenantId.HasValue)
         {
             return branch.Company.TenantId == user.TenantId;
         }
 
         // Company admins have access to all branches in their company
-        if (await _userManager.IsInRoleAsync(user, "CompanyAdmin") && user.CompanyId.HasValue)
+        if (await _userManager.IsInRoleAsync(user, RoleConstants.CompanyAdmin) && user.CompanyId.HasValue)
         {
             return branch.CompanyId == user.CompanyId;
         }
 
         // Branch-level admins have access to assigned branches
-        if (await _userManager.IsInRoleAsync(user, "Admin") || await _userManager.IsInRoleAsync(user, "BranchAdmin"))
+        if (await _userManager.IsInRoleAsync(user, RoleConstants.Admin) || await _userManager.IsInRoleAsync(user, RoleConstants.BranchAdmin))
         {
             return await _context.UserBranches
                 .AnyAsync(ub => ub.UserId == user.Id && ub.BranchId == branchId);
