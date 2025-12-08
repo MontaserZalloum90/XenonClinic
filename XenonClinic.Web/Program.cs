@@ -72,6 +72,9 @@ builder.Services.AddScoped<IConfigurationResolverService, ConfigurationResolverS
 builder.Services.AddScoped<IWhatsAppService, WhatsAppService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 
+// Case Management services
+builder.Services.AddScoped<ICaseService, CaseService>();
+
 // Configure localization
 builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
 

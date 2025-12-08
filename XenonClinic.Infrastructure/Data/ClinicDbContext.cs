@@ -61,6 +61,13 @@ public class ClinicDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<CompanyAuthSettings> CompanyAuthSettings => Set<CompanyAuthSettings>();
     public DbSet<CompanyIdentityProvider> CompanyIdentityProviders => Set<CompanyIdentityProvider>();
 
+    // Case Management entities
+    public DbSet<Case> Cases => Set<Case>();
+    public DbSet<CaseType> CaseTypes => Set<CaseType>();
+    public DbSet<CaseStatus> CaseStatuses => Set<CaseStatus>();
+    public DbSet<CaseNote> CaseNotes => Set<CaseNote>();
+    public DbSet<CaseActivity> CaseActivities => Set<CaseActivity>();
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
@@ -1319,5 +1326,141 @@ public class ClinicDbContext : IdentityDbContext<ApplicationUser>
 
         builder.Entity<ApplicationUser>()
             .HasIndex(u => new { u.CompanyId, u.ExternalProviderName, u.ExternalUserId });
+
+        // ========================================
+        // Case Management Configuration
+        // ========================================
+
+        // Case configuration
+        builder.Entity<Case>()
+            .HasIndex(c => c.CaseNumber)
+            .IsUnique();
+
+        builder.Entity<Case>()
+            .HasIndex(c => c.PatientId);
+
+        builder.Entity<Case>()
+            .HasIndex(c => c.BranchId);
+
+        builder.Entity<Case>()
+            .HasIndex(c => c.CaseStatusId);
+
+        builder.Entity<Case>()
+            .HasIndex(c => c.AssignedToUserId);
+
+        builder.Entity<Case>()
+            .HasIndex(c => c.OpenedDate);
+
+        builder.Entity<Case>()
+            .HasIndex(c => new { c.BranchId, c.OpenedDate });
+
+        builder.Entity<Case>()
+            .HasOne(c => c.Patient)
+            .WithMany(p => p.Cases)
+            .HasForeignKey(c => c.PatientId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<Case>()
+            .HasOne(c => c.Branch)
+            .WithMany(b => b.Cases)
+            .HasForeignKey(c => c.BranchId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<Case>()
+            .HasOne(c => c.CaseType)
+            .WithMany(ct => ct.Cases)
+            .HasForeignKey(c => c.CaseTypeId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<Case>()
+            .HasOne(c => c.CaseStatus)
+            .WithMany(cs => cs.Cases)
+            .HasForeignKey(c => c.CaseStatusId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<Case>()
+            .HasOne(c => c.AssignedToUser)
+            .WithMany()
+            .HasForeignKey(c => c.AssignedToUserId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        // CaseType configuration
+        builder.Entity<CaseType>()
+            .HasIndex(ct => ct.TenantId);
+
+        builder.Entity<CaseType>()
+            .HasIndex(ct => ct.IsActive);
+
+        builder.Entity<CaseType>()
+            .HasIndex(ct => new { ct.TenantId, ct.Name });
+
+        builder.Entity<CaseType>()
+            .HasOne(ct => ct.Tenant)
+            .WithMany()
+            .HasForeignKey(ct => ct.TenantId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // CaseStatus configuration
+        builder.Entity<CaseStatus>()
+            .HasIndex(cs => cs.TenantId);
+
+        builder.Entity<CaseStatus>()
+            .HasIndex(cs => cs.IsActive);
+
+        builder.Entity<CaseStatus>()
+            .HasIndex(cs => cs.Category);
+
+        builder.Entity<CaseStatus>()
+            .HasIndex(cs => new { cs.TenantId, cs.Name });
+
+        builder.Entity<CaseStatus>()
+            .HasOne(cs => cs.Tenant)
+            .WithMany()
+            .HasForeignKey(cs => cs.TenantId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // CaseNote configuration
+        builder.Entity<CaseNote>()
+            .HasIndex(cn => cn.CaseId);
+
+        builder.Entity<CaseNote>()
+            .HasIndex(cn => cn.CreatedAt);
+
+        builder.Entity<CaseNote>()
+            .HasIndex(cn => cn.IsPinned);
+
+        builder.Entity<CaseNote>()
+            .HasOne(cn => cn.Case)
+            .WithMany(c => c.Notes)
+            .HasForeignKey(cn => cn.CaseId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // CaseActivity configuration
+        builder.Entity<CaseActivity>()
+            .HasIndex(ca => ca.CaseId);
+
+        builder.Entity<CaseActivity>()
+            .HasIndex(ca => ca.Status);
+
+        builder.Entity<CaseActivity>()
+            .HasIndex(ca => ca.AssignedToUserId);
+
+        builder.Entity<CaseActivity>()
+            .HasIndex(ca => ca.DueDate);
+
+        builder.Entity<CaseActivity>()
+            .HasIndex(ca => new { ca.CaseId, ca.Status });
+
+        builder.Entity<CaseActivity>()
+            .HasOne(ca => ca.Case)
+            .WithMany(c => c.Activities)
+            .HasForeignKey(ca => ca.CaseId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<CaseActivity>()
+            .HasOne(ca => ca.AssignedToUser)
+            .WithMany()
+            .HasForeignKey(ca => ca.AssignedToUserId)
+            .OnDelete(DeleteBehavior.SetNull);
     }
 }
