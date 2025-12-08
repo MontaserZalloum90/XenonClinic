@@ -180,4 +180,198 @@ public class PatientsController : Controller
             return StatusCode(500, new { error = "Error reading Emirates ID" });
         }
     }
+
+    // Patient Details/Profile Page
+    public async Task<IActionResult> Details(int id)
+    {
+        try
+        {
+            _logger.LogInformation("Loading patient details for ID: {PatientId}", id);
+
+            var branchIds = await _branchService.GetUserBranchIdsAsync();
+
+            var patient = await _db.Patients
+                .Include(p => p.Branch)
+                .Include(p => p.Appointments.OrderByDescending(a => a.StartTime).Take(10))
+                .Include(p => p.Visits.OrderByDescending(v => v.VisitDate).Take(10))
+                .Include(p => p.Devices)
+                .Include(p => p.Invoices)
+                .Where(p => branchIds.Contains(p.BranchId))
+                .FirstOrDefaultAsync(p => p.Id == id);
+
+            if (patient == null)
+            {
+                _logger.LogWarning("Patient not found: {PatientId}", id);
+                return NotFound();
+            }
+
+            _logger.LogInformation("Patient details loaded successfully for ID: {PatientId}", id);
+            return View(patient);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error loading patient details");
+            throw;
+        }
+    }
+
+    // Edit Patient - GET
+    public async Task<IActionResult> Edit(int id)
+    {
+        try
+        {
+            _logger.LogInformation("Loading patient for edit: {PatientId}", id);
+
+            var branchIds = await _branchService.GetUserBranchIdsAsync();
+
+            var patient = await _db.Patients
+                .Where(p => branchIds.Contains(p.BranchId))
+                .FirstOrDefaultAsync(p => p.Id == id);
+
+            if (patient == null)
+            {
+                _logger.LogWarning("Patient not found for edit: {PatientId}", id);
+                return NotFound();
+            }
+
+            var viewModel = new CreatePatientViewModel
+            {
+                BranchId = patient.BranchId,
+                EmiratesId = patient.EmiratesId,
+                FullNameEn = patient.FullNameEn,
+                FullNameAr = patient.FullNameAr,
+                DateOfBirth = patient.DateOfBirth,
+                Gender = patient.Gender,
+                PhoneNumber = patient.PhoneNumber,
+                Email = patient.Email,
+                HearingLossType = patient.HearingLossType,
+                Notes = patient.Notes
+            };
+
+            return View(viewModel);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error loading patient for edit");
+            throw;
+        }
+    }
+
+    // Edit Patient - POST
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Edit(int id, CreatePatientViewModel model)
+    {
+        try
+        {
+            _logger.LogInformation("Updating patient: {PatientId}", id);
+
+            var branchIds = await _branchService.GetUserBranchIdsAsync();
+            var patient = await _db.Patients
+                .Where(p => branchIds.Contains(p.BranchId))
+                .FirstOrDefaultAsync(p => p.Id == id);
+
+            if (patient == null)
+            {
+                _logger.LogWarning("Patient not found for update: {PatientId}", id);
+                return NotFound();
+            }
+
+            // Check for duplicate Emirates ID (excluding current patient)
+            if (await _db.Patients.AnyAsync(p => p.EmiratesId == model.EmiratesId && p.Id != id))
+            {
+                _logger.LogWarning("Duplicate Emirates ID attempted: {EmiratesId}", model.EmiratesId);
+                ModelState.AddModelError(string.Empty, "A patient already exists with this Emirates ID.");
+            }
+
+            // Verify user has access to the selected branch
+            if (model.BranchId > 0)
+            {
+                var hasAccess = await _branchService.HasAccessToBranchAsync(model.BranchId);
+                if (!hasAccess)
+                {
+                    _logger.LogWarning("User attempted to update patient in unauthorized branch: {BranchId}", model.BranchId);
+                    ModelState.AddModelError(nameof(model.BranchId), "You don't have access to the selected branch.");
+                }
+            }
+
+            if (ModelState.IsValid)
+            {
+                patient.BranchId = model.BranchId;
+                patient.EmiratesId = model.EmiratesId;
+                patient.FullNameEn = model.FullNameEn;
+                patient.FullNameAr = model.FullNameAr;
+                patient.DateOfBirth = model.DateOfBirth;
+                patient.Gender = model.Gender;
+                patient.PhoneNumber = model.PhoneNumber;
+                patient.Email = model.Email;
+                patient.HearingLossType = model.HearingLossType;
+                patient.Notes = model.Notes;
+
+                await _db.SaveChangesAsync();
+
+                _logger.LogInformation("Patient updated successfully: {PatientId}", id);
+                return RedirectToAction(nameof(Details), new { id });
+            }
+
+            return View(model);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating patient");
+            throw;
+        }
+    }
+
+    // Delete/Deactivate Patient - POST
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Delete(int id)
+    {
+        try
+        {
+            _logger.LogInformation("Attempting to delete patient: {PatientId}", id);
+
+            var branchIds = await _branchService.GetUserBranchIdsAsync();
+            var patient = await _db.Patients
+                .Include(p => p.Appointments)
+                .Include(p => p.Visits)
+                .Include(p => p.Devices)
+                .Include(p => p.Invoices)
+                .Where(p => branchIds.Contains(p.BranchId))
+                .FirstOrDefaultAsync(p => p.Id == id);
+
+            if (patient == null)
+            {
+                _logger.LogWarning("Patient not found for deletion: {PatientId}", id);
+                return NotFound();
+            }
+
+            // Check if patient has related records
+            var hasRelatedRecords = patient.Appointments.Any() ||
+                                   patient.Visits.Any() ||
+                                   patient.Devices.Any() ||
+                                   patient.Invoices.Any();
+
+            if (hasRelatedRecords)
+            {
+                _logger.LogWarning("Cannot delete patient with related records: {PatientId}", id);
+                TempData["ErrorMessage"] = "Cannot delete patient with existing appointments, visits, devices, or invoices.";
+                return RedirectToAction(nameof(Details), new { id });
+            }
+
+            _db.Patients.Remove(patient);
+            await _db.SaveChangesAsync();
+
+            _logger.LogInformation("Patient deleted successfully: {PatientId}", id);
+            TempData["SuccessMessage"] = "Patient deleted successfully.";
+            return RedirectToAction(nameof(Index));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error deleting patient");
+            TempData["ErrorMessage"] = "An error occurred while deleting the patient.";
+            return RedirectToAction(nameof(Details), new { id });
+        }
+    }
 }

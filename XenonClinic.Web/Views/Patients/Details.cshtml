@@ -1,0 +1,350 @@
+@using Microsoft.AspNetCore.Mvc.Localization
+@inject IViewLocalizer Localizer
+@model XenonClinic.Core.Entities.Patient
+@{
+    ViewData["Title"] = Localizer["PatientDetails"];
+    var age = DateTime.Now.Year - Model.DateOfBirth.Year;
+    if (DateTime.Now.DayOfYear < Model.DateOfBirth.DayOfYear) age--;
+}
+
+<!-- Alert Messages -->
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @TempData["SuccessMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        @TempData["ErrorMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+<!-- Page Header -->
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a asp-action="Index">@Localizer["Patients"]</a></li>
+                <li class="breadcrumb-item active" aria-current="page">@Model.FullNameEn</li>
+            </ol>
+        </nav>
+        <h2 class="mb-0">@Model.FullNameEn</h2>
+        @if (!string.IsNullOrEmpty(Model.FullNameAr))
+        {
+            <p class="text-muted mb-0">@Model.FullNameAr</p>
+        }
+    </div>
+    <div class="btn-group">
+        <a class="btn btn-primary" asp-action="Edit" asp-route-id="@Model.Id">
+            <i class="bi bi-pencil"></i> @Localizer["Edit"]
+        </a>
+        <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">
+            <i class="bi bi-trash"></i> @Localizer["Delete"]
+        </button>
+    </div>
+</div>
+
+<!-- Patient Information Card -->
+<div class="row">
+    <div class="col-lg-4 mb-4">
+        <div class="card card-rounded h-100">
+            <div class="card-body">
+                <h5 class="card-title border-bottom pb-2 mb-3">@Localizer["PatientInformation"]</h5>
+
+                <div class="mb-3">
+                    <label class="text-muted small">@Localizer["EmiratesID"]</label>
+                    <div class="fw-semibold">@Model.EmiratesId</div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="text-muted small">@Localizer["DateOfBirth"]</label>
+                    <div class="fw-semibold">@Model.DateOfBirth.ToString("dd/MM/yyyy") (@age @Localizer["YearsOld"])</div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="text-muted small">@Localizer["Gender"]</label>
+                    <div class="fw-semibold">
+                        @if (Model.Gender == "M")
+                        {
+                            <span><i class="bi bi-gender-male text-primary"></i> @Localizer["Male"]</span>
+                        }
+                        else
+                        {
+                            <span><i class="bi bi-gender-female text-danger"></i> @Localizer["Female"]</span>
+                        }
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="text-muted small">@Localizer["Branch"]</label>
+                    <div class="fw-semibold">@Model.Branch?.Name</div>
+                </div>
+
+                @if (!string.IsNullOrEmpty(Model.PhoneNumber))
+                {
+                    <div class="mb-3">
+                        <label class="text-muted small">@Localizer["Phone"]</label>
+                        <div class="fw-semibold">
+                            <i class="bi bi-telephone"></i> <a href="tel:@Model.PhoneNumber">@Model.PhoneNumber</a>
+                        </div>
+                    </div>
+                }
+
+                @if (!string.IsNullOrEmpty(Model.Email))
+                {
+                    <div class="mb-3">
+                        <label class="text-muted small">@Localizer["Email"]</label>
+                        <div class="fw-semibold">
+                            <i class="bi bi-envelope"></i> <a href="mailto:@Model.Email">@Model.Email</a>
+                        </div>
+                    </div>
+                }
+
+                @if (!string.IsNullOrEmpty(Model.HearingLossType))
+                {
+                    <div class="mb-3">
+                        <label class="text-muted small">@Localizer["HearingLossType"]</label>
+                        <div class="fw-semibold">
+                            <span class="badge bg-info">@Model.HearingLossType</span>
+                        </div>
+                    </div>
+                }
+
+                @if (!string.IsNullOrEmpty(Model.Notes))
+                {
+                    <div class="mb-0">
+                        <label class="text-muted small">@Localizer["Notes"]</label>
+                        <div class="fw-normal">@Model.Notes</div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Related Records -->
+    <div class="col-lg-8">
+        <!-- Tabs for Related Records -->
+        <ul class="nav nav-tabs mb-3" id="patientTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="appointments-tab" data-bs-toggle="tab" data-bs-target="#appointments" type="button" role="tab">
+                    <i class="bi bi-calendar-check"></i> @Localizer["Appointments"] <span class="badge bg-primary">@Model.Appointments.Count</span>
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="visits-tab" data-bs-toggle="tab" data-bs-target="#visits" type="button" role="tab">
+                    <i class="bi bi-clipboard2-pulse"></i> @Localizer["Visits"] <span class="badge bg-success">@Model.Visits.Count</span>
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="devices-tab" data-bs-toggle="tab" data-bs-target="#devices" type="button" role="tab">
+                    <i class="bi bi-ear"></i> @Localizer["HearingDevices"] <span class="badge bg-info">@Model.Devices.Count</span>
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="invoices-tab" data-bs-toggle="tab" data-bs-target="#invoices" type="button" role="tab">
+                    <i class="bi bi-receipt"></i> @Localizer["Invoices"] <span class="badge bg-warning">@Model.Invoices.Count</span>
+                </button>
+            </li>
+        </ul>
+
+        <!-- Tab Content -->
+        <div class="tab-content" id="patientTabsContent">
+            <!-- Appointments Tab -->
+            <div class="tab-pane fade show active" id="appointments" role="tabpanel">
+                <div class="card card-rounded">
+                    <div class="card-header bg-white">
+                        <h6 class="mb-0">@Localizer["RecentAppointments"]</h6>
+                    </div>
+                    <div class="card-body">
+                        @if (Model.Appointments.Any())
+                        {
+                            <div class="list-group list-group-flush">
+                                @foreach (var appointment in Model.Appointments.Take(10))
+                                {
+                                    <div class="list-group-item">
+                                        <div class="d-flex justify-content-between align-items-start">
+                                            <div>
+                                                <h6 class="mb-1">@appointment.Type</h6>
+                                                <p class="mb-1 text-muted small">
+                                                    <i class="bi bi-calendar"></i> @appointment.StartTime.ToString("dd/MM/yyyy HH:mm") - @appointment.EndTime.ToString("HH:mm")
+                                                </p>
+                                                @if (!string.IsNullOrEmpty(appointment.Notes))
+                                                {
+                                                    <p class="mb-0 small">@appointment.Notes</p>
+                                                }
+                                            </div>
+                                            <span class="badge @(appointment.Status == "Completed" ? "bg-success" : appointment.Status == "Cancelled" ? "bg-danger" : "bg-primary")">
+                                                @appointment.Status
+                                            </span>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            <p class="text-muted text-center py-4 mb-0">@Localizer["NoAppointments"]</p>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Visits Tab -->
+            <div class="tab-pane fade" id="visits" role="tabpanel">
+                <div class="card card-rounded">
+                    <div class="card-header bg-white">
+                        <h6 class="mb-0">@Localizer["RecentVisits"]</h6>
+                    </div>
+                    <div class="card-body">
+                        @if (Model.Visits.Any())
+                        {
+                            <div class="list-group list-group-flush">
+                                @foreach (var visit in Model.Visits.Take(10))
+                                {
+                                    <div class="list-group-item">
+                                        <div class="d-flex justify-content-between align-items-start">
+                                            <div>
+                                                <h6 class="mb-1">@Localizer["Visit"] - @visit.VisitDate.ToString("dd/MM/yyyy")</h6>
+                                                @if (!string.IsNullOrEmpty(visit.ChiefComplaint))
+                                                {
+                                                    <p class="mb-1 small"><strong>@Localizer["ChiefComplaint"]:</strong> @visit.ChiefComplaint</p>
+                                                }
+                                                @if (!string.IsNullOrEmpty(visit.Diagnosis))
+                                                {
+                                                    <p class="mb-1 small"><strong>@Localizer["Diagnosis"]:</strong> @visit.Diagnosis</p>
+                                                }
+                                                @if (!string.IsNullOrEmpty(visit.Plan))
+                                                {
+                                                    <p class="mb-0 small"><strong>@Localizer["Plan"]:</strong> @visit.Plan</p>
+                                                }
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            <p class="text-muted text-center py-4 mb-0">@Localizer["NoVisits"]</p>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Hearing Devices Tab -->
+            <div class="tab-pane fade" id="devices" role="tabpanel">
+                <div class="card card-rounded">
+                    <div class="card-header bg-white">
+                        <h6 class="mb-0">@Localizer["HearingDevices"]</h6>
+                    </div>
+                    <div class="card-body">
+                        @if (Model.Devices.Any())
+                        {
+                            <div class="table-responsive">
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>@Localizer["Model"]</th>
+                                            <th>@Localizer["SerialNumber"]</th>
+                                            <th>@Localizer["Ear"]</th>
+                                            <th>@Localizer["PurchaseDate"]</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var device in Model.Devices)
+                                        {
+                                            <tr>
+                                                <td>@device.Model</td>
+                                                <td>@device.SerialNumber</td>
+                                                <td>@device.Ear</td>
+                                                <td>@device.PurchaseDate.ToString("dd/MM/yyyy")</td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                        else
+                        {
+                            <p class="text-muted text-center py-4 mb-0">@Localizer["NoDevices"]</p>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Invoices Tab -->
+            <div class="tab-pane fade" id="invoices" role="tabpanel">
+                <div class="card card-rounded">
+                    <div class="card-header bg-white">
+                        <h6 class="mb-0">@Localizer["Invoices"]</h6>
+                    </div>
+                    <div class="card-body">
+                        @if (Model.Invoices.Any())
+                        {
+                            <div class="table-responsive">
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>@Localizer["InvoiceNumber"]</th>
+                                            <th>@Localizer["Date"]</th>
+                                            <th>@Localizer["Amount"]</th>
+                                            <th>@Localizer["Status"]</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var invoice in Model.Invoices)
+                                        {
+                                            <tr>
+                                                <td>@invoice.InvoiceNumber</td>
+                                                <td>@invoice.InvoiceDate.ToString("dd/MM/yyyy")</td>
+                                                <td>@invoice.TotalAmount.ToString("N2") AED</td>
+                                                <td>
+                                                    <span class="badge @(invoice.IsPaid ? "bg-success" : "bg-warning")">
+                                                        @(invoice.IsPaid ? Localizer["Paid"] : Localizer["Pending"])
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                        else
+                        {
+                            <p class="text-muted text-center py-4 mb-0">@Localizer["NoInvoices"]</p>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel">@Localizer["ConfirmDelete"]</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>@Localizer["AreYouSureDeletePatient"] <strong>@Model.FullNameEn</strong>?</p>
+                <div class="alert alert-warning" role="alert">
+                    <i class="bi bi-exclamation-triangle"></i> @Localizer["PatientDeleteWarning"]
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">@Localizer["Cancel"]</button>
+                <form asp-action="Delete" asp-route-id="@Model.Id" method="post" class="d-inline">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-danger">@Localizer["DeleteConfirm"]</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
