@@ -1,73 +1,143 @@
-# React + TypeScript + Vite
+# XenonClinic React SPA
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Modern React-based frontend for XenonClinic Healthcare Management System.
 
-Currently, two official plugins are available:
+## 🚀 Tech Stack
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **React 18** - UI library
+- **TypeScript** - Type safety
+- **Vite** - Build tool & dev server
+- **Tailwind CSS** - Utility-first styling
+- **React Router** - Client-side routing
+- **React Query** - Server state management
+- **Axios** - HTTP client
+- **Zustand** - Global state management
+- **React Hook Form** - Form handling
 
-## React Compiler
+## 📋 Prerequisites
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- Node.js 18+ and npm
+- XenonClinic backend running on `https://localhost:5001`
 
-## Expanding the ESLint configuration
+## 🛠️ Installation
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+# Install dependencies
+npm install
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## 🏃 Development
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+# Start development server (default: http://localhost:5173)
+npm run dev
 ```
+
+The dev server will automatically proxy API requests to the backend.
+
+## 🏗️ Build
+
+```bash
+# Build for production
+npm run build
+
+# Preview production build
+npm run preview
+```
+
+## 📁 Project Structure
+
+```
+src/
+├── components/      # Reusable components
+│   ├── ui/         # UI primitives (Button, Input, etc.)
+│   └── layout/     # Layout components
+├── contexts/        # React contexts
+│   └── AuthContext.tsx
+├── hooks/           # Custom React hooks
+├── lib/             # Utilities and configurations
+│   └── api.ts      # API client
+├── pages/           # Page components
+│   ├── Login.tsx
+│   └── Dashboard.tsx
+├── types/           # TypeScript types
+│   └── auth.ts
+├── App.tsx          # Root component
+└── main.tsx         # Entry point
+```
+
+## 🔐 Authentication
+
+The app uses JWT token authentication:
+
+1. User logs in with username/password
+2. Backend returns JWT token
+3. Token stored in localStorage
+4. All API requests include token in Authorization header
+5. Protected routes check authentication status
+
+**Default Credentials** (if seeded):
+- Username: `admin` / Password: `Admin@123`
+
+## 🌐 Environment Variables
+
+Create a `.env` file:
+
+```env
+VITE_API_URL=https://localhost:5001
+VITE_APP_NAME=XenonClinic
+```
+
+## 📡 API Integration
+
+The app connects to XenonClinic backend API endpoints:
+
+- `POST /api/AuthApi/login` - Authentication
+- `GET /api/AuthApi/me` - Current user
+- `GET /api/AppointmentsApi` - Appointments
+- And more...
+
+## 🎨 Styling
+
+Uses Tailwind CSS with custom theme:
+
+- Primary color: Blue (`primary-500` to `primary-900`)
+- Utility classes for buttons, inputs, cards
+- Responsive design (mobile-first)
+
+## 📝 Available Scripts
+
+- `npm run dev` - Start development server
+- `npm run build` - Build for production
+- `npm run preview` - Preview production build
+- `npm run lint` - Run ESLint
+
+## 🔄 State Management
+
+- **Auth State** - AuthContext (login, logout, user)
+- **Server State** - React Query (API data caching)
+- **Global State** - Zustand (if needed)
+
+## 🚀 Deployment
+
+The built files can be:
+1. Served by the .NET backend as static files
+2. Deployed to CDN/static hosting
+3. Deployed to Vercel/Netlify
+
+## 📖 Next Steps
+
+- Implement remaining modules (Patients, Laboratory, etc.)
+- Add comprehensive error handling
+- Add loading states and skeletons
+- Add toast notifications
+- Implement role-based access control
+- Add unit and integration tests
+
+## 🤝 Contributing
+
+This is part of the XenonClinic Healthcare Management System.
+
+## 📄 License
+
+Copyright © 2024 XenonClinic
