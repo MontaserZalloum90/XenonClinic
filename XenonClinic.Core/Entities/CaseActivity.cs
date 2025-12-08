@@ -7,19 +7,12 @@ public class CaseActivity
 {
     public int Id { get; set; }
     public int CaseId { get; set; }
+    public int CaseActivityTypeId { get; set; }
+    public int CaseActivityStatusId { get; set; }
+    public int CasePriorityId { get; set; }
 
     public string Title { get; set; } = string.Empty;
     public string? Description { get; set; }
-
-    /// <summary>
-    /// Type of activity: Task, Appointment, Test, FollowUp, PhoneCall, Email
-    /// </summary>
-    public CaseActivityType ActivityType { get; set; } = CaseActivityType.Task;
-
-    /// <summary>
-    /// Status of the activity: Pending, InProgress, Completed, Cancelled
-    /// </summary>
-    public CaseActivityStatus Status { get; set; } = CaseActivityStatus.Pending;
 
     /// <summary>
     /// User assigned to complete this activity
@@ -37,11 +30,6 @@ public class CaseActivity
     public DateTime? CompletedDate { get; set; }
 
     /// <summary>
-    /// Priority of this activity
-    /// </summary>
-    public CasePriority Priority { get; set; } = CasePriority.Medium;
-
-    /// <summary>
     /// Result or outcome of the activity
     /// </summary>
     public string? Result { get; set; }
@@ -53,26 +41,8 @@ public class CaseActivity
 
     // Navigation properties
     public Case Case { get; set; } = null!;
+    public Lookups.CaseActivityTypeLookup CaseActivityType { get; set; } = null!;
+    public Lookups.CaseActivityStatusLookup CaseActivityStatus { get; set; } = null!;
+    public Lookups.CasePriorityLookup CasePriority { get; set; } = null!;
     public ApplicationUser? AssignedToUser { get; set; }
-}
-
-public enum CaseActivityType
-{
-    Task = 1,
-    Appointment = 2,
-    Test = 3,
-    FollowUp = 4,
-    PhoneCall = 5,
-    Email = 6,
-    Consultation = 7,
-    Review = 8
-}
-
-public enum CaseActivityStatus
-{
-    Pending = 1,
-    InProgress = 2,
-    Completed = 3,
-    Cancelled = 4,
-    Overdue = 5
 }
