@@ -24,6 +24,9 @@
         </p>
     </div>
     <div class="d-flex gap-2">
+        <a asp-controller="AudiologyVisits" asp-action="Create" asp-route-appointmentId="@Model.Id" class="btn btn-success">
+            <i class="bi bi-clipboard2-pulse"></i> @Localizer["CreateVisitNote"]
+        </a>
         <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary">
             <i class="bi bi-pencil"></i> @Localizer["Edit"]
         </a>

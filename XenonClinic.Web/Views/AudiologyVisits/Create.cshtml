@@ -1,0 +1,102 @@
+@using Microsoft.AspNetCore.Mvc.Localization
+@inject IViewLocalizer Localizer
+@model XenonClinic.Web.Models.CreateAudiologyVisitViewModel
+
+@{
+    ViewData["Title"] = Localizer["NewAudiologyVisit"];
+    var appointmentId = ViewBag.AppointmentId as int?;
+}
+
+<nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">@Localizer["Home"]</a></li>
+        <li class="breadcrumb-item"><a asp-controller="AudiologyVisits" asp-action="Index">@Localizer["AudiologyVisits"]</a></li>
+        <li class="breadcrumb-item active" aria-current="page">@Localizer["NewVisit"]</li>
+    </ol>
+</nav>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h3 class="mb-0">@Localizer["NewAudiologyVisit"]</h3>
+</div>
+
+<form asp-action="Create" method="post" class="card card-rounded p-3 p-md-4">
+    <input type="hidden" name="appointmentId" value="@appointmentId" />
+    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+    <div class="row g-3">
+        <!-- Patient Selection -->
+        <div class="col-md-6 col-12">
+            <label asp-for="PatientId" class="form-label">
+                @Localizer["Patient"] <span class="text-danger">*</span>
+            </label>
+            <select asp-for="PatientId" asp-items="ViewBag.Patients" class="form-select">
+                <option value="">@Localizer["SelectPatient"]</option>
+            </select>
+            <span asp-validation-for="PatientId" class="text-danger"></span>
+        </div>
+
+        <!-- Visit Date -->
+        <div class="col-md-6 col-12">
+            <label asp-for="VisitDate" class="form-label">
+                @Localizer["VisitDate"] <span class="text-danger">*</span>
+            </label>
+            <input asp-for="VisitDate" class="form-control" type="date" />
+            <span asp-validation-for="VisitDate" class="text-danger"></span>
+        </div>
+
+        <!-- Chief Complaint -->
+        <div class="col-12">
+            <label asp-for="ChiefComplaint" class="form-label">@Localizer["ChiefComplaint"]</label>
+            <textarea asp-for="ChiefComplaint" class="form-control" rows="3" placeholder="@Localizer["EnterChiefComplaint"]"></textarea>
+            <span asp-validation-for="ChiefComplaint" class="text-danger"></span>
+            <div class="form-text">@Localizer["PatientMainConcernOrSymptom"]</div>
+        </div>
+
+        <!-- Diagnosis -->
+        <div class="col-12">
+            <label asp-for="Diagnosis" class="form-label">@Localizer["Diagnosis"]</label>
+            <textarea asp-for="Diagnosis" class="form-control" rows="3" placeholder="@Localizer["EnterDiagnosis"]"></textarea>
+            <span asp-validation-for="Diagnosis" class="text-danger"></span>
+        </div>
+
+        <!-- Treatment Plan -->
+        <div class="col-12">
+            <label asp-for="Plan" class="form-label">@Localizer["TreatmentPlan"]</label>
+            <textarea asp-for="Plan" class="form-control" rows="4" placeholder="@Localizer["EnterTreatmentPlan"]"></textarea>
+            <span asp-validation-for="Plan" class="text-danger"></span>
+        </div>
+    </div>
+
+    <!-- Information Box -->
+    <div class="alert alert-info mt-3">
+        <h6 class="alert-heading"><i class="bi bi-info-circle"></i> @Localizer["VisitInformation"]</h6>
+        <ul class="mb-0 ps-3">
+            <li>@Localizer["DocumentPatientVisitDetails"]</li>
+            <li>@Localizer["AudiogramCanBeAddedAfterCreation"]</li>
+            <li>@Localizer["AllFieldsExceptPatientOptional"]</li>
+        </ul>
+    </div>
+
+    <!-- Form Buttons -->
+    <div class="mt-4 d-flex flex-column flex-sm-row justify-content-end gap-2">
+        @if (appointmentId.HasValue)
+        {
+            <a asp-controller="Appointments" asp-action="Details" asp-route-id="@appointmentId" class="btn btn-outline-secondary">
+                <i class="bi bi-x-lg"></i> @Localizer["Cancel"]
+            </a>
+        }
+        else
+        {
+            <a asp-action="Index" class="btn btn-outline-secondary">
+                <i class="bi bi-x-lg"></i> @Localizer["Cancel"]
+            </a>
+        }
+        <button type="submit" class="btn btn-xenon">
+            <i class="bi bi-check-lg"></i> @Localizer["CreateVisit"]
+        </button>
+    </div>
+</form>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

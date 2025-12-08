@@ -209,19 +209,30 @@
             <!-- Visits Tab -->
             <div class="tab-pane fade" id="visits" role="tabpanel">
                 <div class="card card-rounded">
-                    <div class="card-header bg-white">
+                    <div class="card-header bg-white d-flex justify-content-between align-items-center">
                         <h6 class="mb-0">@Localizer["RecentVisits"]</h6>
+                        <a asp-controller="AudiologyVisits" asp-action="Create" asp-route-patientId="@Model.Id" class="btn btn-sm btn-success">
+                            <i class="bi bi-plus-lg"></i> @Localizer["CreateVisit"]
+                        </a>
                     </div>
                     <div class="card-body">
                         @if (Model.Visits.Any())
                         {
                             <div class="list-group list-group-flush">
-                                @foreach (var visit in Model.Visits.Take(10))
+                                @foreach (var visit in Model.Visits.OrderByDescending(v => v.VisitDate).Take(10))
                                 {
-                                    <div class="list-group-item">
+                                    <a asp-controller="AudiologyVisits" asp-action="Details" asp-route-id="@visit.Id" class="list-group-item list-group-item-action">
                                         <div class="d-flex justify-content-between align-items-start">
-                                            <div>
-                                                <h6 class="mb-1">@Localizer["Visit"] - @visit.VisitDate.ToString("dd/MM/yyyy")</h6>
+                                            <div class="flex-grow-1">
+                                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                                    <h6 class="mb-0">@Localizer["Visit"] - @visit.VisitDate.ToString("dd/MM/yyyy")</h6>
+                                                    @if (visit.Audiogram != null)
+                                                    {
+                                                        <span class="badge bg-info ms-2">
+                                                            <i class="bi bi-graph-up"></i> @Localizer["Audiogram"]
+                                                        </span>
+                                                    }
+                                                </div>
                                                 @if (!string.IsNullOrEmpty(visit.ChiefComplaint))
                                                 {
                                                     <p class="mb-1 small"><strong>@Localizer["ChiefComplaint"]:</strong> @visit.ChiefComplaint</p>
@@ -235,10 +246,19 @@
                                                     <p class="mb-0 small"><strong>@Localizer["Plan"]:</strong> @visit.Plan</p>
                                                 }
                                             </div>
+                                            <i class="bi bi-chevron-right text-muted ms-2"></i>
                                         </div>
-                                    </div>
+                                    </a>
                                 }
                             </div>
+                            @if (Model.Visits.Count > 10)
+                            {
+                                <div class="card-footer bg-white text-center">
+                                    <a asp-controller="AudiologyVisits" asp-action="Index" class="btn btn-sm btn-outline-primary">
+                                        @Localizer["ViewAllVisits"] (@Model.Visits.Count)
+                                    </a>
+                                </div>
+                            }
                         }
                         else
                         {

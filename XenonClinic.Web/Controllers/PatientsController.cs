@@ -196,6 +196,7 @@ public class PatientsController : Controller
                 .Include(p => p.Documents.Where(d => d.IsActive).OrderByDescending(d => d.UploadDate))
                 .Include(p => p.Appointments.OrderByDescending(a => a.StartTime).Take(10))
                 .Include(p => p.Visits.OrderByDescending(v => v.VisitDate).Take(10))
+                    .ThenInclude(v => v.Audiogram)
                 .Include(p => p.Devices)
                 .Include(p => p.Invoices)
                 .Where(p => branchIds.Contains(p.BranchId))
