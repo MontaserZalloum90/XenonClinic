@@ -1,11 +1,9 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace XenonClinic.Core.Entities;
+namespace XenonClinic.Web.Models;
 
-public class Supplier
+public class CreateSupplierViewModel
 {
-    public int Id { get; set; }
-
     [Required]
     [MaxLength(100)]
     public string Name { get; set; } = string.Empty;
@@ -13,22 +11,28 @@ public class Supplier
     [MaxLength(50)]
     public string? Code { get; set; }
 
+    [Required]
     [MaxLength(100)]
     public string ContactPerson { get; set; } = string.Empty;
 
-    [MaxLength(100)]
+    [Required]
     [EmailAddress]
+    [MaxLength(100)]
     public string Email { get; set; } = string.Empty;
 
+    [Required]
+    [Phone]
     [MaxLength(20)]
     public string PhoneNumber { get; set; } = string.Empty;
 
+    [Phone]
     [MaxLength(20)]
     public string? Mobile { get; set; }
 
     [MaxLength(20)]
     public string? Fax { get; set; }
 
+    [Required]
     [MaxLength(500)]
     public string Address { get; set; } = string.Empty;
 
@@ -46,33 +50,17 @@ public class Supplier
     [MaxLength(50)]
     public string? TaxNumber { get; set; }
 
+    [Range(0, 365)]
     public int? PaymentTermsDays { get; set; }
 
+    [Required]
     [MaxLength(50)]
     public string Currency { get; set; } = "AED";
 
+    [Range(0, double.MaxValue)]
     public decimal? CreditLimit { get; set; }
 
     public bool IsActive { get; set; } = true;
 
     public string? Notes { get; set; }
-
-    // Audit fields
-    [Required]
-    public int BranchId { get; set; }
-    public Branch? Branch { get; set; }
-
-    public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
-
-    [Required]
-    [MaxLength(450)]
-    public string CreatedBy { get; set; } = string.Empty;
-
-    [MaxLength(450)]
-    public string? LastModifiedBy { get; set; }
-    public DateTime? LastModifiedAt { get; set; }
-
-    // Navigation properties
-    public ICollection<InventoryItem> InventoryItems { get; set; } = new List<InventoryItem>();
-    public ICollection<PurchaseOrder> PurchaseOrders { get; set; } = new List<PurchaseOrder>();
 }

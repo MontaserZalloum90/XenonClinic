@@ -33,6 +33,11 @@ public class ClinicDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<Payment> Payments => Set<Payment>();
     public DbSet<Quotation> Quotations => Set<Quotation>();
     public DbSet<QuotationItem> QuotationItems => Set<QuotationItem>();
+    public DbSet<PurchaseOrder> PurchaseOrders => Set<PurchaseOrder>();
+    public DbSet<PurchaseOrderItem> PurchaseOrderItems => Set<PurchaseOrderItem>();
+    public DbSet<GoodsReceipt> GoodsReceipts => Set<GoodsReceipt>();
+    public DbSet<GoodsReceiptItem> GoodsReceiptItems => Set<GoodsReceiptItem>();
+    public DbSet<SupplierPayment> SupplierPayments => Set<SupplierPayment>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -572,6 +577,218 @@ public class ClinicDbContext : IdentityDbContext<ApplicationUser>
 
         builder.Entity<QuotationItem>()
             .Property(i => i.Total)
+            .HasPrecision(18, 2);
+
+        // Supplier configuration (enhanced for procurement)
+        builder.Entity<Supplier>()
+            .HasIndex(s => s.Code)
+            .IsUnique();
+
+        builder.Entity<Supplier>()
+            .HasIndex(s => s.BranchId);
+
+        builder.Entity<Supplier>()
+            .HasOne(s => s.Branch)
+            .WithMany()
+            .HasForeignKey(s => s.BranchId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<Supplier>()
+            .Property(s => s.CreditLimit)
+            .HasPrecision(18, 2);
+
+        // PurchaseOrder configuration
+        builder.Entity<PurchaseOrder>()
+            .HasIndex(p => p.OrderNumber)
+            .IsUnique();
+
+        builder.Entity<PurchaseOrder>()
+            .HasIndex(p => p.OrderDate);
+
+        builder.Entity<PurchaseOrder>()
+            .HasIndex(p => p.BranchId);
+
+        builder.Entity<PurchaseOrder>()
+            .HasIndex(p => p.SupplierId);
+
+        builder.Entity<PurchaseOrder>()
+            .HasIndex(p => p.Status);
+
+        builder.Entity<PurchaseOrder>()
+            .HasIndex(p => new { p.BranchId, p.OrderDate });
+
+        builder.Entity<PurchaseOrder>()
+            .HasIndex(p => new { p.SupplierId, p.OrderDate });
+
+        builder.Entity<PurchaseOrder>()
+            .HasOne(p => p.Supplier)
+            .WithMany(s => s.PurchaseOrders)
+            .HasForeignKey(p => p.SupplierId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<PurchaseOrder>()
+            .HasOne(p => p.Branch)
+            .WithMany()
+            .HasForeignKey(p => p.BranchId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<PurchaseOrder>()
+            .Property(p => p.SubTotal)
+            .HasPrecision(18, 2);
+
+        builder.Entity<PurchaseOrder>()
+            .Property(p => p.DiscountAmount)
+            .HasPrecision(18, 2);
+
+        builder.Entity<PurchaseOrder>()
+            .Property(p => p.TaxAmount)
+            .HasPrecision(18, 2);
+
+        builder.Entity<PurchaseOrder>()
+            .Property(p => p.ShippingCost)
+            .HasPrecision(18, 2);
+
+        builder.Entity<PurchaseOrder>()
+            .Property(p => p.Total)
+            .HasPrecision(18, 2);
+
+        builder.Entity<PurchaseOrder>()
+            .Property(p => p.ReceivedAmount)
+            .HasPrecision(18, 2);
+
+        // PurchaseOrderItem configuration
+        builder.Entity<PurchaseOrderItem>()
+            .HasIndex(i => i.PurchaseOrderId);
+
+        builder.Entity<PurchaseOrderItem>()
+            .HasOne(i => i.PurchaseOrder)
+            .WithMany(p => p.Items)
+            .HasForeignKey(i => i.PurchaseOrderId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<PurchaseOrderItem>()
+            .HasOne(i => i.InventoryItem)
+            .WithMany()
+            .HasForeignKey(i => i.InventoryItemId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        builder.Entity<PurchaseOrderItem>()
+            .Property(i => i.UnitPrice)
+            .HasPrecision(18, 2);
+
+        builder.Entity<PurchaseOrderItem>()
+            .Property(i => i.DiscountAmount)
+            .HasPrecision(18, 2);
+
+        builder.Entity<PurchaseOrderItem>()
+            .Property(i => i.TaxAmount)
+            .HasPrecision(18, 2);
+
+        builder.Entity<PurchaseOrderItem>()
+            .Property(i => i.Total)
+            .HasPrecision(18, 2);
+
+        // GoodsReceipt configuration
+        builder.Entity<GoodsReceipt>()
+            .HasIndex(g => g.ReceiptNumber)
+            .IsUnique();
+
+        builder.Entity<GoodsReceipt>()
+            .HasIndex(g => g.ReceiptDate);
+
+        builder.Entity<GoodsReceipt>()
+            .HasIndex(g => g.BranchId);
+
+        builder.Entity<GoodsReceipt>()
+            .HasIndex(g => g.SupplierId);
+
+        builder.Entity<GoodsReceipt>()
+            .HasIndex(g => g.PurchaseOrderId);
+
+        builder.Entity<GoodsReceipt>()
+            .HasIndex(g => new { g.BranchId, g.ReceiptDate });
+
+        builder.Entity<GoodsReceipt>()
+            .HasOne(g => g.PurchaseOrder)
+            .WithMany(p => p.GoodsReceipts)
+            .HasForeignKey(g => g.PurchaseOrderId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        builder.Entity<GoodsReceipt>()
+            .HasOne(g => g.Supplier)
+            .WithMany()
+            .HasForeignKey(g => g.SupplierId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<GoodsReceipt>()
+            .HasOne(g => g.Branch)
+            .WithMany()
+            .HasForeignKey(g => g.BranchId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // GoodsReceiptItem configuration
+        builder.Entity<GoodsReceiptItem>()
+            .HasIndex(i => i.GoodsReceiptId);
+
+        builder.Entity<GoodsReceiptItem>()
+            .HasOne(i => i.GoodsReceipt)
+            .WithMany(g => g.Items)
+            .HasForeignKey(i => i.GoodsReceiptId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<GoodsReceiptItem>()
+            .HasOne(i => i.PurchaseOrderItem)
+            .WithMany()
+            .HasForeignKey(i => i.PurchaseOrderItemId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        builder.Entity<GoodsReceiptItem>()
+            .HasOne(i => i.InventoryItem)
+            .WithMany()
+            .HasForeignKey(i => i.InventoryItemId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        builder.Entity<GoodsReceiptItem>()
+            .Property(i => i.UnitPrice)
+            .HasPrecision(18, 2);
+
+        // SupplierPayment configuration
+        builder.Entity<SupplierPayment>()
+            .HasIndex(p => p.PaymentNumber)
+            .IsUnique();
+
+        builder.Entity<SupplierPayment>()
+            .HasIndex(p => p.PaymentDate);
+
+        builder.Entity<SupplierPayment>()
+            .HasIndex(p => p.SupplierId);
+
+        builder.Entity<SupplierPayment>()
+            .HasIndex(p => p.PurchaseOrderId);
+
+        builder.Entity<SupplierPayment>()
+            .HasIndex(p => new { p.SupplierId, p.PaymentDate });
+
+        builder.Entity<SupplierPayment>()
+            .HasOne(p => p.PurchaseOrder)
+            .WithMany(po => po.Payments)
+            .HasForeignKey(p => p.PurchaseOrderId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        builder.Entity<SupplierPayment>()
+            .HasOne(p => p.Supplier)
+            .WithMany()
+            .HasForeignKey(p => p.SupplierId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<SupplierPayment>()
+            .HasOne(p => p.Branch)
+            .WithMany()
+            .HasForeignKey(p => p.BranchId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<SupplierPayment>()
+            .Property(p => p.Amount)
             .HasPrecision(18, 2);
     }
 }
