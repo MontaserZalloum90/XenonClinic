@@ -7,6 +7,7 @@ public class Appointment
     public int Id { get; set; }
     public int PatientId { get; set; }
     public int BranchId { get; set; }
+    public int? ProviderId { get; set; } // Optional: Healthcare provider/employee assigned to this appointment
     public DateTime StartTime { get; set; }
     public DateTime EndTime { get; set; }
     public AppointmentType Type { get; set; } = AppointmentType.Consultation;
@@ -15,4 +16,5 @@ public class Appointment
 
     public Patient? Patient { get; set; }
     public Branch? Branch { get; set; }
+    public Employee? Provider { get; set; }
 }

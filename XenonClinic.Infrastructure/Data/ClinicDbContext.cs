@@ -255,6 +255,15 @@ public class ClinicDbContext : IdentityDbContext<ApplicationUser>
             .WithMany(b => b.Appointments)
             .HasForeignKey(a => a.BranchId);
 
+        builder.Entity<Appointment>()
+            .HasIndex(a => a.ProviderId);
+
+        builder.Entity<Appointment>()
+            .HasOne(a => a.Provider)
+            .WithMany()
+            .HasForeignKey(a => a.ProviderId)
+            .OnDelete(DeleteBehavior.SetNull);
+
         // AudiologyVisit indexes
         builder.Entity<AudiologyVisit>()
             .HasIndex(v => v.VisitDate);

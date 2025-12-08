@@ -27,7 +27,7 @@
 
     <div class="row g-3">
         <!-- Patient Selection -->
-        <div class="col-12">
+        <div class="col-md-6 col-12">
             <label asp-for="PatientId" class="form-label">
                 @Localizer["Patient"] <span class="text-danger">*</span>
             </label>
@@ -35,6 +35,18 @@
                 <option value="">@Localizer["SelectPatient"]</option>
             </select>
             <span asp-validation-for="PatientId" class="text-danger"></span>
+        </div>
+
+        <!-- Provider Selection -->
+        <div class="col-md-6 col-12">
+            <label asp-for="ProviderId" class="form-label">
+                @Localizer["Provider"]
+            </label>
+            <select asp-for="ProviderId" asp-items="ViewBag.Providers" class="form-select">
+                <option value="">@Localizer["SelectProvider"]</option>
+            </select>
+            <span asp-validation-for="ProviderId" class="text-danger"></span>
+            <div class="form-text">@Localizer["OptionalSelectProvider"]</div>
         </div>
 
         <!-- Appointment Date -->

@@ -110,6 +110,7 @@ public class AppointmentsController : Controller
             var appointment = await _db.Appointments
                 .Include(a => a.Patient)
                 .Include(a => a.Branch)
+                .Include(a => a.Provider)
                 .Where(a => branchIds.Contains(a.BranchId))
                 .FirstOrDefaultAsync(a => a.Id == id);
 
@@ -150,6 +151,7 @@ public class AppointmentsController : Controller
             }
 
             await LoadPatientsDropdown();
+            await LoadProvidersDropdown();
             return View(viewModel);
         }
         catch (Exception ex)
@@ -201,6 +203,7 @@ public class AppointmentsController : Controller
                 var appointment = new Appointment
                 {
                     PatientId = model.PatientId,
+                    ProviderId = model.ProviderId,
                     BranchId = patient!.BranchId,
                     StartTime = startDateTime,
                     EndTime = endDateTime,
@@ -218,6 +221,7 @@ public class AppointmentsController : Controller
             }
 
             await LoadPatientsDropdown();
+            await LoadProvidersDropdown();
             return View(model);
         }
         catch (Exception ex)
@@ -225,6 +229,7 @@ public class AppointmentsController : Controller
             _logger.LogError(ex, "Error creating appointment");
             TempData["ErrorMessage"] = "An error occurred while creating the appointment.";
             await LoadPatientsDropdown();
+            await LoadProvidersDropdown();
             return View(model);
         }
     }
@@ -252,6 +257,7 @@ public class AppointmentsController : Controller
             {
                 Id = appointment.Id,
                 PatientId = appointment.PatientId,
+                ProviderId = appointment.ProviderId,
                 AppointmentDate = appointment.StartTime.Date,
                 StartTime = appointment.StartTime.TimeOfDay,
                 DurationMinutes = durationMinutes,
@@ -262,6 +268,7 @@ public class AppointmentsController : Controller
             };
 
             await LoadPatientsDropdown();
+            await LoadProvidersDropdown();
             return View(viewModel);
         }
         catch (Exception ex)
@@ -328,6 +335,7 @@ public class AppointmentsController : Controller
             if (ModelState.IsValid)
             {
                 appointment.PatientId = model.PatientId;
+                appointment.ProviderId = model.ProviderId;
                 appointment.BranchId = patient!.BranchId;
                 appointment.StartTime = startDateTime;
                 appointment.EndTime = endDateTime;
@@ -343,6 +351,7 @@ public class AppointmentsController : Controller
             }
 
             await LoadPatientsDropdown();
+            await LoadProvidersDropdown();
             return View(model);
         }
         catch (Exception ex)
@@ -350,6 +359,7 @@ public class AppointmentsController : Controller
             _logger.LogError(ex, "Error updating appointment: {AppointmentId}", id);
             TempData["ErrorMessage"] = "An error occurred while updating the appointment.";
             await LoadPatientsDropdown();
+            await LoadProvidersDropdown();
             return View(model);
         }
     }
@@ -405,5 +415,22 @@ public class AppointmentsController : Controller
             .ToListAsync();
 
         ViewBag.Patients = new SelectList(patients, "Id", "DisplayName");
+    }
+
+    // Helper method to load providers dropdown
+    private async Task LoadProvidersDropdown()
+    {
+        var branchIds = await _branchService.GetUserBranchIdsAsync();
+        var providers = await _db.Employees
+            .Where(e => branchIds.Contains(e.BranchId) && e.IsActive)
+            .OrderBy(e => e.FullNameEn)
+            .Select(e => new
+            {
+                e.Id,
+                DisplayName = e.FullNameEn + " - " + e.JobPosition.Name
+            })
+            .ToListAsync();
+
+        ViewBag.Providers = new SelectList(providers, "Id", "DisplayName");
     }
 }

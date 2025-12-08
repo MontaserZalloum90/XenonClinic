@@ -128,6 +128,17 @@
                             @(Model.Branch?.Name ?? "Unknown")
                         </p>
                     </div>
+
+                    @if (Model.Provider != null)
+                    {
+                        <div class="col-12">
+                            <label class="text-muted small fw-bold">@Localizer["Provider"]</label>
+                            <p class="mb-0">
+                                <i class="bi bi-person-badge text-primary"></i>
+                                @Model.Provider.FullNameEn
+                            </p>
+                        </div>
+                    }
                 </div>
             </div>
         </div>

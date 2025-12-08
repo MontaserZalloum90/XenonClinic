@@ -12,6 +12,9 @@ public class CreateAppointmentViewModel
     [Display(Name = "Patient")]
     public int PatientId { get; set; }
 
+    [Display(Name = "Provider")]
+    public int? ProviderId { get; set; }
+
     [Required(ErrorMessage = "Appointment date is required")]
     [Display(Name = "Appointment Date")]
     [DataType(DataType.Date)]
