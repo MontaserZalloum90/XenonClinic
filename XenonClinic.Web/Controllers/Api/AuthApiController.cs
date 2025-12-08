@@ -1,12 +1,15 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using XenonClinic.Core.Entities;
 using XenonClinic.Core.Interfaces;
+using XenonClinic.Infrastructure.Services;
+using XenonClinic.Web.Middleware;
 
 namespace XenonClinic.Web.Controllers.Api;
 
@@ -19,25 +22,33 @@ public class AuthApiController : ControllerBase
     private readonly IConfiguration _configuration;
     private readonly ICompanyContext _companyContext;
     private readonly IBranchScopedService _branchScope;
+    private readonly IAuditService _auditService;
+    private readonly ILogger<AuthApiController> _logger;
 
     public AuthApiController(
         UserManager<ApplicationUser> userManager,
         SignInManager<ApplicationUser> signInManager,
         IConfiguration configuration,
         ICompanyContext companyContext,
-        IBranchScopedService branchScope)
+        IBranchScopedService branchScope,
+        IAuditService auditService,
+        ILogger<AuthApiController> logger)
     {
         _userManager = userManager;
         _signInManager = signInManager;
         _configuration = configuration;
         _companyContext = companyContext;
         _branchScope = branchScope;
+        _auditService = auditService;
+        _logger = logger;
     }
 
     /// <summary>
     /// User login - Returns JWT token for React SPA
+    /// Rate limited to prevent brute force attacks
     /// </summary>
     [HttpPost("login")]
+    [EnableRateLimiting(RateLimitingConfiguration.AuthPolicy)]
     public async Task<IActionResult> Login([FromBody] LoginRequest request)
     {
         if (!ModelState.IsValid)
@@ -45,18 +56,52 @@ public class AuthApiController : ControllerBase
 
         var user = await _userManager.FindByNameAsync(request.Username);
         if (user == null)
+        {
+            _logger.LogWarning("Login failed: User not found - {Username}", request.Username);
+            await _auditService.LogAsync(new AuditLog
+            {
+                Action = AuditActions.LoginFailed,
+                Description = $"Login failed: User not found - {request.Username}",
+                IsSuccess = false,
+                ErrorMessage = "User not found"
+            });
             return Unauthorized(new { message = "Invalid username or password" });
+        }
 
-        var result = await _signInManager.CheckPasswordSignInAsync(user, request.Password, lockoutOnFailure: false);
+        var result = await _signInManager.CheckPasswordSignInAsync(user, request.Password, lockoutOnFailure: true);
 
         if (!result.Succeeded)
+        {
+            _logger.LogWarning("Login failed: Invalid password for user {Username}", request.Username);
+            await _auditService.LogAsync(new AuditLog
+            {
+                Action = AuditActions.LoginFailed,
+                UserId = user.Id,
+                UserName = user.UserName,
+                UserEmail = user.Email,
+                Description = $"Login failed: Invalid password for user {request.Username}",
+                IsSuccess = false,
+                ErrorMessage = result.IsLockedOut ? "Account locked out" : "Invalid password"
+            });
             return Unauthorized(new { message = "Invalid username or password" });
+        }
 
         // Get user roles
         var roles = await _userManager.GetRolesAsync(user);
 
         // Generate JWT token
         var token = GenerateJwtToken(user, roles);
+
+        _logger.LogInformation("User {Username} logged in successfully", request.Username);
+        await _auditService.LogAsync(new AuditLog
+        {
+            Action = AuditActions.Login,
+            UserId = user.Id,
+            UserName = user.UserName,
+            UserEmail = user.Email,
+            Description = $"User {request.Username} logged in successfully",
+            IsSuccess = true
+        });
 
         return Ok(new LoginResponse
         {
@@ -74,8 +119,10 @@ public class AuthApiController : ControllerBase
 
     /// <summary>
     /// User registration
+    /// Rate limited to prevent abuse
     /// </summary>
     [HttpPost("register")]
+    [EnableRateLimiting(RateLimitingConfiguration.AuthPolicy)]
     public async Task<IActionResult> Register([FromBody] RegisterRequest request)
     {
         if (!ModelState.IsValid)
@@ -92,10 +139,28 @@ public class AuthApiController : ControllerBase
         var result = await _userManager.CreateAsync(user, request.Password);
 
         if (!result.Succeeded)
+        {
+            _logger.LogWarning("Registration failed for {Username}: {Errors}",
+                request.Username,
+                string.Join(", ", result.Errors.Select(e => e.Description)));
             return BadRequest(new { errors = result.Errors.Select(e => e.Description) });
+        }
 
         // Add default role
         await _userManager.AddToRoleAsync(user, "User");
+
+        _logger.LogInformation("New user registered: {Username}", request.Username);
+        await _auditService.LogAsync(new AuditLog
+        {
+            Action = AuditActions.Create,
+            EntityType = "User",
+            EntityId = user.Id,
+            UserId = user.Id,
+            UserName = user.UserName,
+            UserEmail = user.Email,
+            Description = $"New user registered: {request.Username}",
+            IsSuccess = true
+        });
 
         return Ok(new { message = "Registration successful. Please login." });
     }

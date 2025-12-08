@@ -69,6 +69,9 @@ public class ClinicDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<CaseNote> CaseNotes => Set<CaseNote>();
     public DbSet<CaseActivity> CaseActivities => Set<CaseActivity>();
 
+    // Audit Logging
+    public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
+
     // Dynamic Lookup entities
     public DbSet<AppointmentTypeLookup> AppointmentTypeLookups => Set<AppointmentTypeLookup>();
     public DbSet<AppointmentStatusLookup> AppointmentStatusLookups => Set<AppointmentStatusLookup>();
@@ -1493,5 +1496,84 @@ public class ClinicDbContext : IdentityDbContext<ApplicationUser>
             .WithMany()
             .HasForeignKey(ca => ca.AssignedToUserId)
             .OnDelete(DeleteBehavior.SetNull);
+
+        // ========================================
+        // Audit Log Configuration
+        // ========================================
+
+        builder.Entity<AuditLog>()
+            .HasIndex(a => a.Timestamp);
+
+        builder.Entity<AuditLog>()
+            .HasIndex(a => a.CorrelationId);
+
+        builder.Entity<AuditLog>()
+            .HasIndex(a => a.UserId);
+
+        builder.Entity<AuditLog>()
+            .HasIndex(a => a.EntityType);
+
+        builder.Entity<AuditLog>()
+            .HasIndex(a => a.Action);
+
+        builder.Entity<AuditLog>()
+            .HasIndex(a => a.TenantId);
+
+        builder.Entity<AuditLog>()
+            .HasIndex(a => a.CompanyId);
+
+        builder.Entity<AuditLog>()
+            .HasIndex(a => new { a.EntityType, a.EntityId });
+
+        builder.Entity<AuditLog>()
+            .HasIndex(a => new { a.TenantId, a.Timestamp });
+
+        builder.Entity<AuditLog>()
+            .HasIndex(a => new { a.UserId, a.Timestamp });
+
+        builder.Entity<AuditLog>()
+            .Property(a => a.Action)
+            .HasMaxLength(50)
+            .IsRequired();
+
+        builder.Entity<AuditLog>()
+            .Property(a => a.EntityType)
+            .HasMaxLength(100);
+
+        builder.Entity<AuditLog>()
+            .Property(a => a.EntityId)
+            .HasMaxLength(100);
+
+        builder.Entity<AuditLog>()
+            .Property(a => a.CorrelationId)
+            .HasMaxLength(50);
+
+        builder.Entity<AuditLog>()
+            .Property(a => a.UserId)
+            .HasMaxLength(450);
+
+        builder.Entity<AuditLog>()
+            .Property(a => a.UserName)
+            .HasMaxLength(256);
+
+        builder.Entity<AuditLog>()
+            .Property(a => a.UserEmail)
+            .HasMaxLength(256);
+
+        builder.Entity<AuditLog>()
+            .Property(a => a.IpAddress)
+            .HasMaxLength(45);
+
+        builder.Entity<AuditLog>()
+            .Property(a => a.HttpMethod)
+            .HasMaxLength(10);
+
+        builder.Entity<AuditLog>()
+            .Property(a => a.RequestPath)
+            .HasMaxLength(500);
+
+        builder.Entity<AuditLog>()
+            .Property(a => a.ModuleName)
+            .HasMaxLength(100);
     }
 }
