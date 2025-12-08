@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace XenonClinic.Core.Entities;
 
-public class Supplier
+public class ExternalLab
 {
     public int Id { get; set; }
 
@@ -14,23 +14,20 @@ public class Supplier
     public string? Code { get; set; }
 
     [MaxLength(100)]
-    public string ContactPerson { get; set; } = string.Empty;
+    public string? ContactPerson { get; set; }
 
     [MaxLength(100)]
     [EmailAddress]
-    public string Email { get; set; } = string.Empty;
+    public string? Email { get; set; }
 
     [MaxLength(20)]
-    public string PhoneNumber { get; set; } = string.Empty;
+    public string? Phone { get; set; }
 
     [MaxLength(20)]
     public string? Mobile { get; set; }
 
-    [MaxLength(20)]
-    public string? Fax { get; set; }
-
     [MaxLength(500)]
-    public string Address { get; set; } = string.Empty;
+    public string? Address { get; set; }
 
     [MaxLength(100)]
     public string? City { get; set; }
@@ -38,20 +35,14 @@ public class Supplier
     [MaxLength(100)]
     public string? Country { get; set; }
 
-    [MaxLength(20)]
-    public string? PostalCode { get; set; }
-
     public string? Website { get; set; }
 
     [MaxLength(50)]
-    public string? TaxNumber { get; set; }
+    public string? LicenseNumber { get; set; }
 
-    public int? PaymentTermsDays { get; set; }
+    public DateTime? LicenseExpiryDate { get; set; }
 
-    [MaxLength(50)]
-    public string Currency { get; set; } = "AED";
-
-    public decimal? CreditLimit { get; set; }
+    public int? TurnaroundTimeDays { get; set; }
 
     public bool IsActive { get; set; } = true;
 
@@ -73,6 +64,6 @@ public class Supplier
     public DateTime? LastModifiedAt { get; set; }
 
     // Navigation properties
-    public ICollection<InventoryItem> InventoryItems { get; set; } = new List<InventoryItem>();
-    public ICollection<PurchaseOrder> PurchaseOrders { get; set; } = new List<PurchaseOrder>();
+    public ICollection<LabTest> LabTests { get; set; } = new List<LabTest>();
+    public ICollection<LabOrder> LabOrders { get; set; } = new List<LabOrder>();
 }

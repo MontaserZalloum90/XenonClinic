@@ -1,7 +1,7 @@
 namespace XenonClinic.Core.Enums;
 
 /// <summary>
-/// Represents the payment status of an invoice
+/// Represents the payment status of an invoice or sale
 /// </summary>
 public enum PaymentStatus
 {
@@ -11,12 +11,27 @@ public enum PaymentStatus
     Pending = 0,
 
     /// <summary>
-    /// Payment has been completed
+    /// Partial payment has been received
     /// </summary>
-    Paid = 1,
+    Partial = 1,
 
     /// <summary>
-    /// Invoice was cancelled
+    /// Payment has been completed in full
     /// </summary>
-    Cancelled = 2
+    Paid = 2,
+
+    /// <summary>
+    /// Payment has been refunded
+    /// </summary>
+    Refunded = 3,
+
+    /// <summary>
+    /// Payment is overdue
+    /// </summary>
+    Overdue = 4,
+
+    /// <summary>
+    /// Invoice/Sale was cancelled
+    /// </summary>
+    Cancelled = 5
 }

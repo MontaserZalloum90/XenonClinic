@@ -1,0 +1,92 @@
+@model IEnumerable<XenonClinic.Web.Models.ExpenseCategoryDto>
+@using Microsoft.Extensions.Localization
+@inject IStringLocalizer<SharedResources> Localizer
+
+@{
+    ViewData["Title"] = Localizer["Expense_Categories"];
+}
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>@Localizer["Expense_Categories"]</h2>
+        <div>
+            <a asp-action="Index" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> @Localizer["Back_to_Dashboard"]
+            </a>
+            <a asp-action="CreateExpenseCategory" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i> @Localizer["New_Category"]
+            </a>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body p-0">
+            @if (Model.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>@Localizer["Category_Name"]</th>
+                                <th>@Localizer["Description"]</th>
+                                <th>@Localizer["Account"]</th>
+                                <th>@Localizer["Expense_Count"]</th>
+                                <th>@Localizer["Status"]</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var category in Model)
+                            {
+                                <tr>
+                                    <td>
+                                        <strong>@category.Name</strong>
+                                    </td>
+                                    <td>
+                                        @if (!string.IsNullOrEmpty(category.Description))
+                                        {
+                                            <small class="text-muted">@category.Description</small>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (!string.IsNullOrEmpty(category.AccountName))
+                                        {
+                                            <small>@category.AccountName</small>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">-</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-info">@category.ExpenseCount</span>
+                                    </td>
+                                    <td>
+                                        @if (category.IsActive)
+                                        {
+                                            <span class="badge bg-success">@Localizer["Active"]</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-secondary">@Localizer["Inactive"]</span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="text-center py-5">
+                    <i class="bi bi-tags fs-1 d-block mb-3 text-muted"></i>
+                    <h5 class="text-muted">@Localizer["No_Categories_Found"]</h5>
+                    <p class="text-muted">@Localizer["Get_Started_Create_Category"]</p>
+                    <a asp-action="CreateExpenseCategory" class="btn btn-primary">
+                        <i class="bi bi-plus-circle"></i> @Localizer["Create_First_Category"]
+                    </a>
+                </div>
+            }
+        </div>
+    </div>
+</div>

@@ -1,0 +1,123 @@
+@model IEnumerable<XenonClinic.Web.Models.AccountDto>
+@using Microsoft.Extensions.Localization
+@inject IStringLocalizer<SharedResources> Localizer
+
+@{
+    ViewData["Title"] = Localizer["Chart_of_Accounts"];
+}
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>@Localizer["Chart_of_Accounts"]</h2>
+        <div>
+            <a asp-action="Index" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> @Localizer["Back_to_Dashboard"]
+            </a>
+            <a asp-action="CreateAccount" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i> @Localizer["New_Account"]
+            </a>
+        </div>
+    </div>
+
+    <!-- Accounts by Type -->
+    @foreach (var accountType in Enum.GetValues<XenonClinic.Core.Enums.AccountType>())
+    {
+        var accountsOfType = Model.Where(a => a.AccountType == accountType).ToList();
+        if (accountsOfType.Any())
+        {
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        @Localizer[$"AccountType_{accountType}"]
+                        <span class="badge bg-secondary ms-2">@accountsOfType.Count</span>
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>@Localizer["Account_Code"]</th>
+                                    <th>@Localizer["Account_Name"]</th>
+                                    <th>@Localizer["Parent_Account"]</th>
+                                    <th class="text-end">@Localizer["Balance"]</th>
+                                    <th>@Localizer["Status"]</th>
+                                    <th>@Localizer["Details"]</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var account in accountsOfType.OrderBy(a => a.AccountCode))
+                                {
+                                    <tr class="@(account.ParentAccountId.HasValue ? "ps-4" : "")">
+                                        <td>
+                                            <strong>@account.AccountCode</strong>
+                                        </td>
+                                        <td>
+                                            @if (account.ParentAccountId.HasValue)
+                                            {
+                                                <span class="text-muted">↳</span>
+                                            }
+                                            @account.AccountName
+                                            @if (!string.IsNullOrEmpty(account.Description))
+                                            {
+                                                <br />
+                                                <small class="text-muted">@account.Description</small>
+                                            }
+                                        </td>
+                                        <td>
+                                            @if (!string.IsNullOrEmpty(account.ParentAccountName))
+                                            {
+                                                <small class="text-muted">@account.ParentAccountName</small>
+                                            }
+                                        </td>
+                                        <td class="text-end">
+                                            <strong class="@(account.Balance >= 0 ? "text-success" : "text-danger")">
+                                                @account.Balance.ToString("N2")
+                                            </strong>
+                                        </td>
+                                        <td>
+                                            @if (account.IsActive)
+                                            {
+                                                <span class="badge bg-success">@Localizer["Active"]</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-secondary">@Localizer["Inactive"]</span>
+                                            }
+                                        </td>
+                                        <td>
+                                            <small class="text-muted">
+                                                @Localizer["Transactions"]: @account.TransactionCount
+                                                @if (account.ChildAccountCount > 0)
+                                                {
+                                                    <br />
+                                                    @Localizer["Sub_Accounts"]: @account.ChildAccountCount
+                                                }
+                                            </small>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        }
+    }
+
+    @if (!Model.Any())
+    {
+        <div class="card">
+            <div class="card-body">
+                <div class="text-center py-5">
+                    <i class="bi bi-list-ul fs-1 d-block mb-3 text-muted"></i>
+                    <h5 class="text-muted">@Localizer["No_Accounts_Found"]</h5>
+                    <p class="text-muted">@Localizer["Get_Started_Create_Account"]</p>
+                    <a asp-action="CreateAccount" class="btn btn-primary">
+                        <i class="bi bi-plus-circle"></i> @Localizer["Create_First_Account"]
+                    </a>
+                </div>
+            </div>
+        </div>
+    }
+</div>
