@@ -1,0 +1,231 @@
+@using XenonClinic.Core.Enums
+@using Microsoft.AspNetCore.Mvc.Localization
+@inject IViewLocalizer Localizer
+@model XenonClinic.Core.Entities.Appointment
+
+@{
+    ViewData["Title"] = Localizer["AppointmentDetails"];
+    var duration = (int)(Model.EndTime - Model.StartTime).TotalMinutes;
+}
+
+<nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">@Localizer["Home"]</a></li>
+        <li class="breadcrumb-item"><a asp-controller="Appointments" asp-action="Index">@Localizer["Appointments"]</a></li>
+        <li class="breadcrumb-item active" aria-current="page">@Localizer["Details"]</li>
+    </ol>
+</nav>
+
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-2">
+    <div>
+        <h3 class="mb-1">@Localizer["AppointmentDetails"]</h3>
+        <p class="text-muted mb-0">
+            @Localizer["AppointmentID"]: #@Model.Id
+        </p>
+    </div>
+    <div class="d-flex gap-2">
+        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary">
+            <i class="bi bi-pencil"></i> @Localizer["Edit"]
+        </a>
+        @if (Model.Status != AppointmentStatus.Cancelled)
+        {
+            <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#cancelModal">
+                <i class="bi bi-x-circle"></i> @Localizer["Cancel"]
+            </button>
+        }
+    </div>
+</div>
+
+<!-- Status Alert -->
+@{
+    var statusAlert = Model.Status switch
+    {
+        AppointmentStatus.Booked => "alert-primary",
+        AppointmentStatus.Completed => "alert-success",
+        AppointmentStatus.Cancelled => "alert-danger",
+        AppointmentStatus.NoShow => "alert-warning",
+        _ => "alert-secondary"
+    };
+    var statusText = Model.Status switch
+    {
+        AppointmentStatus.Booked => Localizer["Booked"],
+        AppointmentStatus.Completed => Localizer["Completed"],
+        AppointmentStatus.Cancelled => Localizer["Cancelled"],
+        AppointmentStatus.NoShow => Localizer["NoShow"],
+        _ => Model.Status.ToString()
+    };
+}
+
+<div class="alert @statusAlert d-flex align-items-center mb-4">
+    <i class="bi bi-info-circle me-2"></i>
+    <strong>@Localizer["Status"]:</strong>&nbsp;@statusText
+</div>
+
+<!-- Appointment Information -->
+<div class="row g-4">
+    <!-- Left Column -->
+    <div class="col-lg-6">
+        <div class="card card-rounded h-100">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">@Localizer["AppointmentInformation"]</h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-12">
+                        <label class="text-muted small fw-bold">@Localizer["Date"]</label>
+                        <p class="mb-0">
+                            <i class="bi bi-calendar3 text-primary"></i>
+                            @Model.StartTime.ToString("dddd, dd MMMM yyyy")
+                        </p>
+                    </div>
+
+                    <div class="col-6">
+                        <label class="text-muted small fw-bold">@Localizer["StartTime"]</label>
+                        <p class="mb-0">
+                            <i class="bi bi-clock text-primary"></i>
+                            @Model.StartTime.ToString("hh:mm tt")
+                        </p>
+                    </div>
+
+                    <div class="col-6">
+                        <label class="text-muted small fw-bold">@Localizer["EndTime"]</label>
+                        <p class="mb-0">
+                            <i class="bi bi-clock-fill text-primary"></i>
+                            @Model.EndTime.ToString("hh:mm tt")
+                        </p>
+                    </div>
+
+                    <div class="col-6">
+                        <label class="text-muted small fw-bold">@Localizer["Duration"]</label>
+                        <p class="mb-0">
+                            <i class="bi bi-hourglass-split text-primary"></i>
+                            @duration @Localizer["Minutes"]
+                        </p>
+                    </div>
+
+                    <div class="col-6">
+                        <label class="text-muted small fw-bold">@Localizer["Type"]</label>
+                        <p class="mb-0">
+                            @{
+                                var typeClass = Model.Type switch
+                                {
+                                    AppointmentType.HearingTest => "bg-primary",
+                                    AppointmentType.Fitting => "bg-success",
+                                    AppointmentType.Consultation => "bg-info",
+                                    AppointmentType.Repair => "bg-warning",
+                                    AppointmentType.FollowUp => "bg-secondary",
+                                    _ => "bg-secondary"
+                                };
+                            }
+                            <span class="badge @typeClass">@Model.Type</span>
+                        </p>
+                    </div>
+
+                    <div class="col-12">
+                        <label class="text-muted small fw-bold">@Localizer["Branch"]</label>
+                        <p class="mb-0">
+                            <i class="bi bi-building text-primary"></i>
+                            @(Model.Branch?.Name ?? "Unknown")
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column -->
+    <div class="col-lg-6">
+        <div class="card card-rounded h-100">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">@Localizer["PatientInformation"]</h5>
+            </div>
+            <div class="card-body">
+                @if (Model.Patient != null)
+                {
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="text-muted small fw-bold">@Localizer["PatientName"]</label>
+                            <p class="mb-0">
+                                <a asp-controller="Patients" asp-action="Details" asp-route-id="@Model.Patient.Id" class="text-decoration-none">
+                                    <i class="bi bi-person-circle text-primary"></i>
+                                    @Model.Patient.FullNameEn
+                                </a>
+                            </p>
+                        </div>
+
+                        <div class="col-12">
+                            <label class="text-muted small fw-bold">@Localizer["EmiratesID"]</label>
+                            <p class="mb-0">
+                                <i class="bi bi-credit-card text-primary"></i>
+                                @Model.Patient.EmiratesId
+                            </p>
+                        </div>
+
+                        @if (!string.IsNullOrEmpty(Model.Patient.PhoneNumber))
+                        {
+                            <div class="col-12">
+                                <label class="text-muted small fw-bold">@Localizer["Phone"]</label>
+                                <p class="mb-0">
+                                    <i class="bi bi-telephone text-primary"></i>
+                                    <a href="tel:@Model.Patient.PhoneNumber">@Model.Patient.PhoneNumber</a>
+                                </p>
+                            </div>
+                        }
+
+                        @if (!string.IsNullOrEmpty(Model.Patient.Email))
+                        {
+                            <div class="col-12">
+                                <label class="text-muted small fw-bold">@Localizer["Email"]</label>
+                                <p class="mb-0">
+                                    <i class="bi bi-envelope text-primary"></i>
+                                    <a href="mailto:@Model.Patient.Email">@Model.Patient.Email</a>
+                                </p>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <p class="text-muted text-center py-4">@Localizer["PatientInformationNotAvailable"]</p>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Notes Section -->
+    @if (!string.IsNullOrEmpty(Model.Notes))
+    {
+        <div class="col-12">
+            <div class="card card-rounded">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">@Localizer["Notes"]</h5>
+                </div>
+                <div class="card-body">
+                    <p class="mb-0 white-space-pre-line">@Model.Notes</p>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<!-- Cancel Confirmation Modal -->
+<div class="modal fade" id="cancelModal" tabindex="-1" aria-labelledby="cancelModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="cancelModalLabel">@Localizer["ConfirmCancellation"]</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                @Localizer["AreYouSureCancelAppointment"]
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">@Localizer["NoKeepIt"]</button>
+                <form asp-action="Delete" asp-route-id="@Model.Id" method="post" class="d-inline">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-danger">@Localizer["YesCancelIt"]</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
