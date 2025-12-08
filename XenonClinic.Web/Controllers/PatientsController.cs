@@ -25,11 +25,14 @@ public class PatientsController : Controller
         _logger = logger;
     }
 
-    public async Task<IActionResult> Index(string? search)
+    public async Task<IActionResult> Index(string? search, int pageNumber = 1)
     {
         try
         {
-            _logger.LogInformation("Loading patients list with search term: {SearchTerm}", search ?? "none");
+            _logger.LogInformation("Loading patients list. Page: {PageNumber}, Search: {SearchTerm}",
+                pageNumber, search ?? "none");
+
+            const int pageSize = 20;
 
             var branchIds = await _branchService.GetUserBranchIdsAsync();
             var query = branchIds.Any()
@@ -41,10 +44,9 @@ public class PatientsController : Controller
                 query = query.Where(p => p.FullNameEn.Contains(search) || p.EmiratesId.Contains(search));
             }
 
-            var patients = await query
+            var patientsQuery = query
                 .Include(p => p.Branch)
                 .OrderByDescending(p => p.Id)
-                .Take(100)
                 .Select(p => new PatientDto
                 {
                     Id = p.Id,
@@ -59,12 +61,16 @@ public class PatientsController : Controller
                     HearingLossType = p.HearingLossType,
                     Notes = p.Notes,
                     BranchName = p.Branch != null ? p.Branch.Name : null
-                })
-                .ToListAsync();
+                });
+
+            var paginatedPatients = await PaginatedList<PatientDto>.CreateAsync(
+                patientsQuery, pageNumber, pageSize);
 
             ViewBag.Search = search;
-            _logger.LogInformation("Found {PatientCount} patients", patients.Count);
-            return View(patients);
+            _logger.LogInformation("Loaded page {PageNumber} of {TotalPages} ({PatientCount} total patients)",
+                pageNumber, paginatedPatients.TotalPages, paginatedPatients.TotalCount);
+
+            return View(paginatedPatients);
         }
         catch (Exception ex)
         {

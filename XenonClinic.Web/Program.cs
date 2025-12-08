@@ -24,6 +24,7 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
   .AddDefaultTokenProviders();
 
 // Register services
+builder.Services.AddMemoryCache();
 builder.Services.AddScoped<ILicenseGuardService, LicenseGuardService>();
 builder.Services.AddScoped<IBranchScopedService, BranchScopedService>();
 builder.Services.AddHttpContextAccessor();

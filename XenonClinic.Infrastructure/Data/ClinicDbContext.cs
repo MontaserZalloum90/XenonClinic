@@ -40,14 +40,31 @@ public class ClinicDbContext : IdentityDbContext<ApplicationUser>
             .HasForeignKey(u => u.PrimaryBranchId)
             .OnDelete(DeleteBehavior.SetNull);
 
+        // Patient indexes
         builder.Entity<Patient>()
             .HasIndex(p => p.EmiratesId)
             .IsUnique();
 
         builder.Entity<Patient>()
+            .HasIndex(p => p.FullNameEn);
+
+        builder.Entity<Patient>()
+            .HasIndex(p => p.BranchId);
+
+        builder.Entity<Patient>()
             .HasOne(p => p.Branch)
             .WithMany(b => b.Patients)
             .HasForeignKey(p => p.BranchId);
+
+        // Appointment indexes
+        builder.Entity<Appointment>()
+            .HasIndex(a => a.StartTime);
+
+        builder.Entity<Appointment>()
+            .HasIndex(a => a.BranchId);
+
+        builder.Entity<Appointment>()
+            .HasIndex(a => new { a.BranchId, a.StartTime });
 
         builder.Entity<Appointment>()
             .HasOne(a => a.Patient)
@@ -58,6 +75,16 @@ public class ClinicDbContext : IdentityDbContext<ApplicationUser>
             .HasOne(a => a.Branch)
             .WithMany(b => b.Appointments)
             .HasForeignKey(a => a.BranchId);
+
+        // AudiologyVisit indexes
+        builder.Entity<AudiologyVisit>()
+            .HasIndex(v => v.VisitDate);
+
+        builder.Entity<AudiologyVisit>()
+            .HasIndex(v => v.BranchId);
+
+        builder.Entity<AudiologyVisit>()
+            .HasIndex(v => new { v.BranchId, v.VisitDate });
 
         builder.Entity<AudiologyVisit>()
             .HasOne(v => v.Patient)
@@ -83,6 +110,16 @@ public class ClinicDbContext : IdentityDbContext<ApplicationUser>
             .HasOne(d => d.Branch)
             .WithMany(b => b.Devices)
             .HasForeignKey(d => d.BranchId);
+
+        // Invoice indexes
+        builder.Entity<Invoice>()
+            .HasIndex(i => i.InvoiceDate);
+
+        builder.Entity<Invoice>()
+            .HasIndex(i => i.BranchId);
+
+        builder.Entity<Invoice>()
+            .HasIndex(i => new { i.BranchId, i.InvoiceDate });
 
         builder.Entity<Invoice>()
             .HasOne(i => i.Patient)
