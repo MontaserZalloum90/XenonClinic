@@ -3,13 +3,19 @@ using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using System.Globalization;
+using XenonClinic.Core.Abstractions;
 using XenonClinic.Core.Entities;
 using XenonClinic.Core.Interfaces;
 using XenonClinic.Infrastructure.Data;
+using XenonClinic.Infrastructure.Modules;
 using XenonClinic.Infrastructure.Services;
 using XenonClinic.Web.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
+
+Console.WriteLine("================================================================================");
+Console.WriteLine("  XenonClinic - Modular Healthcare Management System");
+Console.WriteLine("================================================================================");
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
     ?? "Server=(localdb)\\mssqllocaldb;Database=XenonClinic;Trusted_Connection=True;MultipleActiveResultSets=true";
@@ -81,6 +87,67 @@ builder.Services.AddScoped<IThemeService, ThemeService>();
 // Lookup services
 builder.Services.AddScoped<ILookupService, LookupService>();
 
+// ==================== MODULE SYSTEM ====================
+Console.WriteLine("\n[System] Initializing Module System...");
+
+// Register Module Manager
+builder.Services.AddSingleton<IModuleManager, ModuleManager>();
+
+// Discover and register modules
+var moduleManager = new ModuleManager(builder.Configuration);
+var availableModules = new List<IModule>
+{
+    new CaseManagementModule(),
+    new AudiologyModule(),
+    // Add more modules here as they're created
+};
+
+Console.WriteLine($"[System] Found {availableModules.Count} available modules");
+
+foreach (var module in availableModules)
+{
+    try
+    {
+        // Register module with manager
+        moduleManager.RegisterModule(module);
+
+        // Check if module is enabled
+        if (moduleManager.IsModuleEnabled(module.Name))
+        {
+            Console.WriteLine($"[System] Loading module: {module.DisplayName} v{module.Version}");
+
+            // Initialize module
+            await module.OnInitializingAsync(builder.Services.BuildServiceProvider());
+
+            // Configure module services
+            module.ConfigureServices(builder.Services, builder.Configuration);
+
+            // Store module for later use
+            builder.Services.AddSingleton(module);
+        }
+        else
+        {
+            Console.WriteLine($"[System] Module disabled: {module.DisplayName} (skipped)");
+        }
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"[ERROR] Failed to load module {module.DisplayName}: {ex.Message}");
+        if (module.IsRequired)
+        {
+            throw new Exception($"Required module {module.DisplayName} failed to load", ex);
+        }
+    }
+}
+
+// Store module manager
+builder.Services.AddSingleton(moduleManager);
+
+Console.WriteLine($"[System] Module system initialized - {moduleManager.GetEnabledModules().Count()} modules enabled");
+Console.WriteLine("================================================================================\n");
+
+// ==================== END MODULE SYSTEM ====================
+
 // Configure localization
 builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
 
@@ -105,6 +172,15 @@ builder.Services.AddControllersWithViews()
     .AddDataAnnotationsLocalization();
 
 var app = builder.Build();
+
+// Configure module routes
+Console.WriteLine("\n[System] Configuring module routes...");
+var enabledModules = app.Services.GetServices<IModule>();
+foreach (var module in enabledModules)
+{
+    module.ConfigureRoutes(app);
+}
+Console.WriteLine($"[System] Routes configured for {enabledModules.Count()} modules\n");
 
 // Global exception handling middleware
 app.UseMiddleware<GlobalExceptionHandlerMiddleware>();
