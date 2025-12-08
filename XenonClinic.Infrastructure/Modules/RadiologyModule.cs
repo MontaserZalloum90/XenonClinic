@@ -11,41 +11,41 @@ using XenonClinic.Infrastructure.Services;
 namespace XenonClinic.Infrastructure.Modules;
 
 /// <summary>
-/// Sales Module - Sales orders, quotations, and revenue management
+/// Radiology Module - Medical imaging, radiology orders, and imaging results
 /// </summary>
-public class SalesModule : ModuleBase
+public class RadiologyModule : ModuleBase
 {
-    public override string Name => ModuleNames.Sales;
-    public override string DisplayName => "Sales Management";
+    public override string Name => ModuleNames.Radiology;
+    public override string DisplayName => "Radiology & Imaging";
     public override string Version => "1.0.0";
-    public override string Description => "Sales orders, quotations, customer management, sales invoicing, and sales analytics";
-    public override string Category => ModuleNames.Categories.Financial;
-    public override string? IconClass => "bi-cart-check";
-    public override int DisplayOrder => 35;
+    public override string Description => "Radiology orders, medical imaging studies (X-Ray, CT, MRI, Ultrasound), PACS integration, and imaging reports";
+    public override string Category => ModuleNames.Categories.Clinical;
+    public override string? IconClass => "bi-prescription2";
+    public override int DisplayOrder => 40;
 
     public override void ConfigureServices(IServiceCollection services, IConfiguration configuration)
     {
-        // Register Sales services
-        services.AddScoped<IPharmacyService, PharmacyService>();
+        // Register Radiology services
+        services.AddScoped<IRadiologyService, RadiologyService>();
         Console.WriteLine($"[Module] {DisplayName} v{Version} - Services registered");
     }
 
     public override void ConfigureDatabase(ModelBuilder modelBuilder)
     {
-        // Sales entities will be configured here when implemented
-        // Examples: SalesOrder, SalesOrderLine, Quotation, Customer, SalesInvoice
+        // Radiology entities currently use Lab entities as a foundation
+        // When specific RadiologyOrder/ImagingStudy entities are created, configure them here
         Console.WriteLine($"[Module] {DisplayName} - Database entities configured");
     }
 
     public override void ConfigureRoutes(IEndpointRouteBuilder endpoints)
     {
-        // Sales routes are handled by MVC controllers with attribute routing
+        // Radiology routes are handled by MVC controllers with attribute routing
         Console.WriteLine($"[Module] {DisplayName} - Routes configured");
     }
 
     public override async Task SeedDataAsync(IServiceProvider serviceProvider)
     {
-        // Sales seed data will be added here
+        // Radiology seed data will be added here when specific entities are created
         await Task.CompletedTask;
         Console.WriteLine($"[Module] {DisplayName} - Seed data initialized");
     }

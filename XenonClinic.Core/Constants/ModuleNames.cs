@@ -9,6 +9,7 @@ public static class ModuleNames
     public const string CaseManagement = "CaseManagement";
     public const string Audiology = "Audiology";
     public const string Laboratory = "Laboratory";
+    public const string Radiology = "Radiology";
 
     // Operations Modules
     public const string HR = "HR";
@@ -27,6 +28,7 @@ public static class ModuleNames
         CaseManagement,
         Audiology,
         Laboratory,
+        Radiology,
         HR,
         Inventory,
         Financial,

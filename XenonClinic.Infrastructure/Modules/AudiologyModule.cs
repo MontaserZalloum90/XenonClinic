@@ -6,6 +6,8 @@ using Microsoft.Extensions.DependencyInjection;
 using XenonClinic.Core.Abstractions;
 using XenonClinic.Core.Constants;
 using XenonClinic.Core.Entities;
+using XenonClinic.Core.Interfaces;
+using XenonClinic.Infrastructure.Services;
 
 namespace XenonClinic.Infrastructure.Modules;
 
@@ -25,7 +27,7 @@ public class AudiologyModule : ModuleBase
     public override void ConfigureServices(IServiceCollection services, IConfiguration configuration)
     {
         // Register Audiology services
-        // Services will be added here as they're extracted
+        services.AddScoped<IAppointmentService, AppointmentService>();
         Console.WriteLine($"[Module] {DisplayName} v{Version} - Services registered");
     }
 

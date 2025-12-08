@@ -28,6 +28,7 @@ public class CaseManagementModule : ModuleBase
     {
         // Register Case Management services
         services.AddScoped<ICaseService, CaseService>();
+        services.AddScoped<IPatientService, PatientService>();
 
         Console.WriteLine($"[Module] {DisplayName} v{Version} - Services registered");
     }
