@@ -43,6 +43,10 @@ public class ClinicDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<LabOrder> LabOrders => Set<LabOrder>();
     public DbSet<LabOrderItem> LabOrderItems => Set<LabOrderItem>();
     public DbSet<LabResult> LabResults => Set<LabResult>();
+    public DbSet<Account> Accounts => Set<Account>();
+    public DbSet<ExpenseCategory> ExpenseCategories => Set<ExpenseCategory>();
+    public DbSet<Expense> Expenses => Set<Expense>();
+    public DbSet<FinancialTransaction> FinancialTransactions => Set<FinancialTransaction>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -938,5 +942,143 @@ public class ClinicDbContext : IdentityDbContext<ApplicationUser>
             .WithMany()
             .HasForeignKey(r => r.LabTestId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        // Finance Module Configuration
+
+        // Account
+        builder.Entity<Account>()
+            .HasIndex(a => a.AccountCode)
+            .IsUnique();
+
+        builder.Entity<Account>()
+            .HasIndex(a => a.BranchId);
+
+        builder.Entity<Account>()
+            .HasIndex(a => a.AccountType);
+
+        builder.Entity<Account>()
+            .HasIndex(a => a.IsActive);
+
+        builder.Entity<Account>()
+            .Property(a => a.Balance)
+            .HasPrecision(18, 2);
+
+        builder.Entity<Account>()
+            .HasOne(a => a.Branch)
+            .WithMany()
+            .HasForeignKey(a => a.BranchId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<Account>()
+            .HasOne(a => a.ParentAccount)
+            .WithMany(a => a.ChildAccounts)
+            .HasForeignKey(a => a.ParentAccountId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // ExpenseCategory
+        builder.Entity<ExpenseCategory>()
+            .HasIndex(ec => ec.BranchId);
+
+        builder.Entity<ExpenseCategory>()
+            .HasIndex(ec => ec.IsActive);
+
+        builder.Entity<ExpenseCategory>()
+            .HasIndex(ec => ec.AccountId);
+
+        builder.Entity<ExpenseCategory>()
+            .HasOne(ec => ec.Branch)
+            .WithMany()
+            .HasForeignKey(ec => ec.BranchId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<ExpenseCategory>()
+            .HasOne(ec => ec.Account)
+            .WithMany()
+            .HasForeignKey(ec => ec.AccountId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        // Expense
+        builder.Entity<Expense>()
+            .HasIndex(e => e.ExpenseNumber)
+            .IsUnique();
+
+        builder.Entity<Expense>()
+            .HasIndex(e => e.BranchId);
+
+        builder.Entity<Expense>()
+            .HasIndex(e => e.ExpenseDate);
+
+        builder.Entity<Expense>()
+            .HasIndex(e => e.Status);
+
+        builder.Entity<Expense>()
+            .HasIndex(e => e.ExpenseCategoryId);
+
+        builder.Entity<Expense>()
+            .HasIndex(e => new { e.BranchId, e.ExpenseDate });
+
+        builder.Entity<Expense>()
+            .Property(e => e.Amount)
+            .HasPrecision(18, 2);
+
+        builder.Entity<Expense>()
+            .HasOne(e => e.Branch)
+            .WithMany()
+            .HasForeignKey(e => e.BranchId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<Expense>()
+            .HasOne(e => e.ExpenseCategory)
+            .WithMany(ec => ec.Expenses)
+            .HasForeignKey(e => e.ExpenseCategoryId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // FinancialTransaction
+        builder.Entity<FinancialTransaction>()
+            .HasIndex(ft => ft.TransactionNumber)
+            .IsUnique();
+
+        builder.Entity<FinancialTransaction>()
+            .HasIndex(ft => ft.BranchId);
+
+        builder.Entity<FinancialTransaction>()
+            .HasIndex(ft => ft.TransactionDate);
+
+        builder.Entity<FinancialTransaction>()
+            .HasIndex(ft => ft.AccountId);
+
+        builder.Entity<FinancialTransaction>()
+            .HasIndex(ft => ft.Status);
+
+        builder.Entity<FinancialTransaction>()
+            .HasIndex(ft => new { ft.AccountId, ft.TransactionDate });
+
+        builder.Entity<FinancialTransaction>()
+            .Property(ft => ft.Amount)
+            .HasPrecision(18, 2);
+
+        builder.Entity<FinancialTransaction>()
+            .HasOne(ft => ft.Branch)
+            .WithMany()
+            .HasForeignKey(ft => ft.BranchId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<FinancialTransaction>()
+            .HasOne(ft => ft.Account)
+            .WithMany(a => a.Transactions)
+            .HasForeignKey(ft => ft.AccountId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<FinancialTransaction>()
+            .HasOne(ft => ft.Expense)
+            .WithMany()
+            .HasForeignKey(ft => ft.ExpenseId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        builder.Entity<FinancialTransaction>()
+            .HasOne(ft => ft.Sale)
+            .WithMany()
+            .HasForeignKey(ft => ft.SaleId)
+            .OnDelete(DeleteBehavior.SetNull);
     }
 }
