@@ -165,6 +165,16 @@ function App() {
                 </ProtectedRoute>
               }
             />
+            <Route
+              path="/admin/translations"
+              element={
+                <ProtectedRoute requiredRoles={[Roles.ADMIN]}>
+                  <Layout>
+                    <TranslationManagement />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
 
             {/* Catch all - show 404 page */}
             <Route path="*" element={<NotFound />} />
