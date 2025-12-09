@@ -8,6 +8,12 @@ import { Modal } from '../../components/ui/Modal';
 import { AppointmentForm } from '../../components/AppointmentForm';
 import { Calendar } from '../../components/Calendar';
 import { format } from 'date-fns';
+import { SkeletonTable } from '../../components/ui/LoadingSkeleton';
+import { EmptyState } from '../../components/ui/EmptyState';
+import { ConfirmDialog, useConfirmDialog } from '../../components/ui/ConfirmDialog';
+import { useToast } from '../../components/ui/Toast';
+import { useKeyboardShortcuts, createCommonShortcuts } from '../../hooks/useKeyboardShortcuts';
+import { exportToCSV, exportToExcel, printTable, formatters, type ExportColumn } from '../../utils/export';
 
 type ViewMode = 'list' | 'calendar';
 
@@ -16,10 +22,13 @@ export const AppointmentsList = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | undefined>(undefined);
   const [viewMode, setViewMode] = useState<ViewMode>('list');
+  const [showExportMenu, setShowExportMenu] = useState(false);
   const queryClient = useQueryClient();
+  const { showToast } = useToast();
+  const { dialogState, showConfirm, hideConfirm, handleConfirm } = useConfirmDialog();
 
   // Fetch appointments
-  const { data: appointments, isLoading, error } = useQuery<Appointment[]>({
+  const { data: appointments, isLoading, error, refetch } = useQuery<Appointment[]>({
     queryKey: ['appointments', selectedDate],
     queryFn: async () => {
       if (selectedDate) {
@@ -32,11 +41,26 @@ export const AppointmentsList = () => {
     },
   });
 
+  // Keyboard shortcuts
+  useKeyboardShortcuts(
+    createCommonShortcuts({
+      onNew: handleOpenCreateModal,
+      onRefresh: () => refetch(),
+      onClose: () => {
+        if (isModalOpen) handleCloseModal();
+      },
+    })
+  );
+
   // Confirm mutation
   const confirmMutation = useMutation({
     mutationFn: (id: number) => appointmentsApi.confirm(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['appointments'] });
+      showToast('success', 'Appointment confirmed successfully');
+    },
+    onError: (error: Error) => {
+      showToast('error', `Failed to confirm appointment: ${error.message}`);
     },
   });
 
@@ -46,6 +70,10 @@ export const AppointmentsList = () => {
       appointmentsApi.cancel(id, reason),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['appointments'] });
+      showToast('success', 'Appointment cancelled');
+    },
+    onError: (error: Error) => {
+      showToast('error', `Failed to cancel appointment: ${error.message}`);
     },
   });
 
@@ -54,6 +82,10 @@ export const AppointmentsList = () => {
     mutationFn: (id: number) => appointmentsApi.checkIn(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['appointments'] });
+      showToast('success', 'Patient checked in successfully');
+    },
+    onError: (error: Error) => {
+      showToast('error', `Failed to check in patient: ${error.message}`);
     },
   });
 
@@ -62,6 +94,10 @@ export const AppointmentsList = () => {
     mutationFn: (id: number) => appointmentsApi.complete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['appointments'] });
+      showToast('success', 'Appointment completed');
+    },
+    onError: (error: Error) => {
+      showToast('error', `Failed to complete appointment: ${error.message}`);
     },
   });
 
@@ -83,6 +119,50 @@ export const AppointmentsList = () => {
 
   const handleFormSuccess = () => {
     handleCloseModal();
+    showToast('success', selectedAppointment ? 'Appointment updated successfully' : 'Appointment created successfully');
+  };
+
+  const handleCancelWithConfirm = (appointment: Appointment) => {
+    showConfirm(
+      'Cancel Appointment',
+      `Are you sure you want to cancel the appointment for "${appointment.patient?.fullNameEn}"?`,
+      () => cancelMutation.mutate({ id: appointment.id }),
+      'warning'
+    );
+  };
+
+  // Export handlers
+  const exportColumns: ExportColumn[] = [
+    { key: 'startTime', label: 'Date & Time', format: formatters.datetime },
+    { key: 'patientName', label: 'Patient' },
+    { key: 'providerName', label: 'Provider' },
+    { key: 'status', label: 'Status' },
+    { key: 'appointmentType', label: 'Type' },
+  ];
+
+  const prepareExportData = () => {
+    return (appointments || []).map((a) => ({
+      ...a,
+      patientName: a.patient?.fullNameEn || 'Unknown',
+      providerName: a.provider?.fullName || 'Not assigned',
+    }));
+  };
+
+  const handleExportCSV = () => {
+    exportToCSV(prepareExportData(), exportColumns, 'appointments.csv');
+    setShowExportMenu(false);
+    showToast('success', 'Appointments exported to CSV');
+  };
+
+  const handleExportExcel = () => {
+    exportToExcel(prepareExportData(), exportColumns, 'appointments.xls');
+    setShowExportMenu(false);
+    showToast('success', 'Appointments exported to Excel');
+  };
+
+  const handlePrint = () => {
+    printTable(prepareExportData(), exportColumns, 'Appointments List');
+    setShowExportMenu(false);
   };
 
   const handleAppointmentClick = (appointment: Appointment) => {
@@ -113,7 +193,7 @@ export const AppointmentsList = () => {
 
   if (error) {
     return (
-      <div className="p-4 bg-red-50 border border-red-200 rounded-md">
+      <div className="p-4 bg-red-50 border border-red-200 rounded-md animate-fade-in">
         <p className="text-sm text-red-600">Error loading appointments: {(error as Error).message}</p>
       </div>
     );
@@ -122,12 +202,49 @@ export const AppointmentsList = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between animate-fade-in">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Appointments</h1>
           <p className="text-gray-600 mt-1">Manage patient appointments and schedules</p>
         </div>
         <div className="flex items-center gap-3">
+          {/* Export Button */}
+          <div className="relative">
+            <button
+              onClick={() => setShowExportMenu(!showExportMenu)}
+              className="btn btn-secondary"
+              disabled={!appointments || appointments.length === 0}
+            >
+              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              Export
+            </button>
+            {showExportMenu && (
+              <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10 border border-gray-200 animate-scale-in">
+                <div className="py-1">
+                  <button
+                    onClick={handleExportCSV}
+                    className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  >
+                    Export as CSV
+                  </button>
+                  <button
+                    onClick={handleExportExcel}
+                    className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  >
+                    Export as Excel
+                  </button>
+                  <button
+                    onClick={handlePrint}
+                    className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  >
+                    Print
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
           {/* View Toggle */}
           <div className="flex bg-gray-100 rounded-lg p-1">
             <button
@@ -171,7 +288,7 @@ export const AppointmentsList = () => {
       </div>
 
       {/* Filters */}
-      <div className="card">
+      <div className="card animate-fade-in">
         <div className="flex items-center gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Filter by Date</label>
@@ -195,28 +312,17 @@ export const AppointmentsList = () => {
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="card">
-          <p className="text-sm text-gray-600">Total</p>
-          <p className="text-2xl font-bold text-gray-900 mt-1">{appointments?.length || 0}</p>
-        </div>
-        <div className="card">
-          <p className="text-sm text-gray-600">Confirmed</p>
-          <p className="text-2xl font-bold text-green-600 mt-1">
-            {appointments?.filter((a) => a.status === AppointmentStatus.Confirmed).length || 0}
-          </p>
-        </div>
-        <div className="card">
-          <p className="text-sm text-gray-600">Checked In</p>
-          <p className="text-2xl font-bold text-purple-600 mt-1">
-            {appointments?.filter((a) => a.status === AppointmentStatus.CheckedIn).length || 0}
-          </p>
-        </div>
-        <div className="card">
-          <p className="text-sm text-gray-600">Completed</p>
-          <p className="text-2xl font-bold text-gray-600 mt-1">
-            {appointments?.filter((a) => a.status === AppointmentStatus.Completed).length || 0}
-          </p>
-        </div>
+        {[
+          { label: 'Total', value: appointments?.length || 0, color: 'text-gray-900' },
+          { label: 'Confirmed', value: appointments?.filter((a) => a.status === AppointmentStatus.Confirmed).length || 0, color: 'text-green-600' },
+          { label: 'Checked In', value: appointments?.filter((a) => a.status === AppointmentStatus.CheckedIn).length || 0, color: 'text-purple-600' },
+          { label: 'Completed', value: appointments?.filter((a) => a.status === AppointmentStatus.Completed).length || 0, color: 'text-gray-600' },
+        ].map((stat, index) => (
+          <div key={stat.label} className="card animate-fade-in" style={{ animationDelay: `${index * 50}ms` }}>
+            <p className="text-sm text-gray-600">{stat.label}</p>
+            <p className={`text-2xl font-bold ${stat.color} mt-1`}>{stat.value}</p>
+          </div>
+        ))}
       </div>
 
       {/* Calendar or Table View */}
@@ -227,11 +333,10 @@ export const AppointmentsList = () => {
           onDateClick={handleDateClick}
         />
       ) : (
-        <div className="card overflow-hidden p-0">
+        <div className="card overflow-hidden p-0 animate-fade-in">
           {isLoading ? (
-            <div className="p-8 text-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto"></div>
-              <p className="text-gray-600 mt-2">Loading appointments...</p>
+            <div className="p-6">
+              <SkeletonTable rows={8} columns={5} />
             </div>
           ) : appointments && appointments.length > 0 ? (
             <div className="overflow-x-auto">
@@ -257,7 +362,7 @@ export const AppointmentsList = () => {
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {appointments.map((appointment) => (
-                  <tr key={appointment.id} className="hover:bg-gray-50">
+                  <tr key={appointment.id} className="hover:bg-gray-50 transition-colors">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-gray-900">
                         {formatDateTime(appointment.startTime)}
@@ -329,9 +434,9 @@ export const AppointmentsList = () => {
                         {(appointment.status === AppointmentStatus.Booked ||
                           appointment.status === AppointmentStatus.Confirmed) && (
                           <button
-                            onClick={() => cancelMutation.mutate({ id: appointment.id })}
+                            onClick={() => handleCancelWithConfirm(appointment)}
                             disabled={cancelMutation.isPending}
-                            className="text-red-600 hover:text-red-900 disabled:opacity-50"
+                            className="text-red-600 hover:text-red-900 disabled:opacity-50 transition-colors"
                           >
                             Cancel
                           </button>
@@ -344,26 +449,37 @@ export const AppointmentsList = () => {
             </table>
           </div>
         ) : (
-          <div className="p-8 text-center">
-            <svg
-              className="mx-auto h-12 w-12 text-gray-400"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-              />
-            </svg>
-            <h3 className="mt-2 text-sm font-medium text-gray-900">No appointments</h3>
-            <p className="mt-1 text-sm text-gray-500">Get started by creating a new appointment.</p>
-          </div>
+          <EmptyState
+            icon={
+              <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                />
+              </svg>
+            }
+            title={selectedDate ? 'No appointments on this date' : 'No appointments yet'}
+            description={selectedDate ? 'Try selecting a different date' : 'Get started by scheduling your first appointment'}
+            action={
+              selectedDate
+                ? undefined
+                : {
+                    label: 'Create Appointment',
+                    onClick: handleOpenCreateModal,
+                  }
+            }
+          />
         )}
         </div>
       )}
+
+      {/* Keyboard Shortcuts Help */}
+      <div className="text-xs text-gray-500 animate-fade-in">
+        <strong>Keyboard shortcuts:</strong> <kbd className="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded">Ctrl+N</kbd> New,{' '}
+        <kbd className="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded">Ctrl+R</kbd> Refresh
+      </div>
 
       {/* Create/Edit Modal */}
       <Modal
@@ -378,6 +494,17 @@ export const AppointmentsList = () => {
           onCancel={handleCloseModal}
         />
       </Modal>
+
+      {/* Confirm Dialog */}
+      <ConfirmDialog
+        isOpen={dialogState.isOpen}
+        onClose={hideConfirm}
+        onConfirm={handleConfirm}
+        title={dialogState.title}
+        message={dialogState.message}
+        variant={dialogState.variant}
+        isLoading={cancelMutation.isPending}
+      />
     </div>
   );
 };

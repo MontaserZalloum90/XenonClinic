@@ -10,6 +10,9 @@ import {
   ShoppingCart,
   Check,
 } from 'lucide-react';
+import { Testimonials } from '@/components/ui/Testimonials';
+import { TrustBadges } from '@/components/ui/TrustBadges';
+import { FAQ } from '@/components/ui/FAQ';
 
 const features = [
   {
@@ -44,6 +47,60 @@ const industries = [
     icon: ShoppingCart,
     name: 'Trading Companies',
     description: 'Inventory, sales, procurement, and financial management.',
+  },
+];
+
+const testimonials = [
+  {
+    id: 1,
+    name: 'Dr. Ahmed Al-Mansoori',
+    role: 'Medical Director',
+    company: 'Dubai Health Clinic',
+    content: 'Xenon Platform transformed how we manage our 5 branches. Patient scheduling is seamless, and the reporting features give us insights we never had before.',
+    rating: 5,
+  },
+  {
+    id: 2,
+    name: 'Sarah Al-Hashimi',
+    role: 'Operations Manager',
+    company: 'Gulf Trading Co.',
+    content: 'The inventory management module alone has saved us thousands in waste reduction. The multi-branch support is exactly what we needed.',
+    rating: 5,
+  },
+  {
+    id: 3,
+    name: 'Dr. Fatima Rahman',
+    role: 'Audiology Specialist',
+    company: 'Hearing Care Center',
+    content: 'The specialized audiology module with audiogram charting is incredible. It saved us hours of paperwork and improved patient care quality.',
+    rating: 5,
+  },
+];
+
+const faqs = [
+  {
+    question: 'How quickly can we get started?',
+    answer: 'Most businesses are up and running within 24-48 hours. We provide guided onboarding, data migration assistance, and training for your team to ensure a smooth transition.',
+  },
+  {
+    question: 'Is my data secure and compliant?',
+    answer: 'Absolutely. We employ bank-level 256-bit SSL encryption, are HIPAA-ready for healthcare data, and maintain ISO 27001 certification. All data is stored in secure Gulf region data centers with regular backups.',
+  },
+  {
+    question: 'Can I customize the platform for my business?',
+    answer: 'Yes! Xenon Platform is highly configurable. You can customize workflows, forms, reports, and even add custom fields specific to your business needs without any coding required.',
+  },
+  {
+    question: 'What kind of support do you provide?',
+    answer: 'We offer 24/7 support via email and chat, with phone support during business hours. All plans include free onboarding, training resources, and regular system updates at no additional cost.',
+  },
+  {
+    question: 'Can I integrate with my existing tools?',
+    answer: 'Yes. Xenon Platform offers REST APIs and supports integration with popular tools like accounting software, payment gateways, and laboratory systems.',
+  },
+  {
+    question: 'What happens to my data if I cancel?',
+    answer: 'You maintain complete ownership of your data. We provide full data export in standard formats (Excel, CSV, PDF) at any time, and you can download all your data if you decide to cancel.',
   },
 ];
 
@@ -105,6 +162,9 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* Trust Badges */}
+      <TrustBadges />
+
       {/* Industries Section */}
       <section className="section-padding bg-gray-50">
         <div className="container-marketing">
@@ -132,8 +192,21 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Pricing Preview */}
+      {/* Testimonials Section */}
       <section className="section-padding bg-white">
+        <div className="container-marketing">
+          <div className="text-center mb-12">
+            <h2 className="heading-2 text-gray-900 mb-4">Trusted by businesses across the Gulf</h2>
+            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+              See what our customers have to say about transforming their operations with Xenon Platform.
+            </p>
+          </div>
+          <Testimonials testimonials={testimonials} />
+        </div>
+      </section>
+
+      {/* Pricing Preview */}
+      <section className="section-padding bg-gray-50">
         <div className="container-marketing">
           <div className="text-center mb-12">
             <h2 className="heading-2 text-gray-900 mb-4">Simple, transparent pricing</h2>
@@ -195,6 +268,19 @@ export default function HomePage() {
               View full pricing details <ArrowRight className="inline ml-1 h-4 w-4" />
             </Link>
           </div>
+        </div>
+      </section>
+
+      {/* FAQ Section */}
+      <section className="section-padding bg-white">
+        <div className="container-marketing max-w-4xl">
+          <div className="text-center mb-12">
+            <h2 className="heading-2 text-gray-900 mb-4">Frequently Asked Questions</h2>
+            <p className="text-lg text-gray-600">
+              Everything you need to know about Xenon Platform
+            </p>
+          </div>
+          <FAQ items={faqs} />
         </div>
       </section>
 

@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from './contexts/AuthContext';
 import { ProtectedRoute, Roles } from './components/ProtectedRoute';
 import { Layout } from './components/layout/Layout';
+import { ToastProvider } from './components/ui/Toast';
 import { Login } from './pages/Login';
 import { Dashboard } from './pages/Dashboard';
 import { AppointmentsList } from './pages/Appointments/AppointmentsList';
@@ -32,8 +33,9 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <BrowserRouter>
-          <Routes>
+        <ToastProvider>
+          <BrowserRouter>
+            <Routes>
             {/* Public Routes */}
             <Route path="/login" element={<Login />} />
 
@@ -157,6 +159,7 @@ function App() {
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
+        </ToastProvider>
       </AuthProvider>
     </QueryClientProvider>
   );
