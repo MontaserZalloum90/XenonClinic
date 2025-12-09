@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import {
   Cog6ToothIcon,
   CircleStackIcon,
@@ -13,6 +14,8 @@ import {
   CalendarIcon,
   BuildingStorefrontIcon,
   DocumentTextIcon,
+  LanguageIcon,
+  ChevronRightIcon,
 } from '@heroicons/react/24/outline';
 import { demoService, type DemoStatus, type ClinicType } from '../../lib/demo';
 
@@ -165,6 +168,29 @@ export const AdminDashboard = () => {
           </h1>
           <p className="text-gray-600">System settings and demo data management</p>
         </div>
+      </div>
+
+      {/* Admin Quick Navigation */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <Link
+          to="/admin/translations"
+          className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow group"
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-primary-100 rounded-lg flex items-center justify-center">
+                <LanguageIcon className="h-6 w-6 text-primary-600" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 group-hover:text-primary-600">
+                  Translation Management
+                </h3>
+                <p className="text-sm text-gray-500">Customize labels and terminology</p>
+              </div>
+            </div>
+            <ChevronRightIcon className="h-5 w-5 text-gray-400 group-hover:text-primary-600" />
+          </div>
+        </Link>
       </div>
 
       {/* Demo Data Management Section */}
