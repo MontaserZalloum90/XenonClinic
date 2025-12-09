@@ -19,7 +19,6 @@ import {
   ArrowLeftIcon,
 } from '@heroicons/react/24/outline';
 import { useTenant } from '../../contexts/TenantContext';
-import { useAuth } from '../../contexts/AuthContext';
 
 interface Toast {
   type: 'success' | 'error' | 'info';
@@ -195,8 +194,7 @@ const generateFallback = (key: string): string => {
 };
 
 export const TranslationManagement = () => {
-  const { context, refresh } = useTenant();
-  const { token } = useAuth();
+  const { context, refresh, updateTerminology, isCacheValid } = useTenant();
   const [translations, setTranslations] = useState<TranslationEntry[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
@@ -356,22 +354,11 @@ export const TranslationManagement = () => {
         }
       });
 
-      const response = await fetch('/api/admin/terminology', {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(updatedTerminology),
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed to save translations: ${response.status}`);
-      }
+      // Use updateTerminology from context - this handles API call + cache invalidation
+      await updateTerminology(updatedTerminology);
 
       setPendingChanges({});
-      await refresh();
-      showToast('success', 'Translations saved successfully');
+      showToast('success', 'Translations saved and cache refreshed');
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to save translations';
       showToast('error', message);
@@ -575,7 +562,7 @@ export const TranslationManagement = () => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
         <div className="bg-white rounded-lg shadow p-4">
           <div className="text-sm font-medium text-gray-500">Total Keys</div>
           <div className="text-2xl font-bold text-gray-900">{translations.length}</div>
@@ -593,6 +580,20 @@ export const TranslationManagement = () => {
         <div className="bg-white rounded-lg shadow p-4">
           <div className="text-sm font-medium text-gray-500">Categories</div>
           <div className="text-2xl font-bold text-gray-900">{categories.length - 1}</div>
+        </div>
+        <div className="bg-white rounded-lg shadow p-4">
+          <div className="text-sm font-medium text-gray-500">Cache Status</div>
+          <div className="flex items-center gap-2 mt-1">
+            <span
+              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                isCacheValid
+                  ? 'bg-green-100 text-green-800'
+                  : 'bg-yellow-100 text-yellow-800'
+              }`}
+            >
+              {isCacheValid ? 'Valid' : 'Stale'}
+            </span>
+          </div>
         </div>
       </div>
 

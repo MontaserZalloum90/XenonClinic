@@ -2,13 +2,95 @@ import React, { createContext, useContext, useEffect, useState, useCallback, use
 import type {
   TenantContext,
   TenantContextState,
-  FeatureMap,
   UISchema,
   FormLayout,
   ListLayout,
   NavItem,
 } from '../types/tenant';
 import { useAuth } from './AuthContext';
+
+// ============================================
+// Cache Constants
+// ============================================
+
+const CACHE_KEY = 'tenantContext';
+const CACHE_TIMESTAMP_KEY = 'tenantContextTimestamp';
+const CACHE_VERSION_KEY = 'tenantContextVersion';
+const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes cache TTL
+const CURRENT_CACHE_VERSION = '1.0';
+
+// ============================================
+// Cache Utilities
+// ============================================
+
+interface CachedContext {
+  terminology: Record<string, string>;
+  companyType: string;
+  clinicType: string | null;
+  settings: TenantContext['settings'];
+}
+
+const getCachedContext = (): CachedContext | null => {
+  try {
+    const version = localStorage.getItem(CACHE_VERSION_KEY);
+    if (version !== CURRENT_CACHE_VERSION) {
+      // Clear old cache if version mismatch
+      clearCache();
+      return null;
+    }
+
+    const timestamp = localStorage.getItem(CACHE_TIMESTAMP_KEY);
+    if (timestamp) {
+      const cacheAge = Date.now() - parseInt(timestamp, 10);
+      if (cacheAge > CACHE_TTL_MS) {
+        // Cache expired
+        return null;
+      }
+    }
+
+    const cached = localStorage.getItem(CACHE_KEY);
+    if (cached) {
+      return JSON.parse(cached) as CachedContext;
+    }
+  } catch {
+    // Ignore parse errors
+  }
+  return null;
+};
+
+const setCachedContext = (context: TenantContext): void => {
+  try {
+    localStorage.setItem(CACHE_KEY, JSON.stringify({
+      terminology: context.terminology,
+      companyType: context.companyType,
+      clinicType: context.clinicType,
+      settings: context.settings,
+    }));
+    localStorage.setItem(CACHE_TIMESTAMP_KEY, Date.now().toString());
+    localStorage.setItem(CACHE_VERSION_KEY, CURRENT_CACHE_VERSION);
+  } catch {
+    // Ignore storage errors
+  }
+};
+
+const clearCache = (): void => {
+  try {
+    localStorage.removeItem(CACHE_KEY);
+    localStorage.removeItem(CACHE_TIMESTAMP_KEY);
+    localStorage.removeItem(CACHE_VERSION_KEY);
+  } catch {
+    // Ignore storage errors
+  }
+};
+
+const invalidateCache = (): void => {
+  // Set timestamp to 0 to force refresh on next access
+  try {
+    localStorage.setItem(CACHE_TIMESTAMP_KEY, '0');
+  } catch {
+    // Ignore storage errors
+  }
+};
 
 // ============================================
 // Context Interface
@@ -35,8 +117,11 @@ interface TenantContextValue extends TenantContextState {
   isTrading: boolean;
   clinicType: string | null;
 
-  // Refresh
+  // Cache management
   refresh: () => Promise<void>;
+  updateTerminology: (terminology: Record<string, string>) => Promise<void>;
+  invalidateCache: () => void;
+  isCacheValid: boolean;
 }
 
 const TenantContextContext = createContext<TenantContextValue | undefined>(undefined);
@@ -51,18 +136,65 @@ interface TenantContextProviderProps {
 
 export const TenantContextProvider: React.FC<TenantContextProviderProps> = ({ children }) => {
   const { isAuthenticated, token } = useAuth();
-  const [state, setState] = useState<TenantContextState>({
-    context: null,
-    isLoading: false,
-    error: null,
-    isInitialized: false,
+  const [state, setState] = useState<TenantContextState>(() => {
+    // Try to load from cache on initial mount for faster first render
+    const cached = getCachedContext();
+    if (cached) {
+      return {
+        context: {
+          tenantId: 0,
+          tenantName: '',
+          companyId: 0,
+          companyName: '',
+          companyType: cached.companyType as TenantContext['companyType'],
+          clinicType: cached.clinicType as TenantContext['clinicType'],
+          branchId: 0,
+          branchName: '',
+          logoUrl: null,
+          primaryColor: '#3B82F6',
+          secondaryColor: '#1E40AF',
+          userId: '',
+          userName: '',
+          userRoles: [],
+          userPermissions: [],
+          features: {},
+          terminology: cached.terminology,
+          navigation: [],
+          uiSchemas: {},
+          formLayouts: {},
+          listLayouts: {},
+          settings: cached.settings,
+        },
+        isLoading: false,
+        error: null,
+        isInitialized: false, // Still need to fetch full context
+      };
+    }
+    return {
+      context: null,
+      isLoading: false,
+      error: null,
+      isInitialized: false,
+    };
   });
+  const [isCacheValid, setIsCacheValid] = useState<boolean>(() => getCachedContext() !== null);
 
   // Fetch tenant context from API
-  const fetchContext = useCallback(async () => {
+  const fetchContext = useCallback(async (forceRefresh = false) => {
     if (!isAuthenticated || !token) {
       setState(prev => ({ ...prev, isLoading: false, isInitialized: true }));
       return;
+    }
+
+    // Check cache validity unless forced refresh
+    if (!forceRefresh) {
+      const cached = getCachedContext();
+      if (cached && state.context?.terminology) {
+        // Cache is still valid, no need to fetch
+        setIsCacheValid(true);
+        setState(prev => ({ ...prev, isInitialized: true }));
+        return;
+      }
     }
 
     setState(prev => ({ ...prev, isLoading: true, error: null }));
@@ -88,17 +220,9 @@ export const TenantContextProvider: React.FC<TenantContextProviderProps> = ({ ch
         isInitialized: true,
       });
 
-      // Cache in localStorage (safe subset only)
-      try {
-        localStorage.setItem('tenantContext', JSON.stringify({
-          terminology: context.terminology,
-          companyType: context.companyType,
-          clinicType: context.clinicType,
-          settings: context.settings,
-        }));
-      } catch {
-        // Ignore storage errors
-      }
+      // Update cache
+      setCachedContext(context);
+      setIsCacheValid(true);
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to load configuration';
       setState(prev => ({
@@ -107,8 +231,42 @@ export const TenantContextProvider: React.FC<TenantContextProviderProps> = ({ ch
         error: message,
         isInitialized: true,
       }));
+      setIsCacheValid(false);
     }
-  }, [isAuthenticated, token]);
+  }, [isAuthenticated, token, state.context?.terminology]);
+
+  // Update terminology and refresh cache
+  const updateTerminology = useCallback(async (terminology: Record<string, string>) => {
+    if (!isAuthenticated || !token) {
+      throw new Error('Not authenticated');
+    }
+
+    const response = await fetch('/api/admin/terminology', {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(terminology),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to update terminology: ${response.status}`);
+    }
+
+    // Invalidate cache and force refresh
+    invalidateCache();
+    setIsCacheValid(false);
+
+    // Fetch fresh context from server
+    await fetchContext(true);
+  }, [isAuthenticated, token, fetchContext]);
+
+  // Handle cache invalidation
+  const handleInvalidateCache = useCallback(() => {
+    invalidateCache();
+    setIsCacheValid(false);
+  }, []);
 
   // Initial fetch
   useEffect(() => {
@@ -126,7 +284,8 @@ export const TenantContextProvider: React.FC<TenantContextProviderProps> = ({ ch
         error: null,
         isInitialized: false,
       });
-      localStorage.removeItem('tenantContext');
+      clearCache();
+      setIsCacheValid(false);
     }
   }, [isAuthenticated, state.context]);
 
@@ -177,8 +336,11 @@ export const TenantContextProvider: React.FC<TenantContextProviderProps> = ({ ch
     isClinic: state.context?.companyType === 'CLINIC',
     isTrading: state.context?.companyType === 'TRADING',
     clinicType: state.context?.clinicType ?? null,
-    refresh: fetchContext,
-  }), [state, t, hasFeature, getFeatureSettings, getSchema, getFormLayout, getListLayout, fetchContext]);
+    refresh: () => fetchContext(true),
+    updateTerminology,
+    invalidateCache: handleInvalidateCache,
+    isCacheValid,
+  }), [state, t, hasFeature, getFeatureSettings, getSchema, getFormLayout, getListLayout, fetchContext, updateTerminology, handleInvalidateCache, isCacheValid]);
 
   return (
     <TenantContextContext.Provider value={value}>
