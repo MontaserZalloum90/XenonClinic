@@ -1,4 +1,6 @@
-namespace XenonClinic.Core.Entities;
+using XenonClinic.Core.Entities;
+
+namespace XenonClinic.Infrastructure.Entities;
 
 /// <summary>
 /// Authentication mode for a company
@@ -14,7 +16,8 @@ public enum AuthMode
 }
 
 /// <summary>
-/// Per-company authentication settings
+/// Per-company authentication settings.
+/// This is in Infrastructure because it's authentication infrastructure configuration.
 /// </summary>
 public class CompanyAuthSettings
 {
