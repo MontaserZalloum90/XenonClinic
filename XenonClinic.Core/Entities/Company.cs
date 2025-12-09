@@ -25,6 +25,17 @@ public class Company
     public string SecondaryColor { get; set; } = "#6B7280";
     public string? Currency { get; set; } = "AED";
     public string? Timezone { get; set; } = "Arabian Standard Time";
+
+    /// <summary>
+    /// Type of company (CLINIC, TRADING, etc.)
+    /// </summary>
+    public string CompanyTypeCode { get; set; } = "CLINIC";
+
+    /// <summary>
+    /// Type of clinic (only used when CompanyTypeCode = CLINIC)
+    /// </summary>
+    public string? ClinicTypeCode { get; set; }
+
     public bool IsActive { get; set; } = true;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public string? CreatedBy { get; set; }
@@ -33,6 +44,8 @@ public class Company
 
     // Navigation properties
     public Tenant Tenant { get; set; } = null!;
+    public CompanyType? CompanyType { get; set; }
+    public ClinicType? ClinicType { get; set; }
     public ICollection<Branch> Branches { get; set; } = new List<Branch>();
     public ICollection<ApplicationUser> Users { get; set; } = new List<ApplicationUser>();
 

@@ -34,4 +34,12 @@ public class Tenant
     public ICollection<Company> Companies { get; set; } = new List<Company>();
     public ICollection<ApplicationUser> Users { get; set; } = new List<ApplicationUser>();
     public TenantSettings? Settings { get; set; }
+
+    // Configuration overrides
+    public ICollection<TenantFeature> Features { get; set; } = new List<TenantFeature>();
+    public ICollection<TenantTerminology> Terminology { get; set; } = new List<TenantTerminology>();
+    public ICollection<TenantUISchema> UISchemas { get; set; } = new List<TenantUISchema>();
+    public ICollection<TenantFormLayout> FormLayouts { get; set; } = new List<TenantFormLayout>();
+    public ICollection<TenantListLayout> ListLayouts { get; set; } = new List<TenantListLayout>();
+    public TenantNavigation? Navigation { get; set; }
 }

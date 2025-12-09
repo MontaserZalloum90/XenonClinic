@@ -173,4 +173,116 @@ export const radiologyApi = {
   getStatistics: () => api.get('/api/RadiologyApi/statistics'),
 };
 
+// ============================================
+// AUDIOLOGY API ENDPOINTS
+// ============================================
+
+export const audiogramApi = {
+  getAll: () => api.get('/api/AudiologyApi/audiograms'),
+  getById: (id: number) => api.get(`/api/AudiologyApi/audiograms/${id}`),
+  getByPatient: (patientId: number) => api.get(`/api/AudiologyApi/audiograms/patient/${patientId}`),
+  getLatestByPatient: (patientId: number) => api.get(`/api/AudiologyApi/audiograms/patient/${patientId}/latest`),
+  create: (data: any) => api.post('/api/AudiologyApi/audiograms', data),
+  update: (id: number, data: any) => api.put(`/api/AudiologyApi/audiograms/${id}`, data),
+  delete: (id: number) => api.delete(`/api/AudiologyApi/audiograms/${id}`),
+  compare: (patientId: number, audiogramIds: number[]) =>
+    api.post(`/api/AudiologyApi/audiograms/patient/${patientId}/compare`, { audiogramIds }),
+};
+
+export const hearingAidApi = {
+  getAll: () => api.get('/api/AudiologyApi/hearing-aids'),
+  getById: (id: number) => api.get(`/api/AudiologyApi/hearing-aids/${id}`),
+  getByPatient: (patientId: number) => api.get(`/api/AudiologyApi/hearing-aids/patient/${patientId}`),
+  getBySerialNumber: (serialNumber: string) =>
+    api.get(`/api/AudiologyApi/hearing-aids/serial/${encodeURIComponent(serialNumber)}`),
+  getWarrantyExpiring: (days: number = 30) =>
+    api.get(`/api/AudiologyApi/hearing-aids/warranty-expiring?days=${days}`),
+  create: (data: any) => api.post('/api/AudiologyApi/hearing-aids', data),
+  update: (id: number, data: any) => api.put(`/api/AudiologyApi/hearing-aids/${id}`, data),
+  delete: (id: number) => api.delete(`/api/AudiologyApi/hearing-aids/${id}`),
+  updateStatus: (id: number, status: string) =>
+    api.post(`/api/AudiologyApi/hearing-aids/${id}/status`, { status }),
+
+  // Fittings
+  getFittings: (hearingAidId: number) => api.get(`/api/AudiologyApi/hearing-aids/${hearingAidId}/fittings`),
+  createFitting: (hearingAidId: number, data: any) =>
+    api.post(`/api/AudiologyApi/hearing-aids/${hearingAidId}/fittings`, data),
+  updateFitting: (hearingAidId: number, fittingId: number, data: any) =>
+    api.put(`/api/AudiologyApi/hearing-aids/${hearingAidId}/fittings/${fittingId}`, data),
+
+  // Adjustments
+  getAdjustments: (hearingAidId: number) => api.get(`/api/AudiologyApi/hearing-aids/${hearingAidId}/adjustments`),
+  createAdjustment: (hearingAidId: number, data: any) =>
+    api.post(`/api/AudiologyApi/hearing-aids/${hearingAidId}/adjustments`, data),
+};
+
+export const encounterApi = {
+  getAll: () => api.get('/api/AudiologyApi/encounters'),
+  getById: (id: number) => api.get(`/api/AudiologyApi/encounters/${id}`),
+  getByPatient: (patientId: number) => api.get(`/api/AudiologyApi/encounters/patient/${patientId}`),
+  getToday: () => api.get('/api/AudiologyApi/encounters/today'),
+  getByDateRange: (startDate: string, endDate: string) =>
+    api.get('/api/AudiologyApi/encounters', { params: { startDate, endDate } }),
+  getByStatus: (status: string) => api.get(`/api/AudiologyApi/encounters/status/${status}`),
+  create: (data: any) => api.post('/api/AudiologyApi/encounters', data),
+  update: (id: number, data: any) => api.put(`/api/AudiologyApi/encounters/${id}`, data),
+  delete: (id: number) => api.delete(`/api/AudiologyApi/encounters/${id}`),
+  updateStatus: (id: number, status: string) =>
+    api.post(`/api/AudiologyApi/encounters/${id}/status`, { status }),
+  complete: (id: number) => api.post(`/api/AudiologyApi/encounters/${id}/complete`),
+
+  // Tasks
+  getTasks: (encounterId: number) => api.get(`/api/AudiologyApi/encounters/${encounterId}/tasks`),
+  createTask: (encounterId: number, data: any) =>
+    api.post(`/api/AudiologyApi/encounters/${encounterId}/tasks`, data),
+  updateTask: (encounterId: number, taskId: number, data: any) =>
+    api.put(`/api/AudiologyApi/encounters/${encounterId}/tasks/${taskId}`, data),
+  completeTask: (encounterId: number, taskId: number) =>
+    api.post(`/api/AudiologyApi/encounters/${encounterId}/tasks/${taskId}/complete`),
+  deleteTask: (encounterId: number, taskId: number) =>
+    api.delete(`/api/AudiologyApi/encounters/${encounterId}/tasks/${taskId}`),
+
+  // All tasks (across encounters)
+  getAllPendingTasks: () => api.get('/api/AudiologyApi/tasks/pending'),
+  getOverdueTasks: () => api.get('/api/AudiologyApi/tasks/overdue'),
+  getTasksByAssignee: (assignee: string) =>
+    api.get(`/api/AudiologyApi/tasks/assignee/${encodeURIComponent(assignee)}`),
+};
+
+export const consentApi = {
+  getAll: () => api.get('/api/AudiologyApi/consents'),
+  getById: (id: number) => api.get(`/api/AudiologyApi/consents/${id}`),
+  getByPatient: (patientId: number) => api.get(`/api/AudiologyApi/consents/patient/${patientId}`),
+  getPending: (patientId: number) => api.get(`/api/AudiologyApi/consents/patient/${patientId}/pending`),
+  create: (data: any) => api.post('/api/AudiologyApi/consents', data),
+  sign: (id: number, data: any) => api.post(`/api/AudiologyApi/consents/${id}/sign`, data),
+  revoke: (id: number, reason: string) =>
+    api.post(`/api/AudiologyApi/consents/${id}/revoke`, { reason }),
+  delete: (id: number) => api.delete(`/api/AudiologyApi/consents/${id}`),
+  getFormTemplate: (consentType: string) =>
+    api.get(`/api/AudiologyApi/consents/templates/${consentType}`),
+};
+
+export const attachmentApi = {
+  getByPatient: (patientId: number) => api.get(`/api/AudiologyApi/attachments/patient/${patientId}`),
+  getByEncounter: (encounterId: number) => api.get(`/api/AudiologyApi/attachments/encounter/${encounterId}`),
+  getById: (id: number) => api.get(`/api/AudiologyApi/attachments/${id}`),
+  upload: (data: FormData) =>
+    api.post('/api/AudiologyApi/attachments', data, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }),
+  download: (id: number) =>
+    api.get(`/api/AudiologyApi/attachments/${id}/download`, { responseType: 'blob' }),
+  delete: (id: number) => api.delete(`/api/AudiologyApi/attachments/${id}`),
+  updateMetadata: (id: number, data: any) => api.put(`/api/AudiologyApi/attachments/${id}`, data),
+};
+
+export const audiologyStatsApi = {
+  getDashboard: () => api.get('/api/AudiologyApi/statistics/dashboard'),
+  getEncounterStats: (startDate?: string, endDate?: string) =>
+    api.get('/api/AudiologyApi/statistics/encounters', { params: { startDate, endDate } }),
+  getHearingAidStats: () => api.get('/api/AudiologyApi/statistics/hearing-aids'),
+  getPatientStats: () => api.get('/api/AudiologyApi/statistics/patients'),
+};
+
 export default api;
