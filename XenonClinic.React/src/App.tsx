@@ -1,7 +1,7 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from './contexts/AuthContext';
-import { ProtectedRoute } from './components/ProtectedRoute';
+import { ProtectedRoute, Roles } from './components/ProtectedRoute';
 import { Layout } from './components/layout/Layout';
 import { Login } from './pages/Login';
 import { Dashboard } from './pages/Dashboard';
@@ -13,6 +13,7 @@ import { FinancialList } from './pages/Financial/FinancialList';
 import { InventoryList } from './pages/Inventory/InventoryList';
 import { PharmacyList } from './pages/Pharmacy/PharmacyList';
 import { RadiologyList } from './pages/Radiology/RadiologyList';
+import { NotFound, Forbidden } from './pages/Error';
 
 // Create React Query client
 const queryClient = new QueryClient({
@@ -33,6 +34,10 @@ function App() {
           <Routes>
             {/* Public Routes */}
             <Route path="/login" element={<Login />} />
+
+            {/* Error Pages */}
+            <Route path="/forbidden" element={<Forbidden />} />
+            <Route path="/404" element={<NotFound />} />
 
             {/* Protected Routes with Layout */}
             <Route
@@ -68,7 +73,7 @@ function App() {
             <Route
               path="/laboratory"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute requiredRoles={[Roles.ADMIN, Roles.DOCTOR, Roles.NURSE, Roles.LAB_TECHNICIAN]}>
                   <Layout>
                     <LaboratoryList />
                   </Layout>
@@ -78,7 +83,7 @@ function App() {
             <Route
               path="/hr"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute requiredRoles={[Roles.ADMIN, Roles.HR_MANAGER]}>
                   <Layout>
                     <HRList />
                   </Layout>
@@ -88,7 +93,7 @@ function App() {
             <Route
               path="/financial"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute requiredRoles={[Roles.ADMIN, Roles.ACCOUNTANT]}>
                   <Layout>
                     <FinancialList />
                   </Layout>
@@ -98,7 +103,7 @@ function App() {
             <Route
               path="/inventory"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute requiredRoles={[Roles.ADMIN, Roles.PHARMACIST, Roles.NURSE]}>
                   <Layout>
                     <InventoryList />
                   </Layout>
@@ -108,7 +113,7 @@ function App() {
             <Route
               path="/pharmacy"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute requiredRoles={[Roles.ADMIN, Roles.DOCTOR, Roles.PHARMACIST]}>
                   <Layout>
                     <PharmacyList />
                   </Layout>
@@ -118,7 +123,7 @@ function App() {
             <Route
               path="/radiology"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute requiredRoles={[Roles.ADMIN, Roles.DOCTOR, Roles.RADIOLOGIST]}>
                   <Layout>
                     <RadiologyList />
                   </Layout>
@@ -126,8 +131,8 @@ function App() {
               }
             />
 
-            {/* Catch all - redirect to home */}
-            <Route path="*" element={<Navigate to="/" replace />} />
+            {/* Catch all - show 404 page */}
+            <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
       </AuthProvider>
