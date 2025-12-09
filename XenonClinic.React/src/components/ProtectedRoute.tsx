@@ -72,4 +72,5 @@ export const Roles = {
   RADIOLOGIST: 'Radiologist',
   HR_MANAGER: 'HRManager',
   ACCOUNTANT: 'Accountant',
+  MARKETING_MANAGER: 'MarketingManager',
 } as const;

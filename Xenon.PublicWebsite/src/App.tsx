@@ -7,6 +7,7 @@ import { ToastProvider } from './components/ui/Toast';
 import HomePage from './pages/Home';
 import AboutPage from './pages/About';
 import FeaturesPage from './pages/Features';
+import MarketingModulePage from './pages/Marketing';
 import PricingPage from './pages/Pricing';
 import ContactPage from './pages/Contact';
 import DemoPage from './pages/Demo';
@@ -28,6 +29,7 @@ export default function App() {
         <Route path="/" element={<HomePage />} />
         <Route path="/about" element={<AboutPage />} />
         <Route path="/features" element={<FeaturesPage />} />
+        <Route path="/features/marketing" element={<MarketingModulePage />} />
         <Route path="/pricing" element={<PricingPage />} />
         <Route path="/contact" element={<ContactPage />} />
         <Route path="/demo" element={<DemoPage />} />
