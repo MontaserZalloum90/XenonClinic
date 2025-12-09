@@ -76,3 +76,62 @@ export {
   type EncryptedData,
   type SensitiveField,
 } from './encryption';
+
+// File Upload Security
+export {
+  FILE_UPLOAD_CONFIGS,
+  validateFile,
+  validateFiles,
+  sanitizeFilename,
+  getFileExtension,
+  isDangerousExtension,
+  isAllowedExtension,
+  detectMimeType,
+  generateSecureFilename,
+  createSecureFilePath,
+  formatFileSize,
+  isImageFile,
+  createImagePreview,
+  revokeImagePreview,
+  type FileUploadConfig,
+  type FileValidationResult,
+  type FileValidationOptions,
+} from './fileUpload';
+
+// Password Policy & Account Lockout
+export {
+  DEFAULT_PASSWORD_POLICY,
+  HIPAA_PASSWORD_POLICY,
+  DEFAULT_LOCKOUT_POLICY,
+  validatePassword,
+  getPasswordStrengthLabel,
+  isAccountLocked,
+  recordFailedAttempt,
+  clearLockoutState,
+  getFailedAttempts,
+  isPasswordExpired,
+  getDaysUntilExpiration,
+  getLockoutState,
+  type PasswordPolicy,
+  type AccountLockoutPolicy,
+  type PasswordValidationResult,
+} from './passwordPolicy';
+
+// CSRF Protection
+export {
+  generateCsrfToken,
+  getOrCreateCsrfToken,
+  refreshCsrfToken,
+  clearCsrfToken,
+  getCsrfHeader,
+  withCsrfProtection,
+  requiresCsrfProtection,
+  createAxiosCsrfInterceptor,
+  getCsrfFormField,
+  validateFormCsrfToken,
+  initializeCsrfProtection,
+  useCsrfToken,
+  secureFetch,
+  validateOrigin,
+  getCurrentOrigin,
+} from './csrf';
