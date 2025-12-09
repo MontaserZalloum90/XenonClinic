@@ -1,7 +1,13 @@
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using XenonClinic.Core.Entities;
+using XenonClinic.Core.Entities.Dental;
+using XenonClinic.Core.Entities.Dermatology;
 using XenonClinic.Core.Entities.Lookups;
+using XenonClinic.Core.Entities.Ophthalmology;
+using XenonClinic.Core.Entities.Pediatrics;
+using XenonClinic.Core.Entities.Physiotherapy;
+using XenonClinic.Core.Entities.Veterinary;
 using XenonClinic.Infrastructure.Entities;
 
 namespace XenonClinic.Infrastructure.Data;
@@ -72,6 +78,67 @@ public class ClinicDbContext : IdentityDbContext<Entities.ApplicationUser>
 
     // Audit Logging
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
+
+    // ========================================
+    // Dental Clinic Entities
+    // ========================================
+    public DbSet<DentalVisit> DentalVisits => Set<DentalVisit>();
+    public DbSet<ToothChart> ToothCharts => Set<ToothChart>();
+    public DbSet<ToothRecord> ToothRecords => Set<ToothRecord>();
+    public DbSet<DentalProcedure> DentalProcedures => Set<DentalProcedure>();
+    public DbSet<DentalTreatmentPlan> DentalTreatmentPlans => Set<DentalTreatmentPlan>();
+    public DbSet<DentalTreatmentPlanItem> DentalTreatmentPlanItems => Set<DentalTreatmentPlanItem>();
+    public DbSet<DentalXRay> DentalXRays => Set<DentalXRay>();
+
+    // ========================================
+    // Veterinary Clinic Entities
+    // ========================================
+    public DbSet<Pet> Pets => Set<Pet>();
+    public DbSet<PetOwner> PetOwners => Set<PetOwner>();
+    public DbSet<VetVisit> VetVisits => Set<VetVisit>();
+    public DbSet<VetProcedure> VetProcedures => Set<VetProcedure>();
+    public DbSet<Vaccination> Vaccinations => Set<Vaccination>();
+    public DbSet<GroomingAppointment> GroomingAppointments => Set<GroomingAppointment>();
+    public DbSet<BoardingReservation> BoardingReservations => Set<BoardingReservation>();
+
+    // ========================================
+    // Ophthalmology Clinic Entities
+    // ========================================
+    public DbSet<OphthalmologyVisit> OphthalmologyVisits => Set<OphthalmologyVisit>();
+    public DbSet<VisionTest> VisionTests => Set<VisionTest>();
+    public DbSet<EyeExam> EyeExams => Set<EyeExam>();
+    public DbSet<EyePrescription> EyePrescriptions => Set<EyePrescription>();
+    public DbSet<EyeProcedure> EyeProcedures => Set<EyeProcedure>();
+    public DbSet<EyeCondition> EyeConditions => Set<EyeCondition>();
+
+    // ========================================
+    // Dermatology Clinic Entities
+    // ========================================
+    public DbSet<DermatologyVisit> DermatologyVisits => Set<DermatologyVisit>();
+    public DbSet<SkinCondition> SkinConditions => Set<SkinCondition>();
+    public DbSet<LesionRecord> LesionRecords => Set<LesionRecord>();
+    public DbSet<SkinProcedure> SkinProcedures => Set<SkinProcedure>();
+    public DbSet<SkinTreatmentPlan> SkinTreatmentPlans => Set<SkinTreatmentPlan>();
+
+    // ========================================
+    // Physiotherapy Clinic Entities
+    // ========================================
+    public DbSet<PhysioAssessment> PhysioAssessments => Set<PhysioAssessment>();
+    public DbSet<PhysioSession> PhysioSessions => Set<PhysioSession>();
+    public DbSet<ExerciseProgram> ExercisePrograms => Set<ExerciseProgram>();
+    public DbSet<ExerciseProgramItem> ExerciseProgramItems => Set<ExerciseProgramItem>();
+    public DbSet<RangeOfMotionRecord> RangeOfMotionRecords => Set<RangeOfMotionRecord>();
+    public DbSet<FunctionalOutcome> FunctionalOutcomes => Set<FunctionalOutcome>();
+
+    // ========================================
+    // Pediatrics Clinic Entities
+    // ========================================
+    public DbSet<PediatricVisit> PediatricVisits => Set<PediatricVisit>();
+    public DbSet<GrowthRecord> GrowthRecords => Set<GrowthRecord>();
+    public DbSet<VaccinationRecord> VaccinationRecords => Set<VaccinationRecord>();
+    public DbSet<DevelopmentalMilestone> DevelopmentalMilestones => Set<DevelopmentalMilestone>();
+    public DbSet<DevelopmentalScreening> DevelopmentalScreenings => Set<DevelopmentalScreening>();
+    public DbSet<NewbornRecord> NewbornRecords => Set<NewbornRecord>();
 
     // Dynamic Lookup entities
     public DbSet<AppointmentTypeLookup> AppointmentTypeLookups => Set<AppointmentTypeLookup>();
@@ -320,7 +387,7 @@ public class ClinicDbContext : IdentityDbContext<Entities.ApplicationUser>
 
         builder.Entity<AudiologyVisit>()
             .HasOne(v => v.Patient)
-            .WithMany(p => p.Visits)
+            .WithMany(p => p.AudiologyVisits)
             .HasForeignKey(v => v.PatientId);
 
         builder.Entity<AudiologyVisit>()
@@ -335,7 +402,7 @@ public class ClinicDbContext : IdentityDbContext<Entities.ApplicationUser>
 
         builder.Entity<HearingDevice>()
             .HasOne(d => d.Patient)
-            .WithMany(p => p.Devices)
+            .WithMany(p => p.HearingDevices)
             .HasForeignKey(d => d.PatientId);
 
         builder.Entity<HearingDevice>()
@@ -1566,5 +1633,560 @@ public class ClinicDbContext : IdentityDbContext<Entities.ApplicationUser>
         builder.Entity<AuditLog>()
             .Property(a => a.ModuleName)
             .HasMaxLength(100);
+
+        // ========================================
+        // Dental Clinic Configuration
+        // ========================================
+
+        builder.Entity<DentalVisit>()
+            .HasIndex(v => v.VisitDate);
+
+        builder.Entity<DentalVisit>()
+            .HasIndex(v => v.BranchId);
+
+        builder.Entity<DentalVisit>()
+            .HasOne(v => v.Patient)
+            .WithMany()
+            .HasForeignKey(v => v.PatientId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<DentalVisit>()
+            .HasOne(v => v.Branch)
+            .WithMany()
+            .HasForeignKey(v => v.BranchId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<DentalVisit>()
+            .HasOne(v => v.TreatmentPlan)
+            .WithMany(tp => tp.Visits)
+            .HasForeignKey(v => v.DentalTreatmentPlanId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        builder.Entity<ToothChart>()
+            .HasIndex(tc => tc.PatientId);
+
+        builder.Entity<ToothChart>()
+            .HasOne(tc => tc.Patient)
+            .WithMany()
+            .HasForeignKey(tc => tc.PatientId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<ToothRecord>()
+            .HasOne(tr => tr.ToothChart)
+            .WithMany(tc => tc.TeethRecords)
+            .HasForeignKey(tr => tr.ToothChartId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<DentalProcedure>()
+            .HasOne(p => p.DentalVisit)
+            .WithMany(v => v.Procedures)
+            .HasForeignKey(p => p.DentalVisitId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<DentalProcedure>()
+            .Property(p => p.Fee)
+            .HasPrecision(18, 2);
+
+        builder.Entity<DentalTreatmentPlan>()
+            .HasIndex(tp => tp.PatientId);
+
+        builder.Entity<DentalTreatmentPlan>()
+            .HasOne(tp => tp.Patient)
+            .WithMany()
+            .HasForeignKey(tp => tp.PatientId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<DentalTreatmentPlan>()
+            .Property(tp => tp.EstimatedTotalCost)
+            .HasPrecision(18, 2);
+
+        builder.Entity<DentalTreatmentPlan>()
+            .Property(tp => tp.ActualTotalCost)
+            .HasPrecision(18, 2);
+
+        builder.Entity<DentalTreatmentPlanItem>()
+            .HasOne(i => i.TreatmentPlan)
+            .WithMany(tp => tp.Items)
+            .HasForeignKey(i => i.DentalTreatmentPlanId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<DentalTreatmentPlanItem>()
+            .Property(i => i.EstimatedFee)
+            .HasPrecision(18, 2);
+
+        builder.Entity<DentalTreatmentPlanItem>()
+            .Property(i => i.ActualFee)
+            .HasPrecision(18, 2);
+
+        builder.Entity<DentalXRay>()
+            .HasIndex(x => x.PatientId);
+
+        builder.Entity<DentalXRay>()
+            .HasOne(x => x.Patient)
+            .WithMany()
+            .HasForeignKey(x => x.PatientId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<DentalXRay>()
+            .HasOne(x => x.DentalVisit)
+            .WithMany()
+            .HasForeignKey(x => x.DentalVisitId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        // ========================================
+        // Veterinary Clinic Configuration
+        // ========================================
+
+        builder.Entity<PetOwner>()
+            .HasIndex(po => po.PhoneNumber);
+
+        builder.Entity<PetOwner>()
+            .HasOne(po => po.Branch)
+            .WithMany()
+            .HasForeignKey(po => po.BranchId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<Pet>()
+            .HasIndex(p => p.MicrochipId);
+
+        builder.Entity<Pet>()
+            .HasOne(p => p.Owner)
+            .WithMany(po => po.Pets)
+            .HasForeignKey(p => p.PetOwnerId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<Pet>()
+            .HasOne(p => p.Branch)
+            .WithMany()
+            .HasForeignKey(p => p.BranchId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<Pet>()
+            .Property(p => p.Weight)
+            .HasPrecision(8, 2);
+
+        builder.Entity<VetVisit>()
+            .HasIndex(v => v.VisitDate);
+
+        builder.Entity<VetVisit>()
+            .HasOne(v => v.Pet)
+            .WithMany(p => p.Visits)
+            .HasForeignKey(v => v.PetId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<VetVisit>()
+            .Property(v => v.Weight)
+            .HasPrecision(8, 2);
+
+        builder.Entity<VetVisit>()
+            .Property(v => v.Temperature)
+            .HasPrecision(4, 1);
+
+        builder.Entity<VetProcedure>()
+            .HasOne(p => p.VetVisit)
+            .WithMany(v => v.Procedures)
+            .HasForeignKey(p => p.VetVisitId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<VetProcedure>()
+            .Property(p => p.Fee)
+            .HasPrecision(18, 2);
+
+        builder.Entity<Vaccination>()
+            .HasIndex(v => v.PetId);
+
+        builder.Entity<Vaccination>()
+            .HasOne(v => v.Pet)
+            .WithMany(p => p.Vaccinations)
+            .HasForeignKey(v => v.PetId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<GroomingAppointment>()
+            .HasIndex(g => g.AppointmentDate);
+
+        builder.Entity<GroomingAppointment>()
+            .HasOne(g => g.Pet)
+            .WithMany(p => p.GroomingAppointments)
+            .HasForeignKey(g => g.PetId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<GroomingAppointment>()
+            .Property(g => g.TotalFee)
+            .HasPrecision(18, 2);
+
+        builder.Entity<BoardingReservation>()
+            .HasIndex(b => b.CheckInDate);
+
+        builder.Entity<BoardingReservation>()
+            .HasOne(b => b.Pet)
+            .WithMany(p => p.BoardingReservations)
+            .HasForeignKey(b => b.PetId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<BoardingReservation>()
+            .Property(b => b.DailyRate)
+            .HasPrecision(18, 2);
+
+        builder.Entity<BoardingReservation>()
+            .Property(b => b.TotalFee)
+            .HasPrecision(18, 2);
+
+        // ========================================
+        // Ophthalmology Clinic Configuration
+        // ========================================
+
+        builder.Entity<OphthalmologyVisit>()
+            .HasIndex(v => v.VisitDate);
+
+        builder.Entity<OphthalmologyVisit>()
+            .HasOne(v => v.Patient)
+            .WithMany()
+            .HasForeignKey(v => v.PatientId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<OphthalmologyVisit>()
+            .Property(v => v.IopOd)
+            .HasPrecision(4, 1);
+
+        builder.Entity<OphthalmologyVisit>()
+            .Property(v => v.IopOs)
+            .HasPrecision(4, 1);
+
+        builder.Entity<VisionTest>()
+            .HasOne(vt => vt.Visit)
+            .WithOne(v => v.VisionTest)
+            .HasForeignKey<VisionTest>(vt => vt.OphthalmologyVisitId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<VisionTest>()
+            .Property(vt => vt.SphereOd)
+            .HasPrecision(5, 2);
+
+        builder.Entity<VisionTest>()
+            .Property(vt => vt.SphereOs)
+            .HasPrecision(5, 2);
+
+        builder.Entity<EyeExam>()
+            .HasOne(e => e.Visit)
+            .WithOne(v => v.EyeExam)
+            .HasForeignKey<EyeExam>(e => e.OphthalmologyVisitId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<EyeExam>()
+            .Property(e => e.CupToDiscRatioOd)
+            .HasPrecision(3, 2);
+
+        builder.Entity<EyeExam>()
+            .Property(e => e.CupToDiscRatioOs)
+            .HasPrecision(3, 2);
+
+        builder.Entity<EyePrescription>()
+            .HasIndex(p => p.PatientId);
+
+        builder.Entity<EyePrescription>()
+            .HasOne(p => p.Patient)
+            .WithMany()
+            .HasForeignKey(p => p.PatientId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<EyePrescription>()
+            .Property(p => p.SphereOd)
+            .HasPrecision(5, 2);
+
+        builder.Entity<EyePrescription>()
+            .Property(p => p.SphereOs)
+            .HasPrecision(5, 2);
+
+        builder.Entity<EyeProcedure>()
+            .HasOne(p => p.Visit)
+            .WithMany(v => v.Procedures)
+            .HasForeignKey(p => p.OphthalmologyVisitId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<EyeProcedure>()
+            .Property(p => p.Fee)
+            .HasPrecision(18, 2);
+
+        builder.Entity<EyeCondition>()
+            .HasIndex(c => c.PatientId);
+
+        builder.Entity<EyeCondition>()
+            .HasOne(c => c.Patient)
+            .WithMany()
+            .HasForeignKey(c => c.PatientId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // ========================================
+        // Dermatology Clinic Configuration
+        // ========================================
+
+        builder.Entity<DermatologyVisit>()
+            .HasIndex(v => v.VisitDate);
+
+        builder.Entity<DermatologyVisit>()
+            .HasOne(v => v.Patient)
+            .WithMany()
+            .HasForeignKey(v => v.PatientId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<SkinCondition>()
+            .HasIndex(c => c.PatientId);
+
+        builder.Entity<SkinCondition>()
+            .HasOne(c => c.Patient)
+            .WithMany()
+            .HasForeignKey(c => c.PatientId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<LesionRecord>()
+            .HasIndex(l => l.LesionCode)
+            .IsUnique();
+
+        builder.Entity<LesionRecord>()
+            .HasIndex(l => l.PatientId);
+
+        builder.Entity<LesionRecord>()
+            .HasOne(l => l.Patient)
+            .WithMany()
+            .HasForeignKey(l => l.PatientId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<LesionRecord>()
+            .HasOne(l => l.Visit)
+            .WithMany(v => v.Lesions)
+            .HasForeignKey(l => l.DermatologyVisitId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        builder.Entity<SkinProcedure>()
+            .HasOne(p => p.Visit)
+            .WithMany(v => v.Procedures)
+            .HasForeignKey(p => p.DermatologyVisitId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<SkinProcedure>()
+            .Property(p => p.Fee)
+            .HasPrecision(18, 2);
+
+        builder.Entity<SkinTreatmentPlan>()
+            .HasIndex(tp => tp.PatientId);
+
+        builder.Entity<SkinTreatmentPlan>()
+            .HasOne(tp => tp.Patient)
+            .WithMany()
+            .HasForeignKey(tp => tp.PatientId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<SkinTreatmentPlan>()
+            .HasOne(tp => tp.SkinCondition)
+            .WithMany()
+            .HasForeignKey(tp => tp.SkinConditionId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        builder.Entity<SkinTreatmentPlan>()
+            .Property(tp => tp.EstimatedCost)
+            .HasPrecision(18, 2);
+
+        builder.Entity<SkinTreatmentPlan>()
+            .Property(tp => tp.ActualCost)
+            .HasPrecision(18, 2);
+
+        // ========================================
+        // Physiotherapy Clinic Configuration
+        // ========================================
+
+        builder.Entity<PhysioAssessment>()
+            .HasIndex(a => a.AssessmentDate);
+
+        builder.Entity<PhysioAssessment>()
+            .HasIndex(a => a.PatientId);
+
+        builder.Entity<PhysioAssessment>()
+            .HasOne(a => a.Patient)
+            .WithMany()
+            .HasForeignKey(a => a.PatientId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<PhysioSession>()
+            .HasIndex(s => s.SessionDate);
+
+        builder.Entity<PhysioSession>()
+            .HasOne(s => s.Patient)
+            .WithMany()
+            .HasForeignKey(s => s.PatientId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<PhysioSession>()
+            .HasOne(s => s.ExerciseProgram)
+            .WithMany(ep => ep.Sessions)
+            .HasForeignKey(s => s.ExerciseProgramId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        builder.Entity<ExerciseProgram>()
+            .HasIndex(ep => ep.PatientId);
+
+        builder.Entity<ExerciseProgram>()
+            .HasOne(ep => ep.Patient)
+            .WithMany()
+            .HasForeignKey(ep => ep.PatientId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<ExerciseProgram>()
+            .HasOne(ep => ep.Assessment)
+            .WithMany()
+            .HasForeignKey(ep => ep.PhysioAssessmentId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        builder.Entity<ExerciseProgramItem>()
+            .HasOne(i => i.Program)
+            .WithMany(ep => ep.Exercises)
+            .HasForeignKey(i => i.ExerciseProgramId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<RangeOfMotionRecord>()
+            .HasIndex(r => r.PatientId);
+
+        builder.Entity<RangeOfMotionRecord>()
+            .HasOne(r => r.Patient)
+            .WithMany()
+            .HasForeignKey(r => r.PatientId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<RangeOfMotionRecord>()
+            .HasOne(r => r.Assessment)
+            .WithMany(a => a.RangeOfMotionRecords)
+            .HasForeignKey(r => r.PhysioAssessmentId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        builder.Entity<RangeOfMotionRecord>()
+            .Property(r => r.ActiveRom)
+            .HasPrecision(5, 1);
+
+        builder.Entity<RangeOfMotionRecord>()
+            .Property(r => r.PassiveRom)
+            .HasPrecision(5, 1);
+
+        builder.Entity<FunctionalOutcome>()
+            .HasIndex(f => f.PatientId);
+
+        builder.Entity<FunctionalOutcome>()
+            .HasOne(f => f.Patient)
+            .WithMany()
+            .HasForeignKey(f => f.PatientId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<FunctionalOutcome>()
+            .Property(f => f.Score)
+            .HasPrecision(8, 2);
+
+        // ========================================
+        // Pediatrics Clinic Configuration
+        // ========================================
+
+        builder.Entity<PediatricVisit>()
+            .HasIndex(v => v.VisitDate);
+
+        builder.Entity<PediatricVisit>()
+            .HasOne(v => v.Patient)
+            .WithMany()
+            .HasForeignKey(v => v.PatientId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<PediatricVisit>()
+            .Property(v => v.Weight)
+            .HasPrecision(6, 2);
+
+        builder.Entity<PediatricVisit>()
+            .Property(v => v.Height)
+            .HasPrecision(5, 1);
+
+        builder.Entity<PediatricVisit>()
+            .Property(v => v.HeadCircumference)
+            .HasPrecision(5, 1);
+
+        builder.Entity<GrowthRecord>()
+            .HasIndex(g => g.PatientId);
+
+        builder.Entity<GrowthRecord>()
+            .HasOne(g => g.Patient)
+            .WithMany()
+            .HasForeignKey(g => g.PatientId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<GrowthRecord>()
+            .HasOne(g => g.Visit)
+            .WithMany()
+            .HasForeignKey(g => g.PediatricVisitId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        builder.Entity<GrowthRecord>()
+            .Property(g => g.Weight)
+            .HasPrecision(6, 2);
+
+        builder.Entity<GrowthRecord>()
+            .Property(g => g.Height)
+            .HasPrecision(5, 1);
+
+        builder.Entity<VaccinationRecord>()
+            .HasIndex(v => v.PatientId);
+
+        builder.Entity<VaccinationRecord>()
+            .HasOne(v => v.Patient)
+            .WithMany()
+            .HasForeignKey(v => v.PatientId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<VaccinationRecord>()
+            .HasOne(v => v.Visit)
+            .WithMany()
+            .HasForeignKey(v => v.PediatricVisitId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        builder.Entity<DevelopmentalMilestone>()
+            .HasIndex(m => m.PatientId);
+
+        builder.Entity<DevelopmentalMilestone>()
+            .HasOne(m => m.Patient)
+            .WithMany()
+            .HasForeignKey(m => m.PatientId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<DevelopmentalMilestone>()
+            .HasOne(m => m.Visit)
+            .WithMany()
+            .HasForeignKey(m => m.PediatricVisitId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        builder.Entity<DevelopmentalScreening>()
+            .HasIndex(s => s.PatientId);
+
+        builder.Entity<DevelopmentalScreening>()
+            .HasOne(s => s.Patient)
+            .WithMany()
+            .HasForeignKey(s => s.PatientId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<DevelopmentalScreening>()
+            .HasOne(s => s.Visit)
+            .WithMany()
+            .HasForeignKey(s => s.PediatricVisitId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        builder.Entity<NewbornRecord>()
+            .HasIndex(n => n.PatientId)
+            .IsUnique();
+
+        builder.Entity<NewbornRecord>()
+            .HasOne(n => n.Patient)
+            .WithMany()
+            .HasForeignKey(n => n.PatientId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<NewbornRecord>()
+            .Property(n => n.BirthWeight)
+            .HasPrecision(5, 3);
+
+        builder.Entity<NewbornRecord>()
+            .Property(n => n.BirthLength)
+            .HasPrecision(4, 1);
     }
 }
