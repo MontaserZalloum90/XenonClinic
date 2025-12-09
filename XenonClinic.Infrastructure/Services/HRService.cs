@@ -12,10 +12,12 @@ namespace XenonClinic.Infrastructure.Services;
 public class HRService : IHRService
 {
     private readonly ClinicDbContext _context;
+    private readonly ISequenceGenerator _sequenceGenerator;
 
-    public HRService(ClinicDbContext context)
+    public HRService(ClinicDbContext context, ISequenceGenerator sequenceGenerator)
     {
         _context = context;
+        _sequenceGenerator = sequenceGenerator;
     }
 
     #region Employee Management
@@ -119,21 +121,7 @@ public class HRService : IHRService
 
     public async Task<string> GenerateEmployeeCodeAsync(int branchId)
     {
-        var today = DateTime.UtcNow.Date;
-        var prefix = $"EMP-{today:yyyyMM}";
-
-        var lastEmployee = await _context.Employees
-            .Where(e => e.BranchId == branchId && e.EmployeeCode.StartsWith(prefix))
-            .OrderByDescending(e => e.EmployeeCode)
-            .FirstOrDefaultAsync();
-
-        if (lastEmployee == null)
-        {
-            return $"{prefix}-001";
-        }
-
-        var lastNumber = int.Parse(lastEmployee.EmployeeCode.Split('-').Last());
-        return $"{prefix}-{(lastNumber + 1):D3}";
+        return await _sequenceGenerator.GenerateEmployeeCodeAsync(branchId);
     }
 
     #endregion
