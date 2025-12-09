@@ -12,10 +12,12 @@ namespace XenonClinic.Infrastructure.Services;
 public class FinancialService : IFinancialService
 {
     private readonly ClinicDbContext _context;
+    private readonly ISequenceGenerator _sequenceGenerator;
 
-    public FinancialService(ClinicDbContext context)
+    public FinancialService(ClinicDbContext context, ISequenceGenerator sequenceGenerator)
     {
         _context = context;
+        _sequenceGenerator = sequenceGenerator;
     }
 
     #region Account Management
@@ -211,21 +213,7 @@ public class FinancialService : IFinancialService
 
     public async Task<string> GenerateInvoiceNumberAsync(int branchId)
     {
-        var today = DateTime.UtcNow.Date;
-        var prefix = $"INV-{today:yyyyMMdd}";
-
-        var lastInvoice = await _context.Invoices
-            .Where(i => i.BranchId == branchId && i.InvoiceNumber.StartsWith(prefix))
-            .OrderByDescending(i => i.InvoiceNumber)
-            .FirstOrDefaultAsync();
-
-        if (lastInvoice == null)
-        {
-            return $"{prefix}-0001";
-        }
-
-        var lastNumber = int.Parse(lastInvoice.InvoiceNumber.Split('-').Last());
-        return $"{prefix}-{(lastNumber + 1):D4}";
+        return await _sequenceGenerator.GenerateInvoiceNumberAsync(branchId);
     }
 
     #endregion

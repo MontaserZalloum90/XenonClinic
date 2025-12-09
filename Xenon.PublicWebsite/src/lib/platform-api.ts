@@ -1,50 +1,19 @@
 /**
  * Platform API Client
  * Connects to Xenon.Platform backend
+ * Uses shared API utilities from @xenon/ui
  */
+
+import {
+  createApiClient,
+  buildQueryString,
+  type ApiResponse,
+} from '@xenon/ui';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
-interface ApiResponse<T> {
-  success: boolean;
-  data?: T;
-  error?: string;
-}
-
-async function apiRequest<T>(
-  endpoint: string,
-  options: RequestInit = {}
-): Promise<ApiResponse<T>> {
-  try {
-    const token = localStorage.getItem('tenant_token');
-    const headers: HeadersInit = {
-      'Content-Type': 'application/json',
-      ...(token && { Authorization: `Bearer ${token}` }),
-      ...options.headers,
-    };
-
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-      ...options,
-      headers,
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      return {
-        success: false,
-        error: errorData.message || `Request failed with status ${response.status}`,
-      };
-    }
-
-    const data = await response.json();
-    return { success: true, data };
-  } catch (error) {
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Network error',
-    };
-  }
-}
+// Create API client instance
+const api = createApiClient(API_BASE_URL);
 
 // ============================================
 // Pricing API
@@ -83,20 +52,20 @@ export interface PricingEstimateRequest {
 }
 
 export async function getPlans(): Promise<ApiResponse<PricingPlan[]>> {
-  return apiRequest('/api/public/pricing/plans');
+  return api.get('/api/public/pricing/plans');
 }
 
 export async function getPricingEstimate(
   request: PricingEstimateRequest
 ): Promise<ApiResponse<PricingEstimate>> {
-  const params = new URLSearchParams({
+  const queryString = buildQueryString({
     planId: request.planId,
-    branches: request.branches.toString(),
-    users: request.users.toString(),
+    branches: request.branches,
+    users: request.users,
     billingCycle: request.billingCycle,
     currency: request.currency || 'AED',
   });
-  return apiRequest(`/api/public/pricing/estimate?${params}`);
+  return api.get(`/api/public/pricing/estimate${queryString}`);
 }
 
 // ============================================
@@ -151,23 +120,17 @@ export interface TenantLoginResponse {
 export async function signup(
   data: TenantSignupRequest
 ): Promise<ApiResponse<TenantSignupResponse>> {
-  return apiRequest('/api/public/tenants/signup', {
-    method: 'POST',
-    body: JSON.stringify(data),
-  });
+  return api.post('/api/public/tenants/signup', data);
 }
 
 export async function login(
   data: TenantLoginRequest
 ): Promise<ApiResponse<TenantLoginResponse>> {
-  return apiRequest('/api/public/tenants/login', {
-    method: 'POST',
-    body: JSON.stringify(data),
-  });
+  return api.post('/api/public/tenants/login', data);
 }
 
 export async function getCurrentTenant(): Promise<ApiResponse<{ tenant: unknown; user: unknown }>> {
-  return apiRequest('/api/public/tenants/me');
+  return api.get('/api/public/tenants/me');
 }
 
 // ============================================
@@ -192,10 +155,7 @@ export interface DemoRequestSubmission {
 export async function submitDemoRequest(
   data: DemoRequestSubmission
 ): Promise<ApiResponse<{ id: string; status: string }>> {
-  return apiRequest('/api/public/demo-request', {
-    method: 'POST',
-    body: JSON.stringify(data),
-  });
+  return api.post('/api/public/demo-request', data);
 }
 
 // ============================================
@@ -214,31 +174,33 @@ export interface ContactSubmission {
 export async function submitContactInquiry(
   data: ContactSubmission
 ): Promise<ApiResponse<{ id: string; status: string }>> {
-  return apiRequest('/api/public/demo-request', {
-    method: 'POST',
-    body: JSON.stringify({
-      ...data,
-      source: 'contact-page',
-    }),
+  return api.post('/api/public/demo-request', {
+    ...data,
+    source: 'contact-page',
   });
 }
 
 // ============================================
 // Auth Helpers
+// Re-export from shared library with custom token key
 // ============================================
 
+const TENANT_TOKEN_KEY = 'tenant_token';
+const TENANT_INFO_KEY = 'tenant_info';
+const USER_INFO_KEY = 'user_info';
+
 export function setAuthToken(token: string): void {
-  localStorage.setItem('tenant_token', token);
+  localStorage.setItem(TENANT_TOKEN_KEY, token);
 }
 
 export function getAuthToken(): string | null {
-  return localStorage.getItem('tenant_token');
+  return localStorage.getItem(TENANT_TOKEN_KEY);
 }
 
 export function clearAuthToken(): void {
-  localStorage.removeItem('tenant_token');
-  localStorage.removeItem('tenant_info');
-  localStorage.removeItem('user_info');
+  localStorage.removeItem(TENANT_TOKEN_KEY);
+  localStorage.removeItem(TENANT_INFO_KEY);
+  localStorage.removeItem(USER_INFO_KEY);
 }
 
 export function isAuthenticated(): boolean {

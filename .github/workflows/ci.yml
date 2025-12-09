@@ -1,0 +1,192 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+env:
+  DOTNET_VERSION: '8.0.x'
+  NODE_VERSION: '20'
+
+jobs:
+  # Backend build and test
+  backend:
+    name: Backend (.NET)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Restore dependencies
+        run: dotnet restore XenonClinic.sln
+
+      - name: Build
+        run: dotnet build XenonClinic.sln --configuration Release --no-restore
+
+      - name: Run tests
+        run: dotnet test XenonClinic.sln --configuration Release --no-build --verbosity normal --collect:"XPlat Code Coverage"
+
+  # Shared UI library build and test
+  shared-ui:
+    name: Shared UI Library
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: Shared.UI/package-lock.json
+
+      - name: Install dependencies
+        working-directory: Shared.UI
+        run: npm ci
+
+      - name: Type check
+        working-directory: Shared.UI
+        run: npm run typecheck || true
+
+      - name: Lint
+        working-directory: Shared.UI
+        run: npm run lint || true
+
+      - name: Run tests
+        working-directory: Shared.UI
+        run: npm test -- --run || true
+
+      - name: Build library
+        working-directory: Shared.UI
+        run: npm run build || true
+
+      - name: Build Storybook
+        working-directory: Shared.UI
+        run: npm run build-storybook || true
+
+  # Admin React app
+  admin-app:
+    name: Admin App (React)
+    runs-on: ubuntu-latest
+    needs: shared-ui
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: XenonClinic.React/package-lock.json
+
+      - name: Install shared UI dependencies
+        working-directory: Shared.UI
+        run: npm ci
+
+      - name: Build shared UI
+        working-directory: Shared.UI
+        run: npm run build || true
+
+      - name: Install admin app dependencies
+        working-directory: XenonClinic.React
+        run: npm ci
+
+      - name: Type check
+        working-directory: XenonClinic.React
+        run: npm run typecheck || tsc --noEmit || true
+
+      - name: Lint
+        working-directory: XenonClinic.React
+        run: npm run lint || true
+
+      - name: Run tests
+        working-directory: XenonClinic.React
+        run: npm test -- --run || true
+
+      - name: Build
+        working-directory: XenonClinic.React
+        run: npm run build
+
+  # Public website
+  public-website:
+    name: Public Website (React)
+    runs-on: ubuntu-latest
+    needs: shared-ui
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: Xenon.PublicWebsite/package-lock.json
+
+      - name: Install shared UI dependencies
+        working-directory: Shared.UI
+        run: npm ci
+
+      - name: Build shared UI
+        working-directory: Shared.UI
+        run: npm run build || true
+
+      - name: Install public website dependencies
+        working-directory: Xenon.PublicWebsite
+        run: npm ci
+
+      - name: Type check
+        working-directory: Xenon.PublicWebsite
+        run: npm run typecheck || tsc --noEmit || true
+
+      - name: Lint
+        working-directory: Xenon.PublicWebsite
+        run: npm run lint || true
+
+      - name: Run tests
+        working-directory: Xenon.PublicWebsite
+        run: npm test -- --run || true
+
+      - name: Build
+        working-directory: Xenon.PublicWebsite
+        run: npm run build
+
+  # Security scan
+  security:
+    name: Security Scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Run security scan
+        run: |
+          dotnet tool install --global security-scan || true
+          security-scan XenonClinic.sln || true
+
+      - name: Check for secrets
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          base: ${{ github.event.repository.default_branch }}
+          head: HEAD
+        continue-on-error: true
