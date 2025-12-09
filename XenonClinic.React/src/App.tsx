@@ -15,6 +15,7 @@ import { InventoryList } from './pages/Inventory/InventoryList';
 import { PharmacyList } from './pages/Pharmacy/PharmacyList';
 import { RadiologyList } from './pages/Radiology/RadiologyList';
 import { AudiologyList } from './pages/Audiology/AudiologyList';
+import { MarketingList } from './pages/Marketing/MarketingList';
 import { AdminDashboard } from './pages/Admin';
 import { NotFound, Forbidden } from './pages/Error';
 
@@ -140,6 +141,16 @@ function App() {
                 <ProtectedRoute>
                   <Layout>
                     <AudiologyList />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/marketing"
+              element={
+                <ProtectedRoute requiredRoles={[Roles.ADMIN, Roles.MARKETING_MANAGER]}>
+                  <Layout>
+                    <MarketingList />
                   </Layout>
                 </ProtectedRoute>
               }

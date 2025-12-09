@@ -13,6 +13,7 @@ import {
   BarChart3,
   Settings,
   Ear,
+  Megaphone,
 } from 'lucide-react';
 
 const modules = [
@@ -55,6 +56,12 @@ const modules = [
     icon: UserCog,
     name: 'HR Management',
     description: 'Employees, attendance, leave management, and payroll.',
+  },
+  {
+    icon: Megaphone,
+    name: 'Marketing',
+    description: 'Campaign management, lead tracking, patient outreach, and marketing analytics.',
+    link: '/features/marketing',
   },
 ];
 
@@ -111,15 +118,37 @@ export default function FeaturesPage() {
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {modules.map((module) => (
-              <div key={module.name} className="card card-hover">
-                <div className="h-12 w-12 rounded-xl bg-primary-100 text-primary-600 flex items-center justify-center mb-4">
-                  <module.icon className="h-6 w-6" />
+            {modules.map((module) => {
+              const CardContent = (
+                <>
+                  <div className="h-12 w-12 rounded-xl bg-primary-100 text-primary-600 flex items-center justify-center mb-4">
+                    <module.icon className="h-6 w-6" />
+                  </div>
+                  <h3 className="font-semibold text-gray-900 mb-2">{module.name}</h3>
+                  <p className="text-sm text-gray-600">{module.description}</p>
+                  {'link' in module && (
+                    <div className="mt-4 text-primary-600 text-sm font-medium flex items-center">
+                      Learn more
+                      <ArrowRight className="ml-1 h-4 w-4" />
+                    </div>
+                  )}
+                </>
+              );
+
+              if ('link' in module) {
+                return (
+                  <Link key={module.name} to={module.link} className="card card-hover block">
+                    {CardContent}
+                  </Link>
+                );
+              }
+
+              return (
+                <div key={module.name} className="card card-hover">
+                  {CardContent}
                 </div>
-                <h3 className="font-semibold text-gray-900 mb-2">{module.name}</h3>
-                <p className="text-sm text-gray-600">{module.description}</p>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </section>
