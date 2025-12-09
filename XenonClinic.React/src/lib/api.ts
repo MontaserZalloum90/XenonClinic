@@ -1,46 +1,23 @@
-import axios, { AxiosError } from 'axios';
-import type { InternalAxiosRequestConfig } from 'axios';
+import axios from 'axios';
+import { configureAxiosInstance, tokenStorage, getAxiosErrorMessage } from '@xenon/ui';
 
 // API Base URL - adjust based on environment
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://localhost:5001';
 
-// Create axios instance
-export const api = axios.create({
-  baseURL: API_BASE_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-  // Important: Allow credentials for CORS
-  withCredentials: false,
-});
-
-// Request interceptor - Add auth token to requests
-api.interceptors.request.use(
-  (config: InternalAxiosRequestConfig) => {
-    const token = localStorage.getItem('token');
-    if (token && config.headers) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error: AxiosError) => {
-    return Promise.reject(error);
-  }
-);
-
-// Response interceptor - Handle errors globally
-api.interceptors.response.use(
-  (response) => response,
-  async (error: AxiosError) => {
-    if (error.response?.status === 401) {
-      // Unauthorized - clear token and redirect to login
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
+// Create axios instance with shared configuration
+export const api = configureAxiosInstance(
+  axios.create(),
+  {
+    baseURL: API_BASE_URL,
+    withCredentials: false,
+    onUnauthorized: () => {
       window.location.href = '/login';
-    }
-    return Promise.reject(error);
+    },
   }
 );
+
+// Re-export utilities for use in auth contexts
+export { tokenStorage, getAxiosErrorMessage };
 
 // API endpoints
 export const authApi = {
