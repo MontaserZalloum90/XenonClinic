@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Eye, EyeOff, ArrowRight, AlertCircle } from 'lucide-react';
+import { login, setAuthToken } from '@/lib/platform-api';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -31,14 +32,36 @@ export default function LoginPage() {
     setError('');
 
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      const response = await login({
+        email: formData.email,
+        password: formData.password,
+      });
 
-      // For demo: check credentials
-      if (formData.email === 'demo@xenon.ae' && formData.password === 'demo123') {
+      if (response.success && response.data) {
+        // Store the auth token
+        setAuthToken(response.data.token);
+
+        // Store tenant info for later use
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('tenant_info', JSON.stringify({
+            id: response.data.tenant.id,
+            name: response.data.tenant.name,
+            slug: response.data.tenant.slug,
+            status: response.data.tenant.status,
+          }));
+          localStorage.setItem('user_info', JSON.stringify({
+            id: response.data.user.id,
+            email: response.data.user.email,
+            firstName: response.data.user.firstName,
+            lastName: response.data.user.lastName,
+            role: response.data.user.role,
+          }));
+        }
+
+        // Redirect to dashboard
         router.push('/dashboard');
       } else {
-        setError('Invalid email or password. Try demo@xenon.ae / demo123');
+        setError(response.error || 'Invalid email or password');
       }
     } catch {
       setError('An error occurred. Please try again.');
@@ -55,18 +78,21 @@ export default function LoginPage() {
   return (
     <div className="w-full max-w-md px-4">
       <div className="text-center mb-8">
-        <h1 className="heading-2 text-gray-900 mb-2">Welcome back</h1>
+        <Link href="/" className="inline-block mb-4">
+          <span className="text-2xl font-bold text-primary-600">XENON</span>
+        </Link>
+        <h1 className="text-2xl font-bold text-gray-900 mb-2">Welcome back</h1>
         <p className="text-gray-600">
           Sign in to your XENON account
         </p>
       </div>
 
-      <div className="card">
+      <div className="bg-white rounded-xl shadow-lg p-6 md:p-8">
         {/* Google Sign-in */}
         <button
           type="button"
           onClick={handleGoogleSignIn}
-          className="btn-secondary w-full flex items-center justify-center gap-3 mb-6"
+          className="w-full flex items-center justify-center gap-3 px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors mb-6"
         >
           <svg className="h-5 w-5" viewBox="0 0 24 24">
             <path
@@ -120,7 +146,7 @@ export default function LoginPage() {
               autoComplete="email"
               value={formData.email}
               onChange={handleChange}
-              className="input"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
               placeholder="you@company.com"
             />
           </div>
@@ -138,7 +164,7 @@ export default function LoginPage() {
                 autoComplete="current-password"
                 value={formData.password}
                 onChange={handleChange}
-                className="input pr-10"
+                className="w-full px-4 py-3 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                 placeholder="Enter your password"
               />
               <button
@@ -162,11 +188,11 @@ export default function LoginPage() {
                 name="rememberMe"
                 checked={formData.rememberMe}
                 onChange={handleChange}
-                className="h-4 w-4 text-primary-600 rounded"
+                className="h-4 w-4 text-primary-600 rounded border-gray-300 focus:ring-primary-500"
               />
               <span className="text-sm text-gray-600">Remember me</span>
             </label>
-            <Link href="/forgot-password" className="text-sm link">
+            <Link href="/forgot-password" className="text-sm text-primary-600 hover:underline">
               Forgot password?
             </Link>
           </div>
@@ -174,17 +200,32 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={isLoading}
-            className="btn-primary w-full"
+            className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isLoading ? (
               <>
-                <span className="animate-spin mr-2 h-4 w-4 border-2 border-white border-t-transparent rounded-full inline-block" />
+                <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                    fill="none"
+                  />
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                  />
+                </svg>
                 Signing in...
               </>
             ) : (
               <>
                 Sign in
-                <ArrowRight className="ml-2 h-4 w-4" />
+                <ArrowRight className="h-4 w-4" />
               </>
             )}
           </button>
@@ -192,19 +233,10 @@ export default function LoginPage() {
 
         <p className="mt-6 text-center text-sm text-gray-600">
           Don't have an account?{' '}
-          <Link href="/demo" className="link font-medium">
+          <Link href="/signup" className="text-primary-600 font-medium hover:underline">
             Start free trial
           </Link>
         </p>
-      </div>
-
-      {/* Demo credentials hint */}
-      <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-100 text-sm text-blue-700">
-        <strong>Demo credentials:</strong>
-        <br />
-        Email: demo@xenon.ae
-        <br />
-        Password: demo123
       </div>
     </div>
   );

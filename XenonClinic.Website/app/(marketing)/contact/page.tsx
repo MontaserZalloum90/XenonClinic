@@ -10,7 +10,9 @@ import {
   MessageSquare,
   Send,
   CheckCircle,
+  AlertCircle,
 } from 'lucide-react';
+import { submitContactInquiry } from '@/lib/platform-api';
 
 const contactInfo = [
   {
@@ -58,6 +60,7 @@ export default function ContactPage() {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [error, setError] = useState('');
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
@@ -66,17 +69,34 @@ export default function ContactPage() {
       ...prev,
       [e.target.name]: e.target.value,
     }));
+    setError('');
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+    setError('');
 
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1500));
+    try {
+      const response = await submitContactInquiry({
+        name: formState.name,
+        email: formState.email,
+        company: formState.company || undefined,
+        phone: formState.phone || undefined,
+        inquiryType: formState.inquiryType,
+        message: formState.message,
+      });
 
-    setIsSubmitting(false);
-    setIsSubmitted(true);
+      if (response.success) {
+        setIsSubmitted(true);
+      } else {
+        setError(response.error || 'Failed to submit. Please try again.');
+      }
+    } catch {
+      setError('Network error. Please check your connection and try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -190,6 +210,14 @@ export default function ContactPage() {
                   </div>
                 ) : (
                   <form onSubmit={handleSubmit} className="space-y-6">
+                    {/* Error message */}
+                    {error && (
+                      <div className="p-3 rounded-lg bg-red-50 border border-red-200 flex items-center gap-2 text-sm text-red-700">
+                        <AlertCircle className="h-4 w-4 flex-shrink-0" />
+                        {error}
+                      </div>
+                    )}
+
                     <div className="grid md:grid-cols-2 gap-6">
                       <div>
                         <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">

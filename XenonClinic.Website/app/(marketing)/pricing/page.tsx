@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import {
   PRICING_TIERS,
@@ -8,8 +8,9 @@ import {
   DURATION_DISCOUNTS,
   calculatePricing,
 } from '@/lib/pricing';
+import { getPricingEstimate, type PricingEstimate } from '@/lib/platform-api';
 import type { PlanCode, Currency } from '@/types';
-import { Check, ArrowRight, HelpCircle, ChevronDown } from 'lucide-react';
+import { Check, ArrowRight, HelpCircle, ChevronDown, RefreshCw } from 'lucide-react';
 
 type BillingCycle = 'monthly' | 'quarterly' | 'yearly';
 
@@ -17,6 +18,12 @@ const billingCycleToMonths: Record<BillingCycle, 1 | 3 | 6 | 12> = {
   monthly: 1,
   quarterly: 3,
   yearly: 12,
+};
+
+const billingCycleToApi: Record<BillingCycle, string> = {
+  monthly: 'Monthly',
+  quarterly: 'Quarterly',
+  yearly: 'Annual',
 };
 
 export default function PricingPage() {
@@ -27,16 +34,82 @@ export default function PricingPage() {
   const [selectedAddOns, setSelectedAddOns] = useState<string[]>([]);
   const [showCalculator, setShowCalculator] = useState(false);
 
-  const pricing = useMemo(() => {
-    return calculatePricing({
-      plan: selectedPlan,
-      durationMonths: billingCycleToMonths[billingCycle],
-      branches,
-      users,
-      addOns: selectedAddOns,
-      currency: 'AED' as Currency,
-    });
-  }, [selectedPlan, billingCycle, branches, users, selectedAddOns]);
+  // Backend pricing state
+  const [backendEstimate, setBackendEstimate] = useState<PricingEstimate | null>(null);
+  const [isLoadingEstimate, setIsLoadingEstimate] = useState(false);
+  const [useBackend, setUseBackend] = useState(true);
+
+  // Local fallback pricing calculation
+  const localPricing = calculatePricing({
+    plan: selectedPlan,
+    durationMonths: billingCycleToMonths[billingCycle],
+    branches,
+    users,
+    addOns: selectedAddOns,
+    currency: 'AED' as Currency,
+  });
+
+  // Fetch pricing estimate from backend
+  const fetchEstimate = useCallback(async () => {
+    if (!showCalculator) return;
+
+    setIsLoadingEstimate(true);
+    try {
+      const response = await getPricingEstimate({
+        planId: selectedPlan,
+        branches,
+        users,
+        billingCycle: billingCycleToApi[billingCycle],
+        currency: 'AED',
+      });
+
+      if (response.success && response.data) {
+        setBackendEstimate(response.data);
+        setUseBackend(true);
+      } else {
+        // Fall back to local calculation
+        setUseBackend(false);
+      }
+    } catch {
+      // Fall back to local calculation on error
+      setUseBackend(false);
+    } finally {
+      setIsLoadingEstimate(false);
+    }
+  }, [selectedPlan, branches, users, billingCycle, showCalculator]);
+
+  // Fetch estimate when calculator is opened or parameters change
+  useEffect(() => {
+    if (showCalculator) {
+      const debounceTimer = setTimeout(() => {
+        fetchEstimate();
+      }, 300);
+      return () => clearTimeout(debounceTimer);
+    }
+  }, [fetchEstimate, showCalculator]);
+
+  // Get pricing values (prefer backend, fallback to local)
+  const pricing = useBackend && backendEstimate
+    ? {
+        basePrice: backendEstimate.basePrice,
+        extraBranchesPrice: backendEstimate.extraBranchesPrice,
+        extraUsersPrice: backendEstimate.extraUsersPrice,
+        addOnsPrice: 0, // Backend doesn't include add-ons yet, use local
+        discount: backendEstimate.discountAmount,
+        discountPercent: backendEstimate.discountPercent,
+        total: backendEstimate.total,
+        monthlyEquivalent: backendEstimate.monthlyEquivalent,
+      }
+    : localPricing;
+
+  // Add local add-ons price if using backend
+  const addOnsPrice = selectedAddOns.reduce((sum, code) => {
+    const addon = PRICING_ADDONS.find(a => a.code === code);
+    return sum + (addon?.price.monthly || 0);
+  }, 0) * billingCycleToMonths[billingCycle];
+
+  const finalTotal = pricing.total + addOnsPrice;
+  const finalMonthlyEquivalent = pricing.monthlyEquivalent + (addOnsPrice / billingCycleToMonths[billingCycle]);
 
   const toggleAddOn = (addOnCode: string) => {
     setSelectedAddOns((prev) =>
@@ -341,9 +414,14 @@ export default function PricingPage() {
 
                   {/* Summary */}
                   <div className="bg-gray-50 rounded-lg p-6">
-                    <h4 className="font-semibold text-gray-900 mb-4">
-                      Cost Summary
-                    </h4>
+                    <div className="flex items-center justify-between mb-4">
+                      <h4 className="font-semibold text-gray-900">
+                        Cost Summary
+                      </h4>
+                      {isLoadingEstimate && (
+                        <RefreshCw className="h-4 w-4 text-gray-400 animate-spin" />
+                      )}
+                    </div>
                     <div className="space-y-3">
                       <div className="flex justify-between text-sm">
                         <span className="text-gray-600">Base Plan ({PRICING_TIERS[selectedPlan].name})</span>
@@ -368,10 +446,10 @@ export default function PricingPage() {
                         </div>
                       )}
 
-                      {pricing.addOnsPrice > 0 && (
+                      {addOnsPrice > 0 && (
                         <div className="flex justify-between text-sm">
                           <span className="text-gray-600">Add-ons</span>
-                          <span className="text-gray-900">{Math.round(pricing.addOnsPrice)} AED</span>
+                          <span className="text-gray-900">{Math.round(addOnsPrice)} AED</span>
                         </div>
                       )}
 
@@ -388,11 +466,11 @@ export default function PricingPage() {
                             {billingCycle === 'monthly' ? 'Monthly' : billingCycle === 'quarterly' ? '3-Month' : 'Annual'} Total
                           </span>
                           <span className="text-2xl font-bold text-primary-600">
-                            {Math.round(pricing.total)} AED
+                            {Math.round(finalTotal)} AED
                           </span>
                         </div>
                         <div className="text-right text-sm text-gray-500 mt-1">
-                          ~{Math.round(pricing.monthlyEquivalent)} AED/month
+                          ~{Math.round(finalMonthlyEquivalent)} AED/month
                         </div>
                       </div>
                     </div>

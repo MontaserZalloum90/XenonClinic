@@ -6,7 +6,6 @@ import { useRouter } from 'next/navigation';
 import {
   ArrowRight,
   Check,
-  Building2,
   Stethoscope,
   ShoppingCart,
   Ear,
@@ -15,7 +14,9 @@ import {
   PawPrint,
   Sparkles,
   Scissors,
+  AlertCircle,
 } from 'lucide-react';
+import { submitDemoRequest } from '@/lib/platform-api';
 
 const companyTypes = [
   {
@@ -58,6 +59,7 @@ export default function DemoPage() {
     agreeTerms: false,
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState('');
 
   const handleCompanyTypeSelect = (code: string) => {
     setFormData((prev) => ({ ...prev, companyType: code }));
@@ -79,18 +81,50 @@ export default function DemoPage() {
       ...prev,
       [name]: type === 'checkbox' ? (e.target as HTMLInputElement).checked : value,
     }));
+    setError('');
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+    setError('');
     setStep('processing');
 
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 3000));
+    try {
+      // Split full name into first and last name
+      const nameParts = formData.fullName.trim().split(' ');
+      const firstName = nameParts[0] || '';
+      const lastName = nameParts.slice(1).join(' ') || '';
 
-    // Redirect to success or dashboard
-    router.push('/demo/success');
+      const response = await submitDemoRequest({
+        name: formData.fullName,
+        email: formData.email,
+        phone: formData.phone || undefined,
+        company: formData.companyName,
+        companyType: formData.companyType,
+        clinicType: formData.companyType === 'CLINIC' ? formData.clinicType : undefined,
+        inquiryType: 'demo',
+        message: `Demo request for ${formData.companyType === 'CLINIC' ? clinicTypes.find(c => c.code === formData.clinicType)?.name + ' clinic' : 'trading company'} from ${formData.country}`,
+        source: 'demo-page',
+        // Get UTM params from URL if available
+        utmSource: typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('utm_source') || undefined : undefined,
+        utmMedium: typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('utm_medium') || undefined : undefined,
+        utmCampaign: typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('utm_campaign') || undefined : undefined,
+      });
+
+      if (response.success) {
+        // Redirect to success page
+        router.push('/demo/success');
+      } else {
+        setError(response.error || 'Failed to submit demo request. Please try again.');
+        setStep('details');
+      }
+    } catch {
+      setError('Network error. Please check your connection and try again.');
+      setStep('details');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const canProceed = () => {
@@ -244,6 +278,14 @@ export default function DemoPage() {
 
               <form onSubmit={handleSubmit} className="card">
                 <div className="space-y-6">
+                  {/* Error message */}
+                  {error && (
+                    <div className="p-3 rounded-lg bg-red-50 border border-red-200 flex items-center gap-2 text-sm text-red-700">
+                      <AlertCircle className="h-4 w-4 flex-shrink-0" />
+                      {error}
+                    </div>
+                  )}
+
                   <div>
                     <label htmlFor="companyName" className="block text-sm font-medium text-gray-700 mb-1">
                       Company/Clinic Name *
