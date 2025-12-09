@@ -12,6 +12,7 @@
     "test:run": "vitest run"
   },
   "dependencies": {
+    "@xenon/ui": "file:../Shared.UI",
     "@headlessui/react": "^2.2.9",
     "@heroicons/react": "^2.2.0",
     "lucide-react": "^0.460.0",

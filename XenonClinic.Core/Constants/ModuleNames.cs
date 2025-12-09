@@ -20,6 +20,9 @@ public static class ModuleNames
     public const string Sales = "Sales";
     public const string Procurement = "Procurement";
 
+    // Marketing Modules
+    public const string Marketing = "Marketing";
+
     /// <summary>
     /// All available module names
     /// </summary>
@@ -33,7 +36,8 @@ public static class ModuleNames
         Inventory,
         Financial,
         Sales,
-        Procurement
+        Procurement,
+        Marketing
     };
 
     /// <summary>
@@ -44,5 +48,6 @@ public static class ModuleNames
         public const string Clinical = "Clinical";
         public const string Operations = "Operations";
         public const string Financial = "Financial";
+        public const string Marketing = "Marketing";
     }
 }

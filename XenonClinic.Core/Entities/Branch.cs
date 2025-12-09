@@ -29,7 +29,6 @@ public class Branch
 
     // Navigation properties
     public Company Company { get; set; } = null!;
-    public ICollection<ApplicationUser> PrimaryUsers { get; set; } = new List<ApplicationUser>();
     public ICollection<UserBranch> UserBranches { get; set; } = new List<UserBranch>();
     public ICollection<Patient> Patients { get; set; } = new List<Patient>();
     public ICollection<Appointment> Appointments { get; set; } = new List<Appointment>();
@@ -37,4 +36,6 @@ public class Branch
     public ICollection<HearingDevice> Devices { get; set; } = new List<HearingDevice>();
     public ICollection<Invoice> Invoices { get; set; } = new List<Invoice>();
     public ICollection<Case> Cases { get; set; } = new List<Case>();
+
+    // Note: PrimaryUsers navigation is defined in Infrastructure (ApplicationUser.PrimaryBranchId)
 }

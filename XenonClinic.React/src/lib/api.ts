@@ -1,46 +1,23 @@
-import axios, { AxiosError } from 'axios';
-import type { InternalAxiosRequestConfig } from 'axios';
+import axios from 'axios';
+import { configureAxiosInstance, tokenStorage, getAxiosErrorMessage } from '@xenon/ui';
 
 // API Base URL - adjust based on environment
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://localhost:5001';
 
-// Create axios instance
-export const api = axios.create({
-  baseURL: API_BASE_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-  // Important: Allow credentials for CORS
-  withCredentials: false,
-});
-
-// Request interceptor - Add auth token to requests
-api.interceptors.request.use(
-  (config: InternalAxiosRequestConfig) => {
-    const token = localStorage.getItem('token');
-    if (token && config.headers) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error: AxiosError) => {
-    return Promise.reject(error);
-  }
-);
-
-// Response interceptor - Handle errors globally
-api.interceptors.response.use(
-  (response) => response,
-  async (error: AxiosError) => {
-    if (error.response?.status === 401) {
-      // Unauthorized - clear token and redirect to login
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
+// Create axios instance with shared configuration
+export const api = configureAxiosInstance(
+  axios.create(),
+  {
+    baseURL: API_BASE_URL,
+    withCredentials: false,
+    onUnauthorized: () => {
       window.location.href = '/login';
-    }
-    return Promise.reject(error);
+    },
   }
 );
+
+// Re-export utilities for use in auth contexts
+export { tokenStorage, getAxiosErrorMessage };
 
 // API endpoints
 export const authApi = {
@@ -283,6 +260,91 @@ export const audiologyStatsApi = {
     api.get('/api/AudiologyApi/statistics/encounters', { params: { startDate, endDate } }),
   getHearingAidStats: () => api.get('/api/AudiologyApi/statistics/hearing-aids'),
   getPatientStats: () => api.get('/api/AudiologyApi/statistics/patients'),
+};
+
+// ============================================
+// MARKETING API ENDPOINTS
+// ============================================
+
+export const campaignApi = {
+  getAll: () => api.get('/api/MarketingApi/campaigns'),
+  getById: (id: number) => api.get(`/api/MarketingApi/campaigns/${id}`),
+  getActive: () => api.get('/api/MarketingApi/campaigns/active'),
+  getByStatus: (status: string) => api.get(`/api/MarketingApi/campaigns/status/${status}`),
+  getByType: (type: string) => api.get(`/api/MarketingApi/campaigns/type/${type}`),
+  search: (searchTerm: string) =>
+    api.get(`/api/MarketingApi/campaigns/search?searchTerm=${encodeURIComponent(searchTerm)}`),
+  create: (data: any) => api.post('/api/MarketingApi/campaigns', data),
+  update: (id: number, data: any) => api.put(`/api/MarketingApi/campaigns/${id}`, data),
+  delete: (id: number) => api.delete(`/api/MarketingApi/campaigns/${id}`),
+  updateStatus: (id: number, status: string) =>
+    api.post(`/api/MarketingApi/campaigns/${id}/status`, { status }),
+  activate: (id: number) => api.post(`/api/MarketingApi/campaigns/${id}/activate`),
+  pause: (id: number) => api.post(`/api/MarketingApi/campaigns/${id}/pause`),
+  complete: (id: number) => api.post(`/api/MarketingApi/campaigns/${id}/complete`),
+  getPerformance: (id: number) => api.get(`/api/MarketingApi/campaigns/${id}/performance`),
+};
+
+export const leadApi = {
+  getAll: () => api.get('/api/MarketingApi/leads'),
+  getById: (id: number) => api.get(`/api/MarketingApi/leads/${id}`),
+  getByStatus: (status: string) => api.get(`/api/MarketingApi/leads/status/${status}`),
+  getBySource: (source: string) => api.get(`/api/MarketingApi/leads/source/${source}`),
+  getByCampaign: (campaignId: number) => api.get(`/api/MarketingApi/leads/campaign/${campaignId}`),
+  getNew: () => api.get('/api/MarketingApi/leads/new'),
+  getQualified: () => api.get('/api/MarketingApi/leads/qualified'),
+  getNeedingFollowUp: () => api.get('/api/MarketingApi/leads/follow-up'),
+  getOverdueFollowUps: () => api.get('/api/MarketingApi/leads/overdue'),
+  search: (searchTerm: string) =>
+    api.get(`/api/MarketingApi/leads/search?searchTerm=${encodeURIComponent(searchTerm)}`),
+  create: (data: any) => api.post('/api/MarketingApi/leads', data),
+  update: (id: number, data: any) => api.put(`/api/MarketingApi/leads/${id}`, data),
+  delete: (id: number) => api.delete(`/api/MarketingApi/leads/${id}`),
+  updateStatus: (id: number, status: string) =>
+    api.post(`/api/MarketingApi/leads/${id}/status`, { status }),
+  convert: (id: number, patientData?: any) =>
+    api.post(`/api/MarketingApi/leads/${id}/convert`, patientData),
+  markAsLost: (id: number, reason: string) =>
+    api.post(`/api/MarketingApi/leads/${id}/lost`, { reason }),
+  logContact: (id: number, notes?: string) =>
+    api.post(`/api/MarketingApi/leads/${id}/contact`, { notes }),
+  scheduleFollowUp: (id: number, date: string, notes?: string) =>
+    api.post(`/api/MarketingApi/leads/${id}/schedule-follow-up`, { date, notes }),
+  assign: (id: number, userId: string) =>
+    api.post(`/api/MarketingApi/leads/${id}/assign`, { userId }),
+};
+
+export const marketingActivityApi = {
+  getAll: () => api.get('/api/MarketingApi/activities'),
+  getById: (id: number) => api.get(`/api/MarketingApi/activities/${id}`),
+  getByLead: (leadId: number) => api.get(`/api/MarketingApi/activities/lead/${leadId}`),
+  getByCampaign: (campaignId: number) => api.get(`/api/MarketingApi/activities/campaign/${campaignId}`),
+  getByPatient: (patientId: number) => api.get(`/api/MarketingApi/activities/patient/${patientId}`),
+  getToday: () => api.get('/api/MarketingApi/activities/today'),
+  getScheduled: () => api.get('/api/MarketingApi/activities/scheduled'),
+  getByDateRange: (startDate: string, endDate: string) =>
+    api.get('/api/MarketingApi/activities', { params: { startDate, endDate } }),
+  create: (data: any) => api.post('/api/MarketingApi/activities', data),
+  update: (id: number, data: any) => api.put(`/api/MarketingApi/activities/${id}`, data),
+  delete: (id: number) => api.delete(`/api/MarketingApi/activities/${id}`),
+  complete: (id: number, outcome?: string) =>
+    api.post(`/api/MarketingApi/activities/${id}/complete`, { outcome }),
+  cancel: (id: number, reason?: string) =>
+    api.post(`/api/MarketingApi/activities/${id}/cancel`, { reason }),
+};
+
+export const marketingStatsApi = {
+  getDashboard: () => api.get('/api/MarketingApi/statistics/dashboard'),
+  getCampaignStats: (startDate?: string, endDate?: string) =>
+    api.get('/api/MarketingApi/statistics/campaigns', { params: { startDate, endDate } }),
+  getLeadStats: () => api.get('/api/MarketingApi/statistics/leads'),
+  getLeadFunnel: () => api.get('/api/MarketingApi/statistics/funnel'),
+  getLeadTrends: (days?: number) =>
+    api.get('/api/MarketingApi/statistics/trends', { params: { days } }),
+  getConversionRates: () => api.get('/api/MarketingApi/statistics/conversion-rates'),
+  getROIReport: (startDate?: string, endDate?: string) =>
+    api.get('/api/MarketingApi/statistics/roi', { params: { startDate, endDate } }),
+  getCampaignPerformance: () => api.get('/api/MarketingApi/statistics/campaign-performance'),
 };
 
 export default api;

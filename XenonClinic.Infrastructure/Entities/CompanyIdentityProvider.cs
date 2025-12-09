@@ -1,4 +1,6 @@
-namespace XenonClinic.Core.Entities;
+using XenonClinic.Core.Entities;
+
+namespace XenonClinic.Infrastructure.Entities;
 
 /// <summary>
 /// Type of identity provider
@@ -14,7 +16,8 @@ public enum IdentityProviderType
 }
 
 /// <summary>
-/// Configuration for an external identity provider for a company
+/// Configuration for an external identity provider for a company.
+/// This is in Infrastructure because it's authentication infrastructure configuration.
 /// </summary>
 public class CompanyIdentityProvider
 {

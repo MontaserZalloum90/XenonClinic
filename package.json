@@ -1,0 +1,43 @@
+{
+  "name": "xenon-clinic",
+  "private": true,
+  "version": "1.0.0",
+  "description": "XenonClinic - Healthcare Management System",
+  "workspaces": [
+    "Shared.UI",
+    "XenonClinic.React",
+    "Xenon.PublicWebsite"
+  ],
+  "scripts": {
+    "prepare": "husky",
+    "lint": "npm run lint --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "build:shared": "npm run build -w Shared.UI",
+    "build:admin": "npm run build -w XenonClinic.React",
+    "build:public": "npm run build -w Xenon.PublicWebsite",
+    "build:frontend": "npm run build:shared && npm run build:admin && npm run build:public",
+    "storybook": "npm run storybook -w Shared.UI",
+    "dotnet:restore": "dotnet restore XenonClinic.sln",
+    "dotnet:build": "dotnet build XenonClinic.sln --configuration Release",
+    "dotnet:test": "dotnet test XenonClinic.sln --configuration Release"
+  },
+  "devDependencies": {
+    "husky": "^9.0.0",
+    "lint-staged": "^15.0.0"
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "eslint --fix --max-warnings=0"
+    ],
+    "*.{ts,tsx,js,jsx,json,css,md}": [
+      "prettier --write"
+    ],
+    "*.cs": [
+      "dotnet format --include"
+    ]
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

@@ -12,10 +12,12 @@ namespace XenonClinic.Infrastructure.Services;
 public class LabService : ILabService
 {
     private readonly ClinicDbContext _context;
+    private readonly ISequenceGenerator _sequenceGenerator;
 
-    public LabService(ClinicDbContext context)
+    public LabService(ClinicDbContext context, ISequenceGenerator sequenceGenerator)
     {
         _context = context;
+        _sequenceGenerator = sequenceGenerator;
     }
 
     #region Lab Order Management
@@ -134,21 +136,7 @@ public class LabService : ILabService
 
     public async Task<string> GenerateLabOrderNumberAsync(int branchId)
     {
-        var today = DateTime.UtcNow.Date;
-        var prefix = $"LAB-{today:yyyyMMdd}";
-
-        var lastOrder = await _context.LabOrders
-            .Where(lo => lo.BranchId == branchId && lo.OrderNumber.StartsWith(prefix))
-            .OrderByDescending(lo => lo.OrderNumber)
-            .FirstOrDefaultAsync();
-
-        if (lastOrder == null)
-        {
-            return $"{prefix}-0001";
-        }
-
-        var lastNumber = int.Parse(lastOrder.OrderNumber.Split('-').Last());
-        return $"{prefix}-{(lastNumber + 1):D4}";
+        return await _sequenceGenerator.GenerateLabOrderNumberAsync(branchId);
     }
 
     #endregion

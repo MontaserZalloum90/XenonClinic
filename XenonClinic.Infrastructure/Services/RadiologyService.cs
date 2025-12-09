@@ -14,10 +14,12 @@ namespace XenonClinic.Infrastructure.Services;
 public class RadiologyService : IRadiologyService
 {
     private readonly ClinicDbContext _context;
+    private readonly ISequenceGenerator _sequenceGenerator;
 
-    public RadiologyService(ClinicDbContext context)
+    public RadiologyService(ClinicDbContext context, ISequenceGenerator sequenceGenerator)
     {
         _context = context;
+        _sequenceGenerator = sequenceGenerator;
     }
 
     #region Radiology Order Management
@@ -120,21 +122,7 @@ public class RadiologyService : IRadiologyService
 
     public async Task<string> GenerateRadiologyOrderNumberAsync(int branchId)
     {
-        var today = DateTime.UtcNow.Date;
-        var prefix = $"RAD-{today:yyyyMMdd}";
-
-        var lastOrder = await _context.LabOrders
-            .Where(o => o.BranchId == branchId && o.OrderNumber.StartsWith(prefix))
-            .OrderByDescending(o => o.OrderNumber)
-            .FirstOrDefaultAsync();
-
-        if (lastOrder == null)
-        {
-            return $"{prefix}-0001";
-        }
-
-        var lastNumber = int.Parse(lastOrder.OrderNumber.Split('-').Last());
-        return $"{prefix}-{(lastNumber + 1):D4}";
+        return await _sequenceGenerator.GenerateRadiologyOrderNumberAsync(branchId);
     }
 
     #endregion

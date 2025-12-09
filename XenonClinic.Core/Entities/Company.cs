@@ -47,15 +47,12 @@ public class Company
     public CompanyType? CompanyType { get; set; }
     public ClinicType? ClinicType { get; set; }
     public ICollection<Branch> Branches { get; set; } = new List<Branch>();
-    public ICollection<ApplicationUser> Users { get; set; } = new List<ApplicationUser>();
-
-    /// <summary>
-    /// Authentication settings for this company
-    /// </summary>
-    public CompanyAuthSettings? AuthSettings { get; set; }
 
     /// <summary>
     /// Company-specific configuration settings (can override tenant settings)
     /// </summary>
     public CompanySettings? Settings { get; set; }
+
+    // Note: ApplicationUser and CompanyAuthSettings relationships are defined in Infrastructure
+    // as they depend on ASP.NET Identity which is an infrastructure concern
 }
