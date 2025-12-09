@@ -14,6 +14,7 @@ import { InventoryList } from './pages/Inventory/InventoryList';
 import { PharmacyList } from './pages/Pharmacy/PharmacyList';
 import { RadiologyList } from './pages/Radiology/RadiologyList';
 import { AudiologyList } from './pages/Audiology/AudiologyList';
+import { AdminDashboard } from './pages/Admin';
 import { NotFound, Forbidden } from './pages/Error';
 
 // Create React Query client
@@ -137,6 +138,16 @@ function App() {
                 <ProtectedRoute>
                   <Layout>
                     <AudiologyList />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin"
+              element={
+                <ProtectedRoute requiredRoles={[Roles.ADMIN]}>
+                  <Layout>
+                    <AdminDashboard />
                   </Layout>
                 </ProtectedRoute>
               }
