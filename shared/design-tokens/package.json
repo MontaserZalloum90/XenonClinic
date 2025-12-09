@@ -1,0 +1,15 @@
+{
+  "name": "@xenonclinic/design-tokens",
+  "version": "1.0.0",
+  "description": "Shared design system tokens for XenonClinic applications",
+  "main": "index.js",
+  "type": "module",
+  "keywords": [
+    "design-tokens",
+    "design-system",
+    "tailwind",
+    "xenonclinic"
+  ],
+  "author": "XenonClinic",
+  "license": "PROPRIETARY"
+}

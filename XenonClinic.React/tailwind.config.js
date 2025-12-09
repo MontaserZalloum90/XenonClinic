@@ -1,3 +1,5 @@
+import designTokens from '../shared/design-tokens/index.js';
+
 /** @type {import('tailwindcss').Config} */
 import sharedPreset from '../Shared.UI/src/theme/tailwind-preset.js';
 
