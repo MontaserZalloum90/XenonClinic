@@ -13,6 +13,7 @@ import { FinancialList } from './pages/Financial/FinancialList';
 import { InventoryList } from './pages/Inventory/InventoryList';
 import { PharmacyList } from './pages/Pharmacy/PharmacyList';
 import { RadiologyList } from './pages/Radiology/RadiologyList';
+import { AudiologyList } from './pages/Audiology/AudiologyList';
 import { NotFound, Forbidden } from './pages/Error';
 
 // Create React Query client
@@ -126,6 +127,16 @@ function App() {
                 <ProtectedRoute requiredRoles={[Roles.ADMIN, Roles.DOCTOR, Roles.RADIOLOGIST]}>
                   <Layout>
                     <RadiologyList />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/audiology"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <AudiologyList />
                   </Layout>
                 </ProtectedRoute>
               }
