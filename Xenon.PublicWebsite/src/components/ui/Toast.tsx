@@ -50,16 +50,35 @@ interface ToastContainerProps {
 }
 
 const ToastContainer: React.FC<ToastContainerProps> = ({ toasts, onRemove }) => {
+  // Separate toasts by priority for proper ARIA live region handling
+  const criticalToasts = toasts.filter((t) => t.type === 'error');
+  const normalToasts = toasts.filter((t) => t.type !== 'error');
+
   return (
-    <div
-      className="fixed top-4 right-4 z-50 space-y-2 pointer-events-none"
-      aria-live="polite"
-      aria-atomic="true"
-    >
-      {toasts.map((toast) => (
-        <ToastItem key={toast.id} toast={toast} onRemove={onRemove} />
-      ))}
-    </div>
+    <>
+      {/* Critical toasts (errors) use assertive for immediate announcement */}
+      <div
+        className="fixed top-4 right-4 z-50 space-y-2 pointer-events-none"
+        aria-live="assertive"
+        aria-atomic="true"
+      >
+        {criticalToasts.map((toast) => (
+          <ToastItem key={toast.id} toast={toast} onRemove={onRemove} />
+        ))}
+      </div>
+
+      {/* Normal toasts use polite for non-intrusive announcement */}
+      <div
+        className="fixed top-4 right-4 z-50 space-y-2 pointer-events-none"
+        aria-live="polite"
+        aria-atomic="true"
+        style={{ top: criticalToasts.length > 0 ? `${4 + criticalToasts.length * 5}rem` : '1rem' }}
+      >
+        {normalToasts.map((toast) => (
+          <ToastItem key={toast.id} toast={toast} onRemove={onRemove} />
+        ))}
+      </div>
+    </>
   );
 };
 

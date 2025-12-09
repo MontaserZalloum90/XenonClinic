@@ -38,6 +38,21 @@ export function Header() {
   const location = useLocation();
   const pathname = location.pathname;
 
+  // Handle keyboard navigation for dropdowns
+  const handleDropdownKeyDown = (e: React.KeyboardEvent, itemName: string, children?: typeof navigation.main[0]['children']) => {
+    if (!children) return;
+
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      setActiveDropdown(activeDropdown === itemName ? null : itemName);
+    } else if (e.key === 'Escape') {
+      setActiveDropdown(null);
+    } else if (e.key === 'ArrowDown' && activeDropdown !== itemName) {
+      e.preventDefault();
+      setActiveDropdown(itemName);
+    }
+  };
+
   useEffect(() => {
     const handleScroll = () => {
       setScrolled(window.scrollY > 10);
@@ -84,12 +99,19 @@ export function Header() {
                           ? 'text-primary-600'
                           : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'
                       }`}
+                      aria-expanded={activeDropdown === item.name}
+                      aria-haspopup="true"
+                      onKeyDown={(e) => handleDropdownKeyDown(e, item.name, item.children)}
                     >
                       {item.name}
                       <ChevronDown className="h-4 w-4" />
                     </button>
                     {activeDropdown === item.name && (
-                      <div className="absolute top-full left-0 mt-1 w-56 rounded-xl bg-white shadow-lg ring-1 ring-gray-100 py-2">
+                      <div
+                        className="absolute top-full left-0 mt-1 w-56 rounded-xl bg-white shadow-lg ring-1 ring-gray-100 py-2"
+                        role="menu"
+                        aria-orientation="vertical"
+                      >
                         {item.children.map((child) => (
                           <Link
                             key={child.href}
@@ -99,6 +121,7 @@ export function Header() {
                                 ? 'bg-primary-50 text-primary-600'
                                 : 'text-gray-700 hover:bg-gray-50'
                             }`}
+                            role="menuitem"
                           >
                             {child.name}
                           </Link>
@@ -161,6 +184,7 @@ export function Header() {
                           setActiveDropdown(activeDropdown === item.name ? null : item.name)
                         }
                         className="flex w-full items-center justify-between px-3 py-2 text-base font-medium text-gray-700 rounded-lg hover:bg-gray-100"
+                        aria-expanded={activeDropdown === item.name}
                       >
                         {item.name}
                         <ChevronDown

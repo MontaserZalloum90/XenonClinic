@@ -4,6 +4,18 @@ import { useAuth } from '../contexts/AuthContext';
 import { api, appointmentsApi, patientsApi, laboratoryApi } from '../lib/api';
 import { BarChart, Bar, PieChart, Pie, Cell, ResponsiveContainer, XAxis, YAxis, Tooltip, Legend } from 'recharts';
 
+// Color mapping for module cards - prevents dynamic Tailwind class issues
+const colorClasses = {
+  blue: { bg: 'bg-blue-100', text: 'text-blue-600' },
+  green: { bg: 'bg-green-100', text: 'text-green-600' },
+  purple: { bg: 'bg-purple-100', text: 'text-purple-600' },
+  indigo: { bg: 'bg-indigo-100', text: 'text-indigo-600' },
+  emerald: { bg: 'bg-emerald-100', text: 'text-emerald-600' },
+  orange: { bg: 'bg-orange-100', text: 'text-orange-600' },
+  pink: { bg: 'bg-pink-100', text: 'text-pink-600' },
+  cyan: { bg: 'bg-cyan-100', text: 'text-cyan-600' },
+} as const;
+
 export const Dashboard = () => {
   const { user } = useAuth();
 
@@ -78,7 +90,7 @@ export const Dashboard = () => {
       name: 'Appointments',
       path: '/appointments',
       icon: 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z',
-      color: 'blue',
+      color: 'blue' as keyof typeof colorClasses,
       stats: [
         { label: 'Today', value: appointmentStats?.today || 0 },
         { label: 'Upcoming', value: appointmentStats?.upcoming || 0 },
@@ -88,7 +100,7 @@ export const Dashboard = () => {
       name: 'Patients',
       path: '/patients',
       icon: 'M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z',
-      color: 'green',
+      color: 'green' as keyof typeof colorClasses,
       stats: [
         { label: 'Total', value: patientStats?.totalPatients || 0 },
         { label: 'New (30d)', value: patientStats?.newPatientsThisMonth || 0 },
@@ -98,7 +110,7 @@ export const Dashboard = () => {
       name: 'Laboratory',
       path: '/laboratory',
       icon: 'M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z',
-      color: 'purple',
+      color: 'purple' as keyof typeof colorClasses,
       stats: [
         { label: 'Pending', value: labStats?.pendingOrders || 0 },
         { label: 'Urgent', value: labStats?.urgentOrders || 0 },
@@ -108,7 +120,7 @@ export const Dashboard = () => {
       name: 'HR',
       path: '/hr',
       icon: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z',
-      color: 'indigo',
+      color: 'indigo' as keyof typeof colorClasses,
       stats: [
         { label: 'Total', value: hrStats?.totalEmployees || 0 },
         { label: 'Active', value: hrStats?.activeEmployees || 0 },
@@ -118,7 +130,7 @@ export const Dashboard = () => {
       name: 'Financial',
       path: '/financial',
       icon: 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z',
-      color: 'emerald',
+      color: 'emerald' as keyof typeof colorClasses,
       stats: [
         { label: 'Revenue', value: `AED ${(financialStats?.monthlyRevenue || 0).toFixed(0)}` },
         { label: 'Unpaid', value: financialStats?.unpaidInvoices || 0 },
@@ -128,7 +140,7 @@ export const Dashboard = () => {
       name: 'Inventory',
       path: '/inventory',
       icon: 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4',
-      color: 'orange',
+      color: 'orange' as keyof typeof colorClasses,
       stats: [
         { label: 'Items', value: inventoryStats?.totalItems || 0 },
         { label: 'Low Stock', value: inventoryStats?.lowStockItems || 0 },
@@ -138,7 +150,7 @@ export const Dashboard = () => {
       name: 'Pharmacy',
       path: '/pharmacy',
       icon: 'M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z',
-      color: 'pink',
+      color: 'pink' as keyof typeof colorClasses,
       stats: [
         { label: 'Pending', value: pharmacyStats?.pendingPrescriptions || 0 },
         { label: 'Today', value: pharmacyStats?.dispensedToday || 0 },
@@ -148,7 +160,7 @@ export const Dashboard = () => {
       name: 'Radiology',
       path: '/radiology',
       icon: 'M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z',
-      color: 'cyan',
+      color: 'cyan' as keyof typeof colorClasses,
       stats: [
         { label: 'Pending', value: radiologyStats?.pendingOrders || 0 },
         { label: 'Today', value: radiologyStats?.completedToday || 0 },
@@ -190,8 +202,8 @@ export const Dashboard = () => {
             className="card hover:shadow-lg transition-shadow cursor-pointer"
           >
             <div className="flex items-start justify-between mb-3">
-              <div className={`w-12 h-12 bg-${module.color}-100 rounded-lg flex items-center justify-center`}>
-                <svg className={`w-6 h-6 text-${module.color}-600`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className={`w-12 h-12 ${colorClasses[module.color].bg} rounded-lg flex items-center justify-center`}>
+                <svg className={`w-6 h-6 ${colorClasses[module.color].text}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={module.icon} />
                 </svg>
               </div>

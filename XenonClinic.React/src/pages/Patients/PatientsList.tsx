@@ -335,15 +335,99 @@ export const PatientsList = () => {
         ))}
       </div>
 
-      {/* Table */}
+      {/* Table / Cards */}
       <div className="card overflow-hidden p-0 animate-fade-in">
         {isLoading ? (
           <div className="p-6">
             <SkeletonTable rows={8} columns={5} />
           </div>
         ) : filteredPatients && filteredPatients.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
+          <>
+            {/* Mobile Card View */}
+            <div className="md:hidden divide-y divide-gray-200">
+              {filteredPatients.map((patient) => (
+                <div
+                  key={patient.id}
+                  className={`p-4 ${selectedIds.has(patient.id) ? 'bg-blue-50' : 'bg-white'}`}
+                >
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-start gap-3 flex-1">
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.has(patient.id)}
+                        onChange={() => handleSelectOne(patient.id)}
+                        className="mt-1 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      />
+                      <div className="flex-1">
+                        <h3 className="font-medium text-gray-900">{patient.fullNameEn}</h3>
+                        {patient.fullNameAr && (
+                          <p className="text-sm text-gray-500" dir="rtl">{patient.fullNameAr}</p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => handleOpenEditModal(patient)}
+                        className="p-2 text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
+                        title="Edit patient"
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                          />
+                        </svg>
+                      </button>
+                      <button
+                        onClick={() => handleDelete(patient)}
+                        disabled={deleteMutation.isPending}
+                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg disabled:opacity-50 transition-colors"
+                        title="Delete patient"
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                          />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3 text-sm">
+                    <div>
+                      <span className="text-gray-500">Emirates ID:</span>
+                      <p className="text-gray-900 font-medium">{patient.emiratesId}</p>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">Age/Gender:</span>
+                      <p className="text-gray-900 font-medium">
+                        {calculateAge(patient.dateOfBirth)}y, {patient.gender === 'M' ? 'Male' : 'Female'}
+                      </p>
+                    </div>
+                    {patient.phoneNumber && (
+                      <div>
+                        <span className="text-gray-500">Phone:</span>
+                        <p className="text-gray-900 font-medium">{patient.phoneNumber}</p>
+                      </div>
+                    )}
+                    {patient.email && (
+                      <div>
+                        <span className="text-gray-500">Email:</span>
+                        <p className="text-gray-900 font-medium truncate">{patient.email}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Desktop Table View */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-6 py-3 text-left">
@@ -436,6 +520,7 @@ export const PatientsList = () => {
               </tbody>
             </table>
           </div>
+          </>
         ) : (
           <EmptyState
             icon={
