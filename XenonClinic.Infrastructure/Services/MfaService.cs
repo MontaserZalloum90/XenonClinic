@@ -1,13 +1,17 @@
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using XenonClinic.Core.Interfaces;
+using XenonClinic.Infrastructure.Data;
+using XenonClinic.Infrastructure.Entities;
 
 namespace XenonClinic.Infrastructure.Services;
 
 /// <summary>
-/// Multi-factor authentication service implementation.
+/// Multi-factor authentication service implementation with database persistence.
 /// </summary>
 public class MfaService : IMfaService
 {
@@ -15,25 +19,25 @@ public class MfaService : IMfaService
     private readonly ILogger<MfaService> _logger;
     private readonly ISmsService _smsService;
     private readonly IEmailService _emailService;
+    private readonly ClinicDbContext _dbContext;
 
     private const string Issuer = "XenonClinic";
     private const int TotpDigits = 6;
     private const int TotpPeriod = 30; // seconds
     private const int CodeExpirationMinutes = 10;
 
-    // In production, store these in database
-    private static readonly Dictionary<string, UserMfaData> _userMfaData = new();
-
     public MfaService(
         IMemoryCache cache,
         ILogger<MfaService> logger,
         ISmsService smsService,
-        IEmailService emailService)
+        IEmailService emailService,
+        ClinicDbContext dbContext)
     {
         _cache = cache;
         _logger = logger;
         _smsService = smsService;
         _emailService = emailService;
+        _dbContext = dbContext;
     }
 
     public Task<MfaSetupResult> GenerateTotpSecretAsync(string userId)
@@ -52,14 +56,17 @@ public class MfaService : IMfaService
         return Task.FromResult(new MfaSetupResult(base32Secret, qrCodeUri, manualKey));
     }
 
-    public Task<bool> VerifyTotpCodeAsync(string userId, string code)
+    public async Task<bool> VerifyTotpCodeAsync(string userId, string code)
     {
-        if (!_userMfaData.TryGetValue(userId, out var mfaData) || string.IsNullOrEmpty(mfaData.TotpSecret))
+        var mfaConfig = await _dbContext.UserMfaConfigurations
+            .FirstOrDefaultAsync(m => m.UserId == userId);
+
+        if (mfaConfig == null || string.IsNullOrEmpty(mfaConfig.TotpSecret))
         {
-            return Task.FromResult(false);
+            return false;
         }
 
-        var isValid = VerifyTotp(mfaData.TotpSecret, code);
+        var isValid = VerifyTotp(mfaConfig.TotpSecret, code);
 
         if (isValid)
         {
@@ -70,50 +77,67 @@ public class MfaService : IMfaService
             _logger.LogWarning("TOTP verification failed for user {UserId}", userId);
         }
 
-        return Task.FromResult(isValid);
+        return isValid;
     }
 
-    public Task<bool> EnableTotpAsync(string userId, string code)
+    public async Task<bool> EnableTotpAsync(string userId, string code)
     {
         var cacheKey = $"mfa_setup_{userId}";
         if (!_cache.TryGetValue(cacheKey, out string? secret) || string.IsNullOrEmpty(secret))
         {
-            return Task.FromResult(false);
+            return false;
         }
 
         if (!VerifyTotp(secret, code))
         {
-            return Task.FromResult(false);
+            return false;
         }
 
-        // Store MFA data (in production, save to database)
-        _userMfaData[userId] = new UserMfaData
+        // Get or create MFA configuration in database
+        var mfaConfig = await _dbContext.UserMfaConfigurations
+            .FirstOrDefaultAsync(m => m.UserId == userId);
+
+        if (mfaConfig == null)
         {
-            UserId = userId,
-            TotpSecret = secret,
-            IsEnabled = true,
-            EnabledMethod = MfaMethod.Totp,
-            EnabledAt = DateTime.UtcNow
-        };
+            mfaConfig = new UserMfaConfiguration
+            {
+                UserId = userId,
+                CreatedAt = DateTime.UtcNow
+            };
+            _dbContext.UserMfaConfigurations.Add(mfaConfig);
+        }
+
+        mfaConfig.TotpSecret = secret;
+        mfaConfig.IsEnabled = true;
+        mfaConfig.EnabledMethod = (int)MfaMethod.Totp;
+        mfaConfig.EnabledAt = DateTime.UtcNow;
+        mfaConfig.UpdatedAt = DateTime.UtcNow;
+
+        await _dbContext.SaveChangesAsync();
 
         _cache.Remove(cacheKey);
         _logger.LogInformation("TOTP MFA enabled for user {UserId}", userId);
 
-        return Task.FromResult(true);
+        return true;
     }
 
-    public Task DisableMfaAsync(string userId)
+    public async Task DisableMfaAsync(string userId)
     {
-        if (_userMfaData.TryGetValue(userId, out var mfaData))
+        var mfaConfig = await _dbContext.UserMfaConfigurations
+            .FirstOrDefaultAsync(m => m.UserId == userId);
+
+        if (mfaConfig != null)
         {
-            mfaData.IsEnabled = false;
-            mfaData.EnabledMethod = MfaMethod.None;
-            mfaData.TotpSecret = null;
-            mfaData.BackupCodes.Clear();
+            mfaConfig.IsEnabled = false;
+            mfaConfig.EnabledMethod = (int)MfaMethod.None;
+            mfaConfig.TotpSecret = null;
+            mfaConfig.BackupCodesJson = null;
+            mfaConfig.UpdatedAt = DateTime.UtcNow;
+
+            await _dbContext.SaveChangesAsync();
         }
 
         _logger.LogInformation("MFA disabled for user {UserId}", userId);
-        return Task.CompletedTask;
     }
 
     public async Task<string> SendSmsCodeAsync(string userId, string phoneNumber)
@@ -173,7 +197,7 @@ public class MfaService : IMfaService
         return Task.FromResult(false);
     }
 
-    public Task<IEnumerable<string>> GenerateBackupCodesAsync(string userId, int count = 10)
+    public async Task<IEnumerable<string>> GenerateBackupCodesAsync(string userId, int count = 10)
     {
         var codes = new List<string>();
 
@@ -182,54 +206,85 @@ public class MfaService : IMfaService
             codes.Add(GenerateBackupCode());
         }
 
-        // Store hashed backup codes
-        if (!_userMfaData.TryGetValue(userId, out var mfaData))
+        // Get or create MFA configuration
+        var mfaConfig = await _dbContext.UserMfaConfigurations
+            .FirstOrDefaultAsync(m => m.UserId == userId);
+
+        if (mfaConfig == null)
         {
-            mfaData = new UserMfaData { UserId = userId };
-            _userMfaData[userId] = mfaData;
+            mfaConfig = new UserMfaConfiguration
+            {
+                UserId = userId,
+                CreatedAt = DateTime.UtcNow
+            };
+            _dbContext.UserMfaConfigurations.Add(mfaConfig);
         }
 
-        mfaData.BackupCodes = codes.Select(HashCode).ToList();
+        // Store hashed backup codes as JSON
+        var hashedCodes = codes.Select(HashCode).ToList();
+        mfaConfig.BackupCodesJson = JsonSerializer.Serialize(hashedCodes);
+        mfaConfig.UpdatedAt = DateTime.UtcNow;
+
+        await _dbContext.SaveChangesAsync();
 
         _logger.LogInformation("Generated {Count} backup codes for user {UserId}", count, userId);
 
-        return Task.FromResult<IEnumerable<string>>(codes);
+        return codes;
     }
 
-    public Task<bool> VerifyBackupCodeAsync(string userId, string code)
+    public async Task<bool> VerifyBackupCodeAsync(string userId, string code)
     {
-        if (!_userMfaData.TryGetValue(userId, out var mfaData))
+        var mfaConfig = await _dbContext.UserMfaConfigurations
+            .FirstOrDefaultAsync(m => m.UserId == userId);
+
+        if (mfaConfig == null || string.IsNullOrEmpty(mfaConfig.BackupCodesJson))
         {
-            return Task.FromResult(false);
+            return false;
         }
 
+        var backupCodes = JsonSerializer.Deserialize<List<string>>(mfaConfig.BackupCodesJson) ?? new List<string>();
         var hashedCode = HashCode(code);
-        var matchingCode = mfaData.BackupCodes.FirstOrDefault(c => c == hashedCode);
+        var matchingCode = backupCodes.FirstOrDefault(c => c == hashedCode);
 
         if (matchingCode != null)
         {
-            mfaData.BackupCodes.Remove(matchingCode);
+            backupCodes.Remove(matchingCode);
+            mfaConfig.BackupCodesJson = JsonSerializer.Serialize(backupCodes);
+            mfaConfig.UpdatedAt = DateTime.UtcNow;
+
+            await _dbContext.SaveChangesAsync();
+
             _logger.LogInformation("Backup code used for user {UserId}, {Remaining} remaining",
-                userId, mfaData.BackupCodes.Count);
-            return Task.FromResult(true);
+                userId, backupCodes.Count);
+            return true;
         }
 
-        return Task.FromResult(false);
+        return false;
     }
 
-    public Task<MfaStatus> GetMfaStatusAsync(string userId)
+    public async Task<MfaStatus> GetMfaStatusAsync(string userId)
     {
-        if (!_userMfaData.TryGetValue(userId, out var mfaData))
+        var mfaConfig = await _dbContext.UserMfaConfigurations
+            .FirstOrDefaultAsync(m => m.UserId == userId);
+
+        if (mfaConfig == null)
         {
-            return Task.FromResult(new MfaStatus(false, MfaMethod.None, false, 0));
+            return new MfaStatus(false, MfaMethod.None, false, 0);
         }
 
-        return Task.FromResult(new MfaStatus(
-            mfaData.IsEnabled,
-            mfaData.EnabledMethod,
-            mfaData.BackupCodes.Count > 0,
-            mfaData.BackupCodes.Count
-        ));
+        var backupCodeCount = 0;
+        if (!string.IsNullOrEmpty(mfaConfig.BackupCodesJson))
+        {
+            var codes = JsonSerializer.Deserialize<List<string>>(mfaConfig.BackupCodesJson);
+            backupCodeCount = codes?.Count ?? 0;
+        }
+
+        return new MfaStatus(
+            mfaConfig.IsEnabled,
+            (MfaMethod)mfaConfig.EnabledMethod,
+            backupCodeCount > 0,
+            backupCodeCount
+        );
     }
 
     #region Private Helpers
@@ -378,14 +433,4 @@ public class MfaService : IMfaService
     }
 
     #endregion
-
-    private class UserMfaData
-    {
-        public string UserId { get; set; } = string.Empty;
-        public string? TotpSecret { get; set; }
-        public bool IsEnabled { get; set; }
-        public MfaMethod EnabledMethod { get; set; }
-        public DateTime? EnabledAt { get; set; }
-        public List<string> BackupCodes { get; set; } = new();
-    }
 }
