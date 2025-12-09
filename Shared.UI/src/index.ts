@@ -18,3 +18,18 @@ export { ConfirmDialog, useConfirmDialog } from './components/ConfirmDialog/Conf
 
 // Empty state component
 export { EmptyState } from './components/EmptyState/EmptyState';
+
+// Badge components
+export { Badge, StatusBadge } from './components/Badge/Badge';
+export type { BadgeVariant, BadgeSize } from './components/Badge/Badge';
+
+// API utilities
+export {
+  createApiClient,
+  tokenStorage,
+  buildQueryString,
+  isApiError,
+  getErrorMessage,
+  withRetry,
+} from './lib/api-base';
+export type { ApiResponse, ApiError, RequestConfig, HttpMethod } from './lib/api-base';

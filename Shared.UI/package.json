@@ -24,8 +24,9 @@
   },
   "exports": {
     ".": "./src/index.ts",
-    "./tailwind-preset": "./src/theme/tailwind-preset.js"
+    "./tailwind-preset": "./src/theme/tailwind-preset.js",
+    "./styles": "./src/styles/components.css"
   },
-  "keywords": ["xenon", "ui", "components", "react"],
+  "keywords": ["xenon", "ui", "components", "react", "tailwind"],
   "license": "UNLICENSED"
 }
