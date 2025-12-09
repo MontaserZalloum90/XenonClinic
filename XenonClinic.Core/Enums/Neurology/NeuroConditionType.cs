@@ -1,0 +1,36 @@
+namespace XenonClinic.Core.Enums.Neurology;
+
+public enum NeuroConditionType
+{
+    Epilepsy = 0,
+    Migraine = 1,
+    TensionHeadache = 2,
+    ClusterHeadache = 3,
+    Stroke = 4,
+    TIA = 5,
+    MultipleSclerosis = 6,
+    ParkinsonsDisease = 7,
+    AlzheimersDisease = 8,
+    Dementia = 9,
+    Neuropathy = 10,
+    CarpalTunnelSyndrome = 11,
+    Myasthenia = 12,
+    ALS = 13,
+    Tremor = 14,
+    Dystonia = 15,
+    BrainTumor = 16,
+    Hydrocephalus = 17,
+    MeningitisHistory = 18,
+    EncephalitisHistory = 19,
+    TraumaticBrainInjury = 20,
+    Concussion = 21,
+    SpinalStenosis = 22,
+    Radiculopathy = 23,
+    Myelopathy = 24,
+    Vertigo = 25,
+    BellsPalsy = 26,
+    GuillainBarre = 27,
+    RestlessLegSyndrome = 28,
+    Narcolepsy = 29,
+    Other = 99
+}
