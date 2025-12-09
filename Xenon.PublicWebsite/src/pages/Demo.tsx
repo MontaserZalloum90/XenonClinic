@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowRight, Check, Stethoscope, ShoppingCart, AlertCircle } from 'lucide-react';
 import { submitDemoRequest } from '@/lib/platform-api';
+import { ProgressIndicator } from '@/components/ui/ProgressIndicator';
+import { useToast } from '@/components/ui/Toast';
 
 const companyTypes = [
   { code: 'CLINIC', name: 'Healthcare Clinic', icon: Stethoscope },
@@ -20,6 +22,7 @@ type Step = 'company-type' | 'clinic-type' | 'details' | 'processing';
 
 export default function DemoPage() {
   const navigate = useNavigate();
+  const { showToast } = useToast();
   const [step, setStep] = useState<Step>('company-type');
   const [formData, setFormData] = useState({
     companyType: '',
@@ -32,6 +35,24 @@ export default function DemoPage() {
     agreeTerms: false,
   });
   const [error, setError] = useState('');
+
+  const getStepNumber = () => {
+    if (step === 'company-type') return 1;
+    if (step === 'clinic-type') return 2;
+    if (step === 'details') return formData.companyType === 'CLINIC' ? 3 : 2;
+    return formData.companyType === 'CLINIC' ? 4 : 3;
+  };
+
+  const getTotalSteps = () => {
+    return formData.companyType === 'CLINIC' ? 4 : 3;
+  };
+
+  const getStepLabels = () => {
+    if (formData.companyType === 'CLINIC') {
+      return ['Business Type', 'Clinic Type', 'Details', 'Processing'];
+    }
+    return ['Business Type', 'Details', 'Processing'];
+  };
 
   const handleCompanyTypeSelect = (code: string) => {
     setFormData((prev) => ({ ...prev, companyType: code }));
@@ -70,13 +91,18 @@ export default function DemoPage() {
       });
 
       if (response.success) {
+        showToast('success', 'Demo request submitted successfully!');
         navigate('/demo/success');
       } else {
-        setError(response.error || 'Failed to submit. Please try again.');
+        const errorMsg = response.error || 'Failed to submit. Please try again.';
+        setError(errorMsg);
+        showToast('error', errorMsg);
         setStep('details');
       }
     } catch {
-      setError('Network error. Please try again.');
+      const errorMsg = 'Network error. Please try again.';
+      setError(errorMsg);
+      showToast('error', errorMsg);
       setStep('details');
     }
   };
@@ -87,6 +113,17 @@ export default function DemoPage() {
     <div className="min-h-[calc(100vh-4rem)] bg-gradient-to-b from-gray-50 to-white">
       <div className="container-marketing py-12 md:py-20">
         <div className="max-w-2xl mx-auto">
+          {/* Progress Indicator */}
+          {step !== 'company-type' && (
+            <div className="mb-8 animate-fade-in">
+              <ProgressIndicator
+                currentStep={getStepNumber()}
+                totalSteps={getTotalSteps()}
+                labels={getStepLabels()}
+              />
+            </div>
+          )}
+
           {/* Step: Company Type */}
           {step === 'company-type' && (
             <div className="animate-fade-in">

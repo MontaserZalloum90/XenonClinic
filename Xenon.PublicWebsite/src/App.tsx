@@ -1,6 +1,7 @@
 import { Routes, Route } from 'react-router-dom';
 import { MarketingLayout } from './components/layouts/MarketingLayout';
 import { AuthLayout } from './components/layouts/AuthLayout';
+import { ToastProvider } from './components/ui/Toast';
 
 // Marketing Pages
 import HomePage from './pages/Home';
@@ -20,7 +21,8 @@ import NotFoundPage from './pages/NotFound';
 
 export default function App() {
   return (
-    <Routes>
+    <ToastProvider>
+      <Routes>
       {/* Marketing Routes */}
       <Route element={<MarketingLayout />}>
         <Route path="/" element={<HomePage />} />
@@ -41,5 +43,6 @@ export default function App() {
       {/* 404 */}
       <Route path="*" element={<NotFoundPage />} />
     </Routes>
+    </ToastProvider>
   );
 }
