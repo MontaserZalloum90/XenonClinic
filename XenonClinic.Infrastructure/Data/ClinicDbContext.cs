@@ -2,10 +2,11 @@ using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using XenonClinic.Core.Entities;
 using XenonClinic.Core.Entities.Lookups;
+using XenonClinic.Infrastructure.Entities;
 
 namespace XenonClinic.Infrastructure.Data;
 
-public class ClinicDbContext : IdentityDbContext<ApplicationUser>
+public class ClinicDbContext : IdentityDbContext<Entities.ApplicationUser>
 {
     public ClinicDbContext(DbContextOptions<ClinicDbContext> options) : base(options)
     {
@@ -58,9 +59,9 @@ public class ClinicDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<Expense> Expenses => Set<Expense>();
     public DbSet<FinancialTransaction> FinancialTransactions => Set<FinancialTransaction>();
 
-    // Authentication configuration entities
-    public DbSet<CompanyAuthSettings> CompanyAuthSettings => Set<CompanyAuthSettings>();
-    public DbSet<CompanyIdentityProvider> CompanyIdentityProviders => Set<CompanyIdentityProvider>();
+    // Authentication configuration entities (from Infrastructure)
+    public DbSet<Entities.CompanyAuthSettings> CompanyAuthSettings => Set<Entities.CompanyAuthSettings>();
+    public DbSet<Entities.CompanyIdentityProvider> CompanyIdentityProviders => Set<Entities.CompanyIdentityProvider>();
 
     // Case Management entities
     public DbSet<Case> Cases => Set<Case>();
@@ -127,11 +128,9 @@ public class ClinicDbContext : IdentityDbContext<ApplicationUser>
             .HasForeignKey(c => c.TenantId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        builder.Entity<Tenant>()
-            .HasMany(t => t.Users)
-            .WithOne(u => u.Tenant)
-            .HasForeignKey(u => u.TenantId)
-            .OnDelete(DeleteBehavior.SetNull);
+        // Note: Tenant.Users relationship moved to Infrastructure (ApplicationUser has TenantId)
+        builder.Entity<Entities.ApplicationUser>()
+            .HasIndex(u => u.TenantId);
 
         builder.Entity<Tenant>()
             .HasOne(t => t.Settings)
@@ -162,11 +161,9 @@ public class ClinicDbContext : IdentityDbContext<ApplicationUser>
             .HasForeignKey(b => b.CompanyId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        builder.Entity<Company>()
-            .HasMany(c => c.Users)
-            .WithOne(u => u.Company)
-            .HasForeignKey(u => u.CompanyId)
-            .OnDelete(DeleteBehavior.SetNull);
+        // Note: Company.Users relationship moved to Infrastructure (ApplicationUser has CompanyId)
+        builder.Entity<Entities.ApplicationUser>()
+            .HasIndex(u => u.CompanyId);
 
         // TenantSettings configuration
         builder.Entity<TenantSettings>()
@@ -206,17 +203,11 @@ public class ClinicDbContext : IdentityDbContext<ApplicationUser>
         builder.Entity<Branch>()
             .HasIndex(b => new { b.CompanyId, b.Code });
 
-        // ApplicationUser multi-tenancy relationships
-        builder.Entity<ApplicationUser>()
-            .HasIndex(u => u.TenantId);
-
-        builder.Entity<ApplicationUser>()
-            .HasIndex(u => u.CompanyId);
-
-        builder.Entity<ApplicationUser>()
+        // ApplicationUser multi-tenancy relationships (Infrastructure entity)
+        builder.Entity<Entities.ApplicationUser>()
             .HasIndex(u => u.IsActive);
 
-        builder.Entity<ApplicationUser>()
+        builder.Entity<Entities.ApplicationUser>()
             .HasIndex(u => u.IsSuperAdmin);
 
         // ========================================
@@ -225,17 +216,17 @@ public class ClinicDbContext : IdentityDbContext<ApplicationUser>
 
         builder.Entity<UserBranch>().HasKey(ub => new { ub.UserId, ub.BranchId });
         builder.Entity<UserBranch>()
-            .HasOne(ub => ub.User)
-            .WithMany(u => u.UserBranches)
+            .HasOne<Entities.ApplicationUser>()
+            .WithMany()
             .HasForeignKey(ub => ub.UserId);
         builder.Entity<UserBranch>()
             .HasOne(ub => ub.Branch)
             .WithMany(b => b.UserBranches)
             .HasForeignKey(ub => ub.BranchId);
 
-        builder.Entity<ApplicationUser>()
-            .HasOne(u => u.PrimaryBranch)
-            .WithMany(b => b.PrimaryUsers)
+        builder.Entity<Entities.ApplicationUser>()
+            .HasOne<Branch>()
+            .WithMany()
             .HasForeignKey(u => u.PrimaryBranchId)
             .OnDelete(DeleteBehavior.SetNull);
 
@@ -1298,67 +1289,67 @@ public class ClinicDbContext : IdentityDbContext<ApplicationUser>
         // Company Authentication Configuration
         // ========================================
 
-        // CompanyAuthSettings configuration
-        builder.Entity<CompanyAuthSettings>()
+        // CompanyAuthSettings configuration (Infrastructure entity)
+        builder.Entity<Entities.CompanyAuthSettings>()
             .HasIndex(cas => cas.CompanyId)
             .IsUnique();
 
-        builder.Entity<CompanyAuthSettings>()
+        builder.Entity<Entities.CompanyAuthSettings>()
             .HasIndex(cas => cas.IsEnabled);
 
-        builder.Entity<CompanyAuthSettings>()
+        builder.Entity<Entities.CompanyAuthSettings>()
             .HasOne(cas => cas.Company)
-            .WithOne(c => c.AuthSettings)
-            .HasForeignKey<CompanyAuthSettings>(cas => cas.CompanyId)
+            .WithMany()
+            .HasForeignKey(cas => cas.CompanyId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        builder.Entity<CompanyAuthSettings>()
+        builder.Entity<Entities.CompanyAuthSettings>()
             .HasMany(cas => cas.IdentityProviders)
             .WithOne()
             .HasForeignKey(ip => ip.CompanyId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        // CompanyIdentityProvider configuration
-        builder.Entity<CompanyIdentityProvider>()
+        // CompanyIdentityProvider configuration (Infrastructure entity)
+        builder.Entity<Entities.CompanyIdentityProvider>()
             .HasIndex(ip => ip.CompanyId);
 
-        builder.Entity<CompanyIdentityProvider>()
+        builder.Entity<Entities.CompanyIdentityProvider>()
             .HasIndex(ip => ip.Name);
 
-        builder.Entity<CompanyIdentityProvider>()
+        builder.Entity<Entities.CompanyIdentityProvider>()
             .HasIndex(ip => ip.IsEnabled);
 
-        builder.Entity<CompanyIdentityProvider>()
+        builder.Entity<Entities.CompanyIdentityProvider>()
             .HasIndex(ip => ip.IsDefault);
 
-        builder.Entity<CompanyIdentityProvider>()
+        builder.Entity<Entities.CompanyIdentityProvider>()
             .HasIndex(ip => new { ip.CompanyId, ip.Name })
             .IsUnique();
 
-        builder.Entity<CompanyIdentityProvider>()
+        builder.Entity<Entities.CompanyIdentityProvider>()
             .HasOne(ip => ip.Company)
             .WithMany()
             .HasForeignKey(ip => ip.CompanyId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        builder.Entity<CompanyIdentityProvider>()
+        builder.Entity<Entities.CompanyIdentityProvider>()
             .Property(ip => ip.Name)
             .HasMaxLength(100)
             .IsRequired();
 
-        builder.Entity<CompanyIdentityProvider>()
+        builder.Entity<Entities.CompanyIdentityProvider>()
             .Property(ip => ip.DisplayName)
             .HasMaxLength(200)
             .IsRequired();
 
-        // ApplicationUser external login indexes
-        builder.Entity<ApplicationUser>()
+        // ApplicationUser external login indexes (Infrastructure entity)
+        builder.Entity<Entities.ApplicationUser>()
             .HasIndex(u => u.ExternalUserId);
 
-        builder.Entity<ApplicationUser>()
+        builder.Entity<Entities.ApplicationUser>()
             .HasIndex(u => u.ExternalProviderName);
 
-        builder.Entity<ApplicationUser>()
+        builder.Entity<Entities.ApplicationUser>()
             .HasIndex(u => new { u.CompanyId, u.ExternalProviderName, u.ExternalUserId });
 
         // ========================================

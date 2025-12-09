@@ -1,8 +1,13 @@
 using Microsoft.AspNetCore.Identity;
+using XenonClinic.Core.Interfaces;
 
-namespace XenonClinic.Core.Entities;
+namespace XenonClinic.Infrastructure.Entities;
 
-public class ApplicationUser : IdentityUser
+/// <summary>
+/// Application user entity - concrete implementation using ASP.NET Identity.
+/// This is in Infrastructure because it depends on Microsoft.AspNetCore.Identity.
+/// </summary>
+public class ApplicationUser : IdentityUser, IApplicationUser
 {
     public int? TenantId { get; set; }
     public int? CompanyId { get; set; }
@@ -43,9 +48,6 @@ public class ApplicationUser : IdentityUser
     /// </summary>
     public DateTime? LastExternalLoginAt { get; set; }
 
-    // Navigation properties
-    public Tenant? Tenant { get; set; }
-    public Company? Company { get; set; }
-    public Branch? PrimaryBranch { get; set; }
-    public ICollection<UserBranch> UserBranches { get; set; } = new List<UserBranch>();
+    // Navigation properties - these reference Core entities
+    // Note: These are configured in DbContext, not using attributes to avoid circular references
 }

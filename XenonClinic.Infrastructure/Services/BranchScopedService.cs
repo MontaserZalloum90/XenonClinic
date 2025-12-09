@@ -5,6 +5,7 @@ using XenonClinic.Core.Constants;
 using XenonClinic.Core.Entities;
 using XenonClinic.Core.Interfaces;
 using XenonClinic.Infrastructure.Data;
+using XenonClinic.Infrastructure.Entities;
 
 namespace XenonClinic.Infrastructure.Services;
 

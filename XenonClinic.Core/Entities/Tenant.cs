@@ -1,12 +1,20 @@
 namespace XenonClinic.Core.Entities;
 
 /// <summary>
-/// Represents a tenant - the top level of the multi-tenancy hierarchy.
-/// A tenant is a group of companies.
+/// Represents a clinic tenant instance - the top level of the multi-tenancy hierarchy.
+/// A tenant is a group of companies within a single clinic deployment.
+/// Links to Xenon.Platform's Tenant entity via PlatformTenantId for SaaS management.
 /// </summary>
 public class Tenant
 {
     public int Id { get; set; }
+
+    /// <summary>
+    /// Link to the Platform's Tenant entity (Guid-based).
+    /// This connects the clinic instance to the SaaS management platform.
+    /// </summary>
+    public Guid? PlatformTenantId { get; set; }
+
     public string Name { get; set; } = string.Empty;
     public string Code { get; set; } = string.Empty;
     public string? Description { get; set; }
@@ -22,7 +30,7 @@ public class Tenant
     public DateTime? UpdatedAt { get; set; }
     public string? UpdatedBy { get; set; }
 
-    // License/Subscription information
+    // License/Subscription information (synced from Platform)
     public DateTime? SubscriptionStartDate { get; set; }
     public DateTime? SubscriptionEndDate { get; set; }
     public string? SubscriptionPlan { get; set; }
@@ -32,7 +40,6 @@ public class Tenant
 
     // Navigation properties
     public ICollection<Company> Companies { get; set; } = new List<Company>();
-    public ICollection<ApplicationUser> Users { get; set; } = new List<ApplicationUser>();
     public TenantSettings? Settings { get; set; }
 
     // Configuration overrides
