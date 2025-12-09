@@ -1,0 +1,14 @@
+#!/bin/sh
+
+# Run lint-staged for frontend files
+npx lint-staged
+
+# Run dotnet format check for C# files (if any staged)
+STAGED_CS=$(git diff --cached --name-only --diff-filter=ACM | grep '\.cs$' || true)
+if [ -n "$STAGED_CS" ]; then
+  echo "Checking C# formatting..."
+  dotnet format XenonClinic.sln --verify-no-changes --include $STAGED_CS || {
+    echo "C# formatting issues found. Run 'dotnet format' to fix."
+    exit 1
+  }
+fi

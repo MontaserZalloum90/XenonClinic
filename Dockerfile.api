@@ -1,0 +1,42 @@
+# Backend API Dockerfile
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
+WORKDIR /app
+EXPOSE 5000
+EXPOSE 5001
+
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+ARG BUILD_CONFIGURATION=Release
+WORKDIR /src
+
+# Copy solution and project files
+COPY ["XenonClinic.sln", "."]
+COPY ["XenonClinic.Core/XenonClinic.Core.csproj", "XenonClinic.Core/"]
+COPY ["XenonClinic.Infrastructure/XenonClinic.Infrastructure.csproj", "XenonClinic.Infrastructure/"]
+COPY ["Xenon.Platform/src/Xenon.Platform.Domain/Xenon.Platform.Domain.csproj", "Xenon.Platform/src/Xenon.Platform.Domain/"]
+COPY ["Xenon.Platform/src/Xenon.Platform.Application/Xenon.Platform.Application.csproj", "Xenon.Platform/src/Xenon.Platform.Application/"]
+COPY ["Xenon.Platform/src/Xenon.Platform.Infrastructure/Xenon.Platform.Infrastructure.csproj", "Xenon.Platform/src/Xenon.Platform.Infrastructure/"]
+COPY ["Xenon.Platform/src/Xenon.Platform.Api/Xenon.Platform.Api.csproj", "Xenon.Platform/src/Xenon.Platform.Api/"]
+
+# Restore dependencies
+RUN dotnet restore "Xenon.Platform/src/Xenon.Platform.Api/Xenon.Platform.Api.csproj"
+
+# Copy everything else
+COPY . .
+
+# Build
+WORKDIR "/src/Xenon.Platform/src/Xenon.Platform.Api"
+RUN dotnet build "Xenon.Platform.Api.csproj" -c $BUILD_CONFIGURATION -o /app/build
+
+FROM build AS publish
+ARG BUILD_CONFIGURATION=Release
+RUN dotnet publish "Xenon.Platform.Api.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
+
+FROM base AS final
+WORKDIR /app
+COPY --from=publish /app/publish .
+
+# Create non-root user for security
+RUN adduser --disabled-password --gecos '' appuser && chown -R appuser /app
+USER appuser
+
+ENTRYPOINT ["dotnet", "Xenon.Platform.Api.dll"]

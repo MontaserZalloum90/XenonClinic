@@ -1,0 +1,64 @@
+version: '3.8'
+
+# Development override - run with: docker-compose -f docker-compose.yml -f docker-compose.dev.yml up
+
+services:
+  # Database with development settings
+  db:
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: xenon_dev
+      POSTGRES_PASSWORD: dev_password
+      POSTGRES_DB: xenonclinic_dev
+
+  # Redis with development settings
+  redis:
+    ports:
+      - "6379:6379"
+
+  # API with hot reload for development
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api.dev
+    volumes:
+      - ./XenonClinic.Core:/src/XenonClinic.Core
+      - ./XenonClinic.Infrastructure:/src/XenonClinic.Infrastructure
+      - ./Xenon.Platform:/src/Xenon.Platform
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - DOTNET_USE_POLLING_FILE_WATCHER=true
+    ports:
+      - "5000:5000"
+      - "5001:5001"
+
+  # Admin with volume mount for development
+  admin:
+    build:
+      context: .
+      dockerfile: Dockerfile.admin.dev
+    volumes:
+      - ./Shared.UI:/app/Shared.UI
+      - ./XenonClinic.React:/app/XenonClinic.React
+      - /app/Shared.UI/node_modules
+      - /app/XenonClinic.React/node_modules
+    ports:
+      - "3000:5173"
+    environment:
+      - VITE_API_URL=http://localhost:5000
+
+  # Public website with volume mount for development
+  public:
+    build:
+      context: .
+      dockerfile: Dockerfile.public.dev
+    volumes:
+      - ./Shared.UI:/app/Shared.UI
+      - ./Xenon.PublicWebsite:/app/Xenon.PublicWebsite
+      - /app/Shared.UI/node_modules
+      - /app/Xenon.PublicWebsite/node_modules
+    ports:
+      - "3001:5173"
+    environment:
+      - VITE_API_URL=http://localhost:5000
