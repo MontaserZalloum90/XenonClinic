@@ -4,13 +4,20 @@ import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
 import {
   PRICING_TIERS,
+  PRICING_ADDONS,
   DURATION_DISCOUNTS,
-  ADD_ONS,
   calculatePricing,
-  type PlanCode,
-  type BillingCycle,
 } from '@/lib/pricing';
+import type { PlanCode, Currency } from '@/types';
 import { Check, ArrowRight, HelpCircle, ChevronDown } from 'lucide-react';
+
+type BillingCycle = 'monthly' | 'quarterly' | 'yearly';
+
+const billingCycleToMonths: Record<BillingCycle, 1 | 3 | 6 | 12> = {
+  monthly: 1,
+  quarterly: 3,
+  yearly: 12,
+};
 
 export default function PricingPage() {
   const [billingCycle, setBillingCycle] = useState<BillingCycle>('monthly');
@@ -23,19 +30,24 @@ export default function PricingPage() {
   const pricing = useMemo(() => {
     return calculatePricing({
       plan: selectedPlan,
-      billingCycle,
+      durationMonths: billingCycleToMonths[billingCycle],
       branches,
       users,
       addOns: selectedAddOns,
+      currency: 'AED' as Currency,
     });
   }, [selectedPlan, billingCycle, branches, users, selectedAddOns]);
 
-  const toggleAddOn = (addOnId: string) => {
+  const toggleAddOn = (addOnCode: string) => {
     setSelectedAddOns((prev) =>
-      prev.includes(addOnId)
-        ? prev.filter((id) => id !== addOnId)
-        : [...prev, addOnId]
+      prev.includes(addOnCode)
+        ? prev.filter((code) => code !== addOnCode)
+        : [...prev, addOnCode]
     );
+  };
+
+  const getDiscountPercent = (cycle: BillingCycle): number => {
+    return DURATION_DISCOUNTS[billingCycleToMonths[cycle]] || 0;
   };
 
   return (
@@ -68,7 +80,7 @@ export default function PricingPage() {
                   {cycle.charAt(0).toUpperCase() + cycle.slice(1)}
                   {cycle !== 'monthly' && (
                     <span className="ml-1 text-xs text-primary-600">
-                      -{DURATION_DISCOUNTS[cycle] * 100}%
+                      -{getDiscountPercent(cycle) * 100}%
                     </span>
                   )}
                 </button>
@@ -86,7 +98,7 @@ export default function PricingPage() {
               ([code, tier]) => {
                 const isRecommended = tier.recommended;
                 const monthlyPrice = tier.basePrice.monthly;
-                const discountedPrice = Math.round(monthlyPrice * (1 - DURATION_DISCOUNTS[billingCycle]));
+                const discountedPrice = Math.round(monthlyPrice * (1 - getDiscountPercent(billingCycle)));
 
                 return (
                   <div
@@ -122,7 +134,7 @@ export default function PricingPage() {
                         <p className="text-sm text-gray-500 mt-1">
                           <span className="line-through">{monthlyPrice} AED</span>
                           <span className="text-primary-600 ml-2">
-                            Save {DURATION_DISCOUNTS[billingCycle] * 100}%
+                            Save {getDiscountPercent(billingCycle) * 100}%
                           </span>
                         </p>
                       )}
@@ -299,15 +311,15 @@ export default function PricingPage() {
                         Add-ons
                       </label>
                       <div className="space-y-2">
-                        {ADD_ONS.map((addOn) => (
+                        {PRICING_ADDONS.map((addOn) => (
                           <label
-                            key={addOn.id}
+                            key={addOn.code}
                             className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100"
                           >
                             <input
                               type="checkbox"
-                              checked={selectedAddOns.includes(addOn.id)}
-                              onChange={() => toggleAddOn(addOn.id)}
+                              checked={selectedAddOns.includes(addOn.code)}
+                              onChange={() => toggleAddOn(addOn.code)}
                               className="h-4 w-4 text-primary-600 rounded"
                             />
                             <div className="flex-1">
@@ -319,7 +331,7 @@ export default function PricingPage() {
                               </div>
                             </div>
                             <div className="text-sm font-medium text-gray-900">
-                              {addOn.price} AED/mo
+                              {addOn.price.monthly} AED/mo
                             </div>
                           </label>
                         ))}
@@ -335,53 +347,53 @@ export default function PricingPage() {
                     <div className="space-y-3">
                       <div className="flex justify-between text-sm">
                         <span className="text-gray-600">Base Plan ({PRICING_TIERS[selectedPlan].name})</span>
-                        <span className="text-gray-900">{pricing.basePrice} AED</span>
+                        <span className="text-gray-900">{Math.round(pricing.basePrice)} AED</span>
                       </div>
 
-                      {pricing.extraBranchCost > 0 && (
+                      {pricing.extraBranchesPrice > 0 && (
                         <div className="flex justify-between text-sm">
                           <span className="text-gray-600">
                             Extra Branches ({branches - PRICING_TIERS[selectedPlan].includedBranches})
                           </span>
-                          <span className="text-gray-900">{pricing.extraBranchCost} AED</span>
+                          <span className="text-gray-900">{Math.round(pricing.extraBranchesPrice)} AED</span>
                         </div>
                       )}
 
-                      {pricing.extraUserCost > 0 && (
+                      {pricing.extraUsersPrice > 0 && (
                         <div className="flex justify-between text-sm">
                           <span className="text-gray-600">
                             Extra Users ({users - PRICING_TIERS[selectedPlan].includedUsers})
                           </span>
-                          <span className="text-gray-900">{pricing.extraUserCost} AED</span>
+                          <span className="text-gray-900">{Math.round(pricing.extraUsersPrice)} AED</span>
                         </div>
                       )}
 
-                      {pricing.addOnsCost > 0 && (
+                      {pricing.addOnsPrice > 0 && (
                         <div className="flex justify-between text-sm">
                           <span className="text-gray-600">Add-ons</span>
-                          <span className="text-gray-900">{pricing.addOnsCost} AED</span>
+                          <span className="text-gray-900">{Math.round(pricing.addOnsPrice)} AED</span>
                         </div>
                       )}
 
                       {pricing.discount > 0 && (
                         <div className="flex justify-between text-sm text-primary-600">
-                          <span>Duration Discount ({DURATION_DISCOUNTS[billingCycle] * 100}%)</span>
-                          <span>-{pricing.discount} AED</span>
+                          <span>Duration Discount ({pricing.discountPercent}%)</span>
+                          <span>-{Math.round(pricing.discount)} AED</span>
                         </div>
                       )}
 
                       <div className="border-t pt-3 mt-3">
                         <div className="flex justify-between">
-                          <span className="font-semibold text-gray-900">Monthly Total</span>
+                          <span className="font-semibold text-gray-900">
+                            {billingCycle === 'monthly' ? 'Monthly' : billingCycle === 'quarterly' ? '3-Month' : 'Annual'} Total
+                          </span>
                           <span className="text-2xl font-bold text-primary-600">
-                            {pricing.total} AED
+                            {Math.round(pricing.total)} AED
                           </span>
                         </div>
-                        {billingCycle !== 'monthly' && (
-                          <div className="text-right text-sm text-gray-500 mt-1">
-                            Billed {billingCycle === 'quarterly' ? 'every 3 months' : 'annually'}
-                          </div>
-                        )}
+                        <div className="text-right text-sm text-gray-500 mt-1">
+                          ~{Math.round(pricing.monthlyEquivalent)} AED/month
+                        </div>
                       </div>
                     </div>
 
@@ -428,7 +440,7 @@ export default function PricingPage() {
                 },
                 {
                   q: 'Do you offer discounts for annual billing?',
-                  a: 'Yes! Pay quarterly for 10% off, or annually for 20% off your monthly rate.',
+                  a: 'Yes! Pay quarterly for 5% off, or annually for 15% off your monthly rate.',
                 },
               ].map((faq, index) => (
                 <div key={index} className="card">

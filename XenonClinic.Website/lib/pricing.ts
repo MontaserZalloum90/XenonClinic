@@ -7,6 +7,12 @@ import type {
   Currency,
 } from '@/types';
 
+// Re-export types used by other modules
+export type { PlanCode, Currency };
+
+// BillingCycle type for subscription billing periods
+export type BillingCycle = 'monthly' | 'quarterly' | 'yearly';
+
 // ============================================
 // Pricing Configuration
 // ============================================

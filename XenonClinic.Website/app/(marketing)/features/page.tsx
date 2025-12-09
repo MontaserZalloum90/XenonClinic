@@ -10,7 +10,8 @@ export const metadata: Metadata = {
 };
 
 function getIcon(iconName: string) {
-  const IconComponent = (LucideIcons as Record<string, React.FC<{ className?: string }>>)[iconName];
+  const icons = LucideIcons as unknown as Record<string, React.FC<{ className?: string }>>;
+  const IconComponent = icons[iconName];
   return IconComponent || LucideIcons.Box;
 }
 
@@ -36,13 +37,13 @@ export default function FeaturesPage() {
 
       {/* Features by Category */}
       {featureCategories.map((category) => {
-        const categoryFeatures = features.filter(f => f.category === category);
+        const categoryFeatures = features.filter(f => f.category === category.key);
         if (categoryFeatures.length === 0) return null;
 
         return (
-          <section key={category} className="section-padding bg-white even:bg-gray-50">
+          <section key={category.key} className="section-padding bg-white even:bg-gray-50">
             <div className="container-marketing">
-              <h2 className="heading-3 text-gray-900 mb-8">{category}</h2>
+              <h2 className="heading-3 text-gray-900 mb-8">{category.label}</h2>
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {categoryFeatures.map((feature) => {
                   const Icon = getIcon(feature.icon);
@@ -59,7 +60,7 @@ export default function FeaturesPage() {
                         {feature.title}
                       </h3>
                       <p className="text-gray-600 text-sm mb-4">
-                        {feature.description}
+                        {feature.shortDescription}
                       </p>
                       <span className="text-primary-600 text-sm font-medium inline-flex items-center group-hover:gap-2 transition-all">
                         Learn more

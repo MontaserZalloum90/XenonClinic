@@ -26,12 +26,13 @@ export async function generateMetadata({ params }: FeaturePageProps): Promise<Me
 
   return {
     title: feature.title,
-    description: feature.description,
+    description: feature.shortDescription,
   };
 }
 
 function getIcon(iconName: string) {
-  const IconComponent = (LucideIcons as Record<string, React.FC<{ className?: string }>>)[iconName];
+  const icons = LucideIcons as unknown as Record<string, React.FC<{ className?: string }>>;
+  const IconComponent = icons[iconName];
   return IconComponent || LucideIcons.Box;
 }
 
@@ -72,14 +73,14 @@ export default function FeaturePage({ params }: FeaturePageProps) {
               <div className="h-14 w-14 rounded-xl bg-primary-100 text-primary-600 flex items-center justify-center mb-6">
                 <Icon className="h-7 w-7" />
               </div>
-              <span className="text-sm font-medium text-primary-600 mb-2 block">
+              <span className="text-sm font-medium text-primary-600 mb-2 block capitalize">
                 {feature.category}
               </span>
               <h1 className="heading-1 text-gray-900 mb-6">
                 {feature.title}
               </h1>
               <p className="text-lg md:text-xl text-gray-600 mb-8">
-                {feature.longDescription || feature.description}
+                {feature.fullDescription || feature.shortDescription}
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
                 <Link href="/demo" className="btn-primary btn-lg">
@@ -103,27 +104,18 @@ export default function FeaturePage({ params }: FeaturePageProps) {
         </div>
       </section>
 
-      {/* Highlights */}
-      {feature.highlights && feature.highlights.length > 0 && (
+      {/* Capabilities */}
+      {feature.capabilities && feature.capabilities.length > 0 && (
         <section className="section-padding bg-white">
           <div className="container-marketing">
             <h2 className="heading-2 text-gray-900 mb-8 text-center">
               Key Capabilities
             </h2>
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {feature.highlights.map((highlight, index) => (
-                <div key={index} className="flex gap-4">
-                  <div className="h-8 w-8 rounded-lg bg-secondary-100 text-secondary-600 flex items-center justify-center flex-shrink-0">
-                    <Check className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-900 mb-1">
-                      {highlight.title}
-                    </h3>
-                    <p className="text-gray-600 text-sm">
-                      {highlight.description}
-                    </p>
-                  </div>
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-4xl mx-auto">
+              {feature.capabilities.map((capability, index) => (
+                <div key={index} className="flex items-start gap-3 p-4 bg-gray-50 rounded-lg">
+                  <Check className="h-5 w-5 text-primary-600 mt-0.5 flex-shrink-0" />
+                  <span className="text-gray-700">{capability}</span>
                 </div>
               ))}
             </div>
@@ -131,19 +123,19 @@ export default function FeaturePage({ params }: FeaturePageProps) {
         </section>
       )}
 
-      {/* Benefits */}
-      {feature.benefits && feature.benefits.length > 0 && (
+      {/* Who It's For */}
+      {feature.whoItsFor && feature.whoItsFor.length > 0 && (
         <section className="section-padding bg-gray-50">
           <div className="container-marketing">
             <h2 className="heading-2 text-gray-900 mb-8 text-center">
-              Benefits
+              Who It's For
             </h2>
             <div className="max-w-3xl mx-auto">
               <ul className="space-y-4">
-                {feature.benefits.map((benefit, index) => (
+                {feature.whoItsFor.map((audience, index) => (
                   <li key={index} className="flex items-start gap-3 p-4 bg-white rounded-lg">
-                    <Check className="h-5 w-5 text-primary-600 mt-0.5 flex-shrink-0" />
-                    <span className="text-gray-700">{benefit}</span>
+                    <Check className="h-5 w-5 text-secondary-600 mt-0.5 flex-shrink-0" />
+                    <span className="text-gray-700">{audience}</span>
                   </li>
                 ))}
               </ul>
@@ -152,32 +144,9 @@ export default function FeaturePage({ params }: FeaturePageProps) {
         </section>
       )}
 
-      {/* Use Cases */}
-      {feature.useCases && feature.useCases.length > 0 && (
-        <section className="section-padding bg-white">
-          <div className="container-marketing">
-            <h2 className="heading-2 text-gray-900 mb-8 text-center">
-              Use Cases
-            </h2>
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {feature.useCases.map((useCase, index) => (
-                <div key={index} className="card">
-                  <h3 className="font-semibold text-gray-900 mb-2">
-                    {useCase.title}
-                  </h3>
-                  <p className="text-gray-600 text-sm">
-                    {useCase.description}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
-
       {/* Related Features */}
       {relatedFeatures.length > 0 && (
-        <section className="section-padding bg-gray-50">
+        <section className="section-padding bg-white">
           <div className="container-marketing">
             <h2 className="heading-3 text-gray-900 mb-8">
               Related Features
@@ -198,7 +167,7 @@ export default function FeaturePage({ params }: FeaturePageProps) {
                       {related.title}
                     </h3>
                     <p className="text-gray-600 text-sm mt-1">
-                      {related.description}
+                      {related.shortDescription}
                     </p>
                   </Link>
                 );
