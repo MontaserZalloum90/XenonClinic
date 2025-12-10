@@ -13,6 +13,12 @@ public class Feature
     public string? DefaultRoute { get; set; }
     public int SortOrder { get; set; } = 0;
 
-    // Navigation
+    // Audit fields
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public string? CreatedBy { get; set; }
+    public DateTime? UpdatedAt { get; set; }
+    public string? UpdatedBy { get; set; }
+
+    // Navigation properties
     public ICollection<TenantFeature> TenantFeatures { get; set; } = new List<TenantFeature>();
 }
