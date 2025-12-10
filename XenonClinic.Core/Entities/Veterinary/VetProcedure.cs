@@ -29,5 +29,12 @@ public class VetProcedure
     public decimal? Fee { get; set; }
     public string? Notes { get; set; }
 
+    // Audit fields
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public string? CreatedBy { get; set; }
+    public DateTime? UpdatedAt { get; set; }
+    public string? UpdatedBy { get; set; }
+
+    // Navigation properties
     public VetVisit? VetVisit { get; set; }
 }

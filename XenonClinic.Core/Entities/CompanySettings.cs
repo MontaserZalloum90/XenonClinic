@@ -1,3 +1,5 @@
+using XenonClinic.Core.Attributes;
+
 namespace XenonClinic.Core.Entities;
 
 /// <summary>
@@ -12,7 +14,13 @@ public class CompanySettings
     public string? SmtpHost { get; set; }
     public int? SmtpPort { get; set; }
     public string? SmtpUsername { get; set; }
+
+    /// <summary>
+    /// SMTP password - should be encrypted at rest
+    /// </summary>
+    [SensitiveData(DataType = SensitiveDataType.Credential)]
     public string? SmtpPassword { get; set; }
+
     public bool? SmtpUseSsl { get; set; }
     public string? DefaultSenderEmail { get; set; }
     public string? DefaultSenderName { get; set; }
@@ -21,17 +29,32 @@ public class CompanySettings
     public bool? EnableWhatsApp { get; set; }
     public string? WhatsAppProvider { get; set; } // "Twilio" or "WhatsAppBusiness"
     public string? WhatsAppAccountSid { get; set; } // For Twilio
-    public string? WhatsAppAuthToken { get; set; } // For Twilio
+
+    /// <summary>
+    /// Twilio Auth Token - should be encrypted at rest
+    /// </summary>
+    [SensitiveData(DataType = SensitiveDataType.Token)]
+    public string? WhatsAppAuthToken { get; set; }
+
     public string? WhatsAppPhoneNumber { get; set; } // Sender phone number (format: +1234567890)
-    public string? WhatsAppBusinessApiToken { get; set; } // For WhatsApp Business API
+
+    /// <summary>
+    /// WhatsApp Business API Token - should be encrypted at rest
+    /// </summary>
+    [SensitiveData(DataType = SensitiveDataType.ApiKey)]
+    public string? WhatsAppBusinessApiToken { get; set; }
+
     public string? WhatsAppBusinessPhoneNumberId { get; set; } // For WhatsApp Business API
 
     // Appointment reminder settings override
     public bool? SendAppointmentReminders { get; set; }
     public int? ReminderHoursBeforeAppointment { get; set; }
 
-    public DateTime? LastModifiedAt { get; set; }
-    public string? LastModifiedBy { get; set; }
+    // Audit fields
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public string? CreatedBy { get; set; }
+    public DateTime? UpdatedAt { get; set; }
+    public string? UpdatedBy { get; set; }
 
     // Navigation property
     public Company Company { get; set; } = null!;

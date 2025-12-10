@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Xenon.Platform.Application.DTOs;
 using Xenon.Platform.Application.Interfaces;
 
@@ -6,6 +7,7 @@ namespace Xenon.Platform.Api.Controllers.PlatformAdmin;
 
 [ApiController]
 [Route("api/platform-admin/auth")]
+[EnableRateLimiting("auth")]
 public class AuthController : ControllerBase
 {
     private readonly IPlatformAuthService _authService;

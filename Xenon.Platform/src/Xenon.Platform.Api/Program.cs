@@ -1,8 +1,12 @@
 using System.Text;
+using System.Text.Json;
+using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Asp.Versioning;
 using Serilog;
 using Xenon.Platform.Infrastructure.Persistence;
 using Xenon.Platform.Infrastructure.Services;
@@ -22,6 +26,23 @@ builder.Host.UseSerilog();
 // Add services to the container
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
+
+// API Versioning
+builder.Services.AddApiVersioning(options =>
+{
+    options.DefaultApiVersion = new ApiVersion(1, 0);
+    options.AssumeDefaultVersionWhenUnspecified = true;
+    options.ReportApiVersions = true;
+    options.ApiVersionReader = ApiVersionReader.Combine(
+        new UrlSegmentApiVersionReader(),
+        new HeaderApiVersionReader("X-Api-Version"),
+        new QueryStringApiVersionReader("api-version"));
+})
+.AddApiExplorer(options =>
+{
+    options.GroupNameFormat = "'v'VVV";
+    options.SubstituteApiVersionInUrl = true;
+});
 
 // Swagger with JWT support
 builder.Services.AddSwaggerGen(c =>
@@ -62,12 +83,19 @@ builder.Services.AddSwaggerGen(c =>
 builder.Services.AddDbContext<PlatformDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("PlatformDb")));
 
-// Authentication with dual schemes
-var jwtSecretKey = builder.Configuration["Jwt:SecretKey"]
-    ?? throw new InvalidOperationException("JWT SecretKey not configured");
+// JWT Configuration - Read from environment variable in production
+var jwtSecretKey = Environment.GetEnvironmentVariable("JWT_SECRET_KEY")
+    ?? builder.Configuration["Jwt:SecretKey"]
+    ?? throw new InvalidOperationException("JWT SecretKey not configured. Set JWT_SECRET_KEY environment variable or Jwt:SecretKey in configuration.");
 var jwtIssuer = builder.Configuration["Jwt:Issuer"] ?? "xenon-platform";
 var tenantAudience = builder.Configuration["Jwt:TenantAudience"] ?? "xenon-tenant";
 var adminAudience = builder.Configuration["Jwt:AdminAudience"] ?? "xenon-admin";
+
+// Validate JWT secret key length
+if (jwtSecretKey.Length < 32)
+{
+    throw new InvalidOperationException("JWT SecretKey must be at least 32 characters long for security.");
+}
 
 builder.Services.AddAuthentication(options =>
 {
@@ -134,6 +162,51 @@ builder.Services.AddAuthorization(options =>
               .RequireClaim("role", "SUPER_ADMIN"));
 });
 
+// Rate Limiting
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+
+    // Global rate limit
+    options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(context =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 100,
+                Window = TimeSpan.FromMinutes(1),
+                QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                QueueLimit = 0
+            }));
+
+    // Strict rate limit for authentication endpoints
+    options.AddFixedWindowLimiter("auth", limiterOptions =>
+    {
+        limiterOptions.PermitLimit = 10;
+        limiterOptions.Window = TimeSpan.FromMinutes(1);
+        limiterOptions.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+        limiterOptions.QueueLimit = 0;
+    });
+
+    // Standard rate limit for public endpoints
+    options.AddFixedWindowLimiter("public", limiterOptions =>
+    {
+        limiterOptions.PermitLimit = 30;
+        limiterOptions.Window = TimeSpan.FromMinutes(1);
+        limiterOptions.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+        limiterOptions.QueueLimit = 2;
+    });
+
+    options.OnRejected = async (context, token) =>
+    {
+        context.HttpContext.Response.StatusCode = StatusCodes.Status429TooManyRequests;
+        context.HttpContext.Response.ContentType = "application/json";
+
+        var response = new { success = false, error = "Too many requests. Please try again later." };
+        await context.HttpContext.Response.WriteAsJsonAsync(response, token);
+    };
+});
+
 // Register services
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddMemoryCache();
@@ -163,9 +236,10 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("WebsitePolicy", policy =>
     {
-        policy.WithOrigins(
-                builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()
-                ?? new[] { "http://localhost:3000", "http://localhost:5173" })
+        var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()
+            ?? new[] { "http://localhost:3000", "http://localhost:5173" };
+
+        policy.WithOrigins(allowedOrigins)
             .AllowAnyMethod()
             .AllowAnyHeader()
             .AllowCredentials();
@@ -176,7 +250,60 @@ builder.Services.AddCors(options =>
 builder.Services.AddHealthChecks()
     .AddDbContextCheck<PlatformDbContext>();
 
+// Problem Details for standardized error responses
+builder.Services.AddProblemDetails();
+
 var app = builder.Build();
+
+// Global exception handler
+app.UseExceptionHandler(errorApp =>
+{
+    errorApp.Run(async context =>
+    {
+        context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+        context.Response.ContentType = "application/json";
+
+        var errorResponse = new
+        {
+            success = false,
+            error = app.Environment.IsDevelopment()
+                ? "An internal server error occurred. Check logs for details."
+                : "An unexpected error occurred. Please try again later."
+        };
+
+        await context.Response.WriteAsJsonAsync(errorResponse);
+
+        var exceptionHandlerFeature = context.Features.Get<Microsoft.AspNetCore.Diagnostics.IExceptionHandlerFeature>();
+        if (exceptionHandlerFeature?.Error != null)
+        {
+            Log.Error(exceptionHandlerFeature.Error, "Unhandled exception occurred");
+        }
+    });
+});
+
+// Security Headers Middleware
+app.Use(async (context, next) =>
+{
+    // Prevent clickjacking attacks
+    context.Response.Headers.Append("X-Frame-Options", "DENY");
+
+    // Prevent MIME type sniffing
+    context.Response.Headers.Append("X-Content-Type-Options", "nosniff");
+
+    // Enable XSS filtering
+    context.Response.Headers.Append("X-XSS-Protection", "1; mode=block");
+
+    // Referrer policy
+    context.Response.Headers.Append("Referrer-Policy", "strict-origin-when-cross-origin");
+
+    // Content Security Policy (basic)
+    context.Response.Headers.Append("Content-Security-Policy", "default-src 'self'; frame-ancestors 'none';");
+
+    // Permissions Policy
+    context.Response.Headers.Append("Permissions-Policy", "geolocation=(), microphone=(), camera=()");
+
+    await next();
+});
 
 // Configure the HTTP request pipeline
 if (app.Environment.IsDevelopment())
@@ -184,9 +311,17 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+else
+{
+    // HSTS for production
+    app.UseHsts();
+}
 
 app.UseHttpsRedirection();
 app.UseCors("WebsitePolicy");
+
+// Rate limiting must come before authentication
+app.UseRateLimiter();
 
 app.UseAuthentication();
 app.UseAuthorization();
