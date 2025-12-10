@@ -6,22 +6,43 @@ namespace XenonClinic.Core.Enums;
 public enum AppointmentStatus
 {
     /// <summary>
-    /// Appointment is scheduled and confirmed
+    /// Appointment is scheduled but not yet confirmed
     /// </summary>
-    Booked = 0,
+    Scheduled = 0,
+
+    /// <summary>
+    /// Appointment has been confirmed by patient or staff
+    /// </summary>
+    Confirmed = 1,
+
+    /// <summary>
+    /// Patient has checked in and is waiting
+    /// </summary>
+    CheckedIn = 2,
+
+    /// <summary>
+    /// Appointment is in progress (patient with provider)
+    /// </summary>
+    InProgress = 3,
 
     /// <summary>
     /// Appointment has been completed
     /// </summary>
-    Completed = 1,
+    Completed = 4,
 
     /// <summary>
     /// Appointment was cancelled
     /// </summary>
-    Cancelled = 2,
+    Cancelled = 5,
 
     /// <summary>
     /// Patient did not show up for appointment
     /// </summary>
-    NoShow = 3
+    NoShow = 6,
+
+    /// <summary>
+    /// Legacy: Appointment is scheduled and confirmed (maps to Confirmed)
+    /// </summary>
+    [Obsolete("Use Scheduled or Confirmed instead")]
+    Booked = 1
 }

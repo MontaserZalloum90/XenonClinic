@@ -63,6 +63,16 @@ public class FinancialService : IFinancialService
         var account = await _context.Accounts.FindAsync(id);
         if (account != null)
         {
+            // Check for linked transactions before deleting
+            var hasTransactions = await _context.FinancialTransactions
+                .AnyAsync(t => t.AccountId == id);
+
+            if (hasTransactions)
+            {
+                throw new InvalidOperationException(
+                    "Cannot delete account with existing transactions. Archive the account instead.");
+            }
+
             _context.Accounts.Remove(account);
             await _context.SaveChangesAsync();
         }
@@ -109,13 +119,40 @@ public class FinancialService : IFinancialService
 
     public async Task<FinancialTransaction> CreateTransactionAsync(FinancialTransaction transaction)
     {
-        _context.FinancialTransactions.Add(transaction);
-        await _context.SaveChangesAsync();
+        // Validate amount
+        if (transaction.Amount <= 0)
+        {
+            throw new InvalidOperationException("Transaction amount must be greater than zero");
+        }
 
-        // Update account balance
-        await UpdateAccountBalanceAsync(transaction.AccountId);
+        // Use database transaction to prevent race conditions
+        await using var dbTransaction = await _context.Database.BeginTransactionAsync();
+        try
+        {
+            var account = await _context.Accounts.FindAsync(transaction.AccountId);
+            if (account == null)
+            {
+                throw new KeyNotFoundException($"Account with ID {transaction.AccountId} not found");
+            }
 
-        return transaction;
+            _context.FinancialTransactions.Add(transaction);
+
+            // Update account balance atomically
+            var balanceChange = transaction.TransactionType == TransactionType.Credit
+                ? transaction.Amount
+                : -transaction.Amount;
+            account.Balance += balanceChange;
+
+            await _context.SaveChangesAsync();
+            await dbTransaction.CommitAsync();
+
+            return transaction;
+        }
+        catch
+        {
+            await dbTransaction.RollbackAsync();
+            throw;
+        }
     }
 
     public async Task UpdateTransactionAsync(FinancialTransaction transaction)
@@ -206,6 +243,21 @@ public class FinancialService : IFinancialService
         var invoice = await _context.Invoices.FindAsync(id);
         if (invoice != null)
         {
+            // Prevent deleting paid invoices for audit compliance
+            if (invoice.Status == InvoiceStatus.Paid)
+            {
+                throw new InvalidOperationException(
+                    "Cannot delete a paid invoice. Paid invoices must be retained for audit purposes. " +
+                    "Consider voiding the invoice instead.");
+            }
+
+            // Prevent deleting invoices with payments
+            if (invoice.Status == InvoiceStatus.PartiallyPaid)
+            {
+                throw new InvalidOperationException(
+                    "Cannot delete an invoice with partial payments. Void the invoice instead.");
+            }
+
             _context.Invoices.Remove(invoice);
             await _context.SaveChangesAsync();
         }
@@ -247,6 +299,12 @@ public class FinancialService : IFinancialService
 
     public async Task<Expense> CreateExpenseAsync(Expense expense)
     {
+        // Validate amount
+        if (expense.Amount <= 0)
+        {
+            throw new InvalidOperationException("Expense amount must be greater than zero");
+        }
+
         _context.Expenses.Add(expense);
         await _context.SaveChangesAsync();
         return expense;

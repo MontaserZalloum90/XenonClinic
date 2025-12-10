@@ -25,20 +25,20 @@ public class PatientService : IPatientService
             .Include(p => p.Branch)
             .Include(p => p.MedicalHistory)
             .Include(p => p.Documents)
-            .FirstOrDefaultAsync(p => p.Id == id);
+            .FirstOrDefaultAsync(p => p.Id == id && !p.IsDeleted);
     }
 
     public async Task<Patient?> GetPatientByEmiratesIdAsync(string emiratesId, int branchId)
     {
         return await _context.Patients
             .Include(p => p.MedicalHistory)
-            .FirstOrDefaultAsync(p => p.EmiratesId == emiratesId && p.BranchId == branchId);
+            .FirstOrDefaultAsync(p => p.EmiratesId == emiratesId && p.BranchId == branchId && !p.IsDeleted);
     }
 
     public async Task<IEnumerable<Patient>> GetPatientsByBranchIdAsync(int branchId)
     {
         return await _context.Patients
-            .Where(p => p.BranchId == branchId)
+            .Where(p => p.BranchId == branchId && !p.IsDeleted)
             .OrderBy(p => p.FullNameEn)
             .ToListAsync();
     }
@@ -46,7 +46,7 @@ public class PatientService : IPatientService
     public async Task<IEnumerable<Patient>> SearchPatientsAsync(int branchId, string searchTerm)
     {
         return await _context.Patients
-            .Where(p => p.BranchId == branchId &&
+            .Where(p => p.BranchId == branchId && !p.IsDeleted &&
                    (p.FullNameEn.Contains(searchTerm) ||
                     (p.FullNameAr != null && p.FullNameAr.Contains(searchTerm)) ||
                     p.EmiratesId.Contains(searchTerm) ||
@@ -57,6 +57,18 @@ public class PatientService : IPatientService
 
     public async Task<Patient> CreatePatientAsync(Patient patient)
     {
+        // Check for duplicate EmiratesId within the same branch
+        var existingPatient = await _context.Patients
+            .FirstOrDefaultAsync(p => p.EmiratesId == patient.EmiratesId &&
+                                       p.BranchId == patient.BranchId &&
+                                       !p.IsDeleted);
+
+        if (existingPatient != null)
+        {
+            throw new InvalidOperationException(
+                $"A patient with Emirates ID '{patient.EmiratesId}' already exists in this branch");
+        }
+
         _context.Patients.Add(patient);
         await _context.SaveChangesAsync();
         return patient;
@@ -64,18 +76,41 @@ public class PatientService : IPatientService
 
     public async Task UpdatePatientAsync(Patient patient)
     {
+        // Check for duplicate EmiratesId if changed
+        var existingPatient = await _context.Patients
+            .FirstOrDefaultAsync(p => p.EmiratesId == patient.EmiratesId &&
+                                       p.BranchId == patient.BranchId &&
+                                       p.Id != patient.Id &&
+                                       !p.IsDeleted);
+
+        if (existingPatient != null)
+        {
+            throw new InvalidOperationException(
+                $"A patient with Emirates ID '{patient.EmiratesId}' already exists in this branch");
+        }
+
+        patient.UpdatedAt = DateTime.UtcNow;
         _context.Patients.Update(patient);
         await _context.SaveChangesAsync();
     }
 
-    public async Task DeletePatientAsync(int id)
+    public async Task DeletePatientAsync(int id, string? deletedBy = null)
     {
         var patient = await _context.Patients.FindAsync(id);
         if (patient != null)
         {
-            _context.Patients.Remove(patient);
+            // Soft delete for healthcare compliance - patient records must be retained
+            patient.IsDeleted = true;
+            patient.DeletedAt = DateTime.UtcNow;
+            patient.DeletedBy = deletedBy;
             await _context.SaveChangesAsync();
         }
+    }
+
+    // Legacy method signature for backward compatibility
+    public async Task DeletePatientAsync(int id)
+    {
+        await DeletePatientAsync(id, null);
     }
 
     #endregion
@@ -158,13 +193,14 @@ public class PatientService : IPatientService
     public async Task<int> GetTotalPatientsCountAsync(int branchId)
     {
         return await _context.Patients
-            .CountAsync(p => p.BranchId == branchId);
+            .CountAsync(p => p.BranchId == branchId && !p.IsDeleted);
     }
 
     public async Task<int> GetNewPatientsCountAsync(int branchId, DateTime startDate, DateTime endDate)
     {
         return await _context.Patients
             .CountAsync(p => p.BranchId == branchId &&
+                        !p.IsDeleted &&
                         p.CreatedAt >= startDate &&
                         p.CreatedAt <= endDate);
     }
@@ -172,7 +208,7 @@ public class PatientService : IPatientService
     public async Task<Dictionary<string, int>> GetPatientsByGenderDistributionAsync(int branchId)
     {
         var distribution = await _context.Patients
-            .Where(p => p.BranchId == branchId)
+            .Where(p => p.BranchId == branchId && !p.IsDeleted)
             .GroupBy(p => p.Gender)
             .Select(g => new { Gender = g.Key, Count = g.Count() })
             .ToListAsync();
