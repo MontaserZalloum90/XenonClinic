@@ -155,3 +155,206 @@ public record SubscriptionSummaryDto
 }
 
 #endregion
+
+#region Refresh Tokens
+
+public record RefreshTokenRequest
+{
+    [Required]
+    public string RefreshToken { get; init; } = string.Empty;
+}
+
+public record RefreshTokenResponse
+{
+    public string AccessToken { get; init; } = string.Empty;
+    public string RefreshToken { get; init; } = string.Empty;
+    public DateTime ExpiresAt { get; init; }
+}
+
+public record AdminLoginResponseWithRefresh : AdminLoginResponse
+{
+    public string RefreshToken { get; init; } = string.Empty;
+    public DateTime RefreshTokenExpiresAt { get; init; }
+}
+
+public record TenantLoginResponseWithRefresh : TenantLoginResponse
+{
+    public string RefreshToken { get; init; } = string.Empty;
+    public DateTime RefreshTokenExpiresAt { get; init; }
+}
+
+#endregion
+
+#region Password Management
+
+public record ChangePasswordRequest
+{
+    [Required]
+    public string CurrentPassword { get; init; } = string.Empty;
+
+    [Required]
+    [MinLength(8)]
+    public string NewPassword { get; init; } = string.Empty;
+
+    [Required]
+    [Compare(nameof(NewPassword), ErrorMessage = "Passwords do not match")]
+    public string ConfirmPassword { get; init; } = string.Empty;
+}
+
+public record ChangePasswordResponse
+{
+    public bool Success { get; init; }
+    public string? Message { get; init; }
+}
+
+public record ForgotPasswordRequest
+{
+    [Required]
+    [EmailAddress]
+    public string Email { get; init; } = string.Empty;
+}
+
+public record ForgotPasswordResponse
+{
+    public bool Success { get; init; }
+    public string Message { get; init; } = string.Empty;
+}
+
+public record ResetPasswordRequest
+{
+    [Required]
+    public string Token { get; init; } = string.Empty;
+
+    [Required]
+    [EmailAddress]
+    public string Email { get; init; } = string.Empty;
+
+    [Required]
+    [MinLength(8)]
+    public string NewPassword { get; init; } = string.Empty;
+
+    [Required]
+    [Compare(nameof(NewPassword), ErrorMessage = "Passwords do not match")]
+    public string ConfirmPassword { get; init; } = string.Empty;
+}
+
+public record ResetPasswordResponse
+{
+    public bool Success { get; init; }
+    public string? Message { get; init; }
+}
+
+public record ValidatePasswordRequest
+{
+    [Required]
+    public string Password { get; init; } = string.Empty;
+}
+
+public record ValidatePasswordResponse
+{
+    public bool IsValid { get; init; }
+    public IReadOnlyList<string> Errors { get; init; } = [];
+    public string Strength { get; init; } = string.Empty;
+    public int StrengthScore { get; init; }
+}
+
+#endregion
+
+#region Security Events
+
+public record SecurityEventDto
+{
+    public Guid Id { get; init; }
+    public string EventType { get; init; } = string.Empty;
+    public DateTime OccurredAt { get; init; }
+    public string? IpAddress { get; init; }
+    public string? UserAgent { get; init; }
+    public bool IsSuccessful { get; init; }
+    public string RiskLevel { get; init; } = string.Empty;
+    public string? Details { get; init; }
+}
+
+public record LoginHistoryDto
+{
+    public IReadOnlyList<SecurityEventDto> Events { get; init; } = [];
+    public int TotalSuccessfulLogins { get; init; }
+    public int TotalFailedLogins { get; init; }
+    public DateTime? LastSuccessfulLogin { get; init; }
+    public DateTime? LastFailedLogin { get; init; }
+}
+
+public record ActiveSessionDto
+{
+    public Guid Id { get; init; }
+    public DateTime CreatedAt { get; init; }
+    public DateTime ExpiresAt { get; init; }
+    public string? IpAddress { get; init; }
+    public string? UserAgent { get; init; }
+    public string? DeviceFingerprint { get; init; }
+    public bool IsCurrent { get; init; }
+}
+
+public record RevokeSessionRequest
+{
+    [Required]
+    public Guid SessionId { get; init; }
+}
+
+public record RevokeAllSessionsRequest
+{
+    public bool KeepCurrent { get; init; } = true;
+}
+
+#endregion
+
+#region Two-Factor Authentication
+
+public record Enable2faRequest
+{
+    [Required]
+    public string Password { get; init; } = string.Empty;
+}
+
+public record Enable2faResponse
+{
+    public string SharedKey { get; init; } = string.Empty;
+    public string QrCodeUri { get; init; } = string.Empty;
+    public IReadOnlyList<string> BackupCodes { get; init; } = [];
+}
+
+public record Verify2faRequest
+{
+    [Required]
+    [StringLength(6, MinimumLength = 6)]
+    public string Code { get; init; } = string.Empty;
+}
+
+public record Verify2faResponse
+{
+    public bool IsValid { get; init; }
+    public IReadOnlyList<string>? BackupCodes { get; init; }
+}
+
+public record Disable2faRequest
+{
+    [Required]
+    public string Password { get; init; } = string.Empty;
+
+    [Required]
+    [StringLength(6, MinimumLength = 6)]
+    public string Code { get; init; } = string.Empty;
+}
+
+public record TwoFactorLoginRequest
+{
+    [Required]
+    [StringLength(6, MinimumLength = 6)]
+    public string Code { get; init; } = string.Empty;
+
+    [Required]
+    public string TwoFactorToken { get; init; } = string.Empty;
+
+    public bool UseBackupCode { get; init; }
+}
+
+#endregion

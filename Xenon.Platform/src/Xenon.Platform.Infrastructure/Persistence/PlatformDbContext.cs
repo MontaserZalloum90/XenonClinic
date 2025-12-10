@@ -20,6 +20,9 @@ public class PlatformDbContext : DbContext
     public DbSet<TenantHealthCheck> TenantHealthChecks => Set<TenantHealthCheck>();
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
     public DbSet<ApiCallLog> ApiCallLogs => Set<ApiCallLog>();
+    public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+    public DbSet<SecurityEvent> SecurityEvents => Set<SecurityEvent>();
+    public DbSet<PasswordResetToken> PasswordResetTokens => Set<PasswordResetToken>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

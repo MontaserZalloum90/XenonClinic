@@ -8,6 +8,7 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Asp.Versioning;
 using Serilog;
+using Xenon.Platform.Api.Middleware;
 using Xenon.Platform.Infrastructure.Persistence;
 using Xenon.Platform.Infrastructure.Services;
 
@@ -219,6 +220,13 @@ builder.Services.AddScoped<ITenantProvisioningService, TenantProvisioningService
 builder.Services.AddScoped<IAuditService, AuditService>();
 builder.Services.AddScoped<IHealthCheckService, HealthCheckService>();
 
+// Security services
+builder.Services.AddScoped<IPasswordPolicyService, PasswordPolicyService>();
+builder.Services.AddScoped<IRefreshTokenService, RefreshTokenService>();
+builder.Services.AddScoped<ISecurityEventService, SecurityEventService>();
+builder.Services.AddScoped<IPasswordResetService, PasswordResetService>();
+builder.Services.AddSingleton<IIpBlockingService, IpBlockingService>();
+
 // Application services
 builder.Services.AddScoped<Xenon.Platform.Application.Interfaces.IPlatformAuthService, PlatformAuthService>();
 builder.Services.AddScoped<Xenon.Platform.Application.Interfaces.ITenantAuthService, TenantAuthService>();
@@ -230,6 +238,7 @@ builder.Services.AddScoped<Xenon.Platform.Application.Interfaces.IDemoRequestSer
 // Background services
 builder.Services.AddHostedService<Xenon.Platform.Api.BackgroundServices.TenantHealthCheckService>();
 builder.Services.AddHostedService<Xenon.Platform.Api.BackgroundServices.SubscriptionExpiryService>();
+builder.Services.AddHostedService<Xenon.Platform.Api.BackgroundServices.SecurityCleanupService>();
 
 // CORS
 builder.Services.AddCors(options =>
@@ -319,6 +328,9 @@ else
 
 app.UseHttpsRedirection();
 app.UseCors("WebsitePolicy");
+
+// IP blocking should come before rate limiting to block suspicious IPs early
+app.UseIpBlocking();
 
 // Rate limiting must come before authentication
 app.UseRateLimiter();
