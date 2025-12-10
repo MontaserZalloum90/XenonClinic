@@ -7,12 +7,29 @@ namespace Xenon.Platform.Infrastructure.Services;
 
 public interface IPricingCalculatorService
 {
+    Task<IEnumerable<PlanSummary>> GetActivePlansAsync();
     Task<PricingEstimate?> CalculateEstimate(
         PlanCode planCode,
         int branches,
         int users,
         BillingCycle billingCycle,
         Currency currency = Currency.AED);
+}
+
+public class PlanSummary
+{
+    public PlanCode Code { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string? Description { get; set; }
+    public decimal MonthlyPrice { get; set; }
+    public decimal AnnualPrice { get; set; }
+    public int IncludedBranches { get; set; }
+    public int IncludedUsers { get; set; }
+    public decimal ExtraBranchPrice { get; set; }
+    public decimal ExtraUserPrice { get; set; }
+    public string? Features { get; set; }
+    public string SupportLevel { get; set; } = string.Empty;
+    public bool IsRecommended { get; set; }
 }
 
 public class PricingCalculatorService : IPricingCalculatorService
@@ -38,6 +55,29 @@ public class PricingCalculatorService : IPricingCalculatorService
     public PricingCalculatorService(PlatformDbContext context)
     {
         _context = context;
+    }
+
+    public async Task<IEnumerable<PlanSummary>> GetActivePlansAsync()
+    {
+        return await _context.Plans
+            .Where(p => p.IsActive)
+            .OrderBy(p => p.SortOrder)
+            .Select(p => new PlanSummary
+            {
+                Code = p.Code,
+                Name = p.Name,
+                Description = p.Description,
+                MonthlyPrice = p.MonthlyPrice,
+                AnnualPrice = p.AnnualPrice,
+                IncludedBranches = p.IncludedBranches,
+                IncludedUsers = p.IncludedUsers,
+                ExtraBranchPrice = p.ExtraBranchPrice,
+                ExtraUserPrice = p.ExtraUserPrice,
+                Features = p.FeaturesJson,
+                SupportLevel = p.SupportLevel,
+                IsRecommended = p.IsRecommended
+            })
+            .ToListAsync();
     }
 
     public async Task<PricingEstimate?> CalculateEstimate(
