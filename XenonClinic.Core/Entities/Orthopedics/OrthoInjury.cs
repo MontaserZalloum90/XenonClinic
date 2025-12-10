@@ -6,6 +6,7 @@ public class OrthoInjury
 {
     public int Id { get; set; }
     public int PatientId { get; set; }
+    public int BranchId { get; set; }
     public int? OrthoVisitId { get; set; }
     public InjuryType InjuryType { get; set; }
     public string? InjuryDescription { get; set; }
@@ -27,8 +28,11 @@ public class OrthoInjury
     public string? Complications { get; set; }
     public string? Notes { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public string? CreatedBy { get; set; }
     public DateTime? UpdatedAt { get; set; }
+    public string? UpdatedBy { get; set; }
 
     public Patient? Patient { get; set; }
+    public Branch? Branch { get; set; }
     public OrthoVisit? OrthoVisit { get; set; }
 }

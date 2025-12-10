@@ -6,6 +6,7 @@ public class IVFCycle
 {
     public int Id { get; set; }
     public int PatientId { get; set; }
+    public int BranchId { get; set; }
     public int? PartnerId { get; set; }
     public int CycleNumber { get; set; }
     public DateTime CycleStartDate { get; set; }
@@ -42,9 +43,12 @@ public class IVFCycle
     public decimal? TotalCost { get; set; }
     public string? Notes { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public string? CreatedBy { get; set; }
     public DateTime? UpdatedAt { get; set; }
+    public string? UpdatedBy { get; set; }
 
     public Patient? Patient { get; set; }
+    public Branch? Branch { get; set; }
     public Patient? Partner { get; set; }
     public ICollection<EmbryoRecord> Embryos { get; set; } = new List<EmbryoRecord>();
 }

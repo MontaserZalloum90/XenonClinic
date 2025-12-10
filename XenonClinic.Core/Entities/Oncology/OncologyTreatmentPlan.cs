@@ -6,6 +6,7 @@ public class OncologyTreatmentPlan
 {
     public int Id { get; set; }
     public int PatientId { get; set; }
+    public int BranchId { get; set; }
     public int CancerDiagnosisId { get; set; }
     public DateTime PlanDate { get; set; }
     public TreatmentIntent Intent { get; set; }
@@ -40,9 +41,12 @@ public class OncologyTreatmentPlan
     public string? DiscontinuationReason { get; set; }
     public string? Notes { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public string? CreatedBy { get; set; }
     public DateTime? UpdatedAt { get; set; }
+    public string? UpdatedBy { get; set; }
 
     public Patient? Patient { get; set; }
+    public Branch? Branch { get; set; }
     public CancerDiagnosis? CancerDiagnosis { get; set; }
     public ICollection<ChemotherapySession> ChemotherapySessions { get; set; } = new List<ChemotherapySession>();
     public ICollection<RadiationRecord> RadiationRecords { get; set; } = new List<RadiationRecord>();

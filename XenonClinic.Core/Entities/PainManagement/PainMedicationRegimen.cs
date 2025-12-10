@@ -6,6 +6,7 @@ public class PainMedicationRegimen
 {
     public int Id { get; set; }
     public int PatientId { get; set; }
+    public int BranchId { get; set; }
     public DateTime StartDate { get; set; }
     public DateTime? EndDate { get; set; }
     public PainMedicationStatus Status { get; set; }
@@ -32,7 +33,10 @@ public class PainMedicationRegimen
     public string? DiscontinuationReason { get; set; }
     public string? Notes { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public string? CreatedBy { get; set; }
     public DateTime? UpdatedAt { get; set; }
+    public string? UpdatedBy { get; set; }
 
     public Patient? Patient { get; set; }
+    public Branch? Branch { get; set; }
 }

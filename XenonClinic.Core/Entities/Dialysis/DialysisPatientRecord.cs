@@ -6,6 +6,7 @@ public class DialysisPatientRecord
 {
     public int Id { get; set; }
     public int PatientId { get; set; }
+    public int BranchId { get; set; }
     public DateTime ESRDOnsetDate { get; set; }
     public DateTime DialysisStartDate { get; set; }
     public DialysisModality Modality { get; set; }
@@ -38,8 +39,11 @@ public class DialysisPatientRecord
     public string? PhosphateBinder { get; set; }
     public string? Notes { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public string? CreatedBy { get; set; }
     public DateTime? UpdatedAt { get; set; }
+    public string? UpdatedBy { get; set; }
 
     public Patient? Patient { get; set; }
+    public Branch? Branch { get; set; }
     public ICollection<DialysisSession> Sessions { get; set; } = new List<DialysisSession>();
 }

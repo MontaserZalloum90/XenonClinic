@@ -6,6 +6,7 @@ public class TreatmentGoal
 {
     public int Id { get; set; }
     public int PatientId { get; set; }
+    public int BranchId { get; set; }
     public DateTime CreatedDate { get; set; }
     public GoalType GoalType { get; set; }
     public string? GoalDescription { get; set; }
@@ -25,7 +26,10 @@ public class TreatmentGoal
     public string? OutcomeDescription { get; set; }
     public string? Notes { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public string? CreatedBy { get; set; }
     public DateTime? UpdatedAt { get; set; }
+    public string? UpdatedBy { get; set; }
 
     public Patient? Patient { get; set; }
+    public Branch? Branch { get; set; }
 }

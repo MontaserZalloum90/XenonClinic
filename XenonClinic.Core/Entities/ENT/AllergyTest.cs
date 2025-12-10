@@ -6,6 +6,7 @@ public class AllergyTest
 {
     public int Id { get; set; }
     public int PatientId { get; set; }
+    public int BranchId { get; set; }
     public int? ENTVisitId { get; set; }
     public DateTime TestDate { get; set; }
     public AllergyTestType TestType { get; set; }
@@ -30,7 +31,11 @@ public class AllergyTest
     public string? TreatmentPlan { get; set; }
     public string? Notes { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public string? CreatedBy { get; set; }
+    public DateTime? UpdatedAt { get; set; }
+    public string? UpdatedBy { get; set; }
 
     public Patient? Patient { get; set; }
+    public Branch? Branch { get; set; }
     public ENTVisit? ENTVisit { get; set; }
 }
