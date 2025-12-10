@@ -315,7 +315,7 @@ public class ExclusiveGatewayActivity : ActivityBase
     {
         foreach (var condition in Conditions.OrderBy(c => c.Key))
         {
-            if (EvaluateCondition(condition.Value, context))
+            if (ConditionEvaluator.Evaluate(condition.Value, context, ResolveExpression))
             {
                 return Task.FromResult(ActivityResult.SuccessWithNext(condition.Key));
             }
@@ -328,37 +328,117 @@ public class ExclusiveGatewayActivity : ActivityBase
 
         return Task.FromResult(ActivityResult.Failure("NO_PATH", "No condition matched and no default path defined"));
     }
+}
 
-    private bool EvaluateCondition(string condition, IWorkflowContext context)
+/// <summary>
+/// Shared condition evaluator for gateway activities
+/// </summary>
+internal static class ConditionEvaluator
+{
+    // Operators ordered by length (longest first) to avoid partial matches
+    private static readonly string[] Operators = { "==", "!=", ">=", "<=", ">", "<" };
+
+    public static bool Evaluate(string condition, IWorkflowContext context, Func<string, IWorkflowContext, object?> resolver)
     {
-        // Simple condition evaluation
-        // Format: "var.name == 'value'" or "input.amount > 100"
-        var parts = condition.Split(new[] { "==", "!=", ">", "<", ">=", "<=" }, StringSplitOptions.TrimEntries);
-        if (parts.Length != 2) return false;
+        if (string.IsNullOrWhiteSpace(condition))
+            return false;
 
-        var left = ResolveExpression(parts[0], context);
-        var right = ResolveExpression(parts[1].Trim('\'', '"'), context);
+        // Try to evaluate as boolean expression first
+        var resolved = resolver(condition, context);
+        if (resolved is bool boolValue)
+            return boolValue;
+        if (resolved is string strValue && bool.TryParse(strValue, out var parsedBool))
+            return parsedBool;
 
-        if (condition.Contains("==")) return Equals(left, right);
-        if (condition.Contains("!=")) return !Equals(left, right);
-        if (condition.Contains(">=")) return Compare(left, right) >= 0;
-        if (condition.Contains("<=")) return Compare(left, right) <= 0;
-        if (condition.Contains(">")) return Compare(left, right) > 0;
-        if (condition.Contains("<")) return Compare(left, right) < 0;
+        // Find the operator in the condition
+        string? foundOperator = null;
+        int operatorIndex = -1;
 
-        return false;
+        foreach (var op in Operators)
+        {
+            var idx = condition.IndexOf(op, StringComparison.Ordinal);
+            if (idx >= 0)
+            {
+                foundOperator = op;
+                operatorIndex = idx;
+                break;
+            }
+        }
+
+        if (foundOperator == null || operatorIndex < 0)
+            return false;
+
+        var leftExpression = condition.Substring(0, operatorIndex).Trim();
+        var rightExpression = condition.Substring(operatorIndex + foundOperator.Length).Trim();
+
+        var left = resolver(leftExpression, context);
+        var right = resolver(rightExpression.Trim('\'', '"'), context);
+
+        return foundOperator switch
+        {
+            "==" => Equals(left, right) || CompareValues(left, right) == 0,
+            "!=" => !Equals(left, right) && CompareValues(left, right) != 0,
+            ">=" => CompareValues(left, right) >= 0,
+            "<=" => CompareValues(left, right) <= 0,
+            ">" => CompareValues(left, right) > 0,
+            "<" => CompareValues(left, right) < 0,
+            _ => false
+        };
     }
 
-    private static int Compare(object? left, object? right)
+    private static int CompareValues(object? left, object? right)
     {
         if (left == null && right == null) return 0;
         if (left == null) return -1;
         if (right == null) return 1;
+
+        // Handle numeric comparisons
+        if (TryGetNumericValue(left, out var leftNum) && TryGetNumericValue(right, out var rightNum))
+        {
+            return leftNum.CompareTo(rightNum);
+        }
+
+        // Handle string comparisons
+        if (left is string leftStr && right is string rightStr)
+        {
+            return string.Compare(leftStr, rightStr, StringComparison.OrdinalIgnoreCase);
+        }
+
+        // Try IComparable
         if (left is IComparable comparable)
         {
-            return comparable.CompareTo(Convert.ChangeType(right, left.GetType()));
+            try
+            {
+                var rightConverted = Convert.ChangeType(right, left.GetType());
+                return comparable.CompareTo(rightConverted);
+            }
+            catch
+            {
+                return string.Compare(left.ToString(), right.ToString(), StringComparison.OrdinalIgnoreCase);
+            }
         }
-        return 0;
+
+        return string.Compare(left.ToString(), right.ToString(), StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool TryGetNumericValue(object? value, out double result)
+    {
+        result = 0;
+        if (value == null) return false;
+
+        if (value is double d) { result = d; return true; }
+        if (value is int i) { result = i; return true; }
+        if (value is long l) { result = l; return true; }
+        if (value is decimal dec) { result = (double)dec; return true; }
+        if (value is float f) { result = f; return true; }
+
+        if (value is string s && double.TryParse(s, out var parsed))
+        {
+            result = parsed;
+            return true;
+        }
+
+        return false;
     }
 }
 
@@ -414,7 +494,7 @@ public class InclusiveGatewayActivity : ActivityBase
 
         foreach (var condition in Conditions)
         {
-            if (EvaluateCondition(condition.Value, context))
+            if (ConditionEvaluator.Evaluate(condition.Value, context, ResolveExpression))
             {
                 matchingPaths.Add(condition.Key);
             }
@@ -436,13 +516,6 @@ public class InclusiveGatewayActivity : ActivityBase
         }
 
         return Task.FromResult(ActivityResult.Parallel(matchingPaths));
-    }
-
-    private bool EvaluateCondition(string condition, IWorkflowContext context)
-    {
-        // Simplified - same as ExclusiveGateway
-        var value = ResolveExpression(condition, context);
-        return value is true || (value is string s && bool.TryParse(s, out var b) && b);
     }
 }
 

@@ -68,10 +68,50 @@ public class WorkflowSerializer
         }
         definition.StartActivityId = startNode.Id;
 
-        // Convert nodes to activities
+        // Build gateway conditions from edges (edges define the conditions for gateway paths)
+        var gatewayConditions = new Dictionary<string, Dictionary<string, string>>();
+        var gatewayDefaultPaths = new Dictionary<string, string>();
+        var parallelGatewayPaths = new Dictionary<string, List<string>>();
+
+        foreach (var edge in design.Edges)
+        {
+            var sourceNode = design.Nodes.FirstOrDefault(n => n.Id == edge.Source);
+            if (sourceNode != null && IsGatewayType(sourceNode.Type))
+            {
+                if (!gatewayConditions.ContainsKey(edge.Source))
+                {
+                    gatewayConditions[edge.Source] = new Dictionary<string, string>();
+                }
+
+                if (!string.IsNullOrEmpty(edge.Condition))
+                {
+                    gatewayConditions[edge.Source][edge.Target] = edge.Condition;
+                }
+
+                if (edge.IsDefault)
+                {
+                    gatewayDefaultPaths[edge.Source] = edge.Target;
+                }
+
+                // Track all paths for parallel gateways
+                if (sourceNode.Type.ToLowerInvariant() == "parallelgateway")
+                {
+                    if (!parallelGatewayPaths.ContainsKey(edge.Source))
+                    {
+                        parallelGatewayPaths[edge.Source] = new List<string>();
+                    }
+                    parallelGatewayPaths[edge.Source].Add(edge.Target);
+                }
+            }
+        }
+
+        // Convert nodes to activities (passing gateway conditions)
         foreach (var node in design.Nodes)
         {
-            var activity = ConvertNodeToActivity(node);
+            var conditions = gatewayConditions.GetValueOrDefault(node.Id);
+            var defaultPath = gatewayDefaultPaths.GetValueOrDefault(node.Id);
+            var parallelPaths = parallelGatewayPaths.GetValueOrDefault(node.Id);
+            var activity = ConvertNodeToActivity(node, conditions, defaultPath, parallelPaths);
             definition.Activities[node.Id] = activity;
         }
 
@@ -249,7 +289,17 @@ public class WorkflowSerializer
         return design;
     }
 
-    private static IActivity ConvertNodeToActivity(DesignerNode node)
+    private static bool IsGatewayType(string type)
+    {
+        var lowerType = type.ToLowerInvariant();
+        return lowerType is "exclusivegateway" or "parallelgateway" or "inclusivegateway";
+    }
+
+    private static IActivity ConvertNodeToActivity(
+        DesignerNode node,
+        Dictionary<string, string>? conditions = null,
+        string? defaultPath = null,
+        List<string>? parallelPaths = null)
     {
         return node.Type.ToLowerInvariant() switch
         {
@@ -310,8 +360,8 @@ public class WorkflowSerializer
                 Id = node.Id,
                 Name = node.Name,
                 Description = node.Description,
-                Conditions = new Dictionary<string, string>(), // Filled from edges
-                DefaultPath = node.Config.GetValueOrDefault("defaultPath")?.ToString()
+                Conditions = conditions ?? new Dictionary<string, string>(),
+                DefaultPath = defaultPath ?? node.Config.GetValueOrDefault("defaultPath")?.ToString()
             },
             "parallelgateway" => new ParallelGatewayActivity
             {
@@ -320,15 +370,16 @@ public class WorkflowSerializer
                 Description = node.Description,
                 Direction = node.Config.GetValueOrDefault("direction")?.ToString() == "join"
                     ? GatewayDirection.Join
-                    : GatewayDirection.Split
+                    : GatewayDirection.Split,
+                OutgoingPaths = parallelPaths
             },
             "inclusivegateway" => new InclusiveGatewayActivity
             {
                 Id = node.Id,
                 Name = node.Name,
                 Description = node.Description,
-                Conditions = new Dictionary<string, string>(),
-                DefaultPath = node.Config.GetValueOrDefault("defaultPath")?.ToString()
+                Conditions = conditions ?? new Dictionary<string, string>(),
+                DefaultPath = defaultPath ?? node.Config.GetValueOrDefault("defaultPath")?.ToString()
             },
             "timer" => new TimerActivity
             {

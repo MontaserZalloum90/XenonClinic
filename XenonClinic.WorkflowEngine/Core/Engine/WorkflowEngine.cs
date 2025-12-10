@@ -105,6 +105,11 @@ public class WorkflowEngine : IWorkflowEngine
 
     public async Task<WorkflowExecutionResult> StartAsync(Guid instanceId)
     {
+        return await StartAsync(instanceId, CancellationToken.None);
+    }
+
+    private async Task<WorkflowExecutionResult> StartAsync(Guid instanceId, CancellationToken cancellationToken)
+    {
         var state = await _instanceStore.GetAsync(instanceId);
         if (state == null)
         {
@@ -126,7 +131,7 @@ public class WorkflowEngine : IWorkflowEngine
         state.StartedAt = DateTime.UtcNow;
         state.CurrentActivityId = definition.StartActivityId;
 
-        return await ExecuteAsync(state, definition);
+        return await ExecuteAsync(state, definition, cancellationToken);
     }
 
     public async Task<WorkflowExecutionResult> StartNewAsync(
@@ -135,7 +140,7 @@ public class WorkflowEngine : IWorkflowEngine
         WorkflowInstanceOptions? options = null)
     {
         var instance = await CreateInstanceAsync(workflowId, input, options);
-        return await StartAsync(instance.Id);
+        return await StartAsync(instance.Id, CancellationToken.None);
     }
 
     public async Task<WorkflowExecutionResult> ResumeAsync(
@@ -170,6 +175,10 @@ public class WorkflowEngine : IWorkflowEngine
         state.Bookmarks.Remove(bookmark);
         state.Status = WorkflowStatus.Running;
 
+        // Create cancellation token with timeout
+        using var cts = new CancellationTokenSource(_options.DefaultActivityTimeout);
+        var cancellationToken = cts.Token;
+
         // Get the activity that created the bookmark and resume it
         if (bookmark.ActivityId != null)
         {
@@ -177,7 +186,7 @@ public class WorkflowEngine : IWorkflowEngine
             if (activity is ResumableActivityBase resumable)
             {
                 using var scope = _serviceProvider.CreateScope();
-                var context = new WorkflowContext(state, scope.ServiceProvider, default, _logger);
+                var context = new WorkflowContext(state, scope.ServiceProvider, cancellationToken, _logger);
 
                 var result = await resumable.ResumeAsync(context, input);
                 if (result.IsSuccess)
@@ -195,7 +204,7 @@ public class WorkflowEngine : IWorkflowEngine
             }
         }
 
-        return await ExecuteAsync(state, definition);
+        return await ExecuteAsync(state, definition, cancellationToken);
     }
 
     public async Task CancelAsync(Guid instanceId, string? reason = null)
@@ -271,7 +280,7 @@ public class WorkflowEngine : IWorkflowEngine
         state.Error = null;
         state.FaultCount++;
 
-        return await ExecuteAsync(state, definition);
+        return await ExecuteAsync(state, definition, CancellationToken.None);
     }
 
     public async Task<IWorkflowInstance?> GetInstanceAsync(Guid instanceId)
@@ -363,18 +372,41 @@ public class WorkflowEngine : IWorkflowEngine
 
     private async Task<WorkflowExecutionResult> ExecuteAsync(
         WorkflowInstanceState state,
-        IWorkflowDefinition definition)
+        IWorkflowDefinition definition,
+        CancellationToken cancellationToken = default)
     {
         var stopwatch = Stopwatch.StartNew();
         var activitiesExecuted = 0;
 
+        // Create a linked token with timeout if no token provided
+        using var timeoutCts = cancellationToken == default
+            ? new CancellationTokenSource(_options.DefaultActivityTimeout)
+            : null;
+        using var linkedCts = timeoutCts != null
+            ? CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, timeoutCts.Token)
+            : null;
+        var effectiveToken = linkedCts?.Token ?? cancellationToken;
+
         try
         {
             using var scope = _serviceProvider.CreateScope();
-            var context = new WorkflowContext(state, scope.ServiceProvider, default, _logger);
+            var context = new WorkflowContext(state, scope.ServiceProvider, effectiveToken, _logger);
 
             while (state.Status == WorkflowStatus.Running && state.CurrentActivityId != null)
             {
+                // Check for cancellation at the start of each activity
+                if (effectiveToken.IsCancellationRequested)
+                {
+                    state.Status = WorkflowStatus.Cancelled;
+                    state.CompletedAt = DateTime.UtcNow;
+                    state.AuditEntries.Add(new WorkflowAuditEntry
+                    {
+                        Timestamp = DateTime.UtcNow,
+                        Action = "Cancelled",
+                        Details = "Workflow cancelled due to cancellation request"
+                    });
+                    break;
+                }
                 var activity = definition.GetActivity(state.CurrentActivityId);
                 if (activity == null)
                 {
@@ -547,26 +579,48 @@ public class WorkflowEngine : IWorkflowEngine
 
         state.ParallelBranches[branchId] = branch;
 
-        // For now, execute sequentially (full parallel would require async coordination)
-        foreach (var activityId in branchActivityIds)
+        // Execute branches in parallel using Task.WhenAll
+        var branchTasks = branchActivityIds.Select(async activityId =>
         {
-            state.CurrentActivityId = activityId;
-
             var activity = definition.GetActivity(activityId);
-            if (activity == null) continue;
-
-            var result = await activity.ExecuteAsync(context);
-
-            if (!result.IsSuccess)
+            if (activity == null)
             {
-                branch.Status = ParallelBranchStatus.Faulted;
-                return;
+                return (activityId, ActivityResult.Failure("ACTIVITY_NOT_FOUND", $"Activity not found: {activityId}"));
             }
 
-            state.CompletedActivityIds.Add(activityId);
+            // Check for cancellation before executing
+            if (context.CancellationToken.IsCancellationRequested)
+            {
+                return (activityId, ActivityResult.Failure("CANCELLED", "Execution cancelled"));
+            }
+
+            var result = await activity.ExecuteAsync(context);
+            return (activityId, result);
+        }).ToList();
+
+        var results = await Task.WhenAll(branchTasks);
+
+        // Process results
+        var allSucceeded = true;
+        foreach (var (activityId, result) in results)
+        {
+            if (result.IsSuccess)
+            {
+                // Thread-safe add to completed activities
+                lock (state.CompletedActivityIds)
+                {
+                    state.CompletedActivityIds.Add(activityId);
+                }
+            }
+            else
+            {
+                allSucceeded = false;
+                _logger.LogWarning("Parallel branch activity {ActivityId} failed: {Error}",
+                    activityId, result.Error?.Message);
+            }
         }
 
-        branch.Status = ParallelBranchStatus.Completed;
+        branch.Status = allSucceeded ? ParallelBranchStatus.Completed : ParallelBranchStatus.Faulted;
     }
 
     private string? GetNextActivityId(IWorkflowDefinition definition, string currentActivityId)
@@ -640,15 +694,26 @@ public class WorkflowEngine : IWorkflowEngine
         return false;
     }
 
-    private async Task CompensateAsync(WorkflowInstanceState state, IWorkflowDefinition definition)
+    private async Task CompensateAsync(
+        WorkflowInstanceState state,
+        IWorkflowDefinition definition,
+        CancellationToken cancellationToken = default)
     {
         state.Status = WorkflowStatus.Compensating;
 
         using var scope = _serviceProvider.CreateScope();
-        var context = new WorkflowContext(state, scope.ServiceProvider, default, _logger);
+        var context = new WorkflowContext(state, scope.ServiceProvider, cancellationToken, _logger);
 
         while (state.CompensationStack.Count > 0)
         {
+            // Check for cancellation - but allow compensation to proceed in critical cases
+            if (cancellationToken.IsCancellationRequested)
+            {
+                _logger.LogWarning("Compensation interrupted by cancellation request at {InstanceId}",
+                    state.Id);
+                break;
+            }
+
             var activityId = state.CompensationStack.Pop();
             var activity = definition.GetActivity(activityId);
 
