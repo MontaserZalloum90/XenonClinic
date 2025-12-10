@@ -218,6 +218,7 @@ public class HRService : IHRService
 
         var absentEmployees = await _context.Employees
             .Where(e => e.BranchId == branchId &&
+                   !e.IsDeleted &&
                    e.EmploymentStatus == EmploymentStatus.Active &&
                    !presentEmployeeIds.Contains(e.Id))
             .ToListAsync();
@@ -457,6 +458,31 @@ public class HRService : IHRService
 
     public async Task UpdateLeaveRequestAsync(LeaveRequest leaveRequest)
     {
+        // Check if the leave request exists and its current status
+        var existingRequest = await _context.LeaveRequests.FindAsync(leaveRequest.Id);
+        if (existingRequest == null)
+        {
+            throw new KeyNotFoundException($"Leave request with ID {leaveRequest.Id} not found");
+        }
+
+        // Cannot update approved or rejected leave requests
+        if (existingRequest.Status == LeaveStatus.Approved)
+        {
+            throw new InvalidOperationException("Cannot update an approved leave request");
+        }
+
+        if (existingRequest.Status == LeaveStatus.Rejected)
+        {
+            throw new InvalidOperationException("Cannot update a rejected leave request");
+        }
+
+        // Validate dates if they were changed
+        if (leaveRequest.EndDate < leaveRequest.StartDate)
+        {
+            throw new InvalidOperationException("End date must be on or after start date");
+        }
+
+        leaveRequest.UpdatedAt = DateTime.UtcNow;
         _context.LeaveRequests.Update(leaveRequest);
         await _context.SaveChangesAsync();
     }
@@ -554,7 +580,10 @@ public class HRService : IHRService
     public async Task<bool> ValidateLeaveBalanceAsync(int employeeId, LeaveType leaveType, int requestedDays)
     {
         var employee = await _context.Employees.FindAsync(employeeId);
-        if (employee == null)
+        if (employee == null || employee.IsDeleted)
+            return false;
+
+        if (requestedDays <= 0)
             return false;
 
         return leaveType switch
@@ -594,6 +623,16 @@ public class HRService : IHRService
 
     public async Task<Department> CreateDepartmentAsync(Department department)
     {
+        // Check for duplicate department name within the same branch
+        var existingDepartment = await _context.Departments
+            .FirstOrDefaultAsync(d => d.Name == department.Name && d.BranchId == department.BranchId);
+
+        if (existingDepartment != null)
+        {
+            throw new InvalidOperationException(
+                $"A department with name '{department.Name}' already exists in this branch");
+        }
+
         _context.Departments.Add(department);
         await _context.SaveChangesAsync();
         return department;
@@ -601,6 +640,19 @@ public class HRService : IHRService
 
     public async Task UpdateDepartmentAsync(Department department)
     {
+        // Check for duplicate department name within the same branch (excluding self)
+        var existingDepartment = await _context.Departments
+            .FirstOrDefaultAsync(d => d.Name == department.Name &&
+                                       d.BranchId == department.BranchId &&
+                                       d.Id != department.Id);
+
+        if (existingDepartment != null)
+        {
+            throw new InvalidOperationException(
+                $"A department with name '{department.Name}' already exists in this branch");
+        }
+
+        department.UpdatedAt = DateTime.UtcNow;
         _context.Departments.Update(department);
         await _context.SaveChangesAsync();
     }
@@ -664,6 +716,27 @@ public class HRService : IHRService
 
     public async Task<JobPosition> CreateJobPositionAsync(JobPosition jobPosition)
     {
+        // Validate salary range
+        if (jobPosition.MinSalary < 0)
+        {
+            throw new InvalidOperationException("Minimum salary cannot be negative");
+        }
+
+        if (jobPosition.MaxSalary < jobPosition.MinSalary)
+        {
+            throw new InvalidOperationException("Maximum salary must be greater than or equal to minimum salary");
+        }
+
+        // Check for duplicate job title within the same branch
+        var existingPosition = await _context.JobPositions
+            .FirstOrDefaultAsync(jp => jp.Title == jobPosition.Title && jp.BranchId == jobPosition.BranchId);
+
+        if (existingPosition != null)
+        {
+            throw new InvalidOperationException(
+                $"A job position with title '{jobPosition.Title}' already exists in this branch");
+        }
+
         _context.JobPositions.Add(jobPosition);
         await _context.SaveChangesAsync();
         return jobPosition;
@@ -671,6 +744,30 @@ public class HRService : IHRService
 
     public async Task UpdateJobPositionAsync(JobPosition jobPosition)
     {
+        // Validate salary range
+        if (jobPosition.MinSalary < 0)
+        {
+            throw new InvalidOperationException("Minimum salary cannot be negative");
+        }
+
+        if (jobPosition.MaxSalary < jobPosition.MinSalary)
+        {
+            throw new InvalidOperationException("Maximum salary must be greater than or equal to minimum salary");
+        }
+
+        // Check for duplicate job title within the same branch (excluding self)
+        var existingPosition = await _context.JobPositions
+            .FirstOrDefaultAsync(jp => jp.Title == jobPosition.Title &&
+                                        jp.BranchId == jobPosition.BranchId &&
+                                        jp.Id != jobPosition.Id);
+
+        if (existingPosition != null)
+        {
+            throw new InvalidOperationException(
+                $"A job position with title '{jobPosition.Title}' already exists in this branch");
+        }
+
+        jobPosition.UpdatedAt = DateTime.UtcNow;
         _context.JobPositions.Update(jobPosition);
         await _context.SaveChangesAsync();
     }
@@ -714,11 +811,12 @@ public class HRService : IHRService
     public async Task<int> GetPresentTodayCountAsync(int branchId)
     {
         var today = DateTime.UtcNow.Date;
+        // Count both Present and Late employees (late employees are still present)
         return await _context.Attendances
             .CountAsync(a => a.Employee!.BranchId == branchId &&
                    !a.Employee.IsDeleted &&
                    a.Date.Date == today &&
-                   a.Status == AttendanceStatus.Present);
+                   (a.Status == AttendanceStatus.Present || a.Status == AttendanceStatus.Late));
     }
 
     public async Task<int> GetAbsentTodayCountAsync(int branchId)

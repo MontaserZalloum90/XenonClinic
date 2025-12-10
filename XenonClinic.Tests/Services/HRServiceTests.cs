@@ -990,5 +990,266 @@ public class HRServiceTests
         Assert.True(await service.ValidateLeaveBalanceAsync(employee.Id, LeaveType.Emergency, 100)); // No balance check for emergency
     }
 
+    [Fact]
+    public async Task ValidateLeaveBalanceAsync_ForDeletedEmployee_ReturnsFalse()
+    {
+        // Arrange
+        var (context, employee) = await SetupEmployeeAsync();
+        var mockSequenceGenerator = GetMockSequenceGenerator();
+        var service = new HRService(context, mockSequenceGenerator.Object);
+
+        employee.IsDeleted = true;
+        await context.SaveChangesAsync();
+
+        // Act & Assert
+        Assert.False(await service.ValidateLeaveBalanceAsync(employee.Id, LeaveType.Annual, 1));
+    }
+
+    [Fact]
+    public async Task ValidateLeaveBalanceAsync_WithZeroDays_ReturnsFalse()
+    {
+        // Arrange
+        var (context, employee) = await SetupEmployeeAsync();
+        var mockSequenceGenerator = GetMockSequenceGenerator();
+        var service = new HRService(context, mockSequenceGenerator.Object);
+
+        // Act & Assert
+        Assert.False(await service.ValidateLeaveBalanceAsync(employee.Id, LeaveType.Annual, 0));
+        Assert.False(await service.ValidateLeaveBalanceAsync(employee.Id, LeaveType.Annual, -1));
+    }
+
+    #endregion
+
+    #region Additional Validation Tests
+
+    [Fact]
+    public async Task CreateDepartmentAsync_WithDuplicateName_ThrowsException()
+    {
+        // Arrange
+        var context = GetInMemoryDbContext();
+        var mockSequenceGenerator = GetMockSequenceGenerator();
+        var service = new HRService(context, mockSequenceGenerator.Object);
+
+        var branch = new Branch { Id = 1, Name = "Main Branch", Code = "MB" };
+        context.Branches.Add(branch);
+
+        var existingDept = new Department { Id = 1, Name = "IT", BranchId = 1 };
+        context.Departments.Add(existingDept);
+        await context.SaveChangesAsync();
+
+        var newDept = new Department { Name = "IT", BranchId = 1 }; // Duplicate name
+
+        // Act & Assert
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(
+            () => service.CreateDepartmentAsync(newDept));
+        Assert.Contains("already exists", exception.Message);
+    }
+
+    [Fact]
+    public async Task UpdateDepartmentAsync_WithDuplicateName_ThrowsException()
+    {
+        // Arrange
+        var context = GetInMemoryDbContext();
+        var mockSequenceGenerator = GetMockSequenceGenerator();
+        var service = new HRService(context, mockSequenceGenerator.Object);
+
+        var branch = new Branch { Id = 1, Name = "Main Branch", Code = "MB" };
+        context.Branches.Add(branch);
+
+        var dept1 = new Department { Id = 1, Name = "IT", BranchId = 1 };
+        var dept2 = new Department { Id = 2, Name = "HR", BranchId = 1 };
+        context.Departments.AddRange(dept1, dept2);
+        await context.SaveChangesAsync();
+
+        // Try to rename HR to IT
+        dept2.Name = "IT";
+
+        // Act & Assert
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(
+            () => service.UpdateDepartmentAsync(dept2));
+        Assert.Contains("already exists", exception.Message);
+    }
+
+    [Fact]
+    public async Task CreateJobPositionAsync_WithDuplicateTitle_ThrowsException()
+    {
+        // Arrange
+        var context = GetInMemoryDbContext();
+        var mockSequenceGenerator = GetMockSequenceGenerator();
+        var service = new HRService(context, mockSequenceGenerator.Object);
+
+        var branch = new Branch { Id = 1, Name = "Main Branch", Code = "MB" };
+        context.Branches.Add(branch);
+
+        var existingPos = new JobPosition { Id = 1, Title = "Developer", BranchId = 1, MinSalary = 5000, MaxSalary = 15000 };
+        context.JobPositions.Add(existingPos);
+        await context.SaveChangesAsync();
+
+        var newPos = new JobPosition { Title = "Developer", BranchId = 1, MinSalary = 5000, MaxSalary = 15000 };
+
+        // Act & Assert
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(
+            () => service.CreateJobPositionAsync(newPos));
+        Assert.Contains("already exists", exception.Message);
+    }
+
+    [Fact]
+    public async Task CreateJobPositionAsync_WithNegativeMinSalary_ThrowsException()
+    {
+        // Arrange
+        var context = GetInMemoryDbContext();
+        var mockSequenceGenerator = GetMockSequenceGenerator();
+        var service = new HRService(context, mockSequenceGenerator.Object);
+
+        var jobPos = new JobPosition { Title = "Developer", BranchId = 1, MinSalary = -100, MaxSalary = 15000 };
+
+        // Act & Assert
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(
+            () => service.CreateJobPositionAsync(jobPos));
+        Assert.Contains("negative", exception.Message);
+    }
+
+    [Fact]
+    public async Task CreateJobPositionAsync_WithMaxSalaryLessThanMin_ThrowsException()
+    {
+        // Arrange
+        var context = GetInMemoryDbContext();
+        var mockSequenceGenerator = GetMockSequenceGenerator();
+        var service = new HRService(context, mockSequenceGenerator.Object);
+
+        var jobPos = new JobPosition { Title = "Developer", BranchId = 1, MinSalary = 10000, MaxSalary = 5000 };
+
+        // Act & Assert
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(
+            () => service.CreateJobPositionAsync(jobPos));
+        Assert.Contains("greater than or equal", exception.Message);
+    }
+
+    [Fact]
+    public async Task UpdateLeaveRequestAsync_ApprovedRequest_ThrowsException()
+    {
+        // Arrange
+        var (context, employee) = await SetupEmployeeAsync();
+        var mockSequenceGenerator = GetMockSequenceGenerator();
+        var service = new HRService(context, mockSequenceGenerator.Object);
+
+        var leaveRequest = new LeaveRequest
+        {
+            EmployeeId = employee.Id,
+            LeaveType = LeaveType.Annual,
+            StartDate = DateTime.UtcNow.Date.AddDays(7),
+            EndDate = DateTime.UtcNow.Date.AddDays(10),
+            TotalDays = 4,
+            Status = LeaveStatus.Approved,
+            Reason = "Vacation"
+        };
+        context.LeaveRequests.Add(leaveRequest);
+        await context.SaveChangesAsync();
+
+        leaveRequest.Reason = "Changed reason";
+
+        // Act & Assert
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(
+            () => service.UpdateLeaveRequestAsync(leaveRequest));
+        Assert.Contains("approved", exception.Message.ToLower());
+    }
+
+    [Fact]
+    public async Task UpdateLeaveRequestAsync_RejectedRequest_ThrowsException()
+    {
+        // Arrange
+        var (context, employee) = await SetupEmployeeAsync();
+        var mockSequenceGenerator = GetMockSequenceGenerator();
+        var service = new HRService(context, mockSequenceGenerator.Object);
+
+        var leaveRequest = new LeaveRequest
+        {
+            EmployeeId = employee.Id,
+            LeaveType = LeaveType.Annual,
+            StartDate = DateTime.UtcNow.Date.AddDays(7),
+            EndDate = DateTime.UtcNow.Date.AddDays(10),
+            TotalDays = 4,
+            Status = LeaveStatus.Rejected,
+            Reason = "Vacation"
+        };
+        context.LeaveRequests.Add(leaveRequest);
+        await context.SaveChangesAsync();
+
+        leaveRequest.Reason = "Changed reason";
+
+        // Act & Assert
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(
+            () => service.UpdateLeaveRequestAsync(leaveRequest));
+        Assert.Contains("rejected", exception.Message.ToLower());
+    }
+
+    [Fact]
+    public async Task GetAbsentEmployeesAsync_ExcludesDeletedEmployees()
+    {
+        // Arrange
+        var (context, employee) = await SetupEmployeeAsync();
+        var mockSequenceGenerator = GetMockSequenceGenerator();
+        var service = new HRService(context, mockSequenceGenerator.Object);
+
+        // Add another deleted employee
+        var deletedEmployee = new Employee
+        {
+            EmployeeCode = "EMP-002",
+            FullNameEn = "Deleted Employee",
+            EmiratesId = "784-8888-8888888-8",
+            BranchId = 1,
+            DepartmentId = 1,
+            JobPositionId = 1,
+            BasicSalary = 10000,
+            HireDate = DateTime.UtcNow,
+            DateOfBirth = new DateTime(1990, 1, 1),
+            Gender = "M",
+            Nationality = "AE",
+            Address = "Dubai",
+            Email = "deleted@test.com",
+            PhoneNumber = "111222333",
+            EmploymentStatus = EmploymentStatus.Active,
+            IsDeleted = true,
+            DeletedAt = DateTime.UtcNow
+        };
+        context.Employees.Add(deletedEmployee);
+        await context.SaveChangesAsync();
+
+        // Act
+        var absentees = await service.GetAbsentEmployeesAsync(1, DateTime.UtcNow);
+
+        // Assert
+        Assert.Single(absentees); // Only the non-deleted employee should be in absent list
+        Assert.DoesNotContain(absentees, a => a.EmployeeId == deletedEmployee.Id);
+    }
+
+    [Fact]
+    public async Task GetPresentTodayCountAsync_IncludesLateEmployees()
+    {
+        // Arrange
+        var (context, employee) = await SetupEmployeeAsync();
+        var mockSequenceGenerator = GetMockSequenceGenerator();
+        var service = new HRService(context, mockSequenceGenerator.Object);
+
+        // Add attendance with Late status
+        var attendance = new Attendance
+        {
+            EmployeeId = employee.Id,
+            Date = DateTime.UtcNow.Date,
+            CheckInTime = new TimeOnly(10, 0),
+            Status = AttendanceStatus.Late,
+            IsLate = true,
+            LateMinutes = 60
+        };
+        context.Attendances.Add(attendance);
+        await context.SaveChangesAsync();
+
+        // Act
+        var presentCount = await service.GetPresentTodayCountAsync(1);
+
+        // Assert
+        Assert.Equal(1, presentCount); // Late employee should be counted as present
+    }
+
     #endregion
 }
