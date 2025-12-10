@@ -83,8 +83,11 @@ public class TenantContextService
         // Merge features
         context.Features = await MergeFeaturesAsync(company, tenant);
 
+        // Get language from tenant settings
+        var language = tenant.Settings?.DefaultLanguage ?? "en";
+
         // Merge terminology
-        context.Terminology = MergeTerminology(company, tenant);
+        context.Terminology = MergeTerminology(company, tenant, language);
 
         // Merge navigation
         context.Navigation = MergeNavigation(company, tenant, context.Features, roles);
@@ -161,12 +164,12 @@ public class TenantContextService
         return result;
     }
 
-    private Dictionary<string, string> MergeTerminology(Company company, Tenant tenant)
+    private Dictionary<string, string> MergeTerminology(Company company, Tenant tenant, string language = "en")
     {
         var result = new Dictionary<string, string>();
 
-        // 1. Apply system defaults
-        foreach (var (key, value) in GetDefaultTerminology())
+        // 1. Apply system defaults based on language
+        foreach (var (key, value) in GetDefaultTerminology(language))
         {
             result[key] = value;
         }
@@ -445,7 +448,17 @@ public class TenantContextService
         return result;
     }
 
-    private static Dictionary<string, string> GetDefaultTerminology()
+    private static Dictionary<string, string> GetDefaultTerminology(string language = "en")
+    {
+        return language switch
+        {
+            "ar" or "ar-AE" => GetArabicTerminology(),
+            "fr" or "fr-FR" => GetFrenchTerminology(),
+            _ => GetEnglishTerminology()
+        };
+    }
+
+    private static Dictionary<string, string> GetEnglishTerminology()
     {
         return new Dictionary<string, string>
         {
@@ -458,6 +471,12 @@ public class TenantContextService
             ["entity.appointment.plural"] = "Appointments",
             ["entity.invoice.singular"] = "Invoice",
             ["entity.invoice.plural"] = "Invoices",
+            ["entity.prescription.singular"] = "Prescription",
+            ["entity.prescription.plural"] = "Prescriptions",
+            ["entity.labTest.singular"] = "Lab Test",
+            ["entity.labTest.plural"] = "Lab Tests",
+            ["entity.employee.singular"] = "Employee",
+            ["entity.employee.plural"] = "Employees",
 
             // Roles
             ["role.doctor"] = "Doctor",
@@ -472,8 +491,14 @@ public class TenantContextService
             ["nav.billing"] = "Billing",
             ["nav.inventory"] = "Inventory",
             ["nav.laboratory"] = "Laboratory",
+            ["nav.pharmacy"] = "Pharmacy",
+            ["nav.radiology"] = "Radiology",
+            ["nav.audiology"] = "Audiology",
+            ["nav.financial"] = "Financial",
+            ["nav.marketing"] = "Marketing",
             ["nav.reports"] = "Reports",
             ["nav.hr"] = "HR",
+            ["nav.admin"] = "Admin",
             ["nav.settings"] = "Settings",
 
             // Actions
@@ -485,15 +510,179 @@ public class TenantContextService
             ["action.view"] = "View",
             ["action.export"] = "Export",
             ["action.import"] = "Import",
+            ["action.search"] = "Search",
+            ["action.filter"] = "Filter",
+            ["action.refresh"] = "Refresh",
+            ["action.print"] = "Print",
 
             // Common
             ["common.loading"] = "Loading...",
             ["common.noResults"] = "No results found",
+            ["common.noData"] = "No data available",
             ["common.search"] = "Search",
             ["common.filter"] = "Filter",
             ["common.confirm"] = "Confirm",
+            ["common.yes"] = "Yes",
+            ["common.no"] = "No",
             ["confirm.delete"] = "Are you sure you want to delete this item?",
-            ["confirm.bulkDelete"] = "Are you sure you want to delete the selected items?"
+            ["confirm.bulkDelete"] = "Are you sure you want to delete the selected items?",
+
+            // Messages
+            ["message.saveSuccess"] = "Saved successfully",
+            ["message.deleteSuccess"] = "Deleted successfully",
+            ["message.error"] = "An error occurred"
+        };
+    }
+
+    private static Dictionary<string, string> GetArabicTerminology()
+    {
+        return new Dictionary<string, string>
+        {
+            // Entity names
+            ["entity.patient.singular"] = "مريض",
+            ["entity.patient.plural"] = "المرضى",
+            ["entity.visit.singular"] = "زيارة",
+            ["entity.visit.plural"] = "الزيارات",
+            ["entity.appointment.singular"] = "موعد",
+            ["entity.appointment.plural"] = "المواعيد",
+            ["entity.invoice.singular"] = "فاتورة",
+            ["entity.invoice.plural"] = "الفواتير",
+            ["entity.prescription.singular"] = "وصفة طبية",
+            ["entity.prescription.plural"] = "الوصفات الطبية",
+            ["entity.labTest.singular"] = "فحص مخبري",
+            ["entity.labTest.plural"] = "الفحوصات المخبرية",
+            ["entity.employee.singular"] = "موظف",
+            ["entity.employee.plural"] = "الموظفون",
+
+            // Roles
+            ["role.doctor"] = "طبيب",
+            ["role.nurse"] = "ممرض/ة",
+            ["role.receptionist"] = "موظف استقبال",
+
+            // Navigation
+            ["nav.dashboard"] = "لوحة التحكم",
+            ["nav.patients"] = "المرضى",
+            ["nav.appointments"] = "المواعيد",
+            ["nav.visits"] = "الزيارات",
+            ["nav.billing"] = "الفواتير",
+            ["nav.inventory"] = "المخزون",
+            ["nav.laboratory"] = "المختبر",
+            ["nav.pharmacy"] = "الصيدلية",
+            ["nav.radiology"] = "الأشعة",
+            ["nav.audiology"] = "السمعيات",
+            ["nav.financial"] = "المالية",
+            ["nav.marketing"] = "التسويق",
+            ["nav.reports"] = "التقارير",
+            ["nav.hr"] = "الموارد البشرية",
+            ["nav.admin"] = "الإدارة",
+            ["nav.settings"] = "الإعدادات",
+
+            // Actions
+            ["action.add"] = "إضافة",
+            ["action.edit"] = "تعديل",
+            ["action.delete"] = "حذف",
+            ["action.save"] = "حفظ",
+            ["action.cancel"] = "إلغاء",
+            ["action.view"] = "عرض",
+            ["action.export"] = "تصدير",
+            ["action.import"] = "استيراد",
+            ["action.search"] = "بحث",
+            ["action.filter"] = "تصفية",
+            ["action.refresh"] = "تحديث",
+            ["action.print"] = "طباعة",
+
+            // Common
+            ["common.loading"] = "جاري التحميل...",
+            ["common.noResults"] = "لم يتم العثور على نتائج",
+            ["common.noData"] = "لا توجد بيانات",
+            ["common.search"] = "بحث",
+            ["common.filter"] = "تصفية",
+            ["common.confirm"] = "تأكيد",
+            ["common.yes"] = "نعم",
+            ["common.no"] = "لا",
+            ["confirm.delete"] = "هل أنت متأكد من حذف هذا العنصر؟",
+            ["confirm.bulkDelete"] = "هل أنت متأكد من حذف العناصر المحددة؟",
+
+            // Messages
+            ["message.saveSuccess"] = "تم الحفظ بنجاح",
+            ["message.deleteSuccess"] = "تم الحذف بنجاح",
+            ["message.error"] = "حدث خطأ"
+        };
+    }
+
+    private static Dictionary<string, string> GetFrenchTerminology()
+    {
+        return new Dictionary<string, string>
+        {
+            // Entity names
+            ["entity.patient.singular"] = "Patient",
+            ["entity.patient.plural"] = "Patients",
+            ["entity.visit.singular"] = "Visite",
+            ["entity.visit.plural"] = "Visites",
+            ["entity.appointment.singular"] = "Rendez-vous",
+            ["entity.appointment.plural"] = "Rendez-vous",
+            ["entity.invoice.singular"] = "Facture",
+            ["entity.invoice.plural"] = "Factures",
+            ["entity.prescription.singular"] = "Ordonnance",
+            ["entity.prescription.plural"] = "Ordonnances",
+            ["entity.labTest.singular"] = "Analyse",
+            ["entity.labTest.plural"] = "Analyses",
+            ["entity.employee.singular"] = "Employé",
+            ["entity.employee.plural"] = "Employés",
+
+            // Roles
+            ["role.doctor"] = "Médecin",
+            ["role.nurse"] = "Infirmier/ère",
+            ["role.receptionist"] = "Réceptionniste",
+
+            // Navigation
+            ["nav.dashboard"] = "Tableau de bord",
+            ["nav.patients"] = "Patients",
+            ["nav.appointments"] = "Rendez-vous",
+            ["nav.visits"] = "Visites",
+            ["nav.billing"] = "Facturation",
+            ["nav.inventory"] = "Inventaire",
+            ["nav.laboratory"] = "Laboratoire",
+            ["nav.pharmacy"] = "Pharmacie",
+            ["nav.radiology"] = "Radiologie",
+            ["nav.audiology"] = "Audiologie",
+            ["nav.financial"] = "Finances",
+            ["nav.marketing"] = "Marketing",
+            ["nav.reports"] = "Rapports",
+            ["nav.hr"] = "RH",
+            ["nav.admin"] = "Admin",
+            ["nav.settings"] = "Paramètres",
+
+            // Actions
+            ["action.add"] = "Ajouter",
+            ["action.edit"] = "Modifier",
+            ["action.delete"] = "Supprimer",
+            ["action.save"] = "Enregistrer",
+            ["action.cancel"] = "Annuler",
+            ["action.view"] = "Voir",
+            ["action.export"] = "Exporter",
+            ["action.import"] = "Importer",
+            ["action.search"] = "Rechercher",
+            ["action.filter"] = "Filtrer",
+            ["action.refresh"] = "Actualiser",
+            ["action.print"] = "Imprimer",
+
+            // Common
+            ["common.loading"] = "Chargement...",
+            ["common.noResults"] = "Aucun résultat trouvé",
+            ["common.noData"] = "Aucune donnée disponible",
+            ["common.search"] = "Rechercher",
+            ["common.filter"] = "Filtrer",
+            ["common.confirm"] = "Confirmer",
+            ["common.yes"] = "Oui",
+            ["common.no"] = "Non",
+            ["confirm.delete"] = "Êtes-vous sûr de vouloir supprimer cet élément?",
+            ["confirm.bulkDelete"] = "Êtes-vous sûr de vouloir supprimer les éléments sélectionnés?",
+
+            // Messages
+            ["message.saveSuccess"] = "Enregistré avec succès",
+            ["message.deleteSuccess"] = "Supprimé avec succès",
+            ["message.error"] = "Une erreur s'est produite"
         };
     }
 }

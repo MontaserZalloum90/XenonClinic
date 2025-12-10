@@ -694,19 +694,56 @@ export const frenchTranslations: TranslationDictionary = {
   // ============================================
   'page.dashboard.title': 'Tableau de bord',
   'page.dashboard.welcome': 'Bon retour',
-  'page.dashboard.overview': 'Voici l\'aperçu de votre clinique',
+  'page.dashboard.overview': 'Voici l\'aperçu de votre clinique à travers tous les modules',
 
   'page.patients.title': 'Patients',
-  'page.patients.description': 'Gérer les dossiers patients',
+  'page.patients.description': 'Gérer les dossiers patients et informations',
   'page.patients.add': 'Nouveau patient',
   'page.patients.edit': 'Modifier le patient',
   'page.patients.recentlyViewed': 'Vus récemment',
-  'page.patients.searchPlaceholder': 'Rechercher par nom, ID, téléphone ou email...',
+  'page.patients.searchPlaceholder': 'Rechercher par nom, ID Emirates, téléphone ou email...',
 
   'page.appointments.title': 'Rendez-vous',
   'page.appointments.description': 'Planifier et gérer les rendez-vous',
   'page.appointments.add': 'Nouveau rendez-vous',
   'page.appointments.schedule': 'Planifier un rendez-vous',
+
+  'page.laboratory.title': 'Laboratoire',
+  'page.laboratory.description': 'Gérer les analyses et résultats',
+  'page.laboratory.pendingOrders': 'Commandes en attente',
+  'page.laboratory.urgentOrders': 'Commandes urgentes',
+
+  'page.pharmacy.title': 'Pharmacie',
+  'page.pharmacy.description': 'Gérer les ordonnances et médicaments',
+  'page.pharmacy.pending': 'Ordonnances en attente',
+  'page.pharmacy.dispensedToday': 'Dispensées aujourd\'hui',
+
+  'page.radiology.title': 'Radiologie',
+  'page.radiology.description': 'Gérer les commandes d\'imagerie et rapports',
+
+  'page.audiology.title': 'Audiologie',
+  'page.audiology.description': 'Gérer les tests auditifs et appareils',
+
+  'page.hr.title': 'Ressources Humaines',
+  'page.hr.description': 'Gérer les employés et la paie',
+  'page.hr.totalEmployees': 'Total employés',
+  'page.hr.activeEmployees': 'Employés actifs',
+
+  'page.financial.title': 'Finances',
+  'page.financial.description': 'Gérer les factures et transactions',
+  'page.financial.revenue': 'Revenus',
+  'page.financial.unpaidInvoices': 'Factures impayées',
+
+  'page.inventory.title': 'Inventaire',
+  'page.inventory.description': 'Gérer le stock et les fournitures',
+  'page.inventory.totalItems': 'Total articles',
+  'page.inventory.lowStock': 'Stock faible',
+
+  'page.marketing.title': 'Marketing',
+  'page.marketing.description': 'Gérer les campagnes et prospects',
+
+  'page.admin.title': 'Administration',
+  'page.admin.description': 'Administration système',
 
   'page.login.title': 'Connexion',
   'page.login.subtitle': 'Système de gestion de santé',
@@ -723,17 +760,37 @@ export const frenchTranslations: TranslationDictionary = {
   'field.firstName': 'Prénom',
   'field.lastName': 'Nom',
   'field.fullName': 'Nom complet',
+  'field.fullNameEn': 'Nom complet (Anglais)',
+  'field.fullNameAr': 'Nom complet (Arabe)',
   'field.email': 'Email',
   'field.phone': 'Téléphone',
+  'field.phoneNumber': 'Numéro de téléphone',
   'field.address': 'Adresse',
   'field.dateOfBirth': 'Date de naissance',
   'field.gender': 'Genre',
   'field.male': 'Homme',
   'field.female': 'Femme',
-  'field.username': 'Nom d\'utilisateur',
-  'field.password': 'Mot de passe',
+  'field.nationalId': 'ID National',
+  'field.emiratesId': 'ID Emirates',
+  'field.passportNumber': 'Numéro de passeport',
+  'field.nationality': 'Nationalité',
+  'field.date': 'Date',
+  'field.time': 'Heure',
+  'field.startDate': 'Date de début',
+  'field.endDate': 'Date de fin',
   'field.status': 'Statut',
   'field.notes': 'Notes',
+  'field.description': 'Description',
+  'field.amount': 'Montant',
+  'field.quantity': 'Quantité',
+  'field.price': 'Prix',
+  'field.total': 'Total',
+  'field.discount': 'Remise',
+  'field.tax': 'Taxe',
+  'field.username': 'Nom d\'utilisateur',
+  'field.password': 'Mot de passe',
+  'field.age': 'Âge',
+  'field.contact': 'Contact',
   'field.actions': 'Actions',
 
   // ============================================
@@ -744,17 +801,114 @@ export const frenchTranslations: TranslationDictionary = {
   'status.pending': 'En attente',
   'status.completed': 'Terminé',
   'status.cancelled': 'Annulé',
+  'status.scheduled': 'Planifié',
+  'status.inProgress': 'En cours',
+  'status.draft': 'Brouillon',
+  'status.approved': 'Approuvé',
+  'status.rejected': 'Rejeté',
+  'status.paid': 'Payé',
+  'status.unpaid': 'Impayé',
+  'status.overdue': 'En retard',
+  'status.booked': 'Réservé',
+  'status.confirmed': 'Confirmé',
+  'status.checkedIn': 'Enregistré',
+  'status.noShow': 'Absent',
 
   // ============================================
   // Messages
   // ============================================
   'message.success.saved': 'Enregistré avec succès',
   'message.success.created': 'Créé avec succès',
+  'message.success.updated': 'Mis à jour avec succès',
   'message.success.deleted': 'Supprimé avec succès',
+  'message.success.exported': 'Exporté avec succès',
+
   'message.error.generic': 'Une erreur s\'est produite',
+  'message.error.notFound': 'Élément non trouvé',
+  'message.error.unauthorized': 'Accès non autorisé',
+  'message.error.validation': 'Veuillez vérifier les erreurs du formulaire',
+  'message.error.network': 'Erreur réseau. Veuillez réessayer.',
+  'message.error.loading': 'Erreur lors du chargement des données',
+
+  'message.confirm.delete': 'Êtes-vous sûr de vouloir supprimer cet élément ?',
+  'message.confirm.deleteMultiple': 'Êtes-vous sûr de vouloir supprimer {count} élément(s) ?',
+  'message.confirm.unsavedChanges': 'Vous avez des modifications non enregistrées. Êtes-vous sûr de vouloir quitter ?',
+
   'message.loading': 'Chargement...',
   'message.noData': 'Aucune donnée disponible',
   'message.noResults': 'Aucun résultat trouvé',
+  'message.searchTip': 'Essayez d\'ajuster vos critères de recherche',
+  'message.emptyList': 'Aucun élément pour le moment',
+  'message.getStarted': 'Commencez par créer votre premier élément',
+
+  // ============================================
+  // Table & List
+  // ============================================
+  'table.showing': 'Affichage',
+  'table.of': 'sur',
+  'table.results': 'résultats',
+  'table.page': 'Page',
+  'table.perPage': 'par page',
+  'table.selected': 'sélectionné(s)',
+  'table.noData': 'Aucune donnée à afficher',
+  'table.searchResults': 'Résultats de recherche',
+
+  // ============================================
+  // Dashboard Stats
+  // ============================================
+  'stats.today': 'Aujourd\'hui',
+  'stats.upcoming': 'À venir',
+  'stats.total': 'Total',
+  'stats.new': 'Nouveau',
+  'stats.thisMonth': 'Ce mois',
+  'stats.monthlyRevenue': 'Revenus mensuels',
+  'stats.totalPatients': 'Total patients',
+  'stats.activeStaff': 'Personnel actif',
+  'stats.systemHealth': 'État du système',
+  'stats.apiStatus': 'État API',
+  'stats.database': 'Base de données',
+  'stats.modules': 'Modules',
+  'stats.alerts': 'Alertes',
+  'stats.allOperational': 'Tous les systèmes opérationnels',
+  'stats.connected': 'Connecté',
+  'stats.needsAttention': 'éléments nécessitent attention',
+
+  // ============================================
+  // Clinic Specific
+  // ============================================
+  'clinic.doctor': 'Médecin',
+  'clinic.nurse': 'Infirmier/ère',
+  'clinic.receptionist': 'Réceptionniste',
+  'clinic.diagnosis': 'Diagnostic',
+  'clinic.treatment': 'Traitement',
+  'clinic.prescription': 'Ordonnance',
+  'clinic.vitals': 'Signes vitaux',
+  'clinic.bloodPressure': 'Tension artérielle',
+  'clinic.temperature': 'Température',
+  'clinic.weight': 'Poids',
+  'clinic.height': 'Taille',
+  'clinic.allergies': 'Allergies',
+  'clinic.medicalHistory': 'Antécédents médicaux',
+  'clinic.chiefComplaint': 'Motif de consultation',
+  'clinic.followUp': 'Suivi',
+
+  // ============================================
+  // Keyboard Shortcuts
+  // ============================================
+  'shortcuts.title': 'Raccourcis clavier',
+  'shortcuts.new': 'Nouveau',
+  'shortcuts.search': 'Rechercher',
+  'shortcuts.refresh': 'Actualiser',
+  'shortcuts.delete': 'Supprimer la sélection',
+  'shortcuts.tip': 'Conseil : Appuyez sur',
+  'shortcuts.toFocusSearch': 'pour focus sur la recherche',
+
+  // ============================================
+  // Export Options
+  // ============================================
+  'export.asCSV': 'Exporter en CSV',
+  'export.asExcel': 'Exporter en Excel',
+  'export.print': 'Imprimer',
 
   // ============================================
   // Footer
