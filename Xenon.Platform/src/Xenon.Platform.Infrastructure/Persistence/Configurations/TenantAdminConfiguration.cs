@@ -16,8 +16,16 @@ public class TenantAdminConfiguration : IEntityTypeConfiguration<TenantAdmin>
             .IsRequired()
             .HasMaxLength(256);
 
+        // Email is globally unique across all tenants.
+        // This is intentional because tenant admins log in with just email (no tenant identifier).
+        // If emails were only unique per-tenant, login would be ambiguous.
+        builder.HasIndex(e => e.Email)
+            .IsUnique()
+            .HasDatabaseName("IX_TenantAdmins_Email_Global");
+
+        // Also maintain composite index for potential future multi-admin scenarios
         builder.HasIndex(e => new { e.TenantId, e.Email })
-            .IsUnique();
+            .HasDatabaseName("IX_TenantAdmins_TenantId_Email");
 
         builder.Property(e => e.PasswordHash)
             .IsRequired()
