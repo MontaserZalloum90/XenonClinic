@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useT } from '../contexts/TenantContext';
 import { api, appointmentsApi, patientsApi, laboratoryApi } from '../lib/api';
 import { BarChart, Bar, PieChart, Pie, Cell, ResponsiveContainer, XAxis, YAxis, Tooltip, Legend } from 'recharts';
 
@@ -18,6 +19,7 @@ const colorClasses = {
 
 export const Dashboard = () => {
   const { user } = useAuth();
+  const t = useT();
 
   // Fetch statistics from all modules
   const { data: appointmentStats } = useQuery({
@@ -87,100 +89,109 @@ export const Dashboard = () => {
   // Module cards configuration
   const modules = [
     {
-      name: 'Appointments',
+      name: t('nav.appointments', 'Appointments'),
       path: '/appointments',
       icon: 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z',
       color: 'blue' as keyof typeof colorClasses,
       stats: [
-        { label: 'Today', value: appointmentStats?.today || 0 },
-        { label: 'Upcoming', value: appointmentStats?.upcoming || 0 },
+        { label: t('stats.today', 'Today'), value: appointmentStats?.today || 0 },
+        { label: t('stats.upcoming', 'Upcoming'), value: appointmentStats?.upcoming || 0 },
       ],
     },
     {
-      name: 'Patients',
+      name: t('nav.patients', 'Patients'),
       path: '/patients',
       icon: 'M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z',
       color: 'green' as keyof typeof colorClasses,
       stats: [
-        { label: 'Total', value: patientStats?.totalPatients || 0 },
-        { label: 'New (30d)', value: patientStats?.newPatientsThisMonth || 0 },
+        { label: t('stats.total', 'Total'), value: patientStats?.totalPatients || 0 },
+        { label: t('stats.new', 'New') + ' (30d)', value: patientStats?.newPatientsThisMonth || 0 },
       ],
     },
     {
-      name: 'Laboratory',
+      name: t('nav.laboratory', 'Laboratory'),
       path: '/laboratory',
       icon: 'M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z',
       color: 'purple' as keyof typeof colorClasses,
       stats: [
-        { label: 'Pending', value: labStats?.pendingOrders || 0 },
-        { label: 'Urgent', value: labStats?.urgentOrders || 0 },
+        { label: t('status.pending', 'Pending'), value: labStats?.pendingOrders || 0 },
+        { label: t('page.laboratory.urgentOrders', 'Urgent'), value: labStats?.urgentOrders || 0 },
       ],
     },
     {
-      name: 'HR',
+      name: t('nav.hr', 'HR'),
       path: '/hr',
       icon: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z',
       color: 'indigo' as keyof typeof colorClasses,
       stats: [
-        { label: 'Total', value: hrStats?.totalEmployees || 0 },
-        { label: 'Active', value: hrStats?.activeEmployees || 0 },
+        { label: t('stats.total', 'Total'), value: hrStats?.totalEmployees || 0 },
+        { label: t('status.active', 'Active'), value: hrStats?.activeEmployees || 0 },
       ],
     },
     {
-      name: 'Financial',
+      name: t('nav.financial', 'Financial'),
       path: '/financial',
       icon: 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z',
       color: 'emerald' as keyof typeof colorClasses,
       stats: [
-        { label: 'Revenue', value: `AED ${(financialStats?.monthlyRevenue || 0).toFixed(0)}` },
-        { label: 'Unpaid', value: financialStats?.unpaidInvoices || 0 },
+        { label: t('page.financial.revenue', 'Revenue'), value: `AED ${(financialStats?.monthlyRevenue || 0).toFixed(0)}` },
+        { label: t('page.financial.unpaidInvoices', 'Unpaid'), value: financialStats?.unpaidInvoices || 0 },
       ],
     },
     {
-      name: 'Inventory',
+      name: t('nav.inventory', 'Inventory'),
       path: '/inventory',
       icon: 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4',
       color: 'orange' as keyof typeof colorClasses,
       stats: [
-        { label: 'Items', value: inventoryStats?.totalItems || 0 },
-        { label: 'Low Stock', value: inventoryStats?.lowStockItems || 0 },
+        { label: t('page.inventory.totalItems', 'Items'), value: inventoryStats?.totalItems || 0 },
+        { label: t('page.inventory.lowStock', 'Low Stock'), value: inventoryStats?.lowStockItems || 0 },
       ],
     },
     {
-      name: 'Pharmacy',
+      name: t('nav.pharmacy', 'Pharmacy'),
       path: '/pharmacy',
       icon: 'M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z',
       color: 'pink' as keyof typeof colorClasses,
       stats: [
-        { label: 'Pending', value: pharmacyStats?.pendingPrescriptions || 0 },
-        { label: 'Today', value: pharmacyStats?.dispensedToday || 0 },
+        { label: t('status.pending', 'Pending'), value: pharmacyStats?.pendingPrescriptions || 0 },
+        { label: t('stats.today', 'Today'), value: pharmacyStats?.dispensedToday || 0 },
       ],
     },
     {
-      name: 'Radiology',
+      name: t('nav.radiology', 'Radiology'),
       path: '/radiology',
       icon: 'M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z',
       color: 'cyan' as keyof typeof colorClasses,
       stats: [
-        { label: 'Pending', value: radiologyStats?.pendingOrders || 0 },
-        { label: 'Today', value: radiologyStats?.completedToday || 0 },
+        { label: t('status.pending', 'Pending'), value: radiologyStats?.pendingOrders || 0 },
+        { label: t('stats.today', 'Today'), value: radiologyStats?.completedToday || 0 },
       ],
     },
   ];
 
   // Chart data
+  const statusLabels = [
+    t('status.booked', 'Booked'),
+    t('status.confirmed', 'Confirmed'),
+    t('status.checkedIn', 'CheckedIn'),
+    t('status.completed', 'Completed'),
+    t('status.cancelled', 'Cancelled'),
+    t('status.noShow', 'NoShow'),
+  ];
+
   const appointmentChartData = appointmentStats?.statusDistribution
     ? Object.entries(appointmentStats.statusDistribution).map(([status, count]) => ({
-        name: ['Booked', 'Confirmed', 'CheckedIn', 'Completed', 'Cancelled', 'NoShow'][Number(status)],
+        name: statusLabels[Number(status)] || status,
         value: count,
       }))
     : [];
 
   const moduleActivityData = [
-    { name: 'Appointments', value: appointmentStats?.total || 0 },
-    { name: 'Patients', value: patientStats?.totalPatients || 0 },
-    { name: 'Lab Orders', value: labStats?.pendingOrders || 0 },
-    { name: 'Prescriptions', value: pharmacyStats?.pendingPrescriptions || 0 },
+    { name: t('nav.appointments', 'Appointments'), value: appointmentStats?.total || 0 },
+    { name: t('nav.patients', 'Patients'), value: patientStats?.totalPatients || 0 },
+    { name: t('entity.labTest.plural', 'Lab Orders'), value: labStats?.pendingOrders || 0 },
+    { name: t('entity.prescription.plural', 'Prescriptions'), value: pharmacyStats?.pendingPrescriptions || 0 },
   ];
 
   const COLORS = ['#3B82F6', '#10B981', '#8B5CF6', '#F59E0B', '#EF4444', '#6366F1'];
@@ -189,15 +200,15 @@ export const Dashboard = () => {
     <div className="space-y-6">
       {/* Welcome Section */}
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Welcome back, {user?.fullName}! 👋</h1>
-        <p className="text-gray-600 mt-1">Here's your clinic overview across all modules</p>
+        <h1 className="text-3xl font-bold text-gray-900">{t('page.dashboard.welcome', 'Welcome back')}, {user?.fullName}!</h1>
+        <p className="text-gray-600 mt-1">{t('page.dashboard.overview', "Here's your clinic overview across all modules")}</p>
       </div>
 
       {/* Module Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {modules.map((module) => (
           <Link
-            key={module.name}
+            key={module.path}
             to={module.path}
             className="card hover:shadow-lg transition-shadow cursor-pointer"
           >
@@ -207,7 +218,7 @@ export const Dashboard = () => {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={module.icon} />
                 </svg>
               </div>
-              <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-5 h-5 text-gray-400 rtl:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>
             </div>
@@ -228,7 +239,7 @@ export const Dashboard = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Appointment Status Distribution */}
         <div className="card">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Appointment Status Distribution</h3>
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('nav.appointments', 'Appointment')} {t('field.status', 'Status')}</h3>
           {appointmentChartData.length > 0 ? (
             <ResponsiveContainer width="100%" height={300}>
               <PieChart>
@@ -251,14 +262,14 @@ export const Dashboard = () => {
             </ResponsiveContainer>
           ) : (
             <div className="h-[300px] flex items-center justify-center text-gray-500">
-              No appointment data available
+              {t('message.noData', 'No data available')}
             </div>
           )}
         </div>
 
         {/* Module Activity Overview */}
         <div className="card">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Module Activity Overview</h3>
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('stats.modules', 'Module')} {t('page.dashboard.overview', 'Activity')}</h3>
           {moduleActivityData.some((d) => d.value > 0) ? (
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={moduleActivityData}>
@@ -271,7 +282,7 @@ export const Dashboard = () => {
             </ResponsiveContainer>
           ) : (
             <div className="h-[300px] flex items-center justify-center text-gray-500">
-              No activity data available
+              {t('message.noData', 'No data available')}
             </div>
           )}
         </div>
@@ -279,34 +290,34 @@ export const Dashboard = () => {
 
       {/* System Health Status */}
       <div className="card">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">System Health Status</h3>
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('stats.systemHealth', 'System Health Status')}</h3>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="flex items-center gap-3">
             <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
             <div>
-              <p className="text-sm font-medium text-gray-900">API Status</p>
-              <p className="text-xs text-gray-600">All systems operational</p>
+              <p className="text-sm font-medium text-gray-900">{t('stats.apiStatus', 'API Status')}</p>
+              <p className="text-xs text-gray-600">{t('stats.allOperational', 'All systems operational')}</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
             <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
             <div>
-              <p className="text-sm font-medium text-gray-900">Database</p>
-              <p className="text-xs text-gray-600">Connected</p>
+              <p className="text-sm font-medium text-gray-900">{t('stats.database', 'Database')}</p>
+              <p className="text-xs text-gray-600">{t('stats.connected', 'Connected')}</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
             <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
             <div>
-              <p className="text-sm font-medium text-gray-900">Modules</p>
-              <p className="text-xs text-gray-600">8/8 Active</p>
+              <p className="text-sm font-medium text-gray-900">{t('stats.modules', 'Modules')}</p>
+              <p className="text-xs text-gray-600">8/8 {t('status.active', 'Active')}</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
             <div className="w-3 h-3 bg-yellow-500 rounded-full animate-pulse"></div>
             <div>
-              <p className="text-sm font-medium text-gray-900">Alerts</p>
-              <p className="text-xs text-gray-600">{(inventoryStats?.lowStockItems || 0) + (labStats?.urgentOrders || 0)} items need attention</p>
+              <p className="text-sm font-medium text-gray-900">{t('stats.alerts', 'Alerts')}</p>
+              <p className="text-xs text-gray-600">{(inventoryStats?.lowStockItems || 0) + (labStats?.urgentOrders || 0)} {t('stats.needsAttention', 'items need attention')}</p>
             </div>
           </div>
         </div>
@@ -317,7 +328,7 @@ export const Dashboard = () => {
         <div className="card bg-gradient-to-br from-blue-50 to-blue-100">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-blue-900">Total Patients</p>
+              <p className="text-sm font-medium text-blue-900">{t('stats.totalPatients', 'Total Patients')}</p>
               <p className="text-3xl font-bold text-blue-900 mt-2">{patientStats?.totalPatients || 0}</p>
             </div>
             <div className="w-16 h-16 bg-blue-200 rounded-full flex items-center justify-center">
@@ -331,7 +342,7 @@ export const Dashboard = () => {
         <div className="card bg-gradient-to-br from-green-50 to-green-100">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-green-900">Monthly Revenue</p>
+              <p className="text-sm font-medium text-green-900">{t('stats.monthlyRevenue', 'Monthly Revenue')}</p>
               <p className="text-3xl font-bold text-green-900 mt-2">
                 AED {(financialStats?.monthlyRevenue || 0).toFixed(0)}
               </p>
@@ -347,7 +358,7 @@ export const Dashboard = () => {
         <div className="card bg-gradient-to-br from-purple-50 to-purple-100">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-purple-900">Active Staff</p>
+              <p className="text-sm font-medium text-purple-900">{t('stats.activeStaff', 'Active Staff')}</p>
               <p className="text-3xl font-bold text-purple-900 mt-2">{hrStats?.activeEmployees || 0}</p>
             </div>
             <div className="w-16 h-16 bg-purple-200 rounded-full flex items-center justify-center">

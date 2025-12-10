@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from '@tantml:react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState, useEffect } from 'react';
 import { patientsApi } from '../../lib/api';
 import type { Patient } from '../../types/patient';
@@ -11,6 +11,7 @@ import { useToast } from '../../components/ui/Toast';
 import { useKeyboardShortcuts, createCommonShortcuts } from '../../hooks/useKeyboardShortcuts';
 import { useRecentItems } from '../../hooks/useRecentItems';
 import { exportToCSV, exportToExcel, printTable, formatters, type ExportColumn } from '../../utils/export';
+import { useT } from '../../contexts/TenantContext';
 
 export const PatientsList = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -22,6 +23,7 @@ export const PatientsList = () => {
   const { showToast } = useToast();
   const { dialogState, showConfirm, hideConfirm, handleConfirm } = useConfirmDialog();
   const { recentItems, addRecentItem } = useRecentItems('patient');
+  const t = useT();
 
   // Fetch patients
   const { data: patients, isLoading, error, refetch } = useQuery<Patient[]>({
@@ -37,10 +39,10 @@ export const PatientsList = () => {
     mutationFn: (id: number) => patientsApi.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['patients'] });
-      showToast('success', 'Patient deleted successfully');
+      showToast('success', t('message.success.deleted', 'Patient deleted successfully'));
     },
     onError: (error: Error) => {
-      showToast('error', `Failed to delete patient: ${error.message}`);
+      showToast('error', `${t('action.delete', 'Delete')} ${t('message.error.generic', 'failed')}: ${error.message}`);
     },
   });
 
@@ -52,10 +54,10 @@ export const PatientsList = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['patients'] });
       setSelectedIds(new Set());
-      showToast('success', 'Selected patients deleted successfully');
+      showToast('success', t('message.success.deleted', 'Selected patients deleted successfully'));
     },
     onError: (error: Error) => {
-      showToast('error', `Failed to delete patients: ${error.message}`);
+      showToast('error', `${t('action.delete', 'Delete')} ${t('message.error.generic', 'failed')}: ${error.message}`);
     },
   });
 
@@ -95,13 +97,13 @@ export const PatientsList = () => {
 
   const handleFormSuccess = () => {
     handleCloseModal();
-    showToast('success', selectedPatient ? 'Patient updated successfully' : 'Patient created successfully');
+    showToast('success', selectedPatient ? t('message.success.updated', 'Patient updated successfully') : t('message.success.created', 'Patient created successfully'));
   };
 
   const handleDelete = (patient: Patient) => {
     showConfirm(
-      'Delete Patient',
-      `Are you sure you want to delete "${patient.fullNameEn}"? This action cannot be undone.`,
+      `${t('action.delete', 'Delete')} ${t('entity.patient.singular', 'Patient')}`,
+      t('message.confirm.delete', `Are you sure you want to delete "${patient.fullNameEn}"? This action cannot be undone.`),
       () => deleteMutation.mutate(patient.id),
       'danger'
     );
@@ -109,8 +111,8 @@ export const PatientsList = () => {
 
   const handleBulkDelete = () => {
     showConfirm(
-      'Delete Multiple Patients',
-      `Are you sure you want to delete ${selectedIds.size} patient(s)? This action cannot be undone.`,
+      `${t('action.delete', 'Delete')} ${t('entity.patient.plural', 'Patients')}`,
+      t('message.confirm.deleteMultiple', `Are you sure you want to delete ${selectedIds.size} patient(s)? This action cannot be undone.`).replace('{count}', selectedIds.size.toString()),
       () => bulkDeleteMutation.mutate(Array.from(selectedIds)),
       'danger'
     );
@@ -150,14 +152,14 @@ export const PatientsList = () => {
 
   // Export handlers
   const exportColumns: ExportColumn[] = [
-    { key: 'fullNameEn', label: 'Full Name (English)' },
-    { key: 'fullNameAr', label: 'Full Name (Arabic)' },
-    { key: 'emiratesId', label: 'Emirates ID' },
-    { key: 'dateOfBirth', label: 'Date of Birth', format: formatters.date },
-    { key: 'age', label: 'Age' },
-    { key: 'gender', label: 'Gender', format: (v) => (v === 'M' ? 'Male' : 'Female') },
-    { key: 'phoneNumber', label: 'Phone' },
-    { key: 'email', label: 'Email' },
+    { key: 'fullNameEn', label: t('field.fullNameEn', 'Full Name (English)') },
+    { key: 'fullNameAr', label: t('field.fullNameAr', 'Full Name (Arabic)') },
+    { key: 'emiratesId', label: t('field.emiratesId', 'Emirates ID') },
+    { key: 'dateOfBirth', label: t('field.dateOfBirth', 'Date of Birth'), format: formatters.date },
+    { key: 'age', label: t('field.age', 'Age') },
+    { key: 'gender', label: t('field.gender', 'Gender'), format: (v) => (v === 'M' ? t('field.male', 'Male') : t('field.female', 'Female')) },
+    { key: 'phoneNumber', label: t('field.phone', 'Phone') },
+    { key: 'email', label: t('field.email', 'Email') },
   ];
 
   const prepareExportData = () => {
@@ -170,17 +172,17 @@ export const PatientsList = () => {
   const handleExportCSV = () => {
     exportToCSV(prepareExportData(), exportColumns, 'patients.csv');
     setShowExportMenu(false);
-    showToast('success', 'Patients exported to CSV');
+    showToast('success', t('message.success.exported', 'Patients exported to CSV'));
   };
 
   const handleExportExcel = () => {
     exportToExcel(prepareExportData(), exportColumns, 'patients.xls');
     setShowExportMenu(false);
-    showToast('success', 'Patients exported to Excel');
+    showToast('success', t('message.success.exported', 'Patients exported to Excel'));
   };
 
   const handlePrint = () => {
-    printTable(prepareExportData(), exportColumns, 'Patients List');
+    printTable(prepareExportData(), exportColumns, t('entity.patient.plural', 'Patients List'));
     setShowExportMenu(false);
   };
 
@@ -201,7 +203,7 @@ export const PatientsList = () => {
   if (error) {
     return (
       <div className="p-4 bg-red-50 border border-red-200 rounded-md animate-fade-in">
-        <p className="text-sm text-red-600">Error loading patients: {(error as Error).message}</p>
+        <p className="text-sm text-red-600">{t('message.error.loading', 'Error loading patients')}: {(error as Error).message}</p>
       </div>
     );
   }
@@ -211,8 +213,8 @@ export const PatientsList = () => {
       {/* Header */}
       <div className="flex items-center justify-between animate-fade-in">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Patients</h1>
-          <p className="text-gray-600 mt-1">Manage patient records and information</p>
+          <h1 className="text-2xl font-bold text-gray-900">{t('entity.patient.plural', 'Patients')}</h1>
+          <p className="text-gray-600 mt-1">{t('page.patients.description', 'Manage patient records and information')}</p>
         </div>
         <div className="flex items-center gap-3">
           {selectedIds.size > 0 && (
@@ -221,10 +223,10 @@ export const PatientsList = () => {
               className="btn bg-red-600 hover:bg-red-700 text-white"
               disabled={bulkDeleteMutation.isPending}
             >
-              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-5 h-5 ltr:mr-2 rtl:ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
               </svg>
-              Delete ({selectedIds.size})
+              {t('action.delete', 'Delete')} ({selectedIds.size})
             </button>
           )}
           <div className="relative">
@@ -233,41 +235,41 @@ export const PatientsList = () => {
               className="btn btn-secondary"
               disabled={!filteredPatients || filteredPatients.length === 0}
             >
-              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-5 h-5 ltr:mr-2 rtl:ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
-              Export
+              {t('action.export', 'Export')}
             </button>
             {showExportMenu && (
-              <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10 border border-gray-200 animate-scale-in">
+              <div className="absolute ltr:right-0 rtl:left-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10 border border-gray-200 animate-scale-in">
                 <div className="py-1">
                   <button
                     onClick={handleExportCSV}
-                    className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    className="block w-full ltr:text-left rtl:text-right px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                   >
-                    Export as CSV
+                    {t('export.asCSV', 'Export as CSV')}
                   </button>
                   <button
                     onClick={handleExportExcel}
-                    className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    className="block w-full ltr:text-left rtl:text-right px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                   >
-                    Export as Excel
+                    {t('export.asExcel', 'Export as Excel')}
                   </button>
                   <button
                     onClick={handlePrint}
-                    className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    className="block w-full ltr:text-left rtl:text-right px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                   >
-                    Print
+                    {t('export.print', 'Print')}
                   </button>
                 </div>
               </div>
             )}
           </div>
           <button onClick={handleOpenCreateModal} className="btn btn-primary">
-            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-5 h-5 ltr:mr-2 rtl:ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
             </svg>
-            New Patient
+            {t('page.patients.add', 'New Patient')}
           </button>
         </div>
       </div>
@@ -275,7 +277,7 @@ export const PatientsList = () => {
       {/* Recent Patients */}
       {recentItems.length > 0 && (
         <div className="card animate-fade-in">
-          <h3 className="text-sm font-medium text-gray-700 mb-3">Recently Viewed</h3>
+          <h3 className="text-sm font-medium text-gray-700 mb-3">{t('page.patients.recentlyViewed', 'Recently Viewed')}</h3>
           <div className="flex flex-wrap gap-2">
             {recentItems.map((item) => (
               <button
@@ -295,18 +297,18 @@ export const PatientsList = () => {
 
       {/* Search */}
       <div className="card animate-fade-in">
-        <label className="block text-sm font-medium text-gray-700 mb-2">Search Patients</label>
+        <label className="block text-sm font-medium text-gray-700 mb-2">{t('action.search', 'Search')} {t('entity.patient.plural', 'Patients')}</label>
         <div className="relative">
           <input
             id="patient-search"
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="input w-full md:w-96 pl-10"
-            placeholder="Search by name, Emirates ID, phone, or email..."
+            className="input w-full md:w-96 ltr:pl-10 rtl:pr-10"
+            placeholder={t('page.patients.searchPlaceholder', 'Search by name, Emirates ID, phone, or email...')}
           />
           <svg
-            className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2"
+            className="w-5 h-5 text-gray-400 absolute ltr:left-3 rtl:right-3 top-1/2 transform -translate-y-1/2"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -315,18 +317,18 @@ export const PatientsList = () => {
           </svg>
         </div>
         <p className="text-xs text-gray-500 mt-2">
-          Tip: Press <kbd className="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-xs">Ctrl</kbd> +{' '}
-          <kbd className="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-xs">K</kbd> to focus search
+          {t('shortcuts.tip', 'Tip: Press')} <kbd className="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-xs">Ctrl</kbd> +{' '}
+          <kbd className="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-xs">K</kbd> {t('shortcuts.toFocusSearch', 'to focus search')}
         </p>
       </div>
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         {[
-          { label: 'Total Patients', value: patients?.length || 0, color: 'text-gray-900' },
-          { label: 'Male', value: patients?.filter((p) => p.gender === 'M').length || 0, color: 'text-blue-600' },
-          { label: 'Female', value: patients?.filter((p) => p.gender === 'F').length || 0, color: 'text-pink-600' },
-          { label: 'Search Results', value: filteredPatients?.length || 0, color: 'text-primary-600' },
+          { label: `${t('stats.total', 'Total')} ${t('entity.patient.plural', 'Patients')}`, value: patients?.length || 0, color: 'text-gray-900' },
+          { label: t('field.male', 'Male'), value: patients?.filter((p) => p.gender === 'M').length || 0, color: 'text-blue-600' },
+          { label: t('field.female', 'Female'), value: patients?.filter((p) => p.gender === 'F').length || 0, color: 'text-pink-600' },
+          { label: t('table.searchResults', 'Search Results'), value: filteredPatients?.length || 0, color: 'text-primary-600' },
         ].map((stat, index) => (
           <div key={stat.label} className="card animate-fade-in" style={{ animationDelay: `${index * 50}ms` }}>
             <p className="text-sm text-gray-600">{stat.label}</p>
@@ -369,7 +371,7 @@ export const PatientsList = () => {
                       <button
                         onClick={() => handleOpenEditModal(patient)}
                         className="p-2 text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
-                        title="Edit patient"
+                        title={t('action.edit', 'Edit patient')}
                       >
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path
@@ -384,7 +386,7 @@ export const PatientsList = () => {
                         onClick={() => handleDelete(patient)}
                         disabled={deleteMutation.isPending}
                         className="p-2 text-red-600 hover:bg-red-50 rounded-lg disabled:opacity-50 transition-colors"
-                        title="Delete patient"
+                        title={t('action.delete', 'Delete patient')}
                       >
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path
@@ -399,24 +401,24 @@ export const PatientsList = () => {
                   </div>
                   <div className="grid grid-cols-2 gap-3 text-sm">
                     <div>
-                      <span className="text-gray-500">Emirates ID:</span>
+                      <span className="text-gray-500">{t('field.emiratesId', 'Emirates ID')}:</span>
                       <p className="text-gray-900 font-medium">{patient.emiratesId}</p>
                     </div>
                     <div>
-                      <span className="text-gray-500">Age/Gender:</span>
+                      <span className="text-gray-500">{t('field.age', 'Age')}/{t('field.gender', 'Gender')}:</span>
                       <p className="text-gray-900 font-medium">
-                        {calculateAge(patient.dateOfBirth)}y, {patient.gender === 'M' ? 'Male' : 'Female'}
+                        {calculateAge(patient.dateOfBirth)}y, {patient.gender === 'M' ? t('field.male', 'Male') : t('field.female', 'Female')}
                       </p>
                     </div>
                     {patient.phoneNumber && (
                       <div>
-                        <span className="text-gray-500">Phone:</span>
+                        <span className="text-gray-500">{t('field.phone', 'Phone')}:</span>
                         <p className="text-gray-900 font-medium">{patient.phoneNumber}</p>
                       </div>
                     )}
                     {patient.email && (
                       <div>
-                        <span className="text-gray-500">Email:</span>
+                        <span className="text-gray-500">{t('field.email', 'Email')}:</span>
                         <p className="text-gray-900 font-medium truncate">{patient.email}</p>
                       </div>
                     )}
@@ -430,7 +432,7 @@ export const PatientsList = () => {
               <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3 text-left">
+                  <th className="px-6 py-3 ltr:text-left rtl:text-right">
                     <input
                       type="checkbox"
                       checked={selectedIds.size === filteredPatients.length}
@@ -438,20 +440,20 @@ export const PatientsList = () => {
                       className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                     />
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Patient
+                  <th className="px-6 py-3 ltr:text-left rtl:text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    {t('entity.patient.singular', 'Patient')}
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Emirates ID
+                  <th className="px-6 py-3 ltr:text-left rtl:text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    {t('field.emiratesId', 'Emirates ID')}
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Age/Gender
+                  <th className="px-6 py-3 ltr:text-left rtl:text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    {t('field.age', 'Age')}/{t('field.gender', 'Gender')}
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Contact
+                  <th className="px-6 py-3 ltr:text-left rtl:text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    {t('field.contact', 'Contact')}
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Actions
+                  <th className="px-6 py-3 ltr:text-left rtl:text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    {t('field.actions', 'Actions')}
                   </th>
                 </tr>
               </thead>
@@ -475,8 +477,8 @@ export const PatientsList = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{patient.emiratesId}</td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{calculateAge(patient.dateOfBirth)} years old</div>
-                      <div className="text-sm text-gray-500">{patient.gender === 'M' ? 'Male' : 'Female'}</div>
+                      <div className="text-sm text-gray-900">{calculateAge(patient.dateOfBirth)} {t('field.age', 'years old')}</div>
+                      <div className="text-sm text-gray-500">{patient.gender === 'M' ? t('field.male', 'Male') : t('field.female', 'Female')}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900">{patient.phoneNumber || '-'}</div>
@@ -487,7 +489,7 @@ export const PatientsList = () => {
                         <button
                           onClick={() => handleOpenEditModal(patient)}
                           className="text-primary-600 hover:text-primary-900 transition-colors"
-                          title="Edit patient"
+                          title={t('action.edit', 'Edit patient')}
                         >
                           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path
@@ -502,7 +504,7 @@ export const PatientsList = () => {
                           onClick={() => handleDelete(patient)}
                           disabled={deleteMutation.isPending}
                           className="text-red-600 hover:text-red-900 disabled:opacity-50 transition-colors"
-                          title="Delete patient"
+                          title={t('action.delete', 'Delete patient')}
                         >
                           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path
@@ -533,13 +535,13 @@ export const PatientsList = () => {
                 />
               </svg>
             }
-            title={searchTerm ? 'No patients found' : 'No patients yet'}
-            description={searchTerm ? 'Try adjusting your search criteria' : 'Get started by creating your first patient record'}
+            title={searchTerm ? t('message.noResults', 'No patients found') : t('message.emptyList', 'No patients yet')}
+            description={searchTerm ? t('message.searchTip', 'Try adjusting your search criteria') : t('message.getStarted', 'Get started by creating your first patient record')}
             action={
               searchTerm
                 ? undefined
                 : {
-                    label: 'Create Patient',
+                    label: t('page.patients.add', 'Create Patient'),
                     onClick: handleOpenCreateModal,
                   }
             }
@@ -549,14 +551,14 @@ export const PatientsList = () => {
 
       {/* Keyboard Shortcuts Help */}
       <div className="text-xs text-gray-500 animate-fade-in">
-        <strong>Keyboard shortcuts:</strong> <kbd className="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded">Ctrl+N</kbd> New,{' '}
-        <kbd className="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded">Ctrl+K</kbd> Search,{' '}
-        <kbd className="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded">Ctrl+R</kbd> Refresh,{' '}
-        <kbd className="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded">Delete</kbd> Delete selected
+        <strong>{t('shortcuts.title', 'Keyboard shortcuts')}:</strong> <kbd className="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded">Ctrl+N</kbd> {t('shortcuts.new', 'New')},{' '}
+        <kbd className="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded">Ctrl+K</kbd> {t('shortcuts.search', 'Search')},{' '}
+        <kbd className="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded">Ctrl+R</kbd> {t('shortcuts.refresh', 'Refresh')},{' '}
+        <kbd className="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded">Delete</kbd> {t('shortcuts.delete', 'Delete selected')}
       </div>
 
       {/* Create/Edit Modal */}
-      <Modal isOpen={isModalOpen} onClose={handleCloseModal} title={selectedPatient ? 'Edit Patient' : 'New Patient'} size="lg">
+      <Modal isOpen={isModalOpen} onClose={handleCloseModal} title={selectedPatient ? t('page.patients.edit', 'Edit Patient') : t('page.patients.add', 'New Patient')} size="lg">
         <PatientForm patient={selectedPatient} onSuccess={handleFormSuccess} onCancel={handleCloseModal} />
       </Modal>
 
