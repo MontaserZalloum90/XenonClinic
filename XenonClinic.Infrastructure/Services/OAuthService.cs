@@ -2,9 +2,12 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using XenonClinic.Core.Entities;
 using XenonClinic.Core.Interfaces;
+using XenonClinic.Infrastructure.Data;
 
 namespace XenonClinic.Infrastructure.Services;
 
@@ -16,18 +19,18 @@ public class OAuthService : IOAuthService
     private readonly ILogger<OAuthService> _logger;
     private readonly HttpClient _httpClient;
     private readonly OAuthSettings _settings;
-
-    // In production, store in database
-    private static readonly Dictionary<string, List<LinkedOAuthAccount>> _linkedAccounts = new();
+    private readonly ClinicDbContext _dbContext;
 
     public OAuthService(
         ILogger<OAuthService> logger,
         HttpClient httpClient,
-        IOptions<OAuthSettings> settings)
+        IOptions<OAuthSettings> settings,
+        ClinicDbContext dbContext)
     {
         _logger = logger;
         _httpClient = httpClient;
         _settings = settings.Value;
+        _dbContext = dbContext;
     }
 
     public Task<string> GetAuthorizationUrlAsync(OAuthProvider provider, string redirectUri, string? state = null)
@@ -209,46 +212,65 @@ public class OAuthService : IOAuthService
         }
     }
 
-    public Task LinkAccountAsync(string userId, OAuthProvider provider, string providerUserId, string? accessToken = null)
+    public async Task LinkAccountAsync(string userId, OAuthProvider provider, string providerUserId, string? accessToken = null)
     {
-        if (!_linkedAccounts.ContainsKey(userId))
-        {
-            _linkedAccounts[userId] = new List<LinkedOAuthAccount>();
-        }
+        var providerName = provider.ToString();
 
         // Remove existing link for this provider
-        _linkedAccounts[userId].RemoveAll(a => a.Provider == provider);
+        var existingLink = await _dbContext.OAuthLinkedAccounts
+            .FirstOrDefaultAsync(a => a.UserId == userId && a.Provider == providerName);
 
-        _linkedAccounts[userId].Add(new LinkedOAuthAccount(
-            provider,
-            providerUserId,
-            null,
-            DateTime.UtcNow
-        ));
+        if (existingLink != null)
+        {
+            existingLink.ProviderUserId = providerUserId;
+            existingLink.UpdatedAt = DateTime.UtcNow;
+            existingLink.LastUsedAt = DateTime.UtcNow;
+        }
+        else
+        {
+            var newLink = new OAuthLinkedAccount
+            {
+                UserId = userId,
+                Provider = providerName,
+                ProviderUserId = providerUserId,
+                LinkedAt = DateTime.UtcNow,
+                LastUsedAt = DateTime.UtcNow,
+                CreatedAt = DateTime.UtcNow
+            };
+            _dbContext.OAuthLinkedAccounts.Add(newLink);
+        }
 
+        await _dbContext.SaveChangesAsync();
         _logger.LogInformation("Linked {Provider} account for user {UserId}", provider, userId);
-        return Task.CompletedTask;
     }
 
-    public Task UnlinkAccountAsync(string userId, OAuthProvider provider)
+    public async Task UnlinkAccountAsync(string userId, OAuthProvider provider)
     {
-        if (_linkedAccounts.TryGetValue(userId, out var accounts))
+        var providerName = provider.ToString();
+        var linkedAccount = await _dbContext.OAuthLinkedAccounts
+            .FirstOrDefaultAsync(a => a.UserId == userId && a.Provider == providerName);
+
+        if (linkedAccount != null)
         {
-            accounts.RemoveAll(a => a.Provider == provider);
+            _dbContext.OAuthLinkedAccounts.Remove(linkedAccount);
+            await _dbContext.SaveChangesAsync();
         }
 
         _logger.LogInformation("Unlinked {Provider} account for user {UserId}", provider, userId);
-        return Task.CompletedTask;
     }
 
-    public Task<IEnumerable<LinkedOAuthAccount>> GetLinkedAccountsAsync(string userId)
+    public async Task<IEnumerable<LinkedOAuthAccount>> GetLinkedAccountsAsync(string userId)
     {
-        if (_linkedAccounts.TryGetValue(userId, out var accounts))
-        {
-            return Task.FromResult<IEnumerable<LinkedOAuthAccount>>(accounts);
-        }
+        var dbAccounts = await _dbContext.OAuthLinkedAccounts
+            .Where(a => a.UserId == userId)
+            .ToListAsync();
 
-        return Task.FromResult<IEnumerable<LinkedOAuthAccount>>(Array.Empty<LinkedOAuthAccount>());
+        return dbAccounts.Select(a => new LinkedOAuthAccount(
+            Enum.Parse<OAuthProvider>(a.Provider),
+            a.ProviderUserId,
+            a.ProviderEmail,
+            a.LinkedAt
+        ));
     }
 
     #region Private Methods
