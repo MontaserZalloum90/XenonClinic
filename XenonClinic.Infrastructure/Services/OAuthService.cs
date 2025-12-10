@@ -81,9 +81,8 @@ public class OAuthService : IOAuthService
             ["client_secret"] = config.ClientSecret
         };
 
-        var response = await _httpClient.PostAsync(
-            config.TokenEndpoint,
-            new FormUrlEncodedContent(tokenRequest));
+        using var content = new FormUrlEncodedContent(tokenRequest);
+        using var response = await _httpClient.PostAsync(config.TokenEndpoint, content);
 
         response.EnsureSuccessStatusCode();
 
@@ -114,9 +113,8 @@ public class OAuthService : IOAuthService
             ["client_secret"] = config.ClientSecret
         };
 
-        var response = await _httpClient.PostAsync(
-            config.TokenEndpoint,
-            new FormUrlEncodedContent(tokenRequest));
+        using var content = new FormUrlEncodedContent(tokenRequest);
+        using var response = await _httpClient.PostAsync(config.TokenEndpoint, content);
 
         response.EnsureSuccessStatusCode();
 
@@ -136,10 +134,10 @@ public class OAuthService : IOAuthService
     {
         var config = GetProviderConfig(provider);
 
-        var request = new HttpRequestMessage(HttpMethod.Get, config.UserInfoEndpoint);
+        using var request = new HttpRequestMessage(HttpMethod.Get, config.UserInfoEndpoint);
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
-        var response = await _httpClient.SendAsync(request);
+        using var response = await _httpClient.SendAsync(request);
         response.EnsureSuccessStatusCode();
 
         var json = await response.Content.ReadFromJsonAsync<JsonElement>();
@@ -173,8 +171,8 @@ public class OAuthService : IOAuthService
             return;
         }
 
-        var content = new FormUrlEncodedContent(new[] { new KeyValuePair<string, string>("token", token) });
-        await _httpClient.PostAsync(revokeEndpoint, content);
+        using var content = new FormUrlEncodedContent(new[] { new KeyValuePair<string, string>("token", token) });
+        using var response = await _httpClient.PostAsync(revokeEndpoint, content);
 
         _logger.LogInformation("Token revoked for {Provider}", provider);
     }

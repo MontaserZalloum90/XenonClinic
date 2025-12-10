@@ -69,7 +69,7 @@ public class HealthCheckService : IHealthCheckService
             await connection.OpenAsync();
 
             // Simple query to test connectivity
-            var cmd = new SqlCommand("SELECT 1", connection);
+            await using var cmd = new SqlCommand("SELECT 1", connection);
             await cmd.ExecuteScalarAsync();
 
             sw.Stop();

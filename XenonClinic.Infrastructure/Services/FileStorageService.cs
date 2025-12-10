@@ -187,9 +187,21 @@ public class FileStorageService : IFileStorageService
 
     private string GetFolderPath(string? folder)
     {
-        return string.IsNullOrEmpty(folder)
-            ? _settings.BasePath
-            : Path.Combine(_settings.BasePath, folder);
+        if (string.IsNullOrEmpty(folder))
+            return _settings.BasePath;
+
+        // Validate folder path to prevent path traversal attacks
+        var fullPath = Path.GetFullPath(Path.Combine(_settings.BasePath, folder));
+        var basePath = Path.GetFullPath(_settings.BasePath);
+
+        // Ensure the resolved path is within the base path
+        if (!fullPath.StartsWith(basePath, StringComparison.OrdinalIgnoreCase))
+        {
+            _logger.LogWarning("Path traversal attempt detected: {Folder}", folder);
+            throw new InvalidOperationException("Invalid folder path - path traversal not allowed");
+        }
+
+        return fullPath;
     }
 
     private string GetFilePath(string fileId, FileMetadata metadata)

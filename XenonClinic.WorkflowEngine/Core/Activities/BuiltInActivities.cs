@@ -54,6 +54,27 @@ public class TaskActivity : ActivityBase
 {
     public override string Type => "task";
 
+    // Allowed assembly prefixes for task handlers (security whitelist)
+    private static readonly string[] AllowedHandlerAssemblyPrefixes = new[]
+    {
+        "XenonClinic.",
+        "Xenon.Platform.",
+        "XenonClinic.WorkflowEngine."
+    };
+
+    /// <summary>
+    /// Validates that a handler type is from an allowed assembly.
+    /// </summary>
+    private static bool IsAllowedHandlerType(string typeName)
+    {
+        if (string.IsNullOrWhiteSpace(typeName))
+            return false;
+
+        // Type name must start with one of our allowed prefixes
+        return AllowedHandlerAssemblyPrefixes.Any(prefix =>
+            typeName.StartsWith(prefix, StringComparison.OrdinalIgnoreCase));
+    }
+
     /// <summary>
     /// The task handler type to execute
     /// </summary>
@@ -71,11 +92,23 @@ public class TaskActivity : ActivityBase
             return ActivityResult.Failure("MISSING_HANDLER", "Task handler is not specified");
         }
 
+        // Security: Validate handler type before loading
+        if (!IsAllowedHandlerType(TaskHandler))
+        {
+            return ActivityResult.Failure("INVALID_HANDLER", $"Task handler type not allowed: {TaskHandler}");
+        }
+
         // Resolve handler from DI
         var handlerType = System.Type.GetType(TaskHandler);
         if (handlerType == null)
         {
             return ActivityResult.Failure("INVALID_HANDLER", $"Task handler type not found: {TaskHandler}");
+        }
+
+        // Security: Verify the type implements ITaskHandler
+        if (!typeof(ITaskHandler).IsAssignableFrom(handlerType))
+        {
+            return ActivityResult.Failure("INVALID_HANDLER", $"Type does not implement ITaskHandler: {TaskHandler}");
         }
 
         var handler = context.ServiceProvider.GetService(handlerType) as ITaskHandler;
@@ -116,6 +149,28 @@ public class ServiceTaskActivity : ActivityBase
     public override string Type => "serviceTask";
     public override bool CanCompensate => true;
 
+    // Allowed assembly prefixes for service types (security whitelist)
+    private static readonly string[] AllowedServiceAssemblyPrefixes = new[]
+    {
+        "XenonClinic.",
+        "Xenon.Platform.",
+        "XenonClinic.Core.",
+        "XenonClinic.Infrastructure."
+    };
+
+    /// <summary>
+    /// Validates that a service type is from an allowed assembly.
+    /// </summary>
+    private static bool IsAllowedServiceType(string typeName)
+    {
+        if (string.IsNullOrWhiteSpace(typeName))
+            return false;
+
+        // Type name must start with one of our allowed prefixes
+        return AllowedServiceAssemblyPrefixes.Any(prefix =>
+            typeName.StartsWith(prefix, StringComparison.OrdinalIgnoreCase));
+    }
+
     /// <summary>
     /// Service interface type
     /// </summary>
@@ -138,6 +193,12 @@ public class ServiceTaskActivity : ActivityBase
 
     public override async Task<ActivityResult> ExecuteAsync(IWorkflowContext context)
     {
+        // Security: Validate service type before loading
+        if (!IsAllowedServiceType(ServiceType))
+        {
+            return ActivityResult.Failure("INVALID_SERVICE", $"Service type not allowed: {ServiceType}");
+        }
+
         var serviceType = System.Type.GetType(ServiceType);
         if (serviceType == null)
         {

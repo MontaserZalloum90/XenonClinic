@@ -110,7 +110,8 @@ public class BranchScopedService : IBranchScopedService
         // Tenant admins have access to all branches in their tenant
         if (await _userManager.IsInRoleAsync(user, RoleConstants.TenantAdmin) && user.TenantId.HasValue)
         {
-            return branch.Company.TenantId == user.TenantId;
+            // Null-safe navigation for Company
+            return branch.Company?.TenantId == user.TenantId;
         }
 
         // Company admins have access to all branches in their company

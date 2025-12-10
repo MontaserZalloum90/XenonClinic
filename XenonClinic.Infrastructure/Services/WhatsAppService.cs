@@ -99,10 +99,10 @@ public class WhatsAppService : IWhatsAppService
                 { "Body", message }
             };
 
-            var content = new FormUrlEncodedContent(formData);
+            using var content = new FormUrlEncodedContent(formData);
 
             // Send request
-            var response = await client.PostAsync(url, content);
+            using var response = await client.PostAsync(url, content);
 
             if (response.IsSuccessStatusCode)
             {
@@ -145,10 +145,10 @@ public class WhatsAppService : IWhatsAppService
             };
 
             var jsonContent = JsonSerializer.Serialize(messageData);
-            var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
+            using var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
 
             // Send request
-            var response = await client.PostAsync(url, content);
+            using var response = await client.PostAsync(url, content);
 
             if (response.IsSuccessStatusCode)
             {

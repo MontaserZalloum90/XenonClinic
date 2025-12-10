@@ -206,7 +206,7 @@ public class ReportsController : ControllerBase
                 TotalApiErrors = g.Sum(u => u.ApiErrorsCount),
                 AvgDailyActiveUsers = g.Average(u => u.ActiveUsers),
                 TotalSessions = g.Sum(u => u.TotalSessions),
-                LatestSnapshot = g.OrderByDescending(u => u.SnapshotDate).First()
+                LatestSnapshot = g.OrderByDescending(u => u.SnapshotDate).FirstOrDefault()
             })
             .ToListAsync();
 
@@ -227,8 +227,8 @@ public class ReportsController : ControllerBase
                 errorRate = c.TotalApiCalls > 0 ? Math.Round((double)c.TotalApiErrors / c.TotalApiCalls * 100, 2) : 0,
                 avgDailyActiveUsers = Math.Round(c.AvgDailyActiveUsers, 1),
                 c.TotalSessions,
-                currentUsers = c.LatestSnapshot.TotalUsers,
-                currentBranches = c.LatestSnapshot.ActiveBranches
+                currentUsers = c.LatestSnapshot?.TotalUsers ?? 0,
+                currentBranches = c.LatestSnapshot?.ActiveBranches ?? 0
             };
         })
         .OrderByDescending(r => r.TotalApiCalls)

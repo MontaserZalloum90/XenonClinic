@@ -79,7 +79,8 @@ public class BackgroundJobService : IBackgroundJobService
 
         if (delay > TimeSpan.Zero)
         {
-            _ = Task.Delay(delay).ContinueWith(_ => ExecuteJobAsync<T>(jobId, methodCall));
+            // Use async/await pattern instead of ContinueWith for better error handling
+            _ = DelayThenExecuteAsync(delay, () => ExecuteJobAsync<T>(jobId, methodCall));
         }
         else
         {
@@ -106,7 +107,8 @@ public class BackgroundJobService : IBackgroundJobService
 
         if (delay > TimeSpan.Zero)
         {
-            _ = Task.Delay(delay).ContinueWith(_ => ExecuteJobAsync(jobId, methodCall));
+            // Use async/await pattern instead of ContinueWith for better error handling
+            _ = DelayThenExecuteAsync(delay, () => ExecuteJobAsync(jobId, methodCall));
         }
         else
         {
@@ -262,6 +264,23 @@ public class BackgroundJobService : IBackgroundJobService
     #region Private Methods
 
     private static string GenerateJobId() => Guid.NewGuid().ToString("N")[..12];
+
+    /// <summary>
+    /// Delays execution and then runs the provided async action.
+    /// Better than ContinueWith for async error handling.
+    /// </summary>
+    private async Task DelayThenExecuteAsync(TimeSpan delay, Func<Task> action)
+    {
+        try
+        {
+            await Task.Delay(delay);
+            await action();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error executing delayed job");
+        }
+    }
 
     private async Task ExecuteJobAsync<T>(string jobId, Expression<Func<T, Task>> methodCall)
     {
