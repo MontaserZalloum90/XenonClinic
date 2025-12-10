@@ -28,7 +28,7 @@ public class HRService : IHRService
             .Include(e => e.Branch)
             .Include(e => e.Department)
             .Include(e => e.JobPosition)
-            .FirstOrDefaultAsync(e => e.Id == id);
+            .FirstOrDefaultAsync(e => e.Id == id && !e.IsDeleted);
     }
 
     public async Task<Employee?> GetEmployeeByCodeAsync(string employeeCode, int branchId)
@@ -36,7 +36,7 @@ public class HRService : IHRService
         return await _context.Employees
             .Include(e => e.Department)
             .Include(e => e.JobPosition)
-            .FirstOrDefaultAsync(e => e.EmployeeCode == employeeCode && e.BranchId == branchId);
+            .FirstOrDefaultAsync(e => e.EmployeeCode == employeeCode && e.BranchId == branchId && !e.IsDeleted);
     }
 
     public async Task<Employee?> GetEmployeeByUserIdAsync(string userId)
@@ -45,7 +45,7 @@ public class HRService : IHRService
             .Include(e => e.Branch)
             .Include(e => e.Department)
             .Include(e => e.JobPosition)
-            .FirstOrDefaultAsync(e => e.UserId == userId);
+            .FirstOrDefaultAsync(e => e.UserId == userId && !e.IsDeleted);
     }
 
     public async Task<IEnumerable<Employee>> GetEmployeesByBranchIdAsync(int branchId)
@@ -53,7 +53,7 @@ public class HRService : IHRService
         return await _context.Employees
             .Include(e => e.Department)
             .Include(e => e.JobPosition)
-            .Where(e => e.BranchId == branchId)
+            .Where(e => e.BranchId == branchId && !e.IsDeleted)
             .OrderBy(e => e.FullNameEn)
             .ToListAsync();
     }
@@ -63,7 +63,7 @@ public class HRService : IHRService
         return await _context.Employees
             .Include(e => e.Department)
             .Include(e => e.JobPosition)
-            .Where(e => e.BranchId == branchId && e.EmploymentStatus == EmploymentStatus.Active)
+            .Where(e => e.BranchId == branchId && !e.IsDeleted && e.EmploymentStatus == EmploymentStatus.Active)
             .OrderBy(e => e.FullNameEn)
             .ToListAsync();
     }
@@ -72,7 +72,7 @@ public class HRService : IHRService
     {
         return await _context.Employees
             .Include(e => e.JobPosition)
-            .Where(e => e.DepartmentId == departmentId)
+            .Where(e => e.DepartmentId == departmentId && !e.IsDeleted)
             .OrderBy(e => e.FullNameEn)
             .ToListAsync();
     }
@@ -81,7 +81,7 @@ public class HRService : IHRService
     {
         return await _context.Employees
             .Include(e => e.Department)
-            .Where(e => e.JobPositionId == jobPositionId)
+            .Where(e => e.JobPositionId == jobPositionId && !e.IsDeleted)
             .OrderBy(e => e.FullNameEn)
             .ToListAsync();
     }
@@ -91,13 +91,46 @@ public class HRService : IHRService
         return await _context.Employees
             .Include(e => e.Department)
             .Include(e => e.JobPosition)
-            .Where(e => e.BranchId == branchId && e.EmploymentStatus == status)
+            .Where(e => e.BranchId == branchId && !e.IsDeleted && e.EmploymentStatus == status)
             .OrderBy(e => e.FullNameEn)
             .ToListAsync();
     }
 
     public async Task<Employee> CreateEmployeeAsync(Employee employee)
     {
+        // Validate salary is positive
+        if (employee.BasicSalary <= 0)
+        {
+            throw new InvalidOperationException("Basic salary must be greater than zero");
+        }
+
+        // Check for duplicate EmiratesId within the same branch
+        var existingByEmiratesId = await _context.Employees
+            .FirstOrDefaultAsync(e => e.EmiratesId == employee.EmiratesId &&
+                                       e.BranchId == employee.BranchId &&
+                                       !e.IsDeleted);
+
+        if (existingByEmiratesId != null)
+        {
+            throw new InvalidOperationException(
+                $"An employee with Emirates ID '{employee.EmiratesId}' already exists in this branch");
+        }
+
+        // Check for duplicate EmployeeCode within the same branch
+        if (!string.IsNullOrEmpty(employee.EmployeeCode))
+        {
+            var existingByCode = await _context.Employees
+                .FirstOrDefaultAsync(e => e.EmployeeCode == employee.EmployeeCode &&
+                                           e.BranchId == employee.BranchId &&
+                                           !e.IsDeleted);
+
+            if (existingByCode != null)
+            {
+                throw new InvalidOperationException(
+                    $"An employee with code '{employee.EmployeeCode}' already exists in this branch");
+            }
+        }
+
         _context.Employees.Add(employee);
         await _context.SaveChangesAsync();
         return employee;
@@ -105,6 +138,20 @@ public class HRService : IHRService
 
     public async Task UpdateEmployeeAsync(Employee employee)
     {
+        // Check for duplicate EmiratesId if changed
+        var existingByEmiratesId = await _context.Employees
+            .FirstOrDefaultAsync(e => e.EmiratesId == employee.EmiratesId &&
+                                       e.BranchId == employee.BranchId &&
+                                       e.Id != employee.Id &&
+                                       !e.IsDeleted);
+
+        if (existingByEmiratesId != null)
+        {
+            throw new InvalidOperationException(
+                $"An employee with Emirates ID '{employee.EmiratesId}' already exists in this branch");
+        }
+
+        employee.UpdatedAt = DateTime.UtcNow;
         _context.Employees.Update(employee);
         await _context.SaveChangesAsync();
     }
@@ -114,7 +161,11 @@ public class HRService : IHRService
         var employee = await _context.Employees.FindAsync(id);
         if (employee != null)
         {
-            _context.Employees.Remove(employee);
+            // Soft delete for HR compliance - employee records must be retained
+            employee.IsDeleted = true;
+            employee.DeletedAt = DateTime.UtcNow;
+            employee.EmploymentStatus = EmploymentStatus.Terminated;
+            employee.TerminationDate = DateTime.UtcNow;
             await _context.SaveChangesAsync();
         }
     }
@@ -206,12 +257,50 @@ public class HRService : IHRService
 
     public async Task<Attendance> CheckInAsync(int employeeId, DateTime checkInTime)
     {
+        // Verify employee exists and is active
+        var employee = await _context.Employees.FindAsync(employeeId);
+        if (employee == null || employee.IsDeleted)
+        {
+            throw new KeyNotFoundException($"Employee with ID {employeeId} not found");
+        }
+
+        if (employee.EmploymentStatus != EmploymentStatus.Active)
+        {
+            throw new InvalidOperationException("Cannot check in for an inactive employee");
+        }
+
+        // Check for duplicate check-in on the same day
+        var existingAttendance = await _context.Attendances
+            .FirstOrDefaultAsync(a => a.EmployeeId == employeeId && a.Date.Date == checkInTime.Date);
+
+        if (existingAttendance != null)
+        {
+            throw new InvalidOperationException(
+                $"Employee has already checked in for {checkInTime:yyyy-MM-dd}. Use the existing attendance record.");
+        }
+
+        // Calculate late status based on employee's work schedule
+        var checkInTimeOnly = TimeOnly.FromDateTime(checkInTime);
+        var isLate = false;
+        int? lateMinutes = null;
+
+        if (employee.WorkStartTime.HasValue)
+        {
+            isLate = checkInTimeOnly > employee.WorkStartTime.Value;
+            if (isLate)
+            {
+                lateMinutes = (int)(checkInTimeOnly.ToTimeSpan() - employee.WorkStartTime.Value.ToTimeSpan()).TotalMinutes;
+            }
+        }
+
         var attendance = new Attendance
         {
             EmployeeId = employeeId,
             Date = checkInTime.Date,
-            CheckInTime = TimeOnly.FromDateTime(checkInTime),
-            Status = AttendanceStatus.Present
+            CheckInTime = checkInTimeOnly,
+            Status = isLate ? AttendanceStatus.Late : AttendanceStatus.Present,
+            IsLate = isLate,
+            LateMinutes = lateMinutes
         };
 
         _context.Attendances.Add(attendance);
@@ -221,17 +310,48 @@ public class HRService : IHRService
 
     public async Task<Attendance> CheckOutAsync(int attendanceId, DateTime checkOutTime)
     {
-        var attendance = await _context.Attendances.FindAsync(attendanceId);
+        var attendance = await _context.Attendances
+            .Include(a => a.Employee)
+            .FirstOrDefaultAsync(a => a.Id == attendanceId);
+
         if (attendance == null)
             throw new KeyNotFoundException($"Attendance record with ID {attendanceId} not found");
 
-        attendance.CheckOutTime = TimeOnly.FromDateTime(checkOutTime);
-
-        // Calculate total hours
-        if (attendance.CheckInTime.HasValue && attendance.CheckOutTime.HasValue)
+        // Validate that check-in was performed
+        if (!attendance.CheckInTime.HasValue)
         {
-            var duration = attendance.CheckOutTime.Value.ToTimeSpan() - attendance.CheckInTime.Value.ToTimeSpan();
-            attendance.TotalHours = (decimal)duration.TotalHours;
+            throw new InvalidOperationException("Cannot check out without checking in first");
+        }
+
+        // Validate that check-out has not already been performed
+        if (attendance.CheckOutTime.HasValue)
+        {
+            throw new InvalidOperationException("Check out has already been recorded for this attendance");
+        }
+
+        var checkOutTimeOnly = TimeOnly.FromDateTime(checkOutTime);
+
+        // Validate that check-out time is after check-in time (for same day)
+        if (attendance.Date.Date == checkOutTime.Date && checkOutTimeOnly < attendance.CheckInTime.Value)
+        {
+            throw new InvalidOperationException("Check out time must be after check in time");
+        }
+
+        attendance.CheckOutTime = checkOutTimeOnly;
+
+        // Calculate worked hours
+        var duration = attendance.CheckOutTime.Value.ToTimeSpan() - attendance.CheckInTime.Value.ToTimeSpan();
+        attendance.WorkedHours = (decimal)duration.TotalHours;
+
+        // Calculate overtime if employee has a work schedule
+        if (attendance.Employee?.WorkEndTime.HasValue == true)
+        {
+            var expectedWorkHours = (attendance.Employee.WorkEndTime!.Value.ToTimeSpan() -
+                                      attendance.Employee.WorkStartTime!.Value.ToTimeSpan()).TotalHours;
+            if (attendance.WorkedHours > (decimal)expectedWorkHours)
+            {
+                attendance.OvertimeHours = attendance.WorkedHours - (decimal)expectedWorkHours;
+            }
         }
 
         await _context.SaveChangesAsync();
@@ -268,10 +388,10 @@ public class HRService : IHRService
 
     public async Task<IEnumerable<LeaveRequest>> GetPendingLeaveRequestsAsync(int branchId)
     {
-        return await GetLeaveRequestsByStatusAsync(branchId, LeaveRequestStatus.Pending);
+        return await GetLeaveRequestsByStatusAsync(branchId, LeaveStatus.Pending);
     }
 
-    public async Task<IEnumerable<LeaveRequest>> GetLeaveRequestsByStatusAsync(int branchId, LeaveRequestStatus status)
+    public async Task<IEnumerable<LeaveRequest>> GetLeaveRequestsByStatusAsync(int branchId, LeaveStatus status)
     {
         return await _context.LeaveRequests
             .Include(lr => lr.Employee)
@@ -282,6 +402,54 @@ public class HRService : IHRService
 
     public async Task<LeaveRequest> CreateLeaveRequestAsync(LeaveRequest leaveRequest)
     {
+        // Validate dates
+        if (leaveRequest.EndDate < leaveRequest.StartDate)
+        {
+            throw new InvalidOperationException("End date must be on or after start date");
+        }
+
+        if (leaveRequest.StartDate.Date < DateTime.UtcNow.Date)
+        {
+            throw new InvalidOperationException("Cannot create leave requests for past dates");
+        }
+
+        // Verify employee exists
+        var employee = await _context.Employees.FindAsync(leaveRequest.EmployeeId);
+        if (employee == null || employee.IsDeleted)
+        {
+            throw new KeyNotFoundException($"Employee with ID {leaveRequest.EmployeeId} not found");
+        }
+
+        // Calculate total days
+        var totalDays = (leaveRequest.EndDate - leaveRequest.StartDate).Days + 1;
+        leaveRequest.TotalDays = totalDays;
+
+        // Validate leave balance for applicable leave types
+        if (leaveRequest.LeaveType == LeaveType.Annual || leaveRequest.LeaveType == LeaveType.Sick)
+        {
+            var hasBalance = await ValidateLeaveBalanceAsync(leaveRequest.EmployeeId, leaveRequest.LeaveType, totalDays);
+            if (!hasBalance)
+            {
+                throw new InvalidOperationException(
+                    $"Insufficient {leaveRequest.LeaveType} leave balance. Requested: {totalDays} days");
+            }
+        }
+
+        // Check for overlapping approved leave requests
+        var overlapping = await _context.LeaveRequests
+            .AnyAsync(lr => lr.EmployeeId == leaveRequest.EmployeeId &&
+                           lr.Status == LeaveStatus.Approved &&
+                           lr.StartDate <= leaveRequest.EndDate &&
+                           lr.EndDate >= leaveRequest.StartDate);
+
+        if (overlapping)
+        {
+            throw new InvalidOperationException("Leave request overlaps with an existing approved leave");
+        }
+
+        leaveRequest.Status = LeaveStatus.Pending;
+        leaveRequest.RequestDate = DateTime.UtcNow;
+
         _context.LeaveRequests.Add(leaveRequest);
         await _context.SaveChangesAsync();
         return leaveRequest;
@@ -298,6 +466,12 @@ public class HRService : IHRService
         var leaveRequest = await _context.LeaveRequests.FindAsync(id);
         if (leaveRequest != null)
         {
+            // Cannot delete approved leave requests
+            if (leaveRequest.Status == LeaveStatus.Approved)
+            {
+                throw new InvalidOperationException("Cannot delete an approved leave request");
+            }
+
             _context.LeaveRequests.Remove(leaveRequest);
             await _context.SaveChangesAsync();
         }
@@ -312,24 +486,46 @@ public class HRService : IHRService
         if (leaveRequest == null)
             throw new KeyNotFoundException($"Leave request with ID {leaveRequestId} not found");
 
-        leaveRequest.Status = LeaveRequestStatus.Approved;
+        // Validate current status allows approval
+        if (leaveRequest.Status != LeaveStatus.Pending)
+        {
+            throw new InvalidOperationException(
+                $"Cannot approve leave request with status '{leaveRequest.Status}'. Only pending requests can be approved.");
+        }
+
+        var employee = leaveRequest.Employee;
+        if (employee == null || employee.IsDeleted)
+        {
+            throw new InvalidOperationException("Cannot approve leave for a non-existent or deleted employee");
+        }
+
+        var days = leaveRequest.TotalDays > 0
+            ? leaveRequest.TotalDays
+            : (leaveRequest.EndDate - leaveRequest.StartDate).Days + 1;
+
+        // Validate leave balance before approval
+        if (leaveRequest.LeaveType == LeaveType.Annual)
+        {
+            if (employee.AnnualLeaveBalance < days)
+            {
+                throw new InvalidOperationException(
+                    $"Insufficient annual leave balance. Available: {employee.AnnualLeaveBalance}, Requested: {days}");
+            }
+            employee.AnnualLeaveBalance -= days;
+        }
+        else if (leaveRequest.LeaveType == LeaveType.Sick)
+        {
+            if (employee.SickLeaveBalance < days)
+            {
+                throw new InvalidOperationException(
+                    $"Insufficient sick leave balance. Available: {employee.SickLeaveBalance}, Requested: {days}");
+            }
+            employee.SickLeaveBalance -= days;
+        }
+
+        leaveRequest.Status = LeaveStatus.Approved;
         leaveRequest.ApprovedBy = approvedBy;
         leaveRequest.ApprovedDate = DateTime.UtcNow;
-
-        // Deduct from employee leave balance
-        var employee = leaveRequest.Employee;
-        if (employee != null)
-        {
-            var days = (leaveRequest.EndDate - leaveRequest.StartDate).Days + 1;
-            if (leaveRequest.LeaveType == LeaveType.Annual)
-            {
-                employee.AnnualLeaveBalance -= days;
-            }
-            else if (leaveRequest.LeaveType == LeaveType.Sick)
-            {
-                employee.SickLeaveBalance -= days;
-            }
-        }
 
         await _context.SaveChangesAsync();
     }
@@ -340,10 +536,17 @@ public class HRService : IHRService
         if (leaveRequest == null)
             throw new KeyNotFoundException($"Leave request with ID {leaveRequestId} not found");
 
-        leaveRequest.Status = LeaveRequestStatus.Rejected;
+        // Validate current status allows rejection
+        if (leaveRequest.Status != LeaveStatus.Pending)
+        {
+            throw new InvalidOperationException(
+                $"Cannot reject leave request with status '{leaveRequest.Status}'. Only pending requests can be rejected.");
+        }
+
+        leaveRequest.Status = LeaveStatus.Rejected;
         leaveRequest.ApprovedBy = rejectedBy;
         leaveRequest.ApprovedDate = DateTime.UtcNow;
-        leaveRequest.Remarks = reason;
+        leaveRequest.RejectionReason = reason;
 
         await _context.SaveChangesAsync();
     }
@@ -407,6 +610,26 @@ public class HRService : IHRService
         var department = await _context.Departments.FindAsync(id);
         if (department != null)
         {
+            // Check if department has any active employees
+            var hasEmployees = await _context.Employees
+                .AnyAsync(e => e.DepartmentId == id && !e.IsDeleted);
+
+            if (hasEmployees)
+            {
+                throw new InvalidOperationException(
+                    "Cannot delete department with assigned employees. Reassign or remove employees first.");
+            }
+
+            // Check if department has any job positions
+            var hasJobPositions = await _context.JobPositions
+                .AnyAsync(jp => jp.DepartmentId == id);
+
+            if (hasJobPositions)
+            {
+                throw new InvalidOperationException(
+                    "Cannot delete department with assigned job positions. Remove job positions first.");
+            }
+
             _context.Departments.Remove(department);
             await _context.SaveChangesAsync();
         }
@@ -457,6 +680,16 @@ public class HRService : IHRService
         var jobPosition = await _context.JobPositions.FindAsync(id);
         if (jobPosition != null)
         {
+            // Check if job position has any active employees
+            var hasEmployees = await _context.Employees
+                .AnyAsync(e => e.JobPositionId == id && !e.IsDeleted);
+
+            if (hasEmployees)
+            {
+                throw new InvalidOperationException(
+                    "Cannot delete job position with assigned employees. Reassign or remove employees first.");
+            }
+
             _context.JobPositions.Remove(jobPosition);
             await _context.SaveChangesAsync();
         }
@@ -469,13 +702,13 @@ public class HRService : IHRService
     public async Task<int> GetTotalEmployeesCountAsync(int branchId)
     {
         return await _context.Employees
-            .CountAsync(e => e.BranchId == branchId);
+            .CountAsync(e => e.BranchId == branchId && !e.IsDeleted);
     }
 
     public async Task<int> GetActiveEmployeesCountAsync(int branchId)
     {
         return await _context.Employees
-            .CountAsync(e => e.BranchId == branchId && e.EmploymentStatus == EmploymentStatus.Active);
+            .CountAsync(e => e.BranchId == branchId && !e.IsDeleted && e.EmploymentStatus == EmploymentStatus.Active);
     }
 
     public async Task<int> GetPresentTodayCountAsync(int branchId)
@@ -483,6 +716,7 @@ public class HRService : IHRService
         var today = DateTime.UtcNow.Date;
         return await _context.Attendances
             .CountAsync(a => a.Employee!.BranchId == branchId &&
+                   !a.Employee.IsDeleted &&
                    a.Date.Date == today &&
                    a.Status == AttendanceStatus.Present);
     }
@@ -498,13 +732,15 @@ public class HRService : IHRService
     public async Task<int> GetPendingLeaveRequestsCountAsync(int branchId)
     {
         return await _context.LeaveRequests
-            .CountAsync(lr => lr.Employee!.BranchId == branchId && lr.Status == LeaveRequestStatus.Pending);
+            .CountAsync(lr => lr.Employee!.BranchId == branchId &&
+                        !lr.Employee.IsDeleted &&
+                        lr.Status == LeaveStatus.Pending);
     }
 
     public async Task<decimal> GetTotalPayrollAsync(int branchId)
     {
         return await _context.Employees
-            .Where(e => e.BranchId == branchId && e.EmploymentStatus == EmploymentStatus.Active)
+            .Where(e => e.BranchId == branchId && !e.IsDeleted && e.EmploymentStatus == EmploymentStatus.Active)
             .SumAsync(e => e.BasicSalary +
                      (e.HousingAllowance ?? 0) +
                      (e.TransportAllowance ?? 0) +
@@ -514,7 +750,7 @@ public class HRService : IHRService
     public async Task<Dictionary<EmploymentStatus, int>> GetEmployeeStatusDistributionAsync(int branchId)
     {
         var distribution = await _context.Employees
-            .Where(e => e.BranchId == branchId)
+            .Where(e => e.BranchId == branchId && !e.IsDeleted)
             .GroupBy(e => e.EmploymentStatus)
             .Select(g => new { Status = g.Key, Count = g.Count() })
             .ToDictionaryAsync(x => x.Status, x => x.Count);
@@ -525,7 +761,7 @@ public class HRService : IHRService
     public async Task<Dictionary<int, int>> GetEmployeesByDepartmentDistributionAsync(int branchId)
     {
         var distribution = await _context.Employees
-            .Where(e => e.BranchId == branchId && e.EmploymentStatus == EmploymentStatus.Active)
+            .Where(e => e.BranchId == branchId && !e.IsDeleted && e.EmploymentStatus == EmploymentStatus.Active)
             .GroupBy(e => e.DepartmentId)
             .Select(g => new { DepartmentId = g.Key, Count = g.Count() })
             .ToDictionaryAsync(x => x.DepartmentId, x => x.Count);

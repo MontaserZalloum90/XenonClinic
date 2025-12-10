@@ -2,7 +2,7 @@ using XenonClinic.Core.Enums;
 
 namespace XenonClinic.Core.Entities;
 
-public class Employee
+public class Employee : ISoftDelete
 {
     public int Id { get; set; }
 
@@ -51,6 +51,11 @@ public class Employee
     public string? ProfilePicturePath { get; set; }
     public string? Notes { get; set; }
     public bool IsActive { get; set; } = true;
+
+    // Soft delete support for HR compliance - employee records must be retained
+    public bool IsDeleted { get; set; }
+    public DateTime? DeletedAt { get; set; }
+    public string? DeletedBy { get; set; }
 
     // Audit fields
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
