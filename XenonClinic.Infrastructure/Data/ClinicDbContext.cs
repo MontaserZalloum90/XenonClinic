@@ -22,15 +22,45 @@ using XenonClinic.Core.Entities.Podiatry;
 using XenonClinic.Core.Entities.Psychiatry;
 using XenonClinic.Core.Entities.SleepMedicine;
 using XenonClinic.Core.Entities.Veterinary;
+using XenonClinic.Core.Interfaces;
 using XenonClinic.Infrastructure.Entities;
 
 namespace XenonClinic.Infrastructure.Data;
 
 public class ClinicDbContext : IdentityDbContext<Entities.ApplicationUser>
 {
+    private readonly ITenantContextAccessor? _tenantContextAccessor;
+
+    /// <summary>
+    /// Constructor for runtime use with tenant context.
+    /// </summary>
+    public ClinicDbContext(
+        DbContextOptions<ClinicDbContext> options,
+        ITenantContextAccessor tenantContextAccessor) : base(options)
+    {
+        _tenantContextAccessor = tenantContextAccessor;
+    }
+
+    /// <summary>
+    /// Constructor for design-time and testing without tenant context.
+    /// When no tenant context is provided, global filters are disabled.
+    /// </summary>
     public ClinicDbContext(DbContextOptions<ClinicDbContext> options) : base(options)
     {
+        _tenantContextAccessor = null;
     }
+
+    /// <summary>
+    /// Gets the current tenant ID from the tenant context accessor.
+    /// Returns null if no tenant context is available (super admin or design-time).
+    /// </summary>
+    private int? CurrentTenantId => _tenantContextAccessor?.TenantId;
+
+    /// <summary>
+    /// Determines if tenant filtering should be applied.
+    /// Returns false for super admins or when no tenant context is available.
+    /// </summary>
+    private bool ShouldFilterByTenant => _tenantContextAccessor?.ShouldFilterByTenant ?? false;
 
     // Multi-tenancy entities
     public DbSet<Tenant> Tenants => Set<Tenant>();
@@ -332,6 +362,44 @@ public class ClinicDbContext : IdentityDbContext<Entities.ApplicationUser>
         // ========================================
         // Multi-tenancy Configuration
         // ========================================
+
+        // ========================================
+        // Global Query Filters for Tenant Isolation
+        // These filters automatically apply tenant filtering to all queries.
+        // Super admins bypass these filters (ShouldFilterByTenant = false).
+        // ========================================
+
+        // Company: Filter by tenant
+        builder.Entity<Company>().HasQueryFilter(c =>
+            !ShouldFilterByTenant || c.TenantId == CurrentTenantId);
+
+        // ApplicationUser: Filter by tenant (null TenantId = super admin, allowed)
+        builder.Entity<Entities.ApplicationUser>().HasQueryFilter(u =>
+            !ShouldFilterByTenant || u.TenantId == CurrentTenantId || u.TenantId == null);
+
+        // TenantSettings: Filter by tenant
+        builder.Entity<TenantSettings>().HasQueryFilter(ts =>
+            !ShouldFilterByTenant || ts.TenantId == CurrentTenantId);
+
+        // TenantFeature: Filter by tenant
+        builder.Entity<TenantFeature>().HasQueryFilter(tf =>
+            !ShouldFilterByTenant || tf.TenantId == CurrentTenantId);
+
+        // TenantTerminology: Filter by tenant
+        builder.Entity<TenantTerminology>().HasQueryFilter(tt =>
+            !ShouldFilterByTenant || tt.TenantId == CurrentTenantId);
+
+        // TenantUISchema: Filter by tenant
+        builder.Entity<TenantUISchema>().HasQueryFilter(ts =>
+            !ShouldFilterByTenant || ts.TenantId == CurrentTenantId);
+
+        // TenantFormLayout: Filter by tenant
+        builder.Entity<TenantFormLayout>().HasQueryFilter(tfl =>
+            !ShouldFilterByTenant || tfl.TenantId == CurrentTenantId);
+
+        // TenantListLayout: Filter by tenant
+        builder.Entity<TenantListLayout>().HasQueryFilter(tll =>
+            !ShouldFilterByTenant || tll.TenantId == CurrentTenantId);
 
         // Tenant configuration
         builder.Entity<Tenant>()

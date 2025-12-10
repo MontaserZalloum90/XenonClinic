@@ -19,7 +19,9 @@ public class CurrentUserContext : ICurrentUserContext
     private readonly ClinicDbContext _context;
     private readonly IMemoryCache _cache;
 
-    private static readonly TimeSpan CacheDuration = TimeSpan.FromMinutes(5);
+    // Reduced cache duration for permission-sensitive data (was 5 minutes)
+    // Short TTL ensures permission changes are reflected quickly
+    private static readonly TimeSpan CacheDuration = TimeSpan.FromMinutes(2);
     private const string UserCacheKeyPrefix = "current_user_";
     private const string BranchesCacheKeyPrefix = "user_branches_";
 

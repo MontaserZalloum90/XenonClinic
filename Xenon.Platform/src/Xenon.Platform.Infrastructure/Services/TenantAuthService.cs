@@ -38,7 +38,11 @@ public class TenantAuthService : ITenantAuthService
 
     public async Task<Result<TenantSignupResponse>> SignupAsync(TenantSignupRequest request)
     {
-        // Validate email is not already in use
+        // Validate email is not already in use GLOBALLY (not per-tenant).
+        // This is intentional: tenant admins log in with just email (no tenant identifier),
+        // so email must be unique across all tenants to avoid login ambiguity.
+        // The same person can manage multiple tenants by being added as an admin with different emails,
+        // or we could implement tenant selection after email verification in the future.
         var existingAdmin = await _context.TenantAdmins
             .AnyAsync(a => a.Email.ToLower() == request.Email.ToLower());
 
