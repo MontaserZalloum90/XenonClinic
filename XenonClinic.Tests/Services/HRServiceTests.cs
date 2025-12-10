@@ -292,6 +292,61 @@ public class HRServiceTests
         Assert.Contains("Emirates ID", exception.Message);
     }
 
+    [Fact]
+    public async Task UpdateEmployeeAsync_WithDuplicateEmployeeCode_ThrowsException()
+    {
+        // Arrange
+        var (context, employee) = await SetupEmployeeAsync();
+        var mockSequenceGenerator = GetMockSequenceGenerator();
+        var service = new HRService(context, mockSequenceGenerator.Object);
+
+        // Add another employee
+        var anotherEmployee = new Employee
+        {
+            EmployeeCode = "EMP-002",
+            FullNameEn = "Jane Doe",
+            EmiratesId = "784-9999-9999999-9",
+            BranchId = 1,
+            DepartmentId = 1,
+            JobPositionId = 1,
+            BasicSalary = 10000,
+            HireDate = DateTime.UtcNow,
+            DateOfBirth = new DateTime(1995, 1, 1),
+            Gender = "F",
+            Nationality = "AE",
+            Address = "Abu Dhabi",
+            Email = "jane@test.com",
+            PhoneNumber = "987654321"
+        };
+        context.Employees.Add(anotherEmployee);
+        await context.SaveChangesAsync();
+
+        // Try to update the first employee with the second's Employee Code
+        employee.EmployeeCode = anotherEmployee.EmployeeCode;
+
+        // Act & Assert
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(
+            () => service.UpdateEmployeeAsync(employee));
+        Assert.Contains("code", exception.Message.ToLower());
+        Assert.Contains("already exists", exception.Message);
+    }
+
+    [Fact]
+    public async Task UpdateEmployeeAsync_WithZeroSalary_ThrowsException()
+    {
+        // Arrange
+        var (context, employee) = await SetupEmployeeAsync();
+        var mockSequenceGenerator = GetMockSequenceGenerator();
+        var service = new HRService(context, mockSequenceGenerator.Object);
+
+        employee.BasicSalary = 0;
+
+        // Act & Assert
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(
+            () => service.UpdateEmployeeAsync(employee));
+        Assert.Contains("salary must be greater than zero", exception.Message);
+    }
+
     #endregion
 
     #region Attendance Management Tests
@@ -469,6 +524,190 @@ public class HRServiceTests
         // Assert
         Assert.Equal(11, result.WorkedHours); // 11 hours total
         Assert.Equal(2, result.OvertimeHours); // 2 hours overtime (9 expected, 11 worked)
+    }
+
+    [Fact]
+    public async Task CreateAttendanceAsync_ForDeletedEmployee_ThrowsException()
+    {
+        // Arrange
+        var (context, employee) = await SetupEmployeeAsync();
+        var mockSequenceGenerator = GetMockSequenceGenerator();
+        var service = new HRService(context, mockSequenceGenerator.Object);
+
+        employee.IsDeleted = true;
+        await context.SaveChangesAsync();
+
+        var attendance = new Attendance
+        {
+            EmployeeId = employee.Id,
+            Date = DateTime.UtcNow.Date,
+            Status = AttendanceStatus.Present
+        };
+
+        // Act & Assert
+        var exception = await Assert.ThrowsAsync<KeyNotFoundException>(
+            () => service.CreateAttendanceAsync(attendance));
+        Assert.Contains("not found", exception.Message);
+    }
+
+    [Fact]
+    public async Task CreateAttendanceAsync_ForInactiveEmployee_ThrowsException()
+    {
+        // Arrange
+        var (context, employee) = await SetupEmployeeAsync();
+        var mockSequenceGenerator = GetMockSequenceGenerator();
+        var service = new HRService(context, mockSequenceGenerator.Object);
+
+        employee.EmploymentStatus = EmploymentStatus.Terminated;
+        await context.SaveChangesAsync();
+
+        var attendance = new Attendance
+        {
+            EmployeeId = employee.Id,
+            Date = DateTime.UtcNow.Date,
+            Status = AttendanceStatus.Present
+        };
+
+        // Act & Assert
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(
+            () => service.CreateAttendanceAsync(attendance));
+        Assert.Contains("inactive employee", exception.Message);
+    }
+
+    [Fact]
+    public async Task CreateAttendanceAsync_DuplicateAttendance_ThrowsException()
+    {
+        // Arrange
+        var (context, employee) = await SetupEmployeeAsync();
+        var mockSequenceGenerator = GetMockSequenceGenerator();
+        var service = new HRService(context, mockSequenceGenerator.Object);
+
+        var attendance = new Attendance
+        {
+            EmployeeId = employee.Id,
+            Date = DateTime.UtcNow.Date,
+            Status = AttendanceStatus.Present
+        };
+        await service.CreateAttendanceAsync(attendance);
+
+        var duplicateAttendance = new Attendance
+        {
+            EmployeeId = employee.Id,
+            Date = DateTime.UtcNow.Date,
+            Status = AttendanceStatus.Present
+        };
+
+        // Act & Assert
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(
+            () => service.CreateAttendanceAsync(duplicateAttendance));
+        Assert.Contains("already exists", exception.Message);
+    }
+
+    [Fact]
+    public async Task UpdateAttendanceAsync_NonExistentRecord_ThrowsException()
+    {
+        // Arrange
+        var (context, _) = await SetupEmployeeAsync();
+        var mockSequenceGenerator = GetMockSequenceGenerator();
+        var service = new HRService(context, mockSequenceGenerator.Object);
+
+        var attendance = new Attendance
+        {
+            Id = 9999, // Non-existent
+            EmployeeId = 1,
+            Date = DateTime.UtcNow.Date,
+            Status = AttendanceStatus.Present
+        };
+
+        // Act & Assert
+        var exception = await Assert.ThrowsAsync<KeyNotFoundException>(
+            () => service.UpdateAttendanceAsync(attendance));
+        Assert.Contains("not found", exception.Message);
+    }
+
+    [Fact]
+    public async Task UpdateAttendanceAsync_CheckoutBeforeCheckin_ThrowsException()
+    {
+        // Arrange
+        var (context, employee) = await SetupEmployeeAsync();
+        var mockSequenceGenerator = GetMockSequenceGenerator();
+        var service = new HRService(context, mockSequenceGenerator.Object);
+
+        var attendance = new Attendance
+        {
+            EmployeeId = employee.Id,
+            Date = DateTime.UtcNow.Date,
+            CheckInTime = new TimeOnly(14, 0), // 2 PM
+            Status = AttendanceStatus.Present
+        };
+        context.Attendances.Add(attendance);
+        await context.SaveChangesAsync();
+
+        attendance.CheckOutTime = new TimeOnly(9, 0); // 9 AM - before check-in
+
+        // Act & Assert
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(
+            () => service.UpdateAttendanceAsync(attendance));
+        Assert.Contains("Check out time must be after check in", exception.Message);
+    }
+
+    [Fact]
+    public async Task GetAttendanceByBranchIdAsync_ExcludesDeletedEmployees()
+    {
+        // Arrange
+        var (context, employee) = await SetupEmployeeAsync();
+        var mockSequenceGenerator = GetMockSequenceGenerator();
+        var service = new HRService(context, mockSequenceGenerator.Object);
+
+        // Add attendance for active employee
+        var attendance1 = new Attendance
+        {
+            EmployeeId = employee.Id,
+            Date = DateTime.UtcNow.Date,
+            CheckInTime = new TimeOnly(9, 0),
+            Status = AttendanceStatus.Present
+        };
+        context.Attendances.Add(attendance1);
+
+        // Add a deleted employee with attendance
+        var deletedEmployee = new Employee
+        {
+            EmployeeCode = "EMP-002",
+            FullNameEn = "Deleted Employee",
+            EmiratesId = "784-8888-8888888-8",
+            BranchId = 1,
+            DepartmentId = 1,
+            JobPositionId = 1,
+            BasicSalary = 10000,
+            HireDate = DateTime.UtcNow,
+            DateOfBirth = new DateTime(1990, 1, 1),
+            Gender = "M",
+            Nationality = "AE",
+            Address = "Dubai",
+            Email = "deleted@test.com",
+            PhoneNumber = "111222333",
+            IsDeleted = true,
+            DeletedAt = DateTime.UtcNow
+        };
+        context.Employees.Add(deletedEmployee);
+        await context.SaveChangesAsync();
+
+        var attendance2 = new Attendance
+        {
+            EmployeeId = deletedEmployee.Id,
+            Date = DateTime.UtcNow.Date,
+            CheckInTime = new TimeOnly(9, 0),
+            Status = AttendanceStatus.Present
+        };
+        context.Attendances.Add(attendance2);
+        await context.SaveChangesAsync();
+
+        // Act
+        var result = await service.GetAttendanceByBranchIdAsync(1, DateTime.UtcNow);
+
+        // Assert
+        Assert.Single(result);
+        Assert.DoesNotContain(result, a => a.EmployeeId == deletedEmployee.Id);
     }
 
     #endregion
@@ -1249,6 +1488,136 @@ public class HRServiceTests
 
         // Assert
         Assert.Equal(1, presentCount); // Late employee should be counted as present
+    }
+
+    [Fact]
+    public async Task GetLeaveRequestsByBranchIdAsync_ExcludesDeletedEmployees()
+    {
+        // Arrange
+        var (context, employee) = await SetupEmployeeAsync();
+        var mockSequenceGenerator = GetMockSequenceGenerator();
+        var service = new HRService(context, mockSequenceGenerator.Object);
+
+        // Add leave request for active employee
+        var leaveRequest1 = new LeaveRequest
+        {
+            EmployeeId = employee.Id,
+            LeaveType = LeaveType.Annual,
+            StartDate = DateTime.UtcNow.Date.AddDays(7),
+            EndDate = DateTime.UtcNow.Date.AddDays(10),
+            TotalDays = 4,
+            Status = LeaveStatus.Pending,
+            Reason = "Vacation"
+        };
+        context.LeaveRequests.Add(leaveRequest1);
+
+        // Add a deleted employee with leave request
+        var deletedEmployee = new Employee
+        {
+            EmployeeCode = "EMP-002",
+            FullNameEn = "Deleted Employee",
+            EmiratesId = "784-8888-8888888-8",
+            BranchId = 1,
+            DepartmentId = 1,
+            JobPositionId = 1,
+            BasicSalary = 10000,
+            HireDate = DateTime.UtcNow,
+            DateOfBirth = new DateTime(1990, 1, 1),
+            Gender = "M",
+            Nationality = "AE",
+            Address = "Dubai",
+            Email = "deleted@test.com",
+            PhoneNumber = "111222333",
+            IsDeleted = true,
+            DeletedAt = DateTime.UtcNow
+        };
+        context.Employees.Add(deletedEmployee);
+        await context.SaveChangesAsync();
+
+        var leaveRequest2 = new LeaveRequest
+        {
+            EmployeeId = deletedEmployee.Id,
+            LeaveType = LeaveType.Annual,
+            StartDate = DateTime.UtcNow.Date.AddDays(14),
+            EndDate = DateTime.UtcNow.Date.AddDays(17),
+            TotalDays = 4,
+            Status = LeaveStatus.Pending,
+            Reason = "Vacation"
+        };
+        context.LeaveRequests.Add(leaveRequest2);
+        await context.SaveChangesAsync();
+
+        // Act
+        var result = await service.GetLeaveRequestsByBranchIdAsync(1);
+
+        // Assert
+        Assert.Single(result);
+        Assert.DoesNotContain(result, lr => lr.EmployeeId == deletedEmployee.Id);
+    }
+
+    [Fact]
+    public async Task GetLeaveRequestsByStatusAsync_ExcludesDeletedEmployees()
+    {
+        // Arrange
+        var (context, employee) = await SetupEmployeeAsync();
+        var mockSequenceGenerator = GetMockSequenceGenerator();
+        var service = new HRService(context, mockSequenceGenerator.Object);
+
+        // Add pending leave request for active employee
+        var leaveRequest1 = new LeaveRequest
+        {
+            EmployeeId = employee.Id,
+            LeaveType = LeaveType.Annual,
+            StartDate = DateTime.UtcNow.Date.AddDays(7),
+            EndDate = DateTime.UtcNow.Date.AddDays(10),
+            TotalDays = 4,
+            Status = LeaveStatus.Pending,
+            Reason = "Vacation"
+        };
+        context.LeaveRequests.Add(leaveRequest1);
+
+        // Add a deleted employee with pending leave request
+        var deletedEmployee = new Employee
+        {
+            EmployeeCode = "EMP-002",
+            FullNameEn = "Deleted Employee",
+            EmiratesId = "784-8888-8888888-8",
+            BranchId = 1,
+            DepartmentId = 1,
+            JobPositionId = 1,
+            BasicSalary = 10000,
+            HireDate = DateTime.UtcNow,
+            DateOfBirth = new DateTime(1990, 1, 1),
+            Gender = "M",
+            Nationality = "AE",
+            Address = "Dubai",
+            Email = "deleted@test.com",
+            PhoneNumber = "111222333",
+            IsDeleted = true,
+            DeletedAt = DateTime.UtcNow
+        };
+        context.Employees.Add(deletedEmployee);
+        await context.SaveChangesAsync();
+
+        var leaveRequest2 = new LeaveRequest
+        {
+            EmployeeId = deletedEmployee.Id,
+            LeaveType = LeaveType.Annual,
+            StartDate = DateTime.UtcNow.Date.AddDays(14),
+            EndDate = DateTime.UtcNow.Date.AddDays(17),
+            TotalDays = 4,
+            Status = LeaveStatus.Pending,
+            Reason = "Vacation"
+        };
+        context.LeaveRequests.Add(leaveRequest2);
+        await context.SaveChangesAsync();
+
+        // Act
+        var result = await service.GetLeaveRequestsByStatusAsync(1, LeaveStatus.Pending);
+
+        // Assert
+        Assert.Single(result);
+        Assert.DoesNotContain(result, lr => lr.EmployeeId == deletedEmployee.Id);
     }
 
     #endregion

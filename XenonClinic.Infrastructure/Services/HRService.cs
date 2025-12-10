@@ -138,6 +138,12 @@ public class HRService : IHRService
 
     public async Task UpdateEmployeeAsync(Employee employee)
     {
+        // Validate salary is positive
+        if (employee.BasicSalary <= 0)
+        {
+            throw new InvalidOperationException("Basic salary must be greater than zero");
+        }
+
         // Check for duplicate EmiratesId if changed
         var existingByEmiratesId = await _context.Employees
             .FirstOrDefaultAsync(e => e.EmiratesId == employee.EmiratesId &&
@@ -149,6 +155,22 @@ public class HRService : IHRService
         {
             throw new InvalidOperationException(
                 $"An employee with Emirates ID '{employee.EmiratesId}' already exists in this branch");
+        }
+
+        // Check for duplicate EmployeeCode if changed
+        if (!string.IsNullOrEmpty(employee.EmployeeCode))
+        {
+            var existingByCode = await _context.Employees
+                .FirstOrDefaultAsync(e => e.EmployeeCode == employee.EmployeeCode &&
+                                           e.BranchId == employee.BranchId &&
+                                           e.Id != employee.Id &&
+                                           !e.IsDeleted);
+
+            if (existingByCode != null)
+            {
+                throw new InvalidOperationException(
+                    $"An employee with code '{employee.EmployeeCode}' already exists in this branch");
+            }
         }
 
         employee.UpdatedAt = DateTime.UtcNow;
@@ -198,8 +220,10 @@ public class HRService : IHRService
     {
         return await _context.Attendances
             .Include(a => a.Employee)
-                .ThenInclude(e => e.Department)
-            .Where(a => a.Employee!.BranchId == branchId && a.Date.Date == date.Date)
+                .ThenInclude(e => e!.Department)
+            .Where(a => a.Employee!.BranchId == branchId &&
+                        !a.Employee.IsDeleted &&
+                        a.Date.Date == date.Date)
             .OrderBy(a => a.Employee!.FullNameEn)
             .ToListAsync();
     }
@@ -235,6 +259,28 @@ public class HRService : IHRService
 
     public async Task<Attendance> CreateAttendanceAsync(Attendance attendance)
     {
+        // Validate employee exists and is active
+        var employee = await _context.Employees.FindAsync(attendance.EmployeeId);
+        if (employee == null || employee.IsDeleted)
+        {
+            throw new KeyNotFoundException($"Employee with ID {attendance.EmployeeId} not found");
+        }
+
+        if (employee.EmploymentStatus != EmploymentStatus.Active)
+        {
+            throw new InvalidOperationException("Cannot create attendance for an inactive employee");
+        }
+
+        // Check for duplicate attendance on the same day
+        var existingAttendance = await _context.Attendances
+            .FirstOrDefaultAsync(a => a.EmployeeId == attendance.EmployeeId && a.Date.Date == attendance.Date.Date);
+
+        if (existingAttendance != null)
+        {
+            throw new InvalidOperationException(
+                $"Attendance record already exists for employee on {attendance.Date:yyyy-MM-dd}");
+        }
+
         _context.Attendances.Add(attendance);
         await _context.SaveChangesAsync();
         return attendance;
@@ -242,7 +288,23 @@ public class HRService : IHRService
 
     public async Task UpdateAttendanceAsync(Attendance attendance)
     {
-        _context.Attendances.Update(attendance);
+        // Verify the attendance record exists
+        var existingAttendance = await _context.Attendances.FindAsync(attendance.Id);
+        if (existingAttendance == null)
+        {
+            throw new KeyNotFoundException($"Attendance record with ID {attendance.Id} not found");
+        }
+
+        // Validate checkout time is after checkin time if both are provided
+        if (attendance.CheckInTime.HasValue && attendance.CheckOutTime.HasValue)
+        {
+            if (attendance.CheckOutTime.Value < attendance.CheckInTime.Value)
+            {
+                throw new InvalidOperationException("Check out time must be after check in time");
+            }
+        }
+
+        _context.Entry(existingAttendance).CurrentValues.SetValues(attendance);
         await _context.SaveChangesAsync();
     }
 
@@ -382,7 +444,7 @@ public class HRService : IHRService
     {
         return await _context.LeaveRequests
             .Include(lr => lr.Employee)
-            .Where(lr => lr.Employee!.BranchId == branchId)
+            .Where(lr => lr.Employee!.BranchId == branchId && !lr.Employee.IsDeleted)
             .OrderByDescending(lr => lr.RequestDate)
             .ToListAsync();
     }
@@ -396,7 +458,7 @@ public class HRService : IHRService
     {
         return await _context.LeaveRequests
             .Include(lr => lr.Employee)
-            .Where(lr => lr.Employee!.BranchId == branchId && lr.Status == status)
+            .Where(lr => lr.Employee!.BranchId == branchId && !lr.Employee.IsDeleted && lr.Status == status)
             .OrderByDescending(lr => lr.RequestDate)
             .ToListAsync();
     }
