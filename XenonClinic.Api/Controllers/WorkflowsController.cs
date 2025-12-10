@@ -10,8 +10,10 @@ namespace XenonClinic.Api.Controllers;
 /// <summary>
 /// API controller for workflow management and execution.
 /// </summary>
+[ApiController]
 [Route("api/[controller]")]
 [Authorize]
+[Produces("application/json")]
 public class WorkflowsController : BaseApiController
 {
     private readonly IWorkflowEngine _workflowEngine;

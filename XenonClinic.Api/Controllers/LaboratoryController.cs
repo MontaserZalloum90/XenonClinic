@@ -11,8 +11,10 @@ namespace XenonClinic.Api.Controllers;
 /// Controller for laboratory management operations.
 /// Handles lab tests, orders, results, and external labs.
 /// </summary>
+[ApiController]
 [Route("api/[controller]")]
 [Authorize]
+[Produces("application/json")]
 public class LaboratoryController : BaseApiController
 {
     private readonly ILabService _labService;

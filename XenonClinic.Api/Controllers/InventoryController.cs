@@ -11,8 +11,10 @@ namespace XenonClinic.Api.Controllers;
 /// Controller for inventory management operations.
 /// Handles inventory items, stock operations, and transactions.
 /// </summary>
+[ApiController]
 [Route("api/[controller]")]
 [Authorize]
+[Produces("application/json")]
 public class InventoryController : BaseApiController
 {
     private readonly IInventoryService _inventoryService;

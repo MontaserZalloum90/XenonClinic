@@ -14,8 +14,10 @@ namespace XenonClinic.Api.Controllers;
 /// <summary>
 /// API controller for clinical visit management across all specialties.
 /// </summary>
+[ApiController]
 [Route("api/[controller]")]
 [Authorize]
+[Produces("application/json")]
 public class ClinicalVisitsController : BaseApiController
 {
     private readonly IClinicalVisitService _clinicalVisitService;

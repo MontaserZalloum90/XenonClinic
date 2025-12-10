@@ -15,6 +15,7 @@ namespace XenonClinic.Api.Controllers;
 [Authorize]
 [ApiController]
 [Route("api/[controller]")]
+[Produces("application/json")]
 public class HRController : BaseApiController
 {
     private readonly IHRService _hrService;

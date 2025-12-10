@@ -11,8 +11,10 @@ namespace XenonClinic.Api.Controllers;
 /// Controller for sales management operations.
 /// Handles sales, quotations, and payments.
 /// </summary>
+[ApiController]
 [Route("api/[controller]")]
 [Authorize]
+[Produces("application/json")]
 public class SalesController : BaseApiController
 {
     private readonly IPharmacyService _salesService;

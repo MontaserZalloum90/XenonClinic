@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using Microsoft.EntityFrameworkCore;
 using XenonClinic.Core.Interfaces;
 using XenonClinic.Infrastructure.Data;
@@ -7,10 +8,14 @@ namespace XenonClinic.Infrastructure.Services;
 /// <summary>
 /// Centralized service for generating sequential numbers/codes.
 /// Replaces duplicated sequence generation logic across multiple services.
+/// Thread-safe implementation using database-level locking.
 /// </summary>
 public class SequenceGenerator : ISequenceGenerator
 {
     private readonly ClinicDbContext _context;
+
+    // Static lock objects per branch+prefix combination to prevent race conditions
+    private static readonly ConcurrentDictionary<string, SemaphoreSlim> _locks = new();
 
     public SequenceGenerator(ClinicDbContext context)
     {
@@ -27,10 +32,22 @@ public class SequenceGenerator : ISequenceGenerator
         var today = DateTime.UtcNow.Date;
         var fullPrefix = $"{prefix}-{today.ToString(dateFormat)}";
 
-        var lastNumber = await GetLastSequenceNumberAsync(branchId, fullPrefix, sequenceType);
-        var nextNumber = lastNumber + 1;
+        // Create a unique lock key for this branch and prefix combination
+        var lockKey = $"{branchId}_{fullPrefix}_{sequenceType}";
+        var semaphore = _locks.GetOrAdd(lockKey, _ => new SemaphoreSlim(1, 1));
 
-        return $"{fullPrefix}-{nextNumber.ToString($"D{numberWidth}")}";
+        await semaphore.WaitAsync();
+        try
+        {
+            var lastNumber = await GetLastSequenceNumberAsync(branchId, fullPrefix, sequenceType);
+            var nextNumber = lastNumber + 1;
+
+            return $"{fullPrefix}-{nextNumber.ToString($"D{numberWidth}")}";
+        }
+        finally
+        {
+            semaphore.Release();
+        }
     }
 
     public async Task<string> GenerateLabOrderNumberAsync(int branchId)

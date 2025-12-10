@@ -14,6 +14,7 @@ namespace XenonClinic.Api.Controllers;
 [Authorize]
 [ApiController]
 [Route("api/[controller]")]
+[Produces("application/json")]
 public class PatientController : BaseApiController
 {
     private readonly IPatientService _patientService;

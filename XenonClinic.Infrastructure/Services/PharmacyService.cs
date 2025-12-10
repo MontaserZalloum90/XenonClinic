@@ -12,10 +12,12 @@ namespace XenonClinic.Infrastructure.Services;
 public class PharmacyService : IPharmacyService
 {
     private readonly ClinicDbContext _context;
+    private readonly ISequenceGenerator _sequenceGenerator;
 
-    public PharmacyService(ClinicDbContext context)
+    public PharmacyService(ClinicDbContext context, ISequenceGenerator sequenceGenerator)
     {
         _context = context;
+        _sequenceGenerator = sequenceGenerator;
     }
 
     #region Sale Management
@@ -131,21 +133,9 @@ public class PharmacyService : IPharmacyService
 
     public async Task<string> GenerateInvoiceNumberAsync(int branchId)
     {
-        var today = DateTime.UtcNow.Date;
-        var prefix = $"INV-{today:yyyyMMdd}";
-
-        var lastSale = await _context.Sales
-            .Where(s => s.BranchId == branchId && s.InvoiceNumber.StartsWith(prefix))
-            .OrderByDescending(s => s.InvoiceNumber)
-            .FirstOrDefaultAsync();
-
-        if (lastSale == null)
-        {
-            return $"{prefix}-0001";
-        }
-
-        var lastNumber = int.Parse(lastSale.InvoiceNumber.Split('-').Last());
-        return $"{prefix}-{(lastNumber + 1):D4}";
+        // Use centralized sequence generator to avoid race conditions
+        return await _sequenceGenerator.GenerateSequenceAsync(
+            branchId, "INV", SequenceType.Sale, "yyyyMMdd", 4);
     }
 
     #endregion
