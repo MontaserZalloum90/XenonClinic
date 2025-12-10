@@ -6,6 +6,7 @@ public class TherapySession
 {
     public int Id { get; set; }
     public int PatientId { get; set; }
+    public int BranchId { get; set; }
     public int? MentalHealthVisitId { get; set; }
     public int? AppointmentId { get; set; }
     public DateTime SessionDate { get; set; }
@@ -33,8 +34,12 @@ public class TherapySession
     public string? Therapist { get; set; }
     public string? Notes { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public string? CreatedBy { get; set; }
+    public DateTime? UpdatedAt { get; set; }
+    public string? UpdatedBy { get; set; }
 
     public Patient? Patient { get; set; }
+    public Branch? Branch { get; set; }
     public MentalHealthVisit? MentalHealthVisit { get; set; }
     public Appointment? Appointment { get; set; }
 }

@@ -6,6 +6,7 @@ public class PregnancyRecord
 {
     public int Id { get; set; }
     public int PatientId { get; set; }
+    public int BranchId { get; set; }
     public DateTime? LastMenstrualPeriod { get; set; }
     public DateTime EstimatedDueDate { get; set; }
     public DateTime? ConceptionDate { get; set; }
@@ -33,9 +34,12 @@ public class PregnancyRecord
     public PregnancyOutcome? Outcome { get; set; }
     public string? Notes { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public string? CreatedBy { get; set; }
     public DateTime? UpdatedAt { get; set; }
+    public string? UpdatedBy { get; set; }
 
     public Patient? Patient { get; set; }
+    public Branch? Branch { get; set; }
     public ICollection<PrenatalVisit> PrenatalVisits { get; set; } = new List<PrenatalVisit>();
     public ICollection<ObUltrasound> Ultrasounds { get; set; } = new List<ObUltrasound>();
 }

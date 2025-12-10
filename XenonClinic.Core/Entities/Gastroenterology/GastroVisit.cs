@@ -6,6 +6,7 @@ public class GastroVisit
 {
     public int Id { get; set; }
     public int PatientId { get; set; }
+    public int BranchId { get; set; }
     public int? AppointmentId { get; set; }
     public DateTime VisitDate { get; set; }
     public string? ChiefComplaint { get; set; }
@@ -36,9 +37,12 @@ public class GastroVisit
     public string? Plan { get; set; }
     public string? Notes { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public string? CreatedBy { get; set; }
     public DateTime? UpdatedAt { get; set; }
+    public string? UpdatedBy { get; set; }
 
     public Patient? Patient { get; set; }
+    public Branch? Branch { get; set; }
     public Appointment? Appointment { get; set; }
     public ICollection<EndoscopyRecord> Endoscopies { get; set; } = new List<EndoscopyRecord>();
     public ICollection<GastroProcedure> Procedures { get; set; } = new List<GastroProcedure>();

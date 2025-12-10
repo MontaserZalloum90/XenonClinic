@@ -6,6 +6,7 @@ public class PodiatryGaitAnalysis
 {
     public int Id { get; set; }
     public int PatientId { get; set; }
+    public int BranchId { get; set; }
     public int? PodiatryVisitId { get; set; }
     public DateTime AnalysisDate { get; set; }
     public GaitAnalysisType AnalysisType { get; set; }
@@ -41,7 +42,11 @@ public class PodiatryGaitAnalysis
     public string? Recommendations { get; set; }
     public string? Notes { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public string? CreatedBy { get; set; }
+    public DateTime? UpdatedAt { get; set; }
+    public string? UpdatedBy { get; set; }
 
     public Patient? Patient { get; set; }
+    public Branch? Branch { get; set; }
     public PodiatryVisit? PodiatryVisit { get; set; }
 }

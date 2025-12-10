@@ -27,6 +27,7 @@ public class SkinTreatmentPlan
     /// </summary>
     public string Status { get; set; } = "Draft";
 
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
     public DateTime? StartDate { get; set; }
     public DateTime? ExpectedEndDate { get; set; }
@@ -88,6 +89,10 @@ public class SkinTreatmentPlan
 
     public string? DermatologistId { get; set; }
     public string? Notes { get; set; }
+
+    public string? CreatedBy { get; set; }
+    public DateTime? UpdatedAt { get; set; }
+    public string? UpdatedBy { get; set; }
 
     public Patient? Patient { get; set; }
     public Branch? Branch { get; set; }

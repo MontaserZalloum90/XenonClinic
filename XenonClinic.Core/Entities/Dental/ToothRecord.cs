@@ -7,6 +7,7 @@ public class ToothRecord
 {
     public int Id { get; set; }
     public int ToothChartId { get; set; }
+    public int BranchId { get; set; }
 
     /// <summary>
     /// Universal numbering system (1-32 for adults, A-T for primary teeth)
@@ -39,7 +40,11 @@ public class ToothRecord
     public string? RestorationType { get; set; }
 
     public string? Notes { get; set; }
-    public DateTime LastUpdated { get; set; } = DateTime.UtcNow;
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public string? CreatedBy { get; set; }
+    public DateTime? UpdatedAt { get; set; }
+    public string? UpdatedBy { get; set; }
 
     public ToothChart? ToothChart { get; set; }
+    public Branch? Branch { get; set; }
 }

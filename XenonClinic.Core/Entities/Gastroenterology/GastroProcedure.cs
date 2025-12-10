@@ -6,6 +6,7 @@ public class GastroProcedure
 {
     public int Id { get; set; }
     public int PatientId { get; set; }
+    public int BranchId { get; set; }
     public int? GastroVisitId { get; set; }
     public DateTime ProcedureDate { get; set; }
     public GastroProcedureType ProcedureType { get; set; }
@@ -27,7 +28,11 @@ public class GastroProcedure
     public decimal? Cost { get; set; }
     public string? Notes { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public string? CreatedBy { get; set; }
+    public DateTime? UpdatedAt { get; set; }
+    public string? UpdatedBy { get; set; }
 
     public Patient? Patient { get; set; }
+    public Branch? Branch { get; set; }
     public GastroVisit? GastroVisit { get; set; }
 }

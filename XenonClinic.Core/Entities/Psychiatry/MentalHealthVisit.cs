@@ -6,6 +6,7 @@ public class MentalHealthVisit
 {
     public int Id { get; set; }
     public int PatientId { get; set; }
+    public int BranchId { get; set; }
     public int? AppointmentId { get; set; }
     public DateTime VisitDate { get; set; }
     public MentalHealthVisitType VisitType { get; set; }
@@ -38,9 +39,12 @@ public class MentalHealthVisit
     public string? SafetyPlan { get; set; }
     public string? Notes { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public string? CreatedBy { get; set; }
     public DateTime? UpdatedAt { get; set; }
+    public string? UpdatedBy { get; set; }
 
     public Patient? Patient { get; set; }
+    public Branch? Branch { get; set; }
     public Appointment? Appointment { get; set; }
     public ICollection<TherapySession> TherapySessions { get; set; } = new List<TherapySession>();
 }

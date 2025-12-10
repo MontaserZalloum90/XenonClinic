@@ -474,7 +474,7 @@ public class ClinicDbContext : IdentityDbContext<Entities.ApplicationUser>
             .HasOne(m => m.Patient)
             .WithOne(p => p.MedicalHistory)
             .HasForeignKey<PatientMedicalHistory>(m => m.PatientId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .OnDelete(DeleteBehavior.Restrict);
 
         // PatientDocument configuration
         builder.Entity<PatientDocument>()
@@ -496,7 +496,7 @@ public class ClinicDbContext : IdentityDbContext<Entities.ApplicationUser>
             .HasOne(d => d.Patient)
             .WithMany(p => p.Documents)
             .HasForeignKey(d => d.PatientId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .OnDelete(DeleteBehavior.Restrict);
 
         // Appointment indexes
         builder.Entity<Appointment>()
@@ -765,7 +765,7 @@ public class ClinicDbContext : IdentityDbContext<Entities.ApplicationUser>
             .HasOne(a => a.Employee)
             .WithMany(e => e.Attendances)
             .HasForeignKey(a => a.EmployeeId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .OnDelete(DeleteBehavior.Restrict);
 
         // LeaveRequest configuration
         builder.Entity<LeaveRequest>()
@@ -784,7 +784,7 @@ public class ClinicDbContext : IdentityDbContext<Entities.ApplicationUser>
             .HasOne(l => l.Employee)
             .WithMany(e => e.LeaveRequests)
             .HasForeignKey(l => l.EmployeeId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .OnDelete(DeleteBehavior.Restrict);
 
         // PerformanceReview configuration
         builder.Entity<PerformanceReview>()
@@ -800,7 +800,7 @@ public class ClinicDbContext : IdentityDbContext<Entities.ApplicationUser>
             .HasOne(p => p.Employee)
             .WithMany(e => e.PerformanceReviews)
             .HasForeignKey(p => p.EmployeeId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .OnDelete(DeleteBehavior.Restrict);
 
         builder.Entity<PerformanceReview>()
             .Property(p => p.OverallRating)
@@ -875,7 +875,7 @@ public class ClinicDbContext : IdentityDbContext<Entities.ApplicationUser>
             .HasOne(i => i.Sale)
             .WithMany(s => s.Items)
             .HasForeignKey(i => i.SaleId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .OnDelete(DeleteBehavior.Restrict);
 
         builder.Entity<SaleItem>()
             .HasOne(i => i.InventoryItem)
@@ -921,7 +921,7 @@ public class ClinicDbContext : IdentityDbContext<Entities.ApplicationUser>
             .HasOne(p => p.Sale)
             .WithMany(s => s.Payments)
             .HasForeignKey(p => p.SaleId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .OnDelete(DeleteBehavior.Restrict);
 
         builder.Entity<Payment>()
             .Property(p => p.Amount)
@@ -983,7 +983,7 @@ public class ClinicDbContext : IdentityDbContext<Entities.ApplicationUser>
             .HasOne(i => i.Quotation)
             .WithMany(q => q.Items)
             .HasForeignKey(i => i.QuotationId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .OnDelete(DeleteBehavior.Restrict);
 
         builder.Entity<QuotationItem>()
             .HasOne(i => i.InventoryItem)
@@ -1096,7 +1096,7 @@ public class ClinicDbContext : IdentityDbContext<Entities.ApplicationUser>
             .HasOne(i => i.PurchaseOrder)
             .WithMany(p => p.Items)
             .HasForeignKey(i => i.PurchaseOrderId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .OnDelete(DeleteBehavior.Restrict);
 
         builder.Entity<PurchaseOrderItem>()
             .HasOne(i => i.InventoryItem)
@@ -1166,7 +1166,7 @@ public class ClinicDbContext : IdentityDbContext<Entities.ApplicationUser>
             .HasOne(i => i.GoodsReceipt)
             .WithMany(g => g.Items)
             .HasForeignKey(i => i.GoodsReceiptId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .OnDelete(DeleteBehavior.Restrict);
 
         builder.Entity<GoodsReceiptItem>()
             .HasOne(i => i.PurchaseOrderItem)
@@ -1326,7 +1326,7 @@ public class ClinicDbContext : IdentityDbContext<Entities.ApplicationUser>
             .HasOne(i => i.LabOrder)
             .WithMany(o => o.Items)
             .HasForeignKey(i => i.LabOrderId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .OnDelete(DeleteBehavior.Restrict);
 
         builder.Entity<LabOrderItem>()
             .HasOne(i => i.LabTest)
@@ -1352,7 +1352,7 @@ public class ClinicDbContext : IdentityDbContext<Entities.ApplicationUser>
             .HasOne(r => r.LabOrder)
             .WithMany(o => o.Results)
             .HasForeignKey(r => r.LabOrderId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .OnDelete(DeleteBehavior.Restrict);
 
         builder.Entity<LabResult>()
             .HasOne(r => r.LabOrderItem)
@@ -1693,7 +1693,7 @@ public class ClinicDbContext : IdentityDbContext<Entities.ApplicationUser>
             .HasOne(cn => cn.Case)
             .WithMany(c => c.Notes)
             .HasForeignKey(cn => cn.CaseId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .OnDelete(DeleteBehavior.Restrict);
 
         // CaseActivity configuration
         builder.Entity<CaseActivity>()
@@ -1715,7 +1715,7 @@ public class ClinicDbContext : IdentityDbContext<Entities.ApplicationUser>
             .HasOne(ca => ca.Case)
             .WithMany(c => c.Activities)
             .HasForeignKey(ca => ca.CaseId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .OnDelete(DeleteBehavior.Restrict);
 
         builder.Entity<CaseActivity>()
             .HasOne(ca => ca.AssignedToUser)
@@ -1843,13 +1843,13 @@ public class ClinicDbContext : IdentityDbContext<Entities.ApplicationUser>
             .HasOne(tr => tr.ToothChart)
             .WithMany(tc => tc.TeethRecords)
             .HasForeignKey(tr => tr.ToothChartId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .OnDelete(DeleteBehavior.Restrict);
 
         builder.Entity<DentalProcedure>()
             .HasOne(p => p.DentalVisit)
             .WithMany(v => v.Procedures)
             .HasForeignKey(p => p.DentalVisitId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .OnDelete(DeleteBehavior.Restrict);
 
         builder.Entity<DentalProcedure>()
             .Property(p => p.Fee)
@@ -1876,7 +1876,7 @@ public class ClinicDbContext : IdentityDbContext<Entities.ApplicationUser>
             .HasOne(i => i.TreatmentPlan)
             .WithMany(tp => tp.Items)
             .HasForeignKey(i => i.DentalTreatmentPlanId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .OnDelete(DeleteBehavior.Restrict);
 
         builder.Entity<DentalTreatmentPlanItem>()
             .Property(i => i.EstimatedFee)
@@ -1954,7 +1954,7 @@ public class ClinicDbContext : IdentityDbContext<Entities.ApplicationUser>
             .HasOne(p => p.VetVisit)
             .WithMany(v => v.Procedures)
             .HasForeignKey(p => p.VetVisitId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .OnDelete(DeleteBehavior.Restrict);
 
         builder.Entity<VetProcedure>()
             .Property(p => p.Fee)
@@ -2024,7 +2024,7 @@ public class ClinicDbContext : IdentityDbContext<Entities.ApplicationUser>
             .HasOne(vt => vt.Visit)
             .WithOne(v => v.VisionTest)
             .HasForeignKey<VisionTest>(vt => vt.OphthalmologyVisitId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .OnDelete(DeleteBehavior.Restrict);
 
         builder.Entity<VisionTest>()
             .Property(vt => vt.SphereOd)
@@ -2038,7 +2038,7 @@ public class ClinicDbContext : IdentityDbContext<Entities.ApplicationUser>
             .HasOne(e => e.Visit)
             .WithOne(v => v.EyeExam)
             .HasForeignKey<EyeExam>(e => e.OphthalmologyVisitId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .OnDelete(DeleteBehavior.Restrict);
 
         builder.Entity<EyeExam>()
             .Property(e => e.CupToDiscRatioOd)
@@ -2069,7 +2069,7 @@ public class ClinicDbContext : IdentityDbContext<Entities.ApplicationUser>
             .HasOne(p => p.Visit)
             .WithMany(v => v.Procedures)
             .HasForeignKey(p => p.OphthalmologyVisitId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .OnDelete(DeleteBehavior.Restrict);
 
         builder.Entity<EyeProcedure>()
             .Property(p => p.Fee)
@@ -2129,7 +2129,7 @@ public class ClinicDbContext : IdentityDbContext<Entities.ApplicationUser>
             .HasOne(p => p.Visit)
             .WithMany(v => v.Procedures)
             .HasForeignKey(p => p.DermatologyVisitId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .OnDelete(DeleteBehavior.Restrict);
 
         builder.Entity<SkinProcedure>()
             .Property(p => p.Fee)
@@ -2208,7 +2208,7 @@ public class ClinicDbContext : IdentityDbContext<Entities.ApplicationUser>
             .HasOne(i => i.Program)
             .WithMany(ep => ep.Exercises)
             .HasForeignKey(i => i.ExerciseProgramId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .OnDelete(DeleteBehavior.Restrict);
 
         builder.Entity<RangeOfMotionRecord>()
             .HasIndex(r => r.PatientId);
@@ -2678,7 +2678,7 @@ public class ClinicDbContext : IdentityDbContext<Entities.ApplicationUser>
             .HasOne(p => p.PregnancyRecord)
             .WithMany(pr => pr.PrenatalVisits)
             .HasForeignKey(p => p.PregnancyRecordId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .OnDelete(DeleteBehavior.Restrict);
 
         builder.Entity<PrenatalVisit>()
             .Property(p => p.Weight)
@@ -2697,7 +2697,7 @@ public class ClinicDbContext : IdentityDbContext<Entities.ApplicationUser>
             .HasOne(u => u.PregnancyRecord)
             .WithMany(pr => pr.Ultrasounds)
             .HasForeignKey(u => u.PregnancyRecordId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .OnDelete(DeleteBehavior.Restrict);
 
         builder.Entity<ObUltrasound>()
             .Property(u => u.EstimatedFetalWeight)
@@ -3028,7 +3028,7 @@ public class ClinicDbContext : IdentityDbContext<Entities.ApplicationUser>
             .HasOne(e => e.IVFCycle)
             .WithMany(i => i.Embryos)
             .HasForeignKey(e => e.IVFCycleId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .OnDelete(DeleteBehavior.Restrict);
 
         builder.Entity<HormoneLevel>()
             .HasIndex(h => h.TestDate);
@@ -3240,7 +3240,7 @@ public class ClinicDbContext : IdentityDbContext<Entities.ApplicationUser>
             .HasOne(s => s.DialysisPatientRecord)
             .WithMany(r => r.Sessions)
             .HasForeignKey(s => s.DialysisPatientRecordId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .OnDelete(DeleteBehavior.Restrict);
 
         builder.Entity<DialysisSession>()
             .Property(s => s.PreWeight)
@@ -3400,7 +3400,7 @@ public class ClinicDbContext : IdentityDbContext<Entities.ApplicationUser>
             .HasOne(o => o.CancerDiagnosis)
             .WithMany(c => c.TreatmentPlans)
             .HasForeignKey(o => o.CancerDiagnosisId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .OnDelete(DeleteBehavior.Restrict);
 
         // ========================================
         // Chiropractic Configuration

@@ -21,6 +21,7 @@ public class DentalTreatmentPlan
     /// </summary>
     public string Priority { get; set; } = "Medium";
 
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
     public DateTime? AcceptedDate { get; set; }
     public DateTime? CompletedDate { get; set; }
@@ -36,6 +37,10 @@ public class DentalTreatmentPlan
 
     public string? ProviderId { get; set; }
     public string? Notes { get; set; }
+
+    public string? CreatedBy { get; set; }
+    public DateTime? UpdatedAt { get; set; }
+    public string? UpdatedBy { get; set; }
 
     public Patient? Patient { get; set; }
     public Branch? Branch { get; set; }

@@ -6,6 +6,7 @@ public class DialysisSession
 {
     public int Id { get; set; }
     public int PatientId { get; set; }
+    public int BranchId { get; set; }
     public int? DialysisPatientRecordId { get; set; }
     public DateTime SessionDate { get; set; }
     public DateTime StartTime { get; set; }
@@ -45,7 +46,11 @@ public class DialysisSession
     public string? StaffInitials { get; set; }
     public string? Notes { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public string? CreatedBy { get; set; }
+    public DateTime? UpdatedAt { get; set; }
+    public string? UpdatedBy { get; set; }
 
     public Patient? Patient { get; set; }
+    public Branch? Branch { get; set; }
     public DialysisPatientRecord? DialysisPatientRecord { get; set; }
 }

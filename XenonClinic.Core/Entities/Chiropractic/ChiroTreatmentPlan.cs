@@ -6,6 +6,7 @@ public class ChiroTreatmentPlan
 {
     public int Id { get; set; }
     public int PatientId { get; set; }
+    public int BranchId { get; set; }
     public DateTime PlanDate { get; set; }
     public string? Diagnosis { get; set; }
     public string? ICD10Codes { get; set; }
@@ -30,7 +31,10 @@ public class ChiroTreatmentPlan
     public string? MaintenancePlan { get; set; }
     public string? Notes { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public string? CreatedBy { get; set; }
     public DateTime? UpdatedAt { get; set; }
+    public string? UpdatedBy { get; set; }
 
     public Patient? Patient { get; set; }
+    public Branch? Branch { get; set; }
 }

@@ -4,6 +4,7 @@ public class DialysisLabResult
 {
     public int Id { get; set; }
     public int PatientId { get; set; }
+    public int BranchId { get; set; }
     public DateTime LabDate { get; set; }
     public string? LabType { get; set; }
     public decimal? BUN { get; set; }
@@ -36,6 +37,10 @@ public class DialysisLabResult
     public string? ActionRequired { get; set; }
     public string? Notes { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public string? CreatedBy { get; set; }
+    public DateTime? UpdatedAt { get; set; }
+    public string? UpdatedBy { get; set; }
 
     public Patient? Patient { get; set; }
+    public Branch? Branch { get; set; }
 }
