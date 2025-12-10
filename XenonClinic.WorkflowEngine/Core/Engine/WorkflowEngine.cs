@@ -606,11 +606,8 @@ public class WorkflowEngine : IWorkflowEngine
         {
             if (result.IsSuccess)
             {
-                // Thread-safe add to completed activities
-                lock (state.CompletedActivityIds)
-                {
-                    state.CompletedActivityIds.Add(activityId);
-                }
+                // Use thread-safe method
+                state.AddCompletedActivity(activityId);
             }
             else
             {

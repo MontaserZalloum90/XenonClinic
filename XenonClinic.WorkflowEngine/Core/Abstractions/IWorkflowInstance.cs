@@ -159,6 +159,8 @@ public class WorkflowAuditEntry
 /// </summary>
 public class WorkflowInstanceState : IWorkflowInstance
 {
+    private readonly object _syncLock = new();
+
     public Guid Id { get; set; }
     public string WorkflowId { get; set; } = string.Empty;
     public int Version { get; set; }
@@ -194,6 +196,45 @@ public class WorkflowInstanceState : IWorkflowInstance
     /// Parallel execution branches
     /// </summary>
     public IDictionary<string, ParallelBranch> ParallelBranches { get; set; } = new Dictionary<string, ParallelBranch>();
+
+    /// <summary>
+    /// Thread-safe method to add a completed activity
+    /// </summary>
+    public void AddCompletedActivity(string activityId)
+    {
+        lock (_syncLock)
+        {
+            if (!CompletedActivityIds.Contains(activityId))
+            {
+                CompletedActivityIds.Add(activityId);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Thread-safe method to add an active activity
+    /// </summary>
+    public void AddActiveActivity(string activityId)
+    {
+        lock (_syncLock)
+        {
+            if (!ActiveActivityIds.Contains(activityId))
+            {
+                ActiveActivityIds.Add(activityId);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Thread-safe method to remove an active activity
+    /// </summary>
+    public void RemoveActiveActivity(string activityId)
+    {
+        lock (_syncLock)
+        {
+            ActiveActivityIds.Remove(activityId);
+        }
+    }
 }
 
 /// <summary>

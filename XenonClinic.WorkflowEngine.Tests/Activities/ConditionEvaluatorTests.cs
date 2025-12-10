@@ -162,4 +162,84 @@ public class ConditionEvaluatorTests
         var result = ConditionEvaluator.Evaluate(condition, _contextMock.Object, SimpleResolver);
         result.Should().Be(expected);
     }
+
+    [Fact]
+    public void Evaluate_NullValues_HandlesCorrectly()
+    {
+        _contextMock.Setup(c => c.Variables).Returns(new Dictionary<string, object?>
+        {
+            ["nullVar"] = null
+        });
+
+        // null == null should be true
+        var result = ConditionEvaluator.Evaluate("var.nullVar == var.nullVar", _contextMock.Object, SimpleResolver);
+        result.Should().BeTrue();
+
+        // null != 10 should be true
+        result = ConditionEvaluator.Evaluate("var.nullVar != 10", _contextMock.Object, SimpleResolver);
+        result.Should().BeTrue();
+    }
+
+    [Fact]
+    public void Evaluate_StringNumericComparison_Works()
+    {
+        _contextMock.Setup(c => c.Variables).Returns(new Dictionary<string, object?>
+        {
+            ["strNum"] = "100"
+        });
+
+        var result = ConditionEvaluator.Evaluate("var.strNum >= 50", _contextMock.Object, SimpleResolver);
+        result.Should().BeTrue();
+    }
+
+    [Fact]
+    public void Evaluate_DecimalComparison_Works()
+    {
+        _contextMock.Setup(c => c.Variables).Returns(new Dictionary<string, object?>
+        {
+            ["price"] = 99.99m
+        });
+
+        var result = ConditionEvaluator.Evaluate("var.price > 50", _contextMock.Object, SimpleResolver);
+        result.Should().BeTrue();
+    }
+
+    [Theory]
+    [InlineData("'hello' == 'hello'", true)]
+    [InlineData("'hello' == 'HELLO'", true)] // Case insensitive
+    [InlineData("'hello' != 'world'", true)]
+    [InlineData("'abc' < 'def'", true)]
+    public void Evaluate_StringComparisons_ReturnsCorrectResult(string condition, bool expected)
+    {
+        var result = ConditionEvaluator.Evaluate(condition, _contextMock.Object, SimpleResolver);
+        result.Should().Be(expected);
+    }
+
+    [Fact]
+    public void Evaluate_ConditionWithSpaces_ParsesCorrectly()
+    {
+        var result = ConditionEvaluator.Evaluate("  100   >=   50  ", _contextMock.Object, SimpleResolver);
+        result.Should().BeTrue();
+    }
+
+    [Fact]
+    public void Evaluate_InvalidCondition_ReturnsFalse()
+    {
+        // Condition with no valid operator
+        var result = ConditionEvaluator.Evaluate("this is not a valid condition", _contextMock.Object, SimpleResolver);
+        result.Should().BeFalse();
+    }
+
+    [Fact]
+    public void Evaluate_DoubleEqualsInValue_ParsesCorrectly()
+    {
+        // Test edge case where value might contain operator-like chars
+        _contextMock.Setup(c => c.Variables).Returns(new Dictionary<string, object?>
+        {
+            ["status"] = "ok"
+        });
+
+        var result = ConditionEvaluator.Evaluate("var.status == 'ok'", _contextMock.Object, SimpleResolver);
+        result.Should().BeTrue();
+    }
 }

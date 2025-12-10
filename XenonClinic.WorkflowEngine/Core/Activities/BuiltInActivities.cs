@@ -376,14 +376,32 @@ internal static class ConditionEvaluator
 
         return foundOperator switch
         {
-            "==" => Equals(left, right) || CompareValues(left, right) == 0,
-            "!=" => !Equals(left, right) && CompareValues(left, right) != 0,
+            "==" => AreEqual(left, right),
+            "!=" => !AreEqual(left, right),
             ">=" => CompareValues(left, right) >= 0,
             "<=" => CompareValues(left, right) <= 0,
             ">" => CompareValues(left, right) > 0,
             "<" => CompareValues(left, right) < 0,
             _ => false
         };
+    }
+
+    private static bool AreEqual(object? left, object? right)
+    {
+        if (ReferenceEquals(left, right)) return true;
+        if (left == null || right == null) return left == null && right == null;
+
+        // Try direct equals
+        if (Equals(left, right)) return true;
+
+        // Try numeric comparison
+        if (TryGetNumericValue(left, out var leftNum) && TryGetNumericValue(right, out var rightNum))
+        {
+            return Math.Abs(leftNum - rightNum) < double.Epsilon;
+        }
+
+        // String comparison (case-insensitive)
+        return string.Equals(left.ToString(), right.ToString(), StringComparison.OrdinalIgnoreCase);
     }
 
     private static int CompareValues(object? left, object? right)
