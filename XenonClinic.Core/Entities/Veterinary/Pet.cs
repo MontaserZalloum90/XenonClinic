@@ -64,7 +64,11 @@ public class Pet
     /// </summary>
     public string? PhotoPath { get; set; }
 
-    public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
+    // Audit fields
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public string? CreatedBy { get; set; }
+    public DateTime? UpdatedAt { get; set; }
+    public string? UpdatedBy { get; set; }
 
     public PetOwner? Owner { get; set; }
     public Branch? Branch { get; set; }

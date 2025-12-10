@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Xenon.Platform.Api.Extensions;
 using Xenon.Platform.Application.DTOs;
 using Xenon.Platform.Application.Interfaces;
 
@@ -23,13 +24,13 @@ public class LicenseController : ControllerBase
     [HttpGet]
     public async Task<IActionResult> GetLicense()
     {
-        var tenantIdClaim = User.FindFirst("tenant_id")?.Value;
-        if (string.IsNullOrEmpty(tenantIdClaim) || !Guid.TryParse(tenantIdClaim, out var tenantId))
+        var tenantId = User.GetTenantId();
+        if (!tenantId.HasValue)
         {
             return Unauthorized(new { success = false, error = "Invalid token" });
         }
 
-        var result = await _licenseService.GetLicenseAsync(tenantId);
+        var result = await _licenseService.GetLicenseAsync(tenantId.Value);
 
         if (result.IsFailure)
         {
@@ -45,13 +46,13 @@ public class LicenseController : ControllerBase
     [HttpPost("usage")]
     public async Task<IActionResult> UpdateUsage([FromBody] UsageUpdateRequest request)
     {
-        var tenantIdClaim = User.FindFirst("tenant_id")?.Value;
-        if (string.IsNullOrEmpty(tenantIdClaim) || !Guid.TryParse(tenantIdClaim, out var tenantId))
+        var tenantId = User.GetTenantId();
+        if (!tenantId.HasValue)
         {
             return Unauthorized(new { success = false, error = "Invalid token" });
         }
 
-        var result = await _licenseService.UpdateUsageAsync(tenantId, request);
+        var result = await _licenseService.UpdateUsageAsync(tenantId.Value, request);
 
         if (result.IsFailure)
         {

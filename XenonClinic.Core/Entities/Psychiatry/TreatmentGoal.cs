@@ -7,7 +7,6 @@ public class TreatmentGoal
     public int Id { get; set; }
     public int PatientId { get; set; }
     public int BranchId { get; set; }
-    public DateTime CreatedDate { get; set; }
     public GoalType GoalType { get; set; }
     public string? GoalDescription { get; set; }
     public string? TargetBehavior { get; set; }

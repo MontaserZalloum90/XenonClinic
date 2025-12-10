@@ -1,7 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Xenon.Platform.Domain.Enums;
-using Xenon.Platform.Infrastructure.Persistence;
 using Xenon.Platform.Infrastructure.Services;
 
 namespace Xenon.Platform.Api.Controllers.Public;
@@ -10,12 +8,10 @@ namespace Xenon.Platform.Api.Controllers.Public;
 [Route("api/public/pricing")]
 public class PricingController : ControllerBase
 {
-    private readonly PlatformDbContext _context;
     private readonly IPricingCalculatorService _pricingService;
 
-    public PricingController(PlatformDbContext context, IPricingCalculatorService pricingService)
+    public PricingController(IPricingCalculatorService pricingService)
     {
-        _context = context;
         _pricingService = pricingService;
     }
 
@@ -25,26 +21,7 @@ public class PricingController : ControllerBase
     [HttpGet("plans")]
     public async Task<IActionResult> GetPlans()
     {
-        var plans = await _context.Plans
-            .Where(p => p.IsActive)
-            .OrderBy(p => p.SortOrder)
-            .Select(p => new
-            {
-                p.Code,
-                p.Name,
-                p.Description,
-                p.MonthlyPrice,
-                p.AnnualPrice,
-                p.IncludedBranches,
-                p.IncludedUsers,
-                p.ExtraBranchPrice,
-                p.ExtraUserPrice,
-                Features = p.FeaturesJson,
-                p.SupportLevel,
-                p.IsRecommended
-            })
-            .ToListAsync();
-
+        var plans = await _pricingService.GetActivePlansAsync();
         return Ok(new { success = true, data = plans });
     }
 

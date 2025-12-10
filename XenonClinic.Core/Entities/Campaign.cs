@@ -57,8 +57,8 @@ public class Campaign
     // Audit
     public string CreatedBy { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-    public string? LastModifiedBy { get; set; }
-    public DateTime? LastModifiedAt { get; set; }
+    public DateTime? UpdatedAt { get; set; }
+    public string? UpdatedBy { get; set; }
 
     // Navigation Properties
     public ICollection<Lead> Leads { get; set; } = new List<Lead>();

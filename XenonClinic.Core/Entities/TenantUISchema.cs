@@ -10,6 +10,12 @@ public class TenantUISchema
     public string EntityName { get; set; } = string.Empty;
     public string SchemaJson { get; set; } = "{}";
 
+    // Audit fields
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public string? CreatedBy { get; set; }
+    public DateTime? UpdatedAt { get; set; }
+    public string? UpdatedBy { get; set; }
+
     // Navigation
     public Tenant Tenant { get; set; } = null!;
 }

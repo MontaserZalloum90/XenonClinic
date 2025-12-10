@@ -22,7 +22,10 @@ public class PerformanceReview
     public string AreasForImprovement { get; set; } = string.Empty;
     public string Goals { get; set; } = string.Empty;
     public string? Comments { get; set; }
-    public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
+
+    // Audit fields
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public string? CreatedBy { get; set; }
 
     // Navigation properties
     public Employee Employee { get; set; } = null!;

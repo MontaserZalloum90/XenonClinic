@@ -120,6 +120,24 @@ public class AppointmentService : IAppointmentService
 
     public async Task<Appointment> CreateAppointmentAsync(Appointment appointment)
     {
+        // Validate appointment times
+        if (appointment.EndTime <= appointment.StartTime)
+        {
+            throw new InvalidOperationException("Appointment end time must be after start time");
+        }
+
+        // Validate appointment is not in the past (allow same-day appointments)
+        if (appointment.StartTime.Date < DateTime.UtcNow.Date)
+        {
+            throw new InvalidOperationException("Cannot create appointments in the past");
+        }
+
+        // Check for time slot availability
+        if (!await IsTimeSlotAvailableAsync(appointment.BranchId, appointment.ProviderId, appointment.StartTime, appointment.EndTime))
+        {
+            throw new InvalidOperationException("The requested time slot is not available");
+        }
+
         _context.Appointments.Add(appointment);
         await _context.SaveChangesAsync();
         return appointment;
@@ -145,12 +163,36 @@ public class AppointmentService : IAppointmentService
 
     #region Appointment Status Management
 
+    // Valid status transitions state machine
+    private static readonly Dictionary<AppointmentStatus, AppointmentStatus[]> ValidTransitions = new()
+    {
+        { AppointmentStatus.Scheduled, new[] { AppointmentStatus.Confirmed, AppointmentStatus.Cancelled } },
+        { AppointmentStatus.Confirmed, new[] { AppointmentStatus.CheckedIn, AppointmentStatus.Cancelled, AppointmentStatus.NoShow } },
+        { AppointmentStatus.CheckedIn, new[] { AppointmentStatus.InProgress, AppointmentStatus.Cancelled } },
+        { AppointmentStatus.InProgress, new[] { AppointmentStatus.Completed, AppointmentStatus.Cancelled } },
+        { AppointmentStatus.Completed, Array.Empty<AppointmentStatus>() }, // Terminal state
+        { AppointmentStatus.Cancelled, Array.Empty<AppointmentStatus>() }, // Terminal state
+        { AppointmentStatus.NoShow, Array.Empty<AppointmentStatus>() } // Terminal state
+    };
+
+    private static void ValidateStatusTransition(AppointmentStatus currentStatus, AppointmentStatus newStatus)
+    {
+        if (!ValidTransitions.TryGetValue(currentStatus, out var allowedStatuses) ||
+            !allowedStatuses.Contains(newStatus))
+        {
+            throw new InvalidOperationException(
+                $"Cannot transition from {currentStatus} to {newStatus}. " +
+                $"Valid transitions from {currentStatus}: {string.Join(", ", ValidTransitions.GetValueOrDefault(currentStatus, Array.Empty<AppointmentStatus>()))}");
+        }
+    }
+
     public async Task ConfirmAppointmentAsync(int appointmentId)
     {
         var appointment = await _context.Appointments.FindAsync(appointmentId);
         if (appointment == null)
             throw new KeyNotFoundException($"Appointment with ID {appointmentId} not found");
 
+        ValidateStatusTransition(appointment.Status, AppointmentStatus.Confirmed);
         appointment.Status = AppointmentStatus.Confirmed;
         await _context.SaveChangesAsync();
     }
@@ -161,6 +203,7 @@ public class AppointmentService : IAppointmentService
         if (appointment == null)
             throw new KeyNotFoundException($"Appointment with ID {appointmentId} not found");
 
+        ValidateStatusTransition(appointment.Status, AppointmentStatus.Cancelled);
         appointment.Status = AppointmentStatus.Cancelled;
         if (!string.IsNullOrWhiteSpace(reason))
         {
@@ -177,6 +220,7 @@ public class AppointmentService : IAppointmentService
         if (appointment == null)
             throw new KeyNotFoundException($"Appointment with ID {appointmentId} not found");
 
+        ValidateStatusTransition(appointment.Status, AppointmentStatus.CheckedIn);
         appointment.Status = AppointmentStatus.CheckedIn;
         await _context.SaveChangesAsync();
     }
@@ -186,6 +230,13 @@ public class AppointmentService : IAppointmentService
         var appointment = await _context.Appointments.FindAsync(appointmentId);
         if (appointment == null)
             throw new KeyNotFoundException($"Appointment with ID {appointmentId} not found");
+
+        // Allow completion from CheckedIn or InProgress
+        if (appointment.Status != AppointmentStatus.CheckedIn && appointment.Status != AppointmentStatus.InProgress)
+        {
+            throw new InvalidOperationException(
+                $"Cannot complete appointment from {appointment.Status}. Appointment must be CheckedIn or InProgress.");
+        }
 
         appointment.Status = AppointmentStatus.Completed;
         await _context.SaveChangesAsync();
@@ -197,6 +248,7 @@ public class AppointmentService : IAppointmentService
         if (appointment == null)
             throw new KeyNotFoundException($"Appointment with ID {appointmentId} not found");
 
+        ValidateStatusTransition(appointment.Status, AppointmentStatus.NoShow);
         appointment.Status = AppointmentStatus.NoShow;
         await _context.SaveChangesAsync();
     }

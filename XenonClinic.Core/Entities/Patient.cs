@@ -20,7 +20,7 @@ using XenonClinic.Core.Entities.SleepMedicine;
 
 namespace XenonClinic.Core.Entities;
 
-public class Patient
+public class Patient : ISoftDelete
 {
     public int Id { get; set; }
     public int BranchId { get; set; }
@@ -33,6 +33,11 @@ public class Patient
     public string? Email { get; set; }
     public string? HearingLossType { get; set; }
     public string? Notes { get; set; }
+
+    // Soft delete support for healthcare compliance
+    public bool IsDeleted { get; set; }
+    public DateTime? DeletedAt { get; set; }
+    public string? DeletedBy { get; set; }
 
     public Branch? Branch { get; set; }
     public ICollection<Appointment> Appointments { get; set; } = new List<Appointment>();
@@ -182,4 +187,10 @@ public class Patient
     public ICollection<PodiatryProcedure> PodiatryProcedures { get; set; } = new List<PodiatryProcedure>();
     public ICollection<OrthoticPrescription> OrthoticPrescriptions { get; set; } = new List<OrthoticPrescription>();
     public ICollection<FootCondition> FootConditions { get; set; } = new List<FootCondition>();
+
+    // Audit fields
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public string? CreatedBy { get; set; }
+    public DateTime? UpdatedAt { get; set; }
+    public string? UpdatedBy { get; set; }
 }

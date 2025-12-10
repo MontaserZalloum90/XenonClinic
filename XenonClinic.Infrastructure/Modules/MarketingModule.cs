@@ -53,7 +53,7 @@ public class MarketingModule : ModuleBase
             entity.Property(e => e.Content).HasColumnType("nvarchar(max)");
             entity.Property(e => e.CallToAction).HasMaxLength(200);
             entity.Property(e => e.CreatedBy).IsRequired().HasMaxLength(100);
-            entity.Property(e => e.LastModifiedBy).HasMaxLength(100);
+            entity.Property(e => e.UpdatedBy).HasMaxLength(100);
             entity.Property(e => e.Budget).HasPrecision(18, 2);
             entity.Property(e => e.ActualSpend).HasPrecision(18, 2);
             entity.Property(e => e.Revenue).HasPrecision(18, 2);
@@ -102,7 +102,7 @@ public class MarketingModule : ModuleBase
             entity.Property(e => e.Notes).HasMaxLength(2000);
             entity.Property(e => e.Tags).HasMaxLength(500);
             entity.Property(e => e.CreatedBy).IsRequired().HasMaxLength(100);
-            entity.Property(e => e.LastModifiedBy).HasMaxLength(100);
+            entity.Property(e => e.UpdatedBy).HasMaxLength(100);
             entity.Property(e => e.EstimatedValue).HasPrecision(18, 2);
             entity.Property(e => e.ActualValue).HasPrecision(18, 2);
 
@@ -150,7 +150,7 @@ public class MarketingModule : ModuleBase
             entity.Property(e => e.InternalNotes).HasMaxLength(2000);
             entity.Property(e => e.AttachmentIds).HasMaxLength(500);
             entity.Property(e => e.CreatedBy).IsRequired().HasMaxLength(100);
-            entity.Property(e => e.LastModifiedBy).HasMaxLength(100);
+            entity.Property(e => e.UpdatedBy).HasMaxLength(100);
 
             entity.HasOne(e => e.Lead)
                 .WithMany(l => l.Activities)

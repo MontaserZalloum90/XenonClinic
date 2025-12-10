@@ -28,7 +28,6 @@ public class SkinTreatmentPlan
     public string Status { get; set; } = "Draft";
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-    public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
     public DateTime? StartDate { get; set; }
     public DateTime? ExpectedEndDate { get; set; }
     public DateTime? ActualEndDate { get; set; }

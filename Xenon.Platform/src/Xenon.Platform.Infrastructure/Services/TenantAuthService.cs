@@ -63,18 +63,9 @@ public class TenantAuthService : ITenantAuthService
                 TrialDays = 30
             });
 
-            // Provision database in background
-            _ = Task.Run(async () =>
-            {
-                try
-                {
-                    await _provisioningService.ProvisionTenantDatabase(tenant.Id);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Failed to provision database for tenant {TenantId}", tenant.Id);
-                }
-            });
+            // Provision database in background with proper tracking
+            // Note: In production, this should use a job queue (Hangfire/Quartz) for better reliability
+            _ = ProvisionTenantDatabaseAsync(tenant.Id);
 
             await _auditService.LogAsync("TenantCreated", "Tenant", tenant.Id,
                 newValues: new { tenant.Name, tenant.Slug, tenant.ContactEmail });
@@ -260,5 +251,42 @@ public class TenantAuthService : ITenantAuthService
     public async Task<bool> IsSlugAvailableAsync(string slug)
     {
         return await _provisioningService.IsSlugAvailable(slug);
+    }
+
+    /// <summary>
+    /// Provisions tenant database with proper error tracking.
+    /// In production, this should be replaced with a job queue (Hangfire/Quartz) for reliability.
+    /// </summary>
+    private async Task ProvisionTenantDatabaseAsync(Guid tenantId)
+    {
+        try
+        {
+            _logger.LogInformation("Starting database provisioning for tenant {TenantId}", tenantId);
+
+            await _provisioningService.ProvisionTenantDatabase(tenantId);
+
+            // Update tenant provisioning status
+            var tenant = await _context.Tenants.FindAsync(tenantId);
+            if (tenant != null)
+            {
+                tenant.IsDatabaseProvisioned = true;
+                tenant.DatabaseProvisionedAt = DateTime.UtcNow;
+                await _context.SaveChangesAsync();
+            }
+
+            await _auditService.LogAsync("DatabaseProvisioned", "Tenant", tenantId,
+                newValues: new { ProvisionedAt = DateTime.UtcNow });
+
+            _logger.LogInformation("Database provisioning completed for tenant {TenantId}", tenantId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to provision database for tenant {TenantId}. Manual intervention required.", tenantId);
+
+            await _auditService.LogAsync("DatabaseProvisioningFailed", "Tenant", tenantId,
+                newValues: new { Error = ex.Message }, isSuccess: false, errorMessage: ex.Message);
+
+            // In production: Enqueue a retry job or trigger an alert
+        }
     }
 }

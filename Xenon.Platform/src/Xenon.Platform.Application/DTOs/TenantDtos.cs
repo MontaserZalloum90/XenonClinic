@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace Xenon.Platform.Application.DTOs;
 
 #region Admin Tenant Management
@@ -24,10 +26,19 @@ public record TenantListItemDto
 
 public record TenantListQuery
 {
+    [StringLength(200, ErrorMessage = "Search term cannot exceed 200 characters")]
     public string? Search { get; init; }
+
+    [StringLength(50, ErrorMessage = "Status filter cannot exceed 50 characters")]
     public string? Status { get; init; }
+
+    [StringLength(50, ErrorMessage = "CompanyType filter cannot exceed 50 characters")]
     public string? CompanyType { get; init; }
+
+    [Range(1, int.MaxValue, ErrorMessage = "Page must be at least 1")]
     public int Page { get; init; } = 1;
+
+    [Range(1, 100, ErrorMessage = "PageSize must be between 1 and 100")]
     public int PageSize { get; init; } = 20;
 }
 
@@ -128,12 +139,16 @@ public record TenantUsageHistoryDto
 
 public record SuspendTenantRequest
 {
+    [StringLength(500, ErrorMessage = "Reason cannot exceed 500 characters")]
     public string? Reason { get; init; }
 }
 
 public record ExtendTrialRequest
 {
+    [Range(1, 90, ErrorMessage = "Trial extension must be between 1 and 90 days")]
     public int Days { get; init; } = 14;
+
+    [StringLength(500, ErrorMessage = "Reason cannot exceed 500 characters")]
     public string? Reason { get; init; }
 }
 
@@ -148,6 +163,7 @@ public record ExtendTrialResponse
 
 public record TenantUsageQuery
 {
+    [Range(1, 365, ErrorMessage = "Days must be between 1 and 365")]
     public int Days { get; init; } = 30;
 }
 
@@ -265,7 +281,10 @@ public record LicenseSubscriptionDto
 
 public record UsageUpdateRequest
 {
+    [Range(0, 1000, ErrorMessage = "CurrentBranches must be between 0 and 1000")]
     public int? CurrentBranches { get; init; }
+
+    [Range(0, 10000, ErrorMessage = "CurrentUsers must be between 0 and 10000")]
     public int? CurrentUsers { get; init; }
 }
 

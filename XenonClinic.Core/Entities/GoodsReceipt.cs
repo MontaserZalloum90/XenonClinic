@@ -49,9 +49,9 @@ public class GoodsReceipt
     public string CreatedBy { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
+    public DateTime? UpdatedAt { get; set; }
     [MaxLength(450)]
-    public string? LastModifiedBy { get; set; }
-    public DateTime? LastModifiedAt { get; set; }
+    public string? UpdatedBy { get; set; }
 
     // Navigation properties
     public ICollection<GoodsReceiptItem> Items { get; set; } = new List<GoodsReceiptItem>();

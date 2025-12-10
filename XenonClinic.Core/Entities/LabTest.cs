@@ -53,13 +53,13 @@ public class LabTest
     public int BranchId { get; set; }
     public Branch? Branch { get; set; }
 
-    public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     [Required]
     [MaxLength(450)]
     public string CreatedBy { get; set; } = string.Empty;
 
+    public DateTime? UpdatedAt { get; set; }
     [MaxLength(450)]
-    public string? LastModifiedBy { get; set; }
-    public DateTime? LastModifiedAt { get; set; }
+    public string? UpdatedBy { get; set; }
 }
