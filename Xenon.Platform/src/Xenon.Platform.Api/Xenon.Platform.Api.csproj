@@ -21,6 +21,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Xenon.Platform.Application\Xenon.Platform.Application.csproj" />
     <ProjectReference Include="..\Xenon.Platform.Infrastructure\Xenon.Platform.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\..\XenonClinic.WorkflowEngine\XenonClinic.WorkflowEngine.csproj" />
   </ItemGroup>
 
 </Project>
