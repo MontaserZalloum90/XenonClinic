@@ -201,8 +201,8 @@ public class TenantService : ITenantService
         }
 
         var user = await GetCurrentUserAsync();
-        settings.LastModifiedAt = DateTime.UtcNow;
-        settings.LastModifiedBy = user?.Id;
+        settings.UpdatedAt = DateTime.UtcNow;
+        settings.UpdatedBy = user?.Id;
 
         _context.TenantSettings.Update(settings);
         await _context.SaveChangesAsync();

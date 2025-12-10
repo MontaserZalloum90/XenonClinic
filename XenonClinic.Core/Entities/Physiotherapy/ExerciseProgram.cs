@@ -27,7 +27,6 @@ public class ExerciseProgram
     /// </summary>
     public string Status { get; set; } = "Active";
 
-    public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
     public DateTime? StartDate { get; set; }
     public DateTime? EndDate { get; set; }
 

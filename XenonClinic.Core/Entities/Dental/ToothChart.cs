@@ -34,8 +34,6 @@ public class ToothChart
     public string? CreatedBy { get; set; }
     public DateTime? UpdatedAt { get; set; }
     public string? UpdatedBy { get; set; }
-    public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
-    public DateTime LastUpdated { get; set; } = DateTime.UtcNow;
 
     public Patient? Patient { get; set; }
     public Branch? Branch { get; set; }

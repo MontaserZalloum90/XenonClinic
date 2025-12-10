@@ -8,7 +8,12 @@ public class Department
     public int BranchId { get; set; }
     public int? ManagerId { get; set; } // Employee who manages this department
     public bool IsActive { get; set; } = true;
-    public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
+
+    // Audit fields
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public string? CreatedBy { get; set; }
+    public DateTime? UpdatedAt { get; set; }
+    public string? UpdatedBy { get; set; }
 
     // Navigation properties
     public Branch Branch { get; set; } = null!;

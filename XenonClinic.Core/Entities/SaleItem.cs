@@ -39,4 +39,8 @@ public class SaleItem
 
     // Notes
     public string? Notes { get; set; }
+
+    // Audit fields
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public string? CreatedBy { get; set; }
 }

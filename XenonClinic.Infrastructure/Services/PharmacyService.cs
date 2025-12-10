@@ -159,7 +159,7 @@ public class PharmacyService : IPharmacyService
             throw new KeyNotFoundException($"Sale with ID {saleId} not found");
 
         sale.Status = SaleStatus.Confirmed;
-        sale.LastModifiedAt = DateTime.UtcNow;
+        sale.UpdatedAt = DateTime.UtcNow;
         await _context.SaveChangesAsync();
     }
 
@@ -170,7 +170,7 @@ public class PharmacyService : IPharmacyService
             throw new KeyNotFoundException($"Sale with ID {saleId} not found");
 
         sale.Status = SaleStatus.Completed;
-        sale.LastModifiedAt = DateTime.UtcNow;
+        sale.UpdatedAt = DateTime.UtcNow;
         await _context.SaveChangesAsync();
     }
 
@@ -181,7 +181,7 @@ public class PharmacyService : IPharmacyService
             throw new KeyNotFoundException($"Sale with ID {saleId} not found");
 
         sale.Status = SaleStatus.Cancelled;
-        sale.LastModifiedAt = DateTime.UtcNow;
+        sale.UpdatedAt = DateTime.UtcNow;
         await _context.SaveChangesAsync();
     }
 

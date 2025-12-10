@@ -30,7 +30,12 @@ public class PetOwner
 
     public string? Notes { get; set; }
     public bool IsActive { get; set; } = true;
-    public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
+
+    // Audit fields
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public string? CreatedBy { get; set; }
+    public DateTime? UpdatedAt { get; set; }
+    public string? UpdatedBy { get; set; }
 
     public Branch? Branch { get; set; }
     public ICollection<Pet> Pets { get; set; } = new List<Pet>();

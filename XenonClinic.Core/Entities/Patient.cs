@@ -182,4 +182,10 @@ public class Patient
     public ICollection<PodiatryProcedure> PodiatryProcedures { get; set; } = new List<PodiatryProcedure>();
     public ICollection<OrthoticPrescription> OrthoticPrescriptions { get; set; } = new List<OrthoticPrescription>();
     public ICollection<FootCondition> FootConditions { get; set; } = new List<FootCondition>();
+
+    // Audit fields
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public string? CreatedBy { get; set; }
+    public DateTime? UpdatedAt { get; set; }
+    public string? UpdatedBy { get; set; }
 }

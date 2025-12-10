@@ -26,4 +26,8 @@ public class InventoryTransaction
     public InventoryItem InventoryItem { get; set; } = null!;
     public Patient? Patient { get; set; }
     public Branch? TransferToBranch { get; set; }
+
+    // Audit fields
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public string? CreatedBy { get; set; }
 }

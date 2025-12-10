@@ -30,8 +30,12 @@ public class InventoryItem
     public DateTime? ExpiryDate { get; set; }
     public string? Notes { get; set; }
     public bool IsActive { get; set; } = true;
-    public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
-    public DateTime? LastModifiedDate { get; set; }
+
+    // Audit fields
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public string? CreatedBy { get; set; }
+    public DateTime? UpdatedAt { get; set; }
+    public string? UpdatedBy { get; set; }
 
     // Navigation properties
     public Branch Branch { get; set; } = null!;

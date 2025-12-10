@@ -15,7 +15,10 @@ public class Attendance
     public decimal? WorkedHours { get; set; }
     public decimal? OvertimeHours { get; set; }
     public string? Notes { get; set; }
-    public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
+
+    // Audit fields
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public string? CreatedBy { get; set; }
 
     // Navigation properties
     public Employee Employee { get; set; } = null!;

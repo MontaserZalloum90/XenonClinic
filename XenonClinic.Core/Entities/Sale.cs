@@ -41,11 +41,11 @@ public class Sale
     public int? QuotationId { get; set; }
     public Quotation? Quotation { get; set; }
 
-    // User who created the sale
+    // Audit fields
     public string CreatedBy { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-    public string? LastModifiedBy { get; set; }
-    public DateTime? LastModifiedAt { get; set; }
+    public DateTime? UpdatedAt { get; set; }
+    public string? UpdatedBy { get; set; }
 
     // Navigation Properties
     public ICollection<SaleItem> Items { get; set; } = new List<SaleItem>();

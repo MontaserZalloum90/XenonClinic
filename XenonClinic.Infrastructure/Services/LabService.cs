@@ -101,7 +101,7 @@ public class LabService : ILabService
 
     public async Task UpdateLabOrderAsync(LabOrder labOrder)
     {
-        labOrder.LastModifiedAt = DateTime.UtcNow;
+        labOrder.UpdatedAt = DateTime.UtcNow;
         _context.LabOrders.Update(labOrder);
         await _context.SaveChangesAsync();
     }
@@ -113,8 +113,8 @@ public class LabService : ILabService
             throw new KeyNotFoundException($"Lab order with ID {labOrderId} not found");
 
         labOrder.Status = status;
-        labOrder.LastModifiedBy = userId;
-        labOrder.LastModifiedAt = DateTime.UtcNow;
+        labOrder.UpdatedBy = userId;
+        labOrder.UpdatedAt = DateTime.UtcNow;
 
         if (status == LabOrderStatus.Completed)
         {
@@ -192,7 +192,7 @@ public class LabService : ILabService
 
     public async Task UpdateLabTestAsync(LabTest labTest)
     {
-        labTest.LastModifiedAt = DateTime.UtcNow;
+        labTest.UpdatedAt = DateTime.UtcNow;
         _context.LabTests.Update(labTest);
         await _context.SaveChangesAsync();
     }
@@ -248,7 +248,7 @@ public class LabService : ILabService
 
     public async Task UpdateLabResultAsync(LabResult labResult)
     {
-        labResult.LastModifiedAt = DateTime.UtcNow;
+        labResult.UpdatedAt = DateTime.UtcNow;
         _context.LabResults.Update(labResult);
         await _context.SaveChangesAsync();
     }
@@ -299,7 +299,7 @@ public class LabService : ILabService
 
     public async Task UpdateExternalLabAsync(ExternalLab externalLab)
     {
-        externalLab.LastModifiedAt = DateTime.UtcNow;
+        externalLab.UpdatedAt = DateTime.UtcNow;
         _context.ExternalLabs.Update(externalLab);
         await _context.SaveChangesAsync();
     }

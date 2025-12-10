@@ -22,7 +22,6 @@ public class DentalTreatmentPlan
     public string Priority { get; set; } = "Medium";
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-    public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
     public DateTime? AcceptedDate { get; set; }
     public DateTime? CompletedDate { get; set; }
     public DateTime? EstimatedCompletionDate { get; set; }
