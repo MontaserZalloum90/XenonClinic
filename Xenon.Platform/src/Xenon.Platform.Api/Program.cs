@@ -138,12 +138,21 @@ builder.Services.AddAuthorization(options =>
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddMemoryCache();
 
+// Infrastructure services
 builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
 builder.Services.AddScoped<IPasswordHashingService, PasswordHashingService>();
 builder.Services.AddScoped<IPricingCalculatorService, PricingCalculatorService>();
 builder.Services.AddScoped<ITenantProvisioningService, TenantProvisioningService>();
 builder.Services.AddScoped<IAuditService, AuditService>();
 builder.Services.AddScoped<IHealthCheckService, HealthCheckService>();
+
+// Application services
+builder.Services.AddScoped<Xenon.Platform.Application.Interfaces.IPlatformAuthService, PlatformAuthService>();
+builder.Services.AddScoped<Xenon.Platform.Application.Interfaces.ITenantAuthService, TenantAuthService>();
+builder.Services.AddScoped<Xenon.Platform.Application.Interfaces.ITenantManagementService, TenantManagementService>();
+builder.Services.AddScoped<Xenon.Platform.Application.Interfaces.IUsageService, UsageService>();
+builder.Services.AddScoped<Xenon.Platform.Application.Interfaces.ILicenseService, LicenseService>();
+builder.Services.AddScoped<Xenon.Platform.Application.Interfaces.IDemoRequestService, DemoRequestService>();
 
 // Background services
 builder.Services.AddHostedService<Xenon.Platform.Api.BackgroundServices.TenantHealthCheckService>();
