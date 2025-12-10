@@ -633,7 +633,11 @@ public class ClinicDbContext : IdentityDbContext<Entities.ApplicationUser>
             .WithMany(b => b.Devices)
             .HasForeignKey(d => d.BranchId);
 
-        // Invoice indexes
+        // Invoice configuration
+        builder.Entity<Invoice>()
+            .HasIndex(i => i.InvoiceNumber)
+            .IsUnique();
+
         builder.Entity<Invoice>()
             .HasIndex(i => i.InvoiceDate);
 
@@ -641,17 +645,48 @@ public class ClinicDbContext : IdentityDbContext<Entities.ApplicationUser>
             .HasIndex(i => i.BranchId);
 
         builder.Entity<Invoice>()
+            .HasIndex(i => i.Status);
+
+        builder.Entity<Invoice>()
             .HasIndex(i => new { i.BranchId, i.InvoiceDate });
 
         builder.Entity<Invoice>()
             .HasOne(i => i.Patient)
             .WithMany(p => p.Invoices)
-            .HasForeignKey(i => i.PatientId);
+            .HasForeignKey(i => i.PatientId)
+            .OnDelete(DeleteBehavior.Restrict);
 
         builder.Entity<Invoice>()
             .HasOne(i => i.Branch)
             .WithMany(b => b.Invoices)
-            .HasForeignKey(i => i.BranchId);
+            .HasForeignKey(i => i.BranchId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<Invoice>()
+            .HasOne(i => i.Sale)
+            .WithMany()
+            .HasForeignKey(i => i.SaleId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        builder.Entity<Invoice>()
+            .Property(i => i.SubTotal)
+            .HasPrecision(18, 2);
+
+        builder.Entity<Invoice>()
+            .Property(i => i.DiscountAmount)
+            .HasPrecision(18, 2);
+
+        builder.Entity<Invoice>()
+            .Property(i => i.TaxAmount)
+            .HasPrecision(18, 2);
+
+        builder.Entity<Invoice>()
+            .Property(i => i.TotalAmount)
+            .HasPrecision(18, 2);
+
+        builder.Entity<Invoice>()
+            .Property(i => i.PaidAmount)
+            .HasPrecision(18, 2);
 
         // Supplier configuration
         builder.Entity<Supplier>()

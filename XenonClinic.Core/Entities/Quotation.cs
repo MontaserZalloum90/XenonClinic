@@ -52,6 +52,21 @@ public class Quotation
     public ICollection<Sale> Sales { get; set; } = new List<Sale>();
 
     // Computed Properties
-    public bool IsExpired => ExpiryDate.HasValue && ExpiryDate.Value < DateTime.UtcNow && Status == QuotationStatus.Sent;
+    /// <summary>
+    /// A quotation is expired if it has passed its expiry date and is still in Draft or Sent status
+    /// (not yet accepted, rejected, or already marked as expired)
+    /// </summary>
+    public bool IsExpired => ExpiryDate.HasValue &&
+                             ExpiryDate.Value < DateTime.UtcNow &&
+                             (Status == QuotationStatus.Draft || Status == QuotationStatus.Sent);
+
+    /// <summary>
+    /// A quotation is active if it's sent, not expired, and hasn't been accepted/rejected
+    /// </summary>
     public bool IsActive => Status == QuotationStatus.Sent && !IsExpired;
+
+    /// <summary>
+    /// A quotation can be converted to a sale only if it's been accepted
+    /// </summary>
+    public bool CanConvertToSale => Status == QuotationStatus.Accepted;
 }
