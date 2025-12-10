@@ -94,6 +94,9 @@ public class ClinicDbContext : IdentityDbContext<Entities.ApplicationUser>
     // Audit Logging
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
 
+    // OAuth Linked Accounts
+    public DbSet<OAuthLinkedAccount> OAuthLinkedAccounts => Set<OAuthLinkedAccount>();
+
     // ========================================
     // Dental Clinic Entities
     // ========================================
@@ -1801,6 +1804,34 @@ public class ClinicDbContext : IdentityDbContext<Entities.ApplicationUser>
         builder.Entity<AuditLog>()
             .Property(a => a.ModuleName)
             .HasMaxLength(100);
+
+        // ========================================
+        // OAuth Linked Accounts Configuration
+        // ========================================
+
+        builder.Entity<OAuthLinkedAccount>()
+            .HasIndex(o => new { o.UserId, o.Provider })
+            .IsUnique();
+
+        builder.Entity<OAuthLinkedAccount>()
+            .HasIndex(o => new { o.Provider, o.ProviderUserId })
+            .IsUnique();
+
+        builder.Entity<OAuthLinkedAccount>()
+            .Property(o => o.UserId)
+            .HasMaxLength(450);
+
+        builder.Entity<OAuthLinkedAccount>()
+            .Property(o => o.Provider)
+            .HasMaxLength(50);
+
+        builder.Entity<OAuthLinkedAccount>()
+            .Property(o => o.ProviderUserId)
+            .HasMaxLength(500);
+
+        builder.Entity<OAuthLinkedAccount>()
+            .Property(o => o.ProviderEmail)
+            .HasMaxLength(255);
 
         // ========================================
         // Dental Clinic Configuration
