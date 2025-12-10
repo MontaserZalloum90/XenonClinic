@@ -1,13 +1,21 @@
 using XenonClinic.Core.Enums;
+using XenonClinic.Core.Interfaces;
 
 namespace XenonClinic.Core.Entities;
 
 /// <summary>
 /// Represents a payment transaction for a sale
 /// </summary>
-public class Payment
+public class Payment : IBranchEntity
 {
     public int Id { get; set; }
+
+    /// <summary>
+    /// Branch ID for multi-tenant data isolation.
+    /// Required for all transactional entities.
+    /// </summary>
+    public int BranchId { get; set; }
+    public Branch? Branch { get; set; }
 
     // Payment Information
     public string PaymentNumber { get; set; } = string.Empty;

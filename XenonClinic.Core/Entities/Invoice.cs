@@ -1,11 +1,12 @@
 using XenonClinic.Core.Enums;
+using XenonClinic.Core.Interfaces;
 
 namespace XenonClinic.Core.Entities;
 
 /// <summary>
 /// Represents an invoice for billing purposes
 /// </summary>
-public class Invoice
+public class Invoice : IBranchEntity
 {
     public int Id { get; set; }
 

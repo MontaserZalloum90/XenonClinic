@@ -1,8 +1,18 @@
+using XenonClinic.Core.Interfaces;
+
 namespace XenonClinic.Core.Entities;
 
-public class JobPosition
+public class JobPosition : IBranchEntity
 {
     public int Id { get; set; }
+
+    /// <summary>
+    /// Branch ID for multi-tenant data isolation.
+    /// Required for all transactional entities.
+    /// </summary>
+    public int BranchId { get; set; }
+    public Branch? Branch { get; set; }
+
     public string Title { get; set; } = string.Empty;
     public string? Description { get; set; }
     public decimal MinSalary { get; set; }

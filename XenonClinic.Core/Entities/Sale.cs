@@ -1,11 +1,12 @@
 using XenonClinic.Core.Enums;
+using XenonClinic.Core.Interfaces;
 
 namespace XenonClinic.Core.Entities;
 
 /// <summary>
 /// Represents a sales transaction/invoice
 /// </summary>
-public class Sale
+public class Sale : IBranchEntity
 {
     public int Id { get; set; }
 

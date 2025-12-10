@@ -1,8 +1,9 @@
 using XenonClinic.Core.Enums;
+using XenonClinic.Core.Interfaces;
 
 namespace XenonClinic.Core.Entities;
 
-public class Employee
+public class Employee : IBranchEntity
 {
     public int Id { get; set; }
 

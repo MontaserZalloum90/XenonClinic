@@ -17,10 +17,11 @@ using XenonClinic.Core.Entities.Physiotherapy;
 using XenonClinic.Core.Entities.Podiatry;
 using XenonClinic.Core.Entities.Psychiatry;
 using XenonClinic.Core.Entities.SleepMedicine;
+using XenonClinic.Core.Interfaces;
 
 namespace XenonClinic.Core.Entities;
 
-public class Patient : ISoftDelete
+public class Patient : ISoftDelete, IBranchEntity
 {
     public int Id { get; set; }
     public int BranchId { get; set; }
