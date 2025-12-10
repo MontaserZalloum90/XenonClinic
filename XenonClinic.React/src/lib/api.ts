@@ -106,6 +106,82 @@ export const financialApi = {
   getStatistics: () => api.get('/api/FinancialApi/statistics'),
 };
 
+// ============================================
+// SALES API ENDPOINTS
+// ============================================
+
+export const salesApi = {
+  // Sales
+  getAllSales: () => api.get('/api/SalesApi/sales'),
+  getSaleById: (id: number) => api.get(`/api/SalesApi/sales/${id}`),
+  getSaleByInvoiceNumber: (invoiceNumber: string) =>
+    api.get(`/api/SalesApi/sales/invoice/${encodeURIComponent(invoiceNumber)}`),
+  getSalesByPatient: (patientId: number) => api.get(`/api/SalesApi/sales/patient/${patientId}`),
+  getSalesByStatus: (status: number) => api.get(`/api/SalesApi/sales/status/${status}`),
+  getSalesByPaymentStatus: (status: number) => api.get(`/api/SalesApi/sales/payment-status/${status}`),
+  getSalesByDateRange: (startDate: string, endDate: string) =>
+    api.get('/api/SalesApi/sales/date-range', { params: { startDate, endDate } }),
+  getOverdueSales: () => api.get('/api/SalesApi/sales/overdue'),
+  createSale: (data: any) => api.post('/api/SalesApi/sales', data),
+  updateSale: (id: number, data: any) => api.put(`/api/SalesApi/sales/${id}`, data),
+  deleteSale: (id: number) => api.delete(`/api/SalesApi/sales/${id}`),
+  confirmSale: (id: number) => api.post(`/api/SalesApi/sales/${id}/confirm`),
+  completeSale: (id: number) => api.post(`/api/SalesApi/sales/${id}/complete`),
+  cancelSale: (id: number, reason?: string) =>
+    api.post(`/api/SalesApi/sales/${id}/cancel`, { reason }),
+
+  // Sale Items
+  getSaleItems: (saleId: number) => api.get(`/api/SalesApi/sales/${saleId}/items`),
+  addSaleItem: (saleId: number, data: any) => api.post(`/api/SalesApi/sales/${saleId}/items`, data),
+  updateSaleItem: (saleId: number, itemId: number, data: any) =>
+    api.put(`/api/SalesApi/sales/${saleId}/items/${itemId}`, data),
+  deleteSaleItem: (saleId: number, itemId: number) =>
+    api.delete(`/api/SalesApi/sales/${saleId}/items/${itemId}`),
+
+  // Payments
+  getPaymentsBySale: (saleId: number) => api.get(`/api/SalesApi/sales/${saleId}/payments`),
+  recordPayment: (saleId: number, data: any) =>
+    api.post(`/api/SalesApi/sales/${saleId}/payments`, data),
+  getPaymentById: (id: number) => api.get(`/api/SalesApi/payments/${id}`),
+  updatePayment: (id: number, data: any) => api.put(`/api/SalesApi/payments/${id}`, data),
+  deletePayment: (id: number) => api.delete(`/api/SalesApi/payments/${id}`),
+  refundPayment: (id: number, amount: number, reason?: string) =>
+    api.post(`/api/SalesApi/payments/${id}/refund`, { amount, reason }),
+
+  // Statistics
+  getStatistics: (startDate?: string, endDate?: string) =>
+    api.get('/api/SalesApi/statistics', { params: { startDate, endDate } }),
+};
+
+export const quotationsApi = {
+  // Quotations
+  getAll: () => api.get('/api/SalesApi/quotations'),
+  getById: (id: number) => api.get(`/api/SalesApi/quotations/${id}`),
+  getByNumber: (quotationNumber: string) =>
+    api.get(`/api/SalesApi/quotations/number/${encodeURIComponent(quotationNumber)}`),
+  getByPatient: (patientId: number) => api.get(`/api/SalesApi/quotations/patient/${patientId}`),
+  getByStatus: (status: number) => api.get(`/api/SalesApi/quotations/status/${status}`),
+  getActive: () => api.get('/api/SalesApi/quotations/active'),
+  getExpired: () => api.get('/api/SalesApi/quotations/expired'),
+  create: (data: any) => api.post('/api/SalesApi/quotations', data),
+  update: (id: number, data: any) => api.put(`/api/SalesApi/quotations/${id}`, data),
+  delete: (id: number) => api.delete(`/api/SalesApi/quotations/${id}`),
+  send: (id: number) => api.post(`/api/SalesApi/quotations/${id}/send`),
+  accept: (id: number) => api.post(`/api/SalesApi/quotations/${id}/accept`),
+  reject: (id: number, reason?: string) =>
+    api.post(`/api/SalesApi/quotations/${id}/reject`, { reason }),
+  convertToSale: (id: number) => api.post(`/api/SalesApi/quotations/${id}/convert`),
+
+  // Quotation Items
+  getItems: (quotationId: number) => api.get(`/api/SalesApi/quotations/${quotationId}/items`),
+  addItem: (quotationId: number, data: any) =>
+    api.post(`/api/SalesApi/quotations/${quotationId}/items`, data),
+  updateItem: (quotationId: number, itemId: number, data: any) =>
+    api.put(`/api/SalesApi/quotations/${quotationId}/items/${itemId}`, data),
+  deleteItem: (quotationId: number, itemId: number) =>
+    api.delete(`/api/SalesApi/quotations/${quotationId}/items/${itemId}`),
+};
+
 export const inventoryApi = {
   getAllItems: () => api.get('/api/InventoryApi/items'),
   getById: (id: number) => api.get(`/api/InventoryApi/items/${id}`),

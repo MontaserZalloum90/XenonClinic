@@ -11,14 +11,14 @@ using XenonClinic.Infrastructure.Services;
 namespace XenonClinic.Infrastructure.Modules;
 
 /// <summary>
-/// Sales Module - Sales orders, quotations, and revenue management
+/// Sales Module - Sales orders, quotations, payments, and revenue management
 /// </summary>
 public class SalesModule : ModuleBase
 {
     public override string Name => ModuleNames.Sales;
     public override string DisplayName => "Sales Management";
     public override string Version => "1.0.0";
-    public override string Description => "Sales orders, quotations, customer management, sales invoicing, and sales analytics";
+    public override string Description => "Sales orders, quotations, payments, customer management, sales invoicing, and sales analytics";
     public override string Category => ModuleNames.Categories.Financial;
     public override string? IconClass => "bi-cart-check";
     public override int DisplayOrder => 35;
@@ -26,14 +26,16 @@ public class SalesModule : ModuleBase
     public override void ConfigureServices(IServiceCollection services, IConfiguration configuration)
     {
         // Register Sales services
-        services.AddScoped<IPharmacyService, PharmacyService>();
+        services.AddScoped<ISalesService, SalesService>();
         Console.WriteLine($"[Module] {DisplayName} v{Version} - Services registered");
     }
 
     public override void ConfigureDatabase(ModelBuilder modelBuilder)
     {
-        // Sales entities will be configured here when implemented
-        // Examples: SalesOrder, SalesOrderLine, Quotation, Customer, SalesInvoice
+        // Sales entities are configured in ClinicDbContext:
+        // - Sale, SaleItem (sales transactions with line items)
+        // - Payment (payment records for sales)
+        // - Quotation, QuotationItem (pre-sales estimates)
         Console.WriteLine($"[Module] {DisplayName} - Database entities configured");
     }
 
