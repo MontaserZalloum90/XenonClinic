@@ -69,8 +69,9 @@ public class PasswordResetService : IPasswordResetService
         var tokenKey = $"reset_token_{email}";
         _cache.Set(tokenKey, new ResetTokenData(hashedToken, expiresAt), TimeSpan.FromMinutes(_policy.ResetTokenExpiryMinutes));
 
-        // Send email with reset link
-        var resetLink = $"https://app.xenonclinic.com/reset-password?email={Uri.EscapeDataString(email)}&token={Uri.EscapeDataString(token)}";
+        // Send email with reset link (using configurable base URL)
+        var baseUrl = _policy.ResetPasswordBaseUrl.TrimEnd('/');
+        var resetLink = $"{baseUrl}/reset-password?email={Uri.EscapeDataString(email)}&token={Uri.EscapeDataString(token)}";
 
         await _emailService.SendAsync(new EmailMessage
         {

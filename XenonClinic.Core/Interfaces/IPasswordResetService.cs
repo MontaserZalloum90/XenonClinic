@@ -82,4 +82,5 @@ public class PasswordPolicy
     public int PasswordHistoryCount { get; set; } = 5; // Prevent reuse of last N passwords
     public int ResetTokenExpiryMinutes { get; set; } = 60;
     public int MaxResetAttemptsPerHour { get; set; } = 5;
+    public string ResetPasswordBaseUrl { get; set; } = "https://app.xenonclinic.com";
 }

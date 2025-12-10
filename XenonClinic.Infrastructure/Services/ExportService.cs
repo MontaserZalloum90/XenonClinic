@@ -183,15 +183,31 @@ public class ExportService : IExportService
     {
         if (string.IsNullOrEmpty(value)) return options.QuoteAllFields ? "\"\"" : "";
 
+        // CSV formula injection protection: prefix dangerous characters with single quote
+        // This prevents spreadsheet applications from interpreting content as formulas
+        var sanitizedValue = value;
+        if (value.Length > 0 && IsFormulaPrefix(value[0]))
+        {
+            sanitizedValue = "'" + value;
+        }
+
         var needsQuotes = options.QuoteAllFields ||
-                          value.Contains(options.Delimiter) ||
-                          value.Contains('"') ||
-                          value.Contains('\n') ||
-                          value.Contains('\r');
+                          sanitizedValue.Contains(options.Delimiter) ||
+                          sanitizedValue.Contains('"') ||
+                          sanitizedValue.Contains('\n') ||
+                          sanitizedValue.Contains('\r');
 
-        if (!needsQuotes) return value;
+        if (!needsQuotes) return sanitizedValue;
 
-        return $"\"{value.Replace("\"", "\"\"")}\"";
+        return $"\"{sanitizedValue.Replace("\"", "\"\"")}\"";
+    }
+
+    /// <summary>
+    /// Checks if a character is a formula prefix that could trigger CSV injection.
+    /// </summary>
+    private static bool IsFormulaPrefix(char c)
+    {
+        return c == '=' || c == '+' || c == '-' || c == '@' || c == '\t' || c == '\r' || c == '\n';
     }
 
     private static string EscapeXml(string value)

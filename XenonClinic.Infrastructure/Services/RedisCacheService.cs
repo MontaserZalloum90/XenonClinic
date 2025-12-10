@@ -62,9 +62,24 @@ public class RedisCacheService : ICacheService
             _logger.LogDebug("Cache hit for key: {Key}", key);
             return JsonSerializer.Deserialize<T>(cachedValue, _jsonOptions);
         }
+        catch (OperationCanceledException)
+        {
+            _logger.LogDebug("Cache operation cancelled for key: {Key}", key);
+            throw;
+        }
+        catch (JsonException ex)
+        {
+            _logger.LogWarning(ex, "JSON deserialization error for cache key: {Key}", key);
+            return default;
+        }
+        catch (InvalidOperationException ex)
+        {
+            _logger.LogWarning(ex, "Invalid operation retrieving cache key: {Key}", key);
+            return default;
+        }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Error retrieving cache key: {Key}", key);
+            _logger.LogError(ex, "Unexpected error retrieving cache key: {Key}", key);
             return default;
         }
     }
@@ -86,9 +101,22 @@ public class RedisCacheService : ICacheService
 
             _logger.LogDebug("Cache set for key: {Key}, Expiration: {Expiration}", key, expiration ?? DefaultExpiration);
         }
+        catch (OperationCanceledException)
+        {
+            _logger.LogDebug("Cache set operation cancelled for key: {Key}", key);
+            throw;
+        }
+        catch (JsonException ex)
+        {
+            _logger.LogWarning(ex, "JSON serialization error for cache key: {Key}", key);
+        }
+        catch (InvalidOperationException ex)
+        {
+            _logger.LogWarning(ex, "Invalid operation setting cache key: {Key}", key);
+        }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Error setting cache key: {Key}", key);
+            _logger.LogError(ex, "Unexpected error setting cache key: {Key}", key);
         }
     }
 
@@ -102,9 +130,18 @@ public class RedisCacheService : ICacheService
             await _cache.RemoveAsync(key, cancellationToken);
             _logger.LogDebug("Cache removed for key: {Key}", key);
         }
+        catch (OperationCanceledException)
+        {
+            _logger.LogDebug("Cache remove operation cancelled for key: {Key}", key);
+            throw;
+        }
+        catch (InvalidOperationException ex)
+        {
+            _logger.LogWarning(ex, "Invalid operation removing cache key: {Key}", key);
+        }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Error removing cache key: {Key}", key);
+            _logger.LogError(ex, "Unexpected error removing cache key: {Key}", key);
         }
     }
 
@@ -153,9 +190,19 @@ public class RedisCacheService : ICacheService
             var value = await _cache.GetAsync(key, cancellationToken);
             return value != null;
         }
+        catch (OperationCanceledException)
+        {
+            _logger.LogDebug("Cache exists check cancelled for key: {Key}", key);
+            throw;
+        }
+        catch (InvalidOperationException ex)
+        {
+            _logger.LogWarning(ex, "Invalid operation checking cache key existence: {Key}", key);
+            return false;
+        }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Error checking cache key existence: {Key}", key);
+            _logger.LogError(ex, "Unexpected error checking cache key existence: {Key}", key);
             return false;
         }
     }
