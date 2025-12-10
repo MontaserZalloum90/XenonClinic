@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Xenon.Platform.Application.DTOs;
 using Xenon.Platform.Application.Interfaces;
 
@@ -20,8 +21,16 @@ public class TenantsController : ControllerBase
     /// Create a new trial tenant (signup)
     /// </summary>
     [HttpPost("signup")]
+    [EnableRateLimiting("auth")]
     public async Task<IActionResult> Signup([FromBody] TenantSignupRequest request)
     {
+        // Validate password complexity
+        var passwordValidation = ValidatePasswordComplexity(request.Password);
+        if (!passwordValidation.IsValid)
+        {
+            return BadRequest(new { success = false, error = passwordValidation.Error });
+        }
+
         var result = await _authService.SignupAsync(request);
 
         if (result.IsFailure)
@@ -49,6 +58,7 @@ public class TenantsController : ControllerBase
     /// Tenant login
     /// </summary>
     [HttpPost("login")]
+    [EnableRateLimiting("auth")]
     public async Task<IActionResult> Login([FromBody] TenantLoginRequest request)
     {
         var clientIp = HttpContext.Connection.RemoteIpAddress?.ToString();
@@ -102,6 +112,7 @@ public class TenantsController : ControllerBase
     /// Check if slug is available
     /// </summary>
     [HttpGet("check-slug")]
+    [EnableRateLimiting("public")]
     public async Task<IActionResult> CheckSlug([FromQuery] string slug)
     {
         if (string.IsNullOrWhiteSpace(slug))
@@ -112,5 +123,40 @@ public class TenantsController : ControllerBase
         var isAvailable = await _authService.IsSlugAvailableAsync(slug);
 
         return Ok(new { success = true, data = new { slug, isAvailable } });
+    }
+
+    private static (bool IsValid, string? Error) ValidatePasswordComplexity(string password)
+    {
+        if (string.IsNullOrEmpty(password))
+        {
+            return (false, "Password is required");
+        }
+
+        if (password.Length < 8)
+        {
+            return (false, "Password must be at least 8 characters long");
+        }
+
+        if (!password.Any(char.IsUpper))
+        {
+            return (false, "Password must contain at least one uppercase letter");
+        }
+
+        if (!password.Any(char.IsLower))
+        {
+            return (false, "Password must contain at least one lowercase letter");
+        }
+
+        if (!password.Any(char.IsDigit))
+        {
+            return (false, "Password must contain at least one digit");
+        }
+
+        if (!password.Any(c => !char.IsLetterOrDigit(c)))
+        {
+            return (false, "Password must contain at least one special character");
+        }
+
+        return (true, null);
     }
 }
