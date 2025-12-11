@@ -96,7 +96,7 @@ public class InventoryController : BaseApiController
             var totalCount = filteredItems.Count();
 
             // Apply sorting
-            filteredItems = request.SortBy?.ToLower() switch
+            filteredItems = request.SortBy?.ToLowerInvariant() switch
             {
                 "name" => request.SortDescending ? filteredItems.OrderByDescending(i => i.Name) : filteredItems.OrderBy(i => i.Name),
                 "itemcode" => request.SortDescending ? filteredItems.OrderByDescending(i => i.ItemCode) : filteredItems.OrderBy(i => i.ItemCode),
@@ -642,7 +642,7 @@ public class InventoryController : BaseApiController
             var totalCount = filteredTransactions.Count();
 
             // Apply sorting
-            filteredTransactions = request.SortBy?.ToLower() switch
+            filteredTransactions = request.SortBy?.ToLowerInvariant() switch
             {
                 "amount" => request.SortDescending ? filteredTransactions.OrderByDescending(t => t.TotalAmount) : filteredTransactions.OrderBy(t => t.TotalAmount),
                 "quantity" => request.SortDescending ? filteredTransactions.OrderByDescending(t => t.Quantity) : filteredTransactions.OrderBy(t => t.Quantity),

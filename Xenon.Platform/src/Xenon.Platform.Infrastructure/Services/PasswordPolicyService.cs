@@ -148,7 +148,7 @@ public class PasswordPolicyService : IPasswordPolicyService
     public bool IsCommonPassword(string password)
     {
         return _commonPasswords.Contains(password) ||
-               _commonPasswords.Contains(password.ToLower());
+               _commonPasswords.Contains(password.ToLowerInvariant());
     }
 
     private static bool HasSequentialCharacters(string password, int sequenceLength)

@@ -663,7 +663,7 @@ public class FinancialController : BaseApiController
         var expense = new Expense
         {
             BranchId = branchId.Value,
-            ExpenseNumber = $"EXP-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString()[..8].ToUpper()}",
+            ExpenseNumber = $"EXP-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString()[..8].ToUpperInvariant()}",
             ExpenseDate = dto.ExpenseDate,
             ExpenseCategoryId = dto.ExpenseCategoryId,
             Description = dto.Description,
@@ -938,7 +938,7 @@ public class FinancialController : BaseApiController
         var transaction = new FinancialTransaction
         {
             BranchId = branchId.Value,
-            TransactionNumber = $"TXN-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString()[..8].ToUpper()}",
+            TransactionNumber = $"TXN-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString()[..8].ToUpperInvariant()}",
             TransactionDate = dto.TransactionDate,
             AccountId = dto.AccountId,
             TransactionType = dto.TransactionType,

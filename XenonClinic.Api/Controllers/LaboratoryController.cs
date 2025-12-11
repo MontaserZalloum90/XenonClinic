@@ -81,7 +81,7 @@ public class LaboratoryController : BaseApiController
 
             var totalCount = filteredTests.Count();
 
-            filteredTests = request.SortBy?.ToLower() switch
+            filteredTests = request.SortBy?.ToLowerInvariant() switch
             {
                 "name" => request.SortDescending ? filteredTests.OrderByDescending(t => t.TestName) : filteredTests.OrderBy(t => t.TestName),
                 "code" => request.SortDescending ? filteredTests.OrderByDescending(t => t.TestCode) : filteredTests.OrderBy(t => t.TestCode),
@@ -402,7 +402,7 @@ public class LaboratoryController : BaseApiController
 
             var totalCount = filteredOrders.Count();
 
-            filteredOrders = request.SortBy?.ToLower() switch
+            filteredOrders = request.SortBy?.ToLowerInvariant() switch
             {
                 "ordernumber" => request.SortDescending ? filteredOrders.OrderByDescending(o => o.OrderNumber) : filteredOrders.OrderBy(o => o.OrderNumber),
                 "status" => request.SortDescending ? filteredOrders.OrderByDescending(o => o.Status) : filteredOrders.OrderBy(o => o.Status),

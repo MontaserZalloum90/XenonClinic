@@ -313,7 +313,7 @@ public class MfaService : IMfaService
         using var rng = RandomNumberGenerator.Create();
         var bytes = new byte[5];
         rng.GetBytes(bytes);
-        return Convert.ToHexString(bytes).ToLower();
+        return Convert.ToHexString(bytes).ToLowerInvariant();
     }
 
     private static string HashCode(string code)
