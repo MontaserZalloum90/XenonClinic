@@ -102,9 +102,10 @@ public class WorkflowValidator : IWorkflowValidator
     private void ValidateNodes(WorkflowDesignModel design, List<WorkflowValidationError> errors, List<WorkflowValidationWarning> warnings)
     {
         var nodeIds = new HashSet<string>();
+        var nodes = design.Nodes ?? new List<DesignerNode>();
 
         // Check for start node
-        var startNodes = design.Nodes.Where(n => n.IsStart || n.Type == "start").ToList();
+        var startNodes = nodes.Where(n => n.IsStart || n.Type == "start").ToList();
         if (startNodes.Count == 0)
         {
             errors.Add(new WorkflowValidationError
@@ -125,7 +126,7 @@ public class WorkflowValidator : IWorkflowValidator
         }
 
         // Check for end nodes
-        var endNodes = design.Nodes.Where(n => n.IsEnd || n.Type == "end").ToList();
+        var endNodes = nodes.Where(n => n.IsEnd || n.Type == "end").ToList();
         if (endNodes.Count == 0)
         {
             warnings.Add(new WorkflowValidationWarning
@@ -135,7 +136,7 @@ public class WorkflowValidator : IWorkflowValidator
             });
         }
 
-        foreach (var node in design.Nodes)
+        foreach (var node in nodes)
         {
             // Check for duplicate IDs
             if (!nodeIds.Add(node.Id))
@@ -166,10 +167,13 @@ public class WorkflowValidator : IWorkflowValidator
 
     private void ValidateNodeByType(DesignerNode node, List<WorkflowValidationError> errors, List<WorkflowValidationWarning> warnings)
     {
-        switch (node.Type.ToLowerInvariant())
+        var nodeType = node.Type ?? string.Empty;
+        var config = node.Config ?? new Dictionary<string, object?>();
+
+        switch (nodeType.ToLowerInvariant())
         {
             case "servicetask":
-                if (!node.Config.ContainsKey("serviceType") || string.IsNullOrEmpty(node.Config["serviceType"]?.ToString()))
+                if (!config.ContainsKey("serviceType") || string.IsNullOrEmpty(config["serviceType"]?.ToString()))
                 {
                     errors.Add(new WorkflowValidationError
                     {
@@ -179,7 +183,7 @@ public class WorkflowValidator : IWorkflowValidator
                         PropertyPath = "config.serviceType"
                     });
                 }
-                if (!node.Config.ContainsKey("methodName") || string.IsNullOrEmpty(node.Config["methodName"]?.ToString()))
+                if (!config.ContainsKey("methodName") || string.IsNullOrEmpty(config["methodName"]?.ToString()))
                 {
                     errors.Add(new WorkflowValidationError
                     {
@@ -192,7 +196,7 @@ public class WorkflowValidator : IWorkflowValidator
                 break;
 
             case "subprocess":
-                if (!node.Config.ContainsKey("subWorkflowId") || string.IsNullOrEmpty(node.Config["subWorkflowId"]?.ToString()))
+                if (!config.ContainsKey("subWorkflowId") || string.IsNullOrEmpty(config["subWorkflowId"]?.ToString()))
                 {
                     errors.Add(new WorkflowValidationError
                     {
@@ -206,7 +210,7 @@ public class WorkflowValidator : IWorkflowValidator
 
             case "signalreceive":
             case "signalthrow":
-                if (!node.Config.ContainsKey("signalName") || string.IsNullOrEmpty(node.Config["signalName"]?.ToString()))
+                if (!config.ContainsKey("signalName") || string.IsNullOrEmpty(config["signalName"]?.ToString()))
                 {
                     errors.Add(new WorkflowValidationError
                     {
@@ -219,7 +223,7 @@ public class WorkflowValidator : IWorkflowValidator
                 break;
 
             case "script":
-                if (!node.Config.ContainsKey("script") || string.IsNullOrEmpty(node.Config["script"]?.ToString()))
+                if (!config.ContainsKey("script") || string.IsNullOrEmpty(config["script"]?.ToString()))
                 {
                     errors.Add(new WorkflowValidationError
                     {
@@ -236,9 +240,11 @@ public class WorkflowValidator : IWorkflowValidator
     private void ValidateEdges(WorkflowDesignModel design, List<WorkflowValidationError> errors, List<WorkflowValidationWarning> warnings)
     {
         var edgeIds = new HashSet<string>();
-        var nodeIds = design.Nodes.Select(n => n.Id).ToHashSet();
+        var nodes = design.Nodes ?? new List<DesignerNode>();
+        var edges = design.Edges ?? new List<DesignerEdge>();
+        var nodeIds = nodes.Select(n => n.Id).ToHashSet();
 
-        foreach (var edge in design.Edges)
+        foreach (var edge in edges)
         {
             // Check for duplicate edge IDs
             if (!edgeIds.Add(edge.Id))
@@ -290,12 +296,14 @@ public class WorkflowValidator : IWorkflowValidator
 
     private void ValidateFlowStructure(WorkflowDesignModel design, List<WorkflowValidationError> errors, List<WorkflowValidationWarning> warnings)
     {
-        var nodeIds = design.Nodes.Select(n => n.Id).ToHashSet();
-        var edgesBySource = design.Edges.GroupBy(e => e.Source).ToDictionary(g => g.Key, g => g.ToList());
-        var edgesByTarget = design.Edges.GroupBy(e => e.Target).ToDictionary(g => g.Key, g => g.ToList());
+        var nodes = design.Nodes ?? new List<DesignerNode>();
+        var edges = design.Edges ?? new List<DesignerEdge>();
+        var nodeIds = nodes.Select(n => n.Id).ToHashSet();
+        var edgesBySource = edges.GroupBy(e => e.Source).ToDictionary(g => g.Key, g => g.ToList());
+        var edgesByTarget = edges.GroupBy(e => e.Target).ToDictionary(g => g.Key, g => g.ToList());
 
         // Find start node
-        var startNode = design.Nodes.FirstOrDefault(n => n.IsStart || n.Type == "start");
+        var startNode = nodes.FirstOrDefault(n => n.IsStart || n.Type == "start");
         if (startNode == null) return;
 
         // Check connectivity - all nodes should be reachable from start
@@ -319,7 +327,7 @@ public class WorkflowValidator : IWorkflowValidator
             }
         }
 
-        foreach (var node in design.Nodes)
+        foreach (var node in nodes)
         {
             if (!reachable.Contains(node.Id) && !node.IsStart && node.Type != "start")
             {
@@ -333,7 +341,7 @@ public class WorkflowValidator : IWorkflowValidator
         }
 
         // Check for nodes with no outgoing edges (except end nodes)
-        foreach (var node in design.Nodes)
+        foreach (var node in nodes)
         {
             if (node.Type != "end" && !node.IsEnd)
             {
@@ -350,13 +358,14 @@ public class WorkflowValidator : IWorkflowValidator
         }
 
         // Validate gateway connections
-        foreach (var node in design.Nodes)
+        foreach (var node in nodes)
         {
-            if (node.Type.EndsWith("Gateway", StringComparison.OrdinalIgnoreCase))
+            var nodeType = node.Type ?? string.Empty;
+            if (nodeType.EndsWith("Gateway", StringComparison.OrdinalIgnoreCase))
             {
                 var outgoing = edgesBySource.GetValueOrDefault(node.Id) ?? new List<DesignerEdge>();
 
-                if (node.Type.Equals("exclusiveGateway", StringComparison.OrdinalIgnoreCase))
+                if (nodeType.Equals("exclusiveGateway", StringComparison.OrdinalIgnoreCase))
                 {
                     // Exclusive gateway should have conditions or default
                     var hasDefault = outgoing.Any(e => e.IsDefault);
@@ -379,8 +388,10 @@ public class WorkflowValidator : IWorkflowValidator
     private void ValidateParameters(WorkflowDesignModel design, List<WorkflowValidationError> errors, List<WorkflowValidationWarning> warnings)
     {
         var paramNames = new HashSet<string>();
+        var inputParams = design.InputParameters ?? new List<ParameterDefinition>();
+        var outputParams = design.OutputParameters ?? new List<ParameterDefinition>();
 
-        foreach (var param in design.InputParameters)
+        foreach (var param in inputParams)
         {
             if (string.IsNullOrWhiteSpace(param.Name))
             {
@@ -403,7 +414,7 @@ public class WorkflowValidator : IWorkflowValidator
         }
 
         paramNames.Clear();
-        foreach (var param in design.OutputParameters)
+        foreach (var param in outputParams)
         {
             if (string.IsNullOrWhiteSpace(param.Name))
             {
@@ -428,7 +439,9 @@ public class WorkflowValidator : IWorkflowValidator
 
     private void ValidateTriggers(WorkflowDesignModel design, List<WorkflowValidationError> errors, List<WorkflowValidationWarning> warnings)
     {
-        foreach (var trigger in design.Triggers)
+        var triggers = design.Triggers ?? new List<TriggerDefinition>();
+
+        foreach (var trigger in triggers)
         {
             if (string.IsNullOrWhiteSpace(trigger.Name))
             {
@@ -439,10 +452,13 @@ public class WorkflowValidator : IWorkflowValidator
                 });
             }
 
-            switch (trigger.Type.ToLowerInvariant())
+            var triggerType = trigger.Type ?? string.Empty;
+            var triggerConfig = trigger.Config ?? new Dictionary<string, object?>();
+
+            switch (triggerType.ToLowerInvariant())
             {
                 case "scheduled":
-                    if (!trigger.Config.ContainsKey("cron") || string.IsNullOrEmpty(trigger.Config["cron"]?.ToString()))
+                    if (!triggerConfig.ContainsKey("cron") || string.IsNullOrEmpty(triggerConfig["cron"]?.ToString()))
                     {
                         errors.Add(new WorkflowValidationError
                         {
@@ -454,7 +470,7 @@ public class WorkflowValidator : IWorkflowValidator
                     break;
 
                 case "webhook":
-                    if (!trigger.Config.ContainsKey("path") || string.IsNullOrEmpty(trigger.Config["path"]?.ToString()))
+                    if (!triggerConfig.ContainsKey("path") || string.IsNullOrEmpty(triggerConfig["path"]?.ToString()))
                     {
                         errors.Add(new WorkflowValidationError
                         {
@@ -466,7 +482,7 @@ public class WorkflowValidator : IWorkflowValidator
                     break;
 
                 case "event":
-                    if (!trigger.Config.ContainsKey("eventName") || string.IsNullOrEmpty(trigger.Config["eventName"]?.ToString()))
+                    if (!triggerConfig.ContainsKey("eventName") || string.IsNullOrEmpty(triggerConfig["eventName"]?.ToString()))
                     {
                         errors.Add(new WorkflowValidationError
                         {

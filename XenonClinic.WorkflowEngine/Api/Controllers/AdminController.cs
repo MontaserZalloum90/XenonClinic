@@ -151,6 +151,10 @@ public class AdminController : ControllerBase
         [FromQuery] string pattern,
         CancellationToken cancellationToken)
     {
+        if (string.IsNullOrWhiteSpace(pattern))
+        {
+            return BadRequest(new { message = "Pattern is required" });
+        }
         await _cacheService.RemoveByPatternAsync(pattern, cancellationToken);
         return Ok(new { message = $"Cache entries matching '{pattern}' cleared" });
     }
@@ -327,7 +331,7 @@ public class AdminController : ControllerBase
         {
             Status = clusterState.IsHealthy ? "Healthy" : "Degraded",
             ClusterHealthy = clusterState.IsHealthy,
-            NodeCount = clusterState.Nodes.Count,
+            NodeCount = clusterState.Nodes?.Count ?? 0,
             HasLeader = !string.IsNullOrEmpty(clusterState.LeaderId),
             CacheEntries = cacheStats.TotalEntries,
             CacheHitRatio = cacheStats.TotalHits + cacheStats.TotalMisses > 0
@@ -348,11 +352,24 @@ public class AdminController : ControllerBase
         var assembly = typeof(AdminController).Assembly;
         var version = assembly.GetName().Version;
 
+        DateTime buildDate;
+        try
+        {
+            var location = assembly.Location;
+            buildDate = !string.IsNullOrEmpty(location) && System.IO.File.Exists(location)
+                ? System.IO.File.GetLastWriteTime(location)
+                : DateTime.UtcNow;
+        }
+        catch
+        {
+            buildDate = DateTime.UtcNow;
+        }
+
         return Ok(new VersionInfo
         {
             Version = version?.ToString() ?? "1.0.0",
             AssemblyName = assembly.GetName().Name ?? "XenonClinic.WorkflowEngine",
-            BuildDate = System.IO.File.GetLastWriteTime(assembly.Location)
+            BuildDate = buildDate
         });
     }
 

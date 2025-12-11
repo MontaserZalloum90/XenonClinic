@@ -150,6 +150,8 @@ public class MonitoringController : ControllerBase
         [FromQuery] int limit = 20,
         CancellationToken cancellationToken = default)
     {
+        // Validate and clamp limit to reasonable range
+        limit = Math.Clamp(limit, 1, 100);
         var tenantId = GetTenantId();
         var result = await _monitoringService.GetRecentIncidentsAsync(tenantId, limit, cancellationToken);
         return Ok(result);

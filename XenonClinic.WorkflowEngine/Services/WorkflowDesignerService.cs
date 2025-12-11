@@ -108,7 +108,7 @@ public class WorkflowDesignListResult
     public int TotalCount { get; init; }
     public int PageNumber { get; init; }
     public int PageSize { get; init; }
-    public int TotalPages => (int)Math.Ceiling(TotalCount / (double)PageSize);
+    public int TotalPages => PageSize > 0 ? (int)Math.Ceiling(TotalCount / (double)PageSize) : 0;
 }
 
 /// <summary>
@@ -293,8 +293,9 @@ public class WorkflowDesignerService : IWorkflowDesignerService
         var validation = await ValidateAsync(design);
         if (!validation.IsValid)
         {
+            var errors = validation.Errors ?? Enumerable.Empty<WorkflowValidationError>();
             throw new InvalidOperationException(
-                $"Cannot publish workflow with validation errors: {string.Join(", ", validation.Errors.Select(e => e.Message))}");
+                $"Cannot publish workflow with validation errors: {string.Join(", ", errors.Select(e => e.Message ?? "Unknown error"))}");
         }
 
         await _definitionStore.PublishAsync(id, version);
@@ -338,7 +339,7 @@ public class WorkflowDesignerService : IWorkflowDesignerService
             Tags = d.Tags?.ToList() ?? new List<string>(),
             IsDraft = d.IsDraft,
             IsActive = d.IsActive,
-            NodeCount = d.Activities.Count,
+            NodeCount = d.Activities?.Count ?? 0,
             CreatedAt = d.CreatedAt,
             ModifiedAt = d.ModifiedAt
         }).ToList();
@@ -379,24 +380,24 @@ public class WorkflowDesignerService : IWorkflowDesignerService
             Name = newName,
             Description = original.Description,
             Category = original.Category,
-            Tags = new List<string>(original.Tags),
+            Tags = new List<string>(original.Tags ?? new List<string>()),
             TenantId = original.TenantId,
-            Nodes = original.Nodes.Select(n => new DesignerNode
+            Nodes = (original.Nodes ?? new List<DesignerNode>()).Select(n => new DesignerNode
             {
                 Id = n.Id,
                 Type = n.Type,
                 Name = n.Name,
                 Description = n.Description,
-                Position = new NodePosition { X = n.Position.X, Y = n.Position.Y },
+                Position = n.Position != null ? new NodePosition { X = n.Position.X, Y = n.Position.Y } : new NodePosition(),
                 Dimensions = n.Dimensions,
                 Style = n.Style,
-                Config = new Dictionary<string, object?>(n.Config),
-                InputMappings = new Dictionary<string, string>(n.InputMappings),
-                OutputMappings = new Dictionary<string, string>(n.OutputMappings),
+                Config = n.Config != null ? new Dictionary<string, object?>(n.Config) : new Dictionary<string, object?>(),
+                InputMappings = n.InputMappings != null ? new Dictionary<string, string>(n.InputMappings) : new Dictionary<string, string>(),
+                OutputMappings = n.OutputMappings != null ? new Dictionary<string, string>(n.OutputMappings) : new Dictionary<string, string>(),
                 IsStart = n.IsStart,
                 IsEnd = n.IsEnd
             }).ToList(),
-            Edges = original.Edges.Select(e => new DesignerEdge
+            Edges = (original.Edges ?? new List<DesignerEdge>()).Select(e => new DesignerEdge
             {
                 Id = e.Id,
                 Source = e.Source,
@@ -409,11 +410,11 @@ public class WorkflowDesignerService : IWorkflowDesignerService
                 Priority = e.Priority,
                 Type = e.Type
             }).ToList(),
-            InputParameters = new List<ParameterDefinition>(original.InputParameters),
-            OutputParameters = new List<ParameterDefinition>(original.OutputParameters),
-            Variables = new List<VariableDefinition>(original.Variables),
-            Triggers = new List<TriggerDefinition>(original.Triggers),
-            ErrorHandlers = new List<ErrorHandlerDefinition>(original.ErrorHandlers)
+            InputParameters = new List<ParameterDefinition>(original.InputParameters ?? new List<ParameterDefinition>()),
+            OutputParameters = new List<ParameterDefinition>(original.OutputParameters ?? new List<ParameterDefinition>()),
+            Variables = new List<VariableDefinition>(original.Variables ?? new List<VariableDefinition>()),
+            Triggers = new List<TriggerDefinition>(original.Triggers ?? new List<TriggerDefinition>()),
+            ErrorHandlers = new List<ErrorHandlerDefinition>(original.ErrorHandlers ?? new List<ErrorHandlerDefinition>())
         };
 
         return await CreateAsync(clone);

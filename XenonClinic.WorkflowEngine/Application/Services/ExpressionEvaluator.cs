@@ -72,7 +72,15 @@ public partial class ExpressionEvaluator : IExpressionEvaluator
         {
             return (T)Convert.ChangeType(result, typeof(T));
         }
-        catch
+        catch (InvalidCastException)
+        {
+            return default!;
+        }
+        catch (FormatException)
+        {
+            return default!;
+        }
+        catch (OverflowException)
         {
             return default!;
         }
@@ -269,9 +277,9 @@ public class DynamicContext
 {
     private readonly IDictionary<string, object> _data;
 
-    public DynamicContext(IDictionary<string, object> data)
+    public DynamicContext(IDictionary<string, object>? data)
     {
-        _data = data;
+        _data = data ?? new Dictionary<string, object>();
     }
 
     public object Get(string path)
@@ -316,8 +324,8 @@ public class DynamicContext
             decimal d => d,
             int i => i,
             long l => l,
-            double dbl => (decimal)dbl,
-            float f => (decimal)f,
+            double dbl when !double.IsNaN(dbl) && !double.IsInfinity(dbl) && dbl >= (double)decimal.MinValue && dbl <= (double)decimal.MaxValue => (decimal)dbl,
+            float f when !float.IsNaN(f) && !float.IsInfinity(f) => (decimal)f,
             string s when decimal.TryParse(s, out var parsed) => parsed,
             _ => 0
         };
