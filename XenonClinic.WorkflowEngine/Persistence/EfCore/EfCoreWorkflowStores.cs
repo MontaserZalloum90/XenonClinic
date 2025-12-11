@@ -220,8 +220,16 @@ public class EfCoreWorkflowInstanceStore : IWorkflowInstanceStore
 
     private static WorkflowInstanceState MapToState(WorkflowInstanceEntity entity)
     {
-        var stateData = JsonSerializer.Deserialize<WorkflowStateData>(entity.StateJson, JsonOptions)
-            ?? new WorkflowStateData();
+        WorkflowStateData stateData;
+        try
+        {
+            stateData = JsonSerializer.Deserialize<WorkflowStateData>(entity.StateJson ?? "{}", JsonOptions)
+                ?? new WorkflowStateData();
+        }
+        catch (JsonException)
+        {
+            stateData = new WorkflowStateData();
+        }
 
         var state = new WorkflowInstanceState
         {
@@ -253,7 +261,14 @@ public class EfCoreWorkflowInstanceStore : IWorkflowInstanceStore
 
         if (!string.IsNullOrEmpty(entity.ErrorJson))
         {
-            state.Error = JsonSerializer.Deserialize<WorkflowError>(entity.ErrorJson, JsonOptions);
+            try
+            {
+                state.Error = JsonSerializer.Deserialize<WorkflowError>(entity.ErrorJson, JsonOptions);
+            }
+            catch (JsonException)
+            {
+                // Keep Error as null if deserialization fails
+            }
         }
 
         return state;
@@ -282,11 +297,11 @@ public class EfCoreWorkflowInstanceStore : IWorkflowInstanceStore
             Output = state.Output,
             Variables = state.Variables,
             Metadata = state.Metadata,
-            CompletedActivityIds = state.CompletedActivityIds.ToList(),
-            ActiveActivityIds = state.ActiveActivityIds.ToList(),
-            Bookmarks = state.Bookmarks.ToList(),
-            LogEntries = state.LogEntries.ToList(),
-            AuditEntries = state.AuditEntries.ToList()
+            CompletedActivityIds = state.CompletedActivityIds?.ToList() ?? new List<string>(),
+            ActiveActivityIds = state.ActiveActivityIds?.ToList() ?? new List<string>(),
+            Bookmarks = state.Bookmarks?.ToList() ?? new List<WorkflowBookmark>(),
+            LogEntries = state.LogEntries?.ToList() ?? new List<WorkflowLogEntry>(),
+            AuditEntries = state.AuditEntries?.ToList() ?? new List<WorkflowAuditEntry>()
         };
 
         entity.StateJson = JsonSerializer.Serialize(stateData, JsonOptions);
@@ -295,6 +310,33 @@ public class EfCoreWorkflowInstanceStore : IWorkflowInstanceStore
 
     private static WorkflowExecutionRecord MapToExecutionRecord(WorkflowExecutionHistoryEntity entity)
     {
+        Dictionary<string, object?>? output = null;
+        ActivityError? error = null;
+
+        if (entity.OutputJson != null)
+        {
+            try
+            {
+                output = JsonSerializer.Deserialize<Dictionary<string, object?>>(entity.OutputJson, JsonOptions);
+            }
+            catch (JsonException)
+            {
+                // Keep output as null if deserialization fails
+            }
+        }
+
+        if (entity.ErrorJson != null)
+        {
+            try
+            {
+                error = JsonSerializer.Deserialize<ActivityError>(entity.ErrorJson, JsonOptions);
+            }
+            catch (JsonException)
+            {
+                // Keep error as null if deserialization fails
+            }
+        }
+
         return new WorkflowExecutionRecord
         {
             Id = entity.Id,
@@ -306,12 +348,8 @@ public class EfCoreWorkflowInstanceStore : IWorkflowInstanceStore
                 ? type : ExecutionRecordType.ActivityStarted,
             Timestamp = entity.Timestamp,
             Duration = entity.DurationMs.HasValue ? TimeSpan.FromMilliseconds(entity.DurationMs.Value) : null,
-            Output = entity.OutputJson != null
-                ? JsonSerializer.Deserialize<Dictionary<string, object?>>(entity.OutputJson, JsonOptions)
-                : null,
-            Error = entity.ErrorJson != null
-                ? JsonSerializer.Deserialize<ActivityError>(entity.ErrorJson, JsonOptions)
-                : null
+            Output = output,
+            Error = error
         };
     }
 
@@ -529,8 +567,16 @@ public class EfCoreWorkflowDefinitionStore : IWorkflowDefinitionStore
 
     private static WorkflowDefinitionModel DeserializeDefinition(WorkflowDefinitionEntity entity)
     {
-        var definition = JsonSerializer.Deserialize<WorkflowDefinitionModel>(entity.DefinitionJson, JsonOptions)
-            ?? new WorkflowDefinitionModel();
+        WorkflowDefinitionModel definition;
+        try
+        {
+            definition = JsonSerializer.Deserialize<WorkflowDefinitionModel>(entity.DefinitionJson ?? "{}", JsonOptions)
+                ?? new WorkflowDefinitionModel();
+        }
+        catch (JsonException)
+        {
+            definition = new WorkflowDefinitionModel();
+        }
 
         // Ensure metadata from entity is applied
         definition.Id = entity.Id;

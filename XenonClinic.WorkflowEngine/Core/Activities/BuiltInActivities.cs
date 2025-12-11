@@ -491,7 +491,15 @@ internal static class ConditionEvaluator
                 var rightConverted = Convert.ChangeType(right, left.GetType());
                 return comparable.CompareTo(rightConverted);
             }
-            catch
+            catch (InvalidCastException)
+            {
+                return string.Compare(left.ToString(), right.ToString(), StringComparison.OrdinalIgnoreCase);
+            }
+            catch (FormatException)
+            {
+                return string.Compare(left.ToString(), right.ToString(), StringComparison.OrdinalIgnoreCase);
+            }
+            catch (OverflowException)
             {
                 return string.Compare(left.ToString(), right.ToString(), StringComparison.OrdinalIgnoreCase);
             }
@@ -741,13 +749,26 @@ public class TimerActivity : ResumableActivityBase
     {
         if (!string.IsNullOrEmpty(Duration))
         {
-            // Parse ISO 8601 duration
-            return System.DateTime.UtcNow.Add(System.Xml.XmlConvert.ToTimeSpan(Duration));
+            try
+            {
+                // Parse ISO 8601 duration
+                return System.DateTime.UtcNow.Add(System.Xml.XmlConvert.ToTimeSpan(Duration));
+            }
+            catch (FormatException)
+            {
+                // Invalid duration format, return now
+                return System.DateTime.UtcNow;
+            }
         }
 
         if (!string.IsNullOrEmpty(DateTime))
         {
-            return System.DateTime.Parse(DateTime);
+            if (System.DateTime.TryParse(DateTime, out var parsed))
+            {
+                return parsed;
+            }
+            // Invalid datetime format, return now
+            return System.DateTime.UtcNow;
         }
 
         return System.DateTime.UtcNow;
@@ -885,7 +906,22 @@ public class SubProcessActivity : ActivityBase
     public override async Task<ActivityResult> CompensateAsync(IWorkflowContext context)
     {
         var instanceIdVar = context.Variables.TryGetValue($"_subprocess_{Id}_instanceId", out var idObj);
-        if (!instanceIdVar || idObj is not Guid instanceId) return ActivityResult.Success();
+        if (!instanceIdVar || idObj == null) return ActivityResult.Success();
+
+        // Handle both Guid and string representations
+        Guid instanceId;
+        if (idObj is Guid guid)
+        {
+            instanceId = guid;
+        }
+        else if (idObj is string str && Guid.TryParse(str, out var parsedGuid))
+        {
+            instanceId = parsedGuid;
+        }
+        else
+        {
+            return ActivityResult.Success();
+        }
 
         var engine = context.ServiceProvider.GetService<IWorkflowEngine>();
         if (engine == null) return ActivityResult.Success();
