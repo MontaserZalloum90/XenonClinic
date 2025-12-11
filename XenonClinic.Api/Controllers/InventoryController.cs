@@ -55,11 +55,11 @@ public class InventoryController : BaseApiController
 
             if (!string.IsNullOrEmpty(request.SearchTerm))
             {
-                var searchLower = request.SearchTerm.ToLower();
+                var searchTerm = request.SearchTerm;
                 filteredItems = filteredItems.Where(i =>
-                    i.ItemCode.ToLower().Contains(searchLower) ||
-                    i.Name.ToLower().Contains(searchLower) ||
-                    i.Description.ToLower().Contains(searchLower));
+                    i.ItemCode.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+                    i.Name.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+                    (i.Description != null && i.Description.Contains(searchTerm, StringComparison.OrdinalIgnoreCase)));
             }
 
             if (request.Category.HasValue)

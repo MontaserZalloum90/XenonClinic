@@ -52,9 +52,10 @@ public class SalesController : BaseApiController
             if (request.OverdueOnly == true) filtered = filtered.Where(s => s.IsOverdue);
             if (!string.IsNullOrEmpty(request.SearchTerm))
             {
-                var term = request.SearchTerm.ToLower();
-                filtered = filtered.Where(s => s.InvoiceNumber.ToLower().Contains(term) ||
-                    (s.Patient != null && s.Patient.FullNameEn.ToLower().Contains(term)));
+                var term = request.SearchTerm;
+                filtered = filtered.Where(s =>
+                    s.InvoiceNumber.Contains(term, StringComparison.OrdinalIgnoreCase) ||
+                    (s.Patient != null && s.Patient.FullNameEn.Contains(term, StringComparison.OrdinalIgnoreCase)));
             }
 
             var totalCount = filtered.Count();

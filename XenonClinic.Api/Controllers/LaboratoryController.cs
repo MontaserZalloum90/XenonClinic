@@ -53,10 +53,10 @@ public class LaboratoryController : BaseApiController
 
             if (!string.IsNullOrEmpty(request.SearchTerm))
             {
-                var searchLower = request.SearchTerm.ToLower();
+                var searchTerm = request.SearchTerm;
                 filteredTests = filteredTests.Where(t =>
-                    t.TestCode.ToLower().Contains(searchLower) ||
-                    t.TestName.ToLower().Contains(searchLower));
+                    t.TestCode.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+                    t.TestName.Contains(searchTerm, StringComparison.OrdinalIgnoreCase));
             }
 
             if (request.Category.HasValue)
@@ -394,10 +394,10 @@ public class LaboratoryController : BaseApiController
 
             if (!string.IsNullOrEmpty(request.SearchTerm))
             {
-                var searchLower = request.SearchTerm.ToLower();
+                var searchTerm = request.SearchTerm;
                 filteredOrders = filteredOrders.Where(o =>
-                    o.OrderNumber.ToLower().Contains(searchLower) ||
-                    (o.Patient != null && o.Patient.FullNameEn.ToLower().Contains(searchLower)));
+                    o.OrderNumber.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+                    (o.Patient != null && o.Patient.FullNameEn.Contains(searchTerm, StringComparison.OrdinalIgnoreCase)));
             }
 
             var totalCount = filteredOrders.Count();
