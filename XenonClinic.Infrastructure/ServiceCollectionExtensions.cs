@@ -37,6 +37,68 @@ public static class ServiceCollectionExtensions
     }
 
     /// <summary>
+    /// Adds security and compliance services (HIPAA, RBAC, Audit).
+    /// </summary>
+    public static IServiceCollection AddSecurityServices(this IServiceCollection services, IConfiguration configuration)
+    {
+        // HIPAA-compliant audit logging
+        services.AddScoped<IAuditService, AuditService>();
+
+        // Role-Based Access Control
+        services.AddScoped<IRbacService, RbacService>();
+
+        // PHI Encryption Service
+        services.AddSingleton<IEncryptionService>(sp =>
+        {
+            var masterKey = configuration["Security:EncryptionMasterKey"]
+                ?? throw new InvalidOperationException("Security:EncryptionMasterKey is required");
+            return new EncryptionService(masterKey);
+        });
+
+        // Patient Consent Management
+        services.AddScoped<IConsentService, ConsentService>();
+
+        // Backup and Disaster Recovery
+        services.AddScoped<IBackupService, BackupService>();
+
+        // Security Configuration
+        services.AddScoped<ISecurityConfigurationService, SecurityConfigurationService>();
+
+        // Resilience Services (Circuit Breaker, Rate Limiting)
+        services.AddSingleton<IResilienceService, ResilienceService>();
+
+        return services;
+    }
+
+    /// <summary>
+    /// Adds analytics and business intelligence services.
+    /// </summary>
+    public static IServiceCollection AddAnalyticsServices(this IServiceCollection services)
+    {
+        services.AddScoped<IAnalyticsService, AnalyticsService>();
+        return services;
+    }
+
+    /// <summary>
+    /// Adds patient portal services for self-service patient access.
+    /// </summary>
+    public static IServiceCollection AddPatientPortalServices(this IServiceCollection services)
+    {
+        services.AddScoped<IPatientPortalService, PatientPortalService>();
+        return services;
+    }
+
+    /// <summary>
+    /// Adds clinical decision support services.
+    /// Provides evidence-based clinical recommendations, alerts, and decision support tools.
+    /// </summary>
+    public static IServiceCollection AddClinicalDecisionSupportServices(this IServiceCollection services)
+    {
+        services.AddScoped<IClinicalDecisionSupportService, ClinicalDecisionSupportService>();
+        return services;
+    }
+
+    /// <summary>
     /// Adds database services with proper configuration including retry policies and connection resilience.
     /// </summary>
     /// <param name="services">The service collection.</param>
