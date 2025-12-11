@@ -87,6 +87,7 @@ public class AppointmentService : IAppointmentService
         }
 
         return await _context.Appointments
+            .AsNoTracking()
             .Include(a => a.Patient)
             .Include(a => a.Provider)
             .Where(a => a.BranchId == branchId &&
@@ -124,6 +125,7 @@ public class AppointmentService : IAppointmentService
         var futureDate = today.AddDays(days);
 
         return await _context.Appointments
+            .AsNoTracking()
             .Include(a => a.Patient)
             .Include(a => a.Provider)
             .Where(a => a.BranchId == branchId &&
@@ -358,6 +360,26 @@ public class AppointmentService : IAppointmentService
         var appointment = await _context.Appointments.FindAsync(appointmentId);
         if (appointment == null)
             throw new KeyNotFoundException($"Appointment with ID {appointmentId} not found");
+
+        // Validate appointment can be rescheduled (only Scheduled or Confirmed appointments)
+        if (appointment.Status != AppointmentStatus.Scheduled && appointment.Status != AppointmentStatus.Confirmed)
+        {
+            throw new InvalidOperationException(
+                $"Cannot reschedule appointment in {appointment.Status} status. " +
+                "Only scheduled or confirmed appointments can be rescheduled.");
+        }
+
+        // Validate new times are valid
+        if (newEndTime <= newStartTime)
+        {
+            throw new InvalidOperationException("Appointment end time must be after start time");
+        }
+
+        // Validate new time is not in the past
+        if (newStartTime.Date < DateTime.UtcNow.Date)
+        {
+            throw new InvalidOperationException("Cannot reschedule appointment to a past date");
+        }
 
         // Check if new time slot is available
         if (!await IsTimeSlotAvailableAsync(appointment.BranchId, appointment.ProviderId, newStartTime, newEndTime, appointmentId))

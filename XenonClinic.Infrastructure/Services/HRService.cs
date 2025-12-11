@@ -287,6 +287,33 @@ public class HRService : IHRService
 
     public async Task<Attendance> CheckInAsync(int employeeId, DateTime checkInTime)
     {
+        // Validate employee exists
+        var employeeExists = await _context.Employees.AnyAsync(e => e.Id == employeeId);
+        if (!employeeExists)
+        {
+            throw new KeyNotFoundException($"Employee with ID {employeeId} not found");
+        }
+
+        // Check for existing attendance on the same day
+        var existingAttendance = await _context.Attendances
+            .FirstOrDefaultAsync(a => a.EmployeeId == employeeId && a.Date.Date == checkInTime.Date);
+
+        if (existingAttendance != null)
+        {
+            // If already checked in, return the existing record
+            if (existingAttendance.CheckInTime.HasValue)
+            {
+                throw new InvalidOperationException(
+                    $"Employee has already checked in at {existingAttendance.CheckInTime.Value} on {checkInTime:yyyy-MM-dd}");
+            }
+
+            // Update existing absent record with check-in time
+            existingAttendance.CheckInTime = TimeOnly.FromDateTime(checkInTime);
+            existingAttendance.Status = AttendanceStatus.Present;
+            await _context.SaveChangesAsync();
+            return existingAttendance;
+        }
+
         var attendance = new Attendance
         {
             EmployeeId = employeeId,
@@ -443,6 +470,27 @@ public class HRService : IHRService
         if (leaveRequest == null)
             throw new KeyNotFoundException($"Leave request with ID {leaveRequestId} not found");
 
+        // Validate status - can only approve pending requests
+        if (leaveRequest.Status != LeaveRequestStatus.Pending)
+        {
+            throw new InvalidOperationException(
+                $"Cannot approve leave request in {leaveRequest.Status} status. Only pending requests can be approved.");
+        }
+
+        // Calculate requested days
+        var requestedDays = (leaveRequest.EndDate - leaveRequest.StartDate).Days + 1;
+
+        // Validate leave balance for annual and sick leave
+        if (leaveRequest.LeaveType == LeaveType.Annual || leaveRequest.LeaveType == LeaveType.Sick)
+        {
+            var hasBalance = await ValidateLeaveBalanceAsync(leaveRequest.EmployeeId, leaveRequest.LeaveType, requestedDays);
+            if (!hasBalance)
+            {
+                throw new InvalidOperationException(
+                    $"Insufficient {leaveRequest.LeaveType} leave balance. Requested: {requestedDays} days.");
+            }
+        }
+
         leaveRequest.Status = LeaveRequestStatus.Approved;
         leaveRequest.ApprovedBy = approvedBy;
         leaveRequest.ApprovedDate = DateTime.UtcNow;
@@ -470,6 +518,13 @@ public class HRService : IHRService
         var leaveRequest = await _context.LeaveRequests.FindAsync(leaveRequestId);
         if (leaveRequest == null)
             throw new KeyNotFoundException($"Leave request with ID {leaveRequestId} not found");
+
+        // Validate status - can only reject pending requests
+        if (leaveRequest.Status != LeaveRequestStatus.Pending)
+        {
+            throw new InvalidOperationException(
+                $"Cannot reject leave request in {leaveRequest.Status} status. Only pending requests can be rejected.");
+        }
 
         leaveRequest.Status = LeaveRequestStatus.Rejected;
         leaveRequest.ApprovedBy = rejectedBy;
