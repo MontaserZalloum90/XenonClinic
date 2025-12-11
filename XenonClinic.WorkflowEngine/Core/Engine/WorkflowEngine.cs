@@ -238,7 +238,11 @@ public class WorkflowEngine : IWorkflowEngine
                     if (result.IsSuccess)
                     {
                         state.AddCompletedActivity(bookmark.ActivityId);
-                        state.CompensationStack.Push(bookmark.ActivityId);
+                        state.CompensationStack ??= new Stack<string>();
+                        if (bookmark.ActivityId != null)
+                        {
+                            state.CompensationStack.Push(bookmark.ActivityId);
+                        }
 
                         // Continue execution from next activity
                         var nextActivityId = result.NextActivityId ?? GetNextActivityId(definition, bookmark.ActivityId);
@@ -470,6 +474,7 @@ public class WorkflowEngine : IWorkflowEngine
                 }
 
                 activitiesExecuted++;
+                state.ActiveActivityIds ??= new List<string>();
                 state.ActiveActivityIds.Clear();
                 state.ActiveActivityIds.Add(state.CurrentActivityId);
 
@@ -531,11 +536,13 @@ public class WorkflowEngine : IWorkflowEngine
                 }
 
                 // Track completed activity
+                state.CompletedActivityIds ??= new List<string>();
                 if (!state.CompletedActivityIds.Contains(state.CurrentActivityId))
                 {
                     state.CompletedActivityIds.Add(state.CurrentActivityId);
                     if (activity.CanCompensate)
                     {
+                        state.CompensationStack ??= new Stack<string>();
                         state.CompensationStack.Push(state.CurrentActivityId);
                     }
                 }
@@ -627,7 +634,7 @@ public class WorkflowEngine : IWorkflowEngine
         var branch = new ParallelBranch
         {
             Id = branchId,
-            ParentActivityId = state.CurrentActivityId!,
+            ParentActivityId = state.CurrentActivityId ?? string.Empty,
             ActivityIds = branchActivityIds.ToList(),
             Status = ParallelBranchStatus.Running
         };
@@ -746,7 +753,8 @@ public class WorkflowEngine : IWorkflowEngine
     private string? FindConvergingGateway(IWorkflowDefinition definition, string splitGatewayId)
     {
         // Find the parallel join gateway that corresponds to the split
-        foreach (var activity in definition.Activities.Values)
+        var activities = definition.Activities ?? new Dictionary<string, IActivity>();
+        foreach (var activity in activities.Values)
         {
             if (activity is ParallelGatewayActivity gateway && gateway.Direction == GatewayDirection.Join)
             {
@@ -766,7 +774,8 @@ public class WorkflowEngine : IWorkflowEngine
         ActivityError? error)
     {
         // Check for error boundary events
-        foreach (var activity in definition.Activities.Values)
+        var activities = definition.Activities ?? new Dictionary<string, IActivity>();
+        foreach (var activity in activities.Values)
         {
             if (activity is ErrorBoundaryActivity boundary
                 && boundary.AttachedToActivityId == state.CurrentActivityId
@@ -816,6 +825,7 @@ public class WorkflowEngine : IWorkflowEngine
         using var scope = _serviceProvider.CreateScope();
         var context = new WorkflowContext(state, scope.ServiceProvider, cancellationToken, _logger);
 
+        state.CompensationStack ??= new Stack<string>();
         while (state.CompensationStack.Count > 0)
         {
             // Check for cancellation - but allow compensation to proceed in critical cases
