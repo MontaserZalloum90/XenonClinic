@@ -181,7 +181,7 @@ public class InvoiceListRequestValidator : AbstractValidator<InvoiceListRequestD
     public InvoiceListRequestValidator()
     {
         RuleFor(x => x.PageNumber)
-            .GreaterThan(0).WithMessage(FinancialValidationMessages.InvalidPageNumber);
+            .GreaterThanOrEqualTo(1).WithMessage(FinancialValidationMessages.InvalidPageNumber);
 
         RuleFor(x => x.PageSize)
             .InclusiveBetween(1, 100).WithMessage(FinancialValidationMessages.InvalidPageSize);
@@ -317,7 +317,7 @@ public class ExpenseListRequestValidator : AbstractValidator<ExpenseListRequestD
     public ExpenseListRequestValidator()
     {
         RuleFor(x => x.PageNumber)
-            .GreaterThan(0).WithMessage(FinancialValidationMessages.InvalidPageNumber);
+            .GreaterThanOrEqualTo(1).WithMessage(FinancialValidationMessages.InvalidPageNumber);
 
         RuleFor(x => x.PageSize)
             .InclusiveBetween(1, 100).WithMessage(FinancialValidationMessages.InvalidPageSize);
@@ -385,7 +385,7 @@ public class TransactionListRequestValidator : AbstractValidator<TransactionList
     public TransactionListRequestValidator()
     {
         RuleFor(x => x.PageNumber)
-            .GreaterThan(0).WithMessage(FinancialValidationMessages.InvalidPageNumber);
+            .GreaterThanOrEqualTo(1).WithMessage(FinancialValidationMessages.InvalidPageNumber);
 
         RuleFor(x => x.PageSize)
             .InclusiveBetween(1, 100).WithMessage(FinancialValidationMessages.InvalidPageSize);

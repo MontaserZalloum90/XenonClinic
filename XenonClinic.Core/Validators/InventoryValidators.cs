@@ -140,7 +140,7 @@ public class InventoryItemListRequestValidator : AbstractValidator<InventoryItem
     public InventoryItemListRequestValidator()
     {
         RuleFor(x => x.PageNumber)
-            .GreaterThan(0).WithMessage(InventoryValidationMessages.InvalidPageNumber);
+            .GreaterThanOrEqualTo(1).WithMessage(InventoryValidationMessages.InvalidPageNumber);
 
         RuleFor(x => x.PageSize)
             .InclusiveBetween(1, 100).WithMessage(InventoryValidationMessages.InvalidPageSize);
@@ -279,7 +279,7 @@ public class CreateInventoryTransactionValidator : AbstractValidator<CreateInven
             .IsInEnum().WithMessage(InventoryValidationMessages.TransactionTypeInvalid);
 
         RuleFor(x => x.Quantity)
-            .NotEqual(0).WithMessage(InventoryValidationMessages.QuantityRequired);
+            .GreaterThan(0).WithMessage(InventoryValidationMessages.QuantityRequired);
 
         RuleFor(x => x.UnitPrice)
             .GreaterThanOrEqualTo(0).WithMessage(InventoryValidationMessages.UnitPriceInvalid);
@@ -315,7 +315,7 @@ public class InventoryTransactionListRequestValidator : AbstractValidator<Invent
     public InventoryTransactionListRequestValidator()
     {
         RuleFor(x => x.PageNumber)
-            .GreaterThan(0).WithMessage(InventoryValidationMessages.InvalidPageNumber);
+            .GreaterThanOrEqualTo(1).WithMessage(InventoryValidationMessages.InvalidPageNumber);
 
         RuleFor(x => x.PageSize)
             .InclusiveBetween(1, 100).WithMessage(InventoryValidationMessages.InvalidPageSize);

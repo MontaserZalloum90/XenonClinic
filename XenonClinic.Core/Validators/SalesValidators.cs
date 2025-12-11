@@ -131,7 +131,7 @@ public class SaleListRequestValidator : AbstractValidator<SaleListRequestDto>
     public SaleListRequestValidator()
     {
         RuleFor(x => x.PageNumber)
-            .GreaterThan(0).WithMessage(SalesValidationMessages.InvalidPageNumber);
+            .GreaterThanOrEqualTo(1).WithMessage(SalesValidationMessages.InvalidPageNumber);
 
         RuleFor(x => x.PageSize)
             .InclusiveBetween(1, 100).WithMessage(SalesValidationMessages.InvalidPageSize);
@@ -397,7 +397,7 @@ public class QuotationListRequestValidator : AbstractValidator<QuotationListRequ
     public QuotationListRequestValidator()
     {
         RuleFor(x => x.PageNumber)
-            .GreaterThan(0).WithMessage(SalesValidationMessages.InvalidPageNumber);
+            .GreaterThanOrEqualTo(1).WithMessage(SalesValidationMessages.InvalidPageNumber);
 
         RuleFor(x => x.PageSize)
             .InclusiveBetween(1, 100).WithMessage(SalesValidationMessages.InvalidPageSize);

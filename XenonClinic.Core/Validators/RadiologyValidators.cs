@@ -118,7 +118,7 @@ public class ImagingStudyListRequestValidator : AbstractValidator<ImagingStudyLi
     public ImagingStudyListRequestValidator()
     {
         RuleFor(x => x.PageNumber)
-            .GreaterThan(0).WithMessage(RadiologyValidationMessages.InvalidPageNumber);
+            .GreaterThanOrEqualTo(1).WithMessage(RadiologyValidationMessages.InvalidPageNumber);
 
         RuleFor(x => x.PageSize)
             .InclusiveBetween(1, 100).WithMessage(RadiologyValidationMessages.InvalidPageSize);
@@ -255,7 +255,7 @@ public class RadiologyOrderListRequestValidator : AbstractValidator<RadiologyOrd
     public RadiologyOrderListRequestValidator()
     {
         RuleFor(x => x.PageNumber)
-            .GreaterThan(0).WithMessage(RadiologyValidationMessages.InvalidPageNumber);
+            .GreaterThanOrEqualTo(1).WithMessage(RadiologyValidationMessages.InvalidPageNumber);
 
         RuleFor(x => x.PageSize)
             .InclusiveBetween(1, 100).WithMessage(RadiologyValidationMessages.InvalidPageSize);

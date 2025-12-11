@@ -183,7 +183,7 @@ public class EmployeeListRequestValidator : AbstractValidator<EmployeeListReques
     public EmployeeListRequestValidator()
     {
         RuleFor(x => x.PageNumber)
-            .GreaterThan(0).WithMessage(HRValidationMessages.InvalidPageNumber);
+            .GreaterThanOrEqualTo(1).WithMessage(HRValidationMessages.InvalidPageNumber);
 
         RuleFor(x => x.PageSize)
             .InclusiveBetween(1, 100).WithMessage(HRValidationMessages.InvalidPageSize);
@@ -410,7 +410,7 @@ public class AttendanceListRequestValidator : AbstractValidator<AttendanceListRe
     public AttendanceListRequestValidator()
     {
         RuleFor(x => x.PageNumber)
-            .GreaterThan(0).WithMessage(HRValidationMessages.InvalidPageNumber);
+            .GreaterThanOrEqualTo(1).WithMessage(HRValidationMessages.InvalidPageNumber);
 
         RuleFor(x => x.PageSize)
             .InclusiveBetween(1, 100).WithMessage(HRValidationMessages.InvalidPageSize);
@@ -539,7 +539,7 @@ public class LeaveRequestListValidator : AbstractValidator<LeaveRequestListDto>
     public LeaveRequestListValidator()
     {
         RuleFor(x => x.PageNumber)
-            .GreaterThan(0).WithMessage(HRValidationMessages.InvalidPageNumber);
+            .GreaterThanOrEqualTo(1).WithMessage(HRValidationMessages.InvalidPageNumber);
 
         RuleFor(x => x.PageSize)
             .InclusiveBetween(1, 100).WithMessage(HRValidationMessages.InvalidPageSize);

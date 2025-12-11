@@ -93,7 +93,7 @@ public class LabTestListRequestValidator : AbstractValidator<LabTestListRequestD
     public LabTestListRequestValidator()
     {
         RuleFor(x => x.PageNumber)
-            .GreaterThan(0).WithMessage(LabValidationMessages.InvalidPageNumber);
+            .GreaterThanOrEqualTo(1).WithMessage(LabValidationMessages.InvalidPageNumber);
 
         RuleFor(x => x.PageSize)
             .InclusiveBetween(1, 100).WithMessage(LabValidationMessages.InvalidPageSize);
@@ -236,7 +236,7 @@ public class LabOrderListRequestValidator : AbstractValidator<LabOrderListReques
     public LabOrderListRequestValidator()
     {
         RuleFor(x => x.PageNumber)
-            .GreaterThan(0).WithMessage(LabValidationMessages.InvalidPageNumber);
+            .GreaterThanOrEqualTo(1).WithMessage(LabValidationMessages.InvalidPageNumber);
 
         RuleFor(x => x.PageSize)
             .InclusiveBetween(1, 100).WithMessage(LabValidationMessages.InvalidPageSize);
