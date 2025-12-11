@@ -136,7 +136,8 @@ public class InventoryService : IInventoryService
             .Include(t => t.InventoryItem)
             .Include(t => t.Patient)
             .Include(t => t.TransferToBranch)
-            .Where(t => t.InventoryItem!.BranchId == branchId)
+            // BUG FIX: Add null check instead of null-forgiving operator to prevent NullReferenceException
+            .Where(t => t.InventoryItem != null && t.InventoryItem.BranchId == branchId)
             .OrderByDescending(t => t.TransactionDate)
             .ToListAsync();
     }
@@ -146,7 +147,8 @@ public class InventoryService : IInventoryService
         return await _context.InventoryTransactions
             .AsNoTracking()
             .Include(t => t.InventoryItem)
-            .Where(t => t.InventoryItem!.BranchId == branchId &&
+            // BUG FIX: Add null check instead of null-forgiving operator to prevent NullReferenceException
+            .Where(t => t.InventoryItem != null && t.InventoryItem.BranchId == branchId &&
                    t.TransactionType == transactionType)
             .OrderByDescending(t => t.TransactionDate)
             .ToListAsync();
@@ -561,7 +563,8 @@ public class InventoryService : IInventoryService
     {
         var transactions = await _context.InventoryTransactions
             .Include(t => t.InventoryItem)
-            .Where(t => t.InventoryItem!.BranchId == branchId)
+            // BUG FIX: Add null check instead of null-forgiving operator to prevent NullReferenceException
+            .Where(t => t.InventoryItem != null && t.InventoryItem.BranchId == branchId)
             .GroupBy(t => t.TransactionType)
             .Select(g => new { Type = g.Key, Count = g.Count() })
             .ToListAsync();

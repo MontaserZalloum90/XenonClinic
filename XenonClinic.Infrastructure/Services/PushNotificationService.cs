@@ -797,11 +797,12 @@ public class PushNotificationService : IPushNotificationService
 
     public async Task<TopicSubscriptionResponseDto> UnsubscribeFromTopicAsync(TopicSubscriptionDto dto)
     {
+        // BUG FIX: Add null checks instead of null-forgiving operators to prevent NullReferenceException
         var subscription = await _context.TopicSubscriptions
             .Include(s => s.Topic)
             .Include(s => s.Device)
-            .FirstOrDefaultAsync(s => s.Topic!.Name == dto.TopicName &&
-                                      s.Device!.DeviceToken == dto.DeviceToken);
+            .FirstOrDefaultAsync(s => s.Topic != null && s.Topic.Name == dto.TopicName &&
+                                      s.Device != null && s.Device.DeviceToken == dto.DeviceToken);
 
         if (subscription == null)
         {
@@ -825,11 +826,12 @@ public class PushNotificationService : IPushNotificationService
 
     public async Task<IEnumerable<string>> GetDeviceTopicsAsync(string deviceToken)
     {
+        // BUG FIX: Add null checks instead of null-forgiving operators to prevent NullReferenceException
         return await _context.TopicSubscriptions
             .Include(s => s.Topic)
             .Include(s => s.Device)
-            .Where(s => s.Device!.DeviceToken == deviceToken && s.IsActive)
-            .Select(s => s.Topic!.Name)
+            .Where(s => s.Device != null && s.Device.DeviceToken == deviceToken && s.IsActive && s.Topic != null)
+            .Select(s => s.Topic!.Name) // Null-forgiving is safe here due to the Where clause filter
             .ToListAsync();
     }
 

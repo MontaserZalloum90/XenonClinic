@@ -15,13 +15,28 @@ public class SequenceGenerator : ISequenceGenerator
     private readonly ClinicDbContext _context;
 
     // Static lock objects per branch+prefix combination to prevent race conditions
-    private static readonly ConcurrentDictionary<string, (SemaphoreSlim Semaphore, DateTime LastUsed)> _locks = new();
+    private static readonly ConcurrentDictionary<string, SemaphoreEntry> _locks = new();
 
     // Cleanup interval and max age for unused semaphores
     private static readonly TimeSpan CleanupInterval = TimeSpan.FromMinutes(30);
     private static readonly TimeSpan MaxSemaphoreAge = TimeSpan.FromHours(24);
     private static DateTime _lastCleanup = DateTime.UtcNow;
     private static readonly object _cleanupLock = new();
+
+    /// <summary>
+    /// BUG FIX: Use a class instead of tuple to track reference count and prevent TOCTOU race condition.
+    /// The reference count ensures semaphores are not disposed while in use.
+    /// </summary>
+    private class SemaphoreEntry
+    {
+        public SemaphoreSlim Semaphore { get; } = new(1, 1);
+        public DateTime LastUsed { get; set; } = DateTime.UtcNow;
+        public int ReferenceCount;
+
+        public void IncrementRef() => Interlocked.Increment(ref ReferenceCount);
+        public int DecrementRef() => Interlocked.Decrement(ref ReferenceCount);
+        public bool IsInUse => Volatile.Read(ref ReferenceCount) > 0;
+    }
 
     public SequenceGenerator(ClinicDbContext context)
     {
@@ -30,6 +45,7 @@ public class SequenceGenerator : ISequenceGenerator
 
     /// <summary>
     /// Cleans up unused semaphores to prevent memory leaks.
+    /// BUG FIX: Check reference count before disposing to prevent TOCTOU race condition.
     /// </summary>
     private static void CleanupUnusedSemaphores()
     {
@@ -43,15 +59,29 @@ public class SequenceGenerator : ISequenceGenerator
             _lastCleanup = now;
 
             var keysToRemove = _locks
-                .Where(kvp => now - kvp.Value.LastUsed > MaxSemaphoreAge)
+                .Where(kvp => now - kvp.Value.LastUsed > MaxSemaphoreAge && !kvp.Value.IsInUse)
                 .Select(kvp => kvp.Key)
                 .ToList();
 
             foreach (var key in keysToRemove)
             {
-                if (_locks.TryRemove(key, out var entry))
+                // BUG FIX: Only remove and dispose if entry is still not in use
+                // This prevents disposing a semaphore that another thread just started using
+                if (_locks.TryGetValue(key, out var entry) && !entry.IsInUse)
                 {
-                    entry.Semaphore.Dispose();
+                    if (_locks.TryRemove(key, out var removedEntry))
+                    {
+                        // Double-check it's still not in use before disposing
+                        if (!removedEntry.IsInUse)
+                        {
+                            removedEntry.Semaphore.Dispose();
+                        }
+                        else
+                        {
+                            // Put it back if it became in use
+                            _locks.TryAdd(key, removedEntry);
+                        }
+                    }
                 }
             }
         }
@@ -73,24 +103,31 @@ public class SequenceGenerator : ISequenceGenerator
         // Periodically cleanup unused semaphores
         CleanupUnusedSemaphores();
 
-        var entry = _locks.AddOrUpdate(
-            lockKey,
-            _ => (new SemaphoreSlim(1, 1), DateTime.UtcNow),
-            (_, existing) => (existing.Semaphore, DateTime.UtcNow));
+        // BUG FIX: Use reference counting to prevent TOCTOU race condition
+        // Increment ref count BEFORE acquiring lock to prevent cleanup from disposing
+        var entry = _locks.GetOrAdd(lockKey, _ => new SemaphoreEntry());
+        entry.IncrementRef();
+        entry.LastUsed = DateTime.UtcNow;
 
-        var semaphore = entry.Semaphore;
-
-        await semaphore.WaitAsync();
         try
         {
-            var lastNumber = await GetLastSequenceNumberAsync(branchId, fullPrefix, sequenceType);
-            var nextNumber = lastNumber + 1;
+            await entry.Semaphore.WaitAsync();
+            try
+            {
+                var lastNumber = await GetLastSequenceNumberAsync(branchId, fullPrefix, sequenceType);
+                var nextNumber = lastNumber + 1;
 
-            return $"{fullPrefix}-{nextNumber.ToString($"D{numberWidth}")}";
+                return $"{fullPrefix}-{nextNumber.ToString($"D{numberWidth}")}";
+            }
+            finally
+            {
+                entry.Semaphore.Release();
+            }
         }
         finally
         {
-            semaphore.Release();
+            // Decrement ref count after we're done with the semaphore
+            entry.DecrementRef();
         }
     }
 
