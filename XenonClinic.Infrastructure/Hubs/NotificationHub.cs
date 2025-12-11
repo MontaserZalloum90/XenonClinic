@@ -12,7 +12,8 @@ public class NotificationHub : Hub
 {
     private readonly ILogger<NotificationHub> _logger;
     private static readonly Dictionary<string, HashSet<string>> _userConnections = new();
-    private static readonly Dictionary<string, HashSet<string>> _groupMembers = new();
+    // Use lock object for thread-safe access to _userConnections
+    private static readonly object _connectionLock = new();
 
     public NotificationHub(ILogger<NotificationHub> logger)
     {
@@ -26,7 +27,7 @@ public class NotificationHub : Hub
 
         if (!string.IsNullOrEmpty(userId))
         {
-            lock (_userConnections)
+            lock (_connectionLock)
             {
                 if (!_userConnections.ContainsKey(userId))
                 {
@@ -51,7 +52,7 @@ public class NotificationHub : Hub
 
         if (!string.IsNullOrEmpty(userId))
         {
-            lock (_userConnections)
+            lock (_connectionLock)
             {
                 if (_userConnections.TryGetValue(userId, out var connections))
                 {
@@ -120,7 +121,7 @@ public class NotificationHub : Hub
     /// </summary>
     public Task<bool> IsUserOnline(string userId)
     {
-        lock (_userConnections)
+        lock (_connectionLock)
         {
             return Task.FromResult(_userConnections.ContainsKey(userId) && _userConnections[userId].Count > 0);
         }

@@ -18,6 +18,13 @@ public class BackgroundJobService : IBackgroundJobService
     private static readonly ConcurrentDictionary<string, JobInfo> _jobs = new();
     private static readonly ConcurrentDictionary<string, RecurringJobInfo> _recurringJobs = new();
 
+    // Cleanup settings to prevent memory leaks from accumulated jobs
+    private static readonly TimeSpan CleanupInterval = TimeSpan.FromMinutes(15);
+    private static readonly TimeSpan CompletedJobRetention = TimeSpan.FromHours(1);
+    private static readonly TimeSpan FailedJobRetention = TimeSpan.FromHours(24);
+    private static DateTime _lastCleanup = DateTime.UtcNow;
+    private static readonly object _cleanupLock = new();
+
     public BackgroundJobService(
         IServiceProvider serviceProvider,
         ILogger<BackgroundJobService> logger)
@@ -26,8 +33,49 @@ public class BackgroundJobService : IBackgroundJobService
         _logger = logger;
     }
 
+    /// <summary>
+    /// Cleans up completed and failed jobs to prevent memory leaks.
+    /// </summary>
+    private void CleanupOldJobs()
+    {
+        var now = DateTime.UtcNow;
+        if (now - _lastCleanup < CleanupInterval) return;
+
+        lock (_cleanupLock)
+        {
+            // Double-check after acquiring lock
+            if (now - _lastCleanup < CleanupInterval) return;
+            _lastCleanup = now;
+
+            var jobsToRemove = _jobs
+                .Where(kvp =>
+                    (kvp.Value.State == JobState.Succeeded &&
+                     kvp.Value.CompletedAt.HasValue &&
+                     now - kvp.Value.CompletedAt.Value > CompletedJobRetention) ||
+                    (kvp.Value.State == JobState.Failed &&
+                     kvp.Value.CompletedAt.HasValue &&
+                     now - kvp.Value.CompletedAt.Value > FailedJobRetention) ||
+                    (kvp.Value.State == JobState.Deleted))
+                .Select(kvp => kvp.Key)
+                .ToList();
+
+            foreach (var key in jobsToRemove)
+            {
+                _jobs.TryRemove(key, out _);
+            }
+
+            if (jobsToRemove.Count > 0)
+            {
+                _logger.LogDebug("Cleaned up {Count} old jobs", jobsToRemove.Count);
+            }
+        }
+    }
+
     public string Enqueue<T>(Expression<Func<T, Task>> methodCall)
     {
+        // Periodically cleanup old jobs to prevent memory leaks
+        CleanupOldJobs();
+
         var jobId = GenerateJobId();
         var job = new JobInfo
         {

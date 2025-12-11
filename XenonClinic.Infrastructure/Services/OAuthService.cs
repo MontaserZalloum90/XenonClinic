@@ -24,9 +24,11 @@ public class OAuthService : IOAuthService
     private readonly OAuthSettings _settings;
     private readonly ClinicDbContext _dbContext;
 
-    // JWKS cache with expiration
+    // JWKS cache with expiration and cleanup
     private static readonly ConcurrentDictionary<string, (JsonWebKeySet Keys, DateTime ExpiresAt)> _jwksCache = new();
     private static readonly TimeSpan JwksCacheDuration = TimeSpan.FromHours(1);
+    private static readonly TimeSpan CacheCleanupInterval = TimeSpan.FromMinutes(30);
+    private static DateTime _lastCacheCleanup = DateTime.UtcNow;
 
     public OAuthService(
         ILogger<OAuthService> logger,
@@ -268,6 +270,9 @@ public class OAuthService : IOAuthService
 
     private async Task<JsonWebKeySet?> GetJwksAsync(OAuthProvider provider, OAuthProviderConfig config)
     {
+        // Periodically cleanup expired cache entries to prevent memory leaks
+        CleanupExpiredCacheEntries();
+
         var jwksUri = config.JwksUri;
         if (string.IsNullOrEmpty(jwksUri))
         {
@@ -306,6 +311,27 @@ public class OAuthService : IOAuthService
         {
             _logger.LogError(ex, "Failed to fetch JWKS from {JwksUri}", jwksUri);
             return null;
+        }
+    }
+
+    /// <summary>
+    /// Cleans up expired JWKS cache entries to prevent memory leaks.
+    /// </summary>
+    private static void CleanupExpiredCacheEntries()
+    {
+        var now = DateTime.UtcNow;
+        if (now - _lastCacheCleanup < CacheCleanupInterval) return;
+
+        _lastCacheCleanup = now;
+
+        var expiredKeys = _jwksCache
+            .Where(kvp => kvp.Value.ExpiresAt < now)
+            .Select(kvp => kvp.Key)
+            .ToList();
+
+        foreach (var key in expiredKeys)
+        {
+            _jwksCache.TryRemove(key, out _);
         }
     }
 
