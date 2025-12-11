@@ -99,7 +99,8 @@ public class InvoiceDto
     public decimal? TaxAmount { get; set; }
     public decimal TotalAmount { get; set; }
     public decimal PaidAmount { get; set; }
-    public decimal RemainingAmount => TotalAmount - PaidAmount;
+    // BUG FIX: Use proper rounding to ensure consistent 2 decimal places for currency
+    public decimal RemainingAmount => Math.Round(TotalAmount - PaidAmount, 2, MidpointRounding.AwayFromZero);
     public PaymentMethod? PaymentMethod { get; set; }
     public string? PaymentMethodDisplay => PaymentMethod switch
     {
