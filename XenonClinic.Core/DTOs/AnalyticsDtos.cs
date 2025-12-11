@@ -892,3 +892,151 @@ public class CreateDashboardSubscriptionDto
 }
 
 #endregion
+
+#region Additional Controller DTOs
+
+/// <summary>
+/// Save dashboard request (create/update)
+/// </summary>
+public class SaveDashboardDto
+{
+    public string Name { get; set; } = string.Empty;
+    public string? Description { get; set; }
+    public string? Category { get; set; }
+    public List<SaveWidgetDto>? Widgets { get; set; }
+    public bool IsDefault { get; set; }
+    public bool IsShared { get; set; }
+}
+
+/// <summary>
+/// Save widget request
+/// </summary>
+public class SaveWidgetDto
+{
+    public string Title { get; set; } = string.Empty;
+    public string WidgetType { get; set; } = string.Empty;
+    public string? MetricId { get; set; }
+    public string? DataSource { get; set; }
+    public int Width { get; set; } = 4;
+    public int Height { get; set; } = 2;
+    public int PositionX { get; set; }
+    public int PositionY { get; set; }
+    public Dictionary<string, object>? Configuration { get; set; }
+}
+
+/// <summary>
+/// Widget DTO
+/// </summary>
+public class WidgetDto
+{
+    public int Id { get; set; }
+    public int DashboardId { get; set; }
+    public string Title { get; set; } = string.Empty;
+    public string WidgetType { get; set; } = string.Empty;
+    public string? MetricId { get; set; }
+    public string? DataSource { get; set; }
+    public int Width { get; set; }
+    public int Height { get; set; }
+    public int PositionX { get; set; }
+    public int PositionY { get; set; }
+    public Dictionary<string, object>? Configuration { get; set; }
+    public DateTime CreatedAt { get; set; }
+}
+
+/// <summary>
+/// Widget data DTO
+/// </summary>
+public class WidgetDataDto
+{
+    public int WidgetId { get; set; }
+    public string WidgetType { get; set; } = string.Empty;
+    public object? Value { get; set; }
+    public List<object>? SeriesData { get; set; }
+    public Dictionary<string, object>? Metadata { get; set; }
+    public DateTime GeneratedAt { get; set; }
+}
+
+/// <summary>
+/// Dashboard with all widget data
+/// </summary>
+public class DashboardDataDto
+{
+    public int DashboardId { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public DateTime? StartDate { get; set; }
+    public DateTime? EndDate { get; set; }
+    public List<WidgetDataDto> Widgets { get; set; } = new();
+    public DateTime GeneratedAt { get; set; }
+}
+
+/// <summary>
+/// Clinical outcomes analytics
+/// </summary>
+public class ClinicalOutcomesDto
+{
+    public int BranchId { get; set; }
+    public DateTime StartDate { get; set; }
+    public DateTime EndDate { get; set; }
+    public int TotalPatientsTreated { get; set; }
+    public decimal PatientSatisfactionScore { get; set; }
+    public decimal TreatmentSuccessRate { get; set; }
+    public decimal ReadmissionRate { get; set; }
+    public decimal ComplicationRate { get; set; }
+    public List<OutcomeMetricDto> OutcomesByDepartment { get; set; } = new();
+    public List<QualityMeasureDto> QualityMeasures { get; set; } = new();
+}
+
+/// <summary>
+/// KPI dashboard
+/// </summary>
+public class KPIDashboardDto
+{
+    public int BranchId { get; set; }
+    public DateTime StartDate { get; set; }
+    public DateTime EndDate { get; set; }
+    public List<KPIItemDto> KPIs { get; set; } = new();
+}
+
+/// <summary>
+/// Individual KPI item
+/// </summary>
+public class KPIItemDto
+{
+    public string Name { get; set; } = string.Empty;
+    public string Category { get; set; } = string.Empty;
+    public decimal Value { get; set; }
+    public string Unit { get; set; } = string.Empty;
+    public decimal? Target { get; set; }
+    public decimal? PreviousValue { get; set; }
+    public decimal ChangePercent { get; set; }
+    public string Trend { get; set; } = string.Empty; // Up, Down, Stable
+    public string Status { get; set; } = string.Empty; // Good, Warning, Critical
+}
+
+/// <summary>
+/// Metric data point for history/trending
+/// </summary>
+public class MetricDataPointDto
+{
+    public DateTime Timestamp { get; set; }
+    public decimal Value { get; set; }
+    public string? Label { get; set; }
+}
+
+/// <summary>
+/// Analytics alert configuration
+/// </summary>
+public class AnalyticsAlertConfigDto
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string MetricId { get; set; } = string.Empty;
+    public string Condition { get; set; } = string.Empty; // GT, LT, EQ, CHANGE_PERCENT
+    public decimal Threshold { get; set; }
+    public string Severity { get; set; } = string.Empty; // Info, Warning, Critical
+    public List<string> NotifyEmails { get; set; } = new();
+    public bool IsActive { get; set; }
+    public int? BranchId { get; set; }
+}
+
+#endregion

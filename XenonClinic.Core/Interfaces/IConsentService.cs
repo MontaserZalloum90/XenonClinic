@@ -9,36 +9,41 @@ public interface IConsentService
 {
     #region Consent CRUD
 
-    Task<PatientConsentDto> GetConsentAsync(int consentId);
-    Task<List<PatientConsentDto>> GetPatientConsentsAsync(int patientId);
-    Task<PatientConsentDto> CreateConsentAsync(SaveConsentDto request, int createdByUserId);
-    Task<PatientConsentDto> UpdateConsentAsync(int consentId, SaveConsentDto request, int updatedByUserId);
-    Task<bool> RevokeConsentAsync(RevokeConsentDto request, int revokedByUserId);
+    Task<PatientConsentDto?> GetConsentByIdAsync(int consentId);
+    Task<List<PatientConsentDto>> GetPatientConsentsAsync(int patientId, string? consentType = null, bool activeOnly = false);
+    Task<PatientConsentDto> GrantConsentAsync(SaveConsentDto request, int grantedByUserId);
+    Task<PatientConsentDto?> UpdateConsentAsync(int consentId, SaveConsentDto request, int updatedByUserId);
+    Task<PatientConsentDto> RevokeConsentAsync(RevokeConsentDto request, int revokedByUserId);
+    Task<List<ConsentHistoryDto>> GetConsentHistoryAsync(int consentId);
 
     #endregion
 
     #region Consent Verification
 
-    Task<ConsentVerificationDto> VerifyConsentAsync(int patientId, string consentType, string? purpose = null);
+    Task<ConsentVerificationDto> VerifyConsentAsync(int patientId, string consentType);
+    Task<ConsentVerificationDto> VerifyConsentForPurposeAsync(int patientId, string consentType, string purpose);
+    Task<Dictionary<string, ConsentVerificationDto>> VerifyMultipleConsentsAsync(int patientId, List<string> consentTypes);
     Task<bool> HasActiveConsentAsync(int patientId, string consentType);
     Task<bool> CanShareDataAsync(int patientId, string recipientType, string purpose);
     Task<bool> CanParticipateInResearchAsync(int patientId);
 
     #endregion
 
-    #region Consent Summary
+    #region Consent Summary & Reports
 
-    Task<PatientConsentSummaryDto> GetConsentSummaryAsync(int patientId);
-    Task<List<PatientConsentDto>> GetExpiringConsentsAsync(int daysAhead = 30);
+    Task<PatientConsentSummaryDto> GetPatientConsentSummaryAsync(int patientId);
+    Task<List<PatientConsentDto>> GetExpiringConsentsAsync(int branchId, int daysAhead = 30);
     Task<List<PatientConsentDto>> GetPendingConsentsAsync(int? branchId = null);
+    Task<object> GetComplianceReportAsync(int branchId, DateTime startDate, DateTime endDate);
 
     #endregion
 
     #region Templates
 
-    Task<List<ConsentFormTemplateDto>> GetConsentTemplatesAsync(string? consentType = null);
-    Task<ConsentFormTemplateDto> GetTemplateAsync(int templateId);
-    Task<ConsentFormTemplateDto> SaveTemplateAsync(ConsentFormTemplateDto template, int userId);
+    Task<List<ConsentFormTemplateDto>> GetConsentFormTemplatesAsync(string? consentType = null, string? language = null);
+    Task<ConsentFormTemplateDto?> GetConsentFormTemplateAsync(int templateId);
+    Task<ConsentFormTemplateDto> CreateConsentFormTemplateAsync(ConsentFormTemplateDto template);
+    Task<ConsentFormTemplateDto?> UpdateConsentFormTemplateAsync(ConsentFormTemplateDto template);
     Task<string> GenerateConsentDocumentAsync(int templateId, int patientId);
 
     #endregion
@@ -46,7 +51,7 @@ public interface IConsentService
     #region HIE/FHIR Integration
 
     Task<ConsentDirectiveDto> GetConsentDirectiveAsync(int patientId);
-    Task<object> ExportToFhirConsentAsync(int consentId);
+    Task<ConsentDirectiveDto?> ExportToFhirAsync(int consentId);
     Task<PatientConsentDto> ImportFromFhirConsentAsync(object fhirConsent, int patientId);
 
     #endregion

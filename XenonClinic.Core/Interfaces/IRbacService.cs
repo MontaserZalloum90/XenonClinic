@@ -10,9 +10,9 @@ public interface IRbacService
     #region Permission Management
 
     /// <summary>
-    /// Get all permissions
+    /// Get all permissions, optionally filtered by category
     /// </summary>
-    Task<List<PermissionDto>> GetAllPermissionsAsync();
+    Task<List<PermissionDto>> GetAllPermissionsAsync(string? category = null);
 
     /// <summary>
     /// Get permissions by category
@@ -51,17 +51,17 @@ public interface IRbacService
     /// <summary>
     /// Create a new role
     /// </summary>
-    Task<RoleDto> CreateRoleAsync(SaveRoleDto request, int createdByUserId);
+    Task<RoleDto> CreateRoleAsync(SaveRoleDto request);
 
     /// <summary>
     /// Update role
     /// </summary>
-    Task<RoleDto> UpdateRoleAsync(int roleId, SaveRoleDto request, int updatedByUserId);
+    Task<RoleDto?> UpdateRoleAsync(int roleId, SaveRoleDto request);
 
     /// <summary>
     /// Delete role
     /// </summary>
-    Task<bool> DeleteRoleAsync(int roleId, int deletedByUserId);
+    Task<bool> DeleteRoleAsync(int roleId);
 
     /// <summary>
     /// Duplicate role with new name
@@ -85,7 +85,7 @@ public interface IRbacService
     /// <summary>
     /// Assign roles to user
     /// </summary>
-    Task<bool> AssignRolesToUserAsync(AssignRolesDto request, int assignedByUserId);
+    Task AssignRolesToUserAsync(AssignRolesDto request);
 
     /// <summary>
     /// Remove role from user
@@ -129,7 +129,7 @@ public interface IRbacService
     /// <summary>
     /// Get user's effective permissions (from all roles + direct)
     /// </summary>
-    Task<List<string>> GetEffectivePermissionsAsync(int userId);
+    Task<List<string>> GetUserEffectivePermissionsAsync(int userId);
 
     /// <summary>
     /// Validate emergency access request
@@ -177,7 +177,7 @@ public interface IRbacService
     /// <summary>
     /// Bulk update role permissions
     /// </summary>
-    Task<bool> BulkUpdatePermissionsAsync(BulkPermissionUpdateDto request, int updatedByUserId);
+    Task BulkUpdateRolePermissionsAsync(BulkPermissionUpdateDto request);
 
     #endregion
 

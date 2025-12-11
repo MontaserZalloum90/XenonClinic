@@ -12,12 +12,12 @@ public interface IAnalyticsService
     /// <summary>
     /// Get all dashboards for the current user
     /// </summary>
-    Task<List<DashboardDto>> GetDashboardsAsync(int userId, int branchId);
+    Task<List<DashboardDto>> GetDashboardsAsync(int userId);
 
     /// <summary>
     /// Get dashboard by ID
     /// </summary>
-    Task<DashboardDto?> GetDashboardAsync(int dashboardId, int userId);
+    Task<DashboardDto?> GetDashboardByIdAsync(int dashboardId);
 
     /// <summary>
     /// Get default dashboard
@@ -27,17 +27,22 @@ public interface IAnalyticsService
     /// <summary>
     /// Create a new dashboard
     /// </summary>
-    Task<DashboardDto> CreateDashboardAsync(CreateDashboardDto request, int userId, int branchId);
+    Task<DashboardDto> CreateDashboardAsync(SaveDashboardDto request, int userId);
 
     /// <summary>
     /// Update dashboard
     /// </summary>
-    Task<DashboardDto> UpdateDashboardAsync(int dashboardId, UpdateDashboardDto request, int userId);
+    Task<DashboardDto?> UpdateDashboardAsync(int dashboardId, SaveDashboardDto request);
 
     /// <summary>
     /// Delete dashboard
     /// </summary>
-    Task<bool> DeleteDashboardAsync(int dashboardId, int userId);
+    Task DeleteDashboardAsync(int dashboardId);
+
+    /// <summary>
+    /// Get dashboard data with widget values
+    /// </summary>
+    Task<DashboardDataDto> GetDashboardDataAsync(int dashboardId, int branchId, DateTime? startDate = null, DateTime? endDate = null);
 
     /// <summary>
     /// Duplicate dashboard
@@ -56,22 +61,22 @@ public interface IAnalyticsService
     /// <summary>
     /// Add widget to dashboard
     /// </summary>
-    Task<DashboardWidgetDto> AddWidgetAsync(int dashboardId, DashboardWidgetDto widget, int userId);
+    Task<WidgetDto> AddWidgetAsync(int dashboardId, SaveWidgetDto widget);
 
     /// <summary>
     /// Update widget
     /// </summary>
-    Task<DashboardWidgetDto> UpdateWidgetAsync(int dashboardId, string widgetId, DashboardWidgetDto widget, int userId);
+    Task<WidgetDto?> UpdateWidgetAsync(int widgetId, SaveWidgetDto widget);
 
     /// <summary>
-    /// Remove widget from dashboard
+    /// Delete widget
     /// </summary>
-    Task<bool> RemoveWidgetAsync(int dashboardId, string widgetId, int userId);
+    Task DeleteWidgetAsync(int widgetId);
 
     /// <summary>
     /// Get widget data
     /// </summary>
-    Task<Dictionary<string, object>> GetWidgetDataAsync(int dashboardId, string widgetId, Dictionary<string, object>? filters = null);
+    Task<WidgetDataDto> GetWidgetDataAsync(int widgetId, int branchId, DateTime? startDate = null, DateTime? endDate = null);
 
     /// <summary>
     /// Refresh widget data
@@ -111,6 +116,26 @@ public interface IAnalyticsService
     /// Get operational efficiency metrics
     /// </summary>
     Task<OperationalEfficiencyDto> GetOperationalEfficiencyAsync(int branchId, DateTime? startDate = null, DateTime? endDate = null);
+
+    /// <summary>
+    /// Get clinical outcomes analytics
+    /// </summary>
+    Task<ClinicalOutcomesDto> GetClinicalOutcomesAsync(int branchId, DateTime startDate, DateTime endDate);
+
+    /// <summary>
+    /// Get resource utilization analytics
+    /// </summary>
+    Task<ResourceUtilizationDto> GetResourceUtilizationAsync(int branchId, DateTime startDate, DateTime endDate);
+
+    /// <summary>
+    /// Get KPI dashboard
+    /// </summary>
+    Task<KPIDashboardDto> GetKPIsAsync(int branchId, DateTime startDate, DateTime endDate);
+
+    /// <summary>
+    /// Get metric history for trending
+    /// </summary>
+    Task<List<MetricDataPointDto>> GetMetricHistoryAsync(int branchId, string metricName, DateTime startDate, DateTime endDate, string granularity);
 
     #endregion
 
@@ -153,7 +178,7 @@ public interface IAnalyticsService
     /// <summary>
     /// Get patient risk scores
     /// </summary>
-    Task<List<PatientRiskScoreDto>> GetPatientRiskScoresAsync(int branchId, int? limit = 100);
+    Task<List<PatientRiskScoreDto>> GetPatientRiskScoresAsync(int branchId, string? riskCategory = null, int minScore = 0);
 
     /// <summary>
     /// Get patient risk score by patient ID
@@ -163,7 +188,7 @@ public interface IAnalyticsService
     /// <summary>
     /// Get no-show predictions for upcoming appointments
     /// </summary>
-    Task<List<NoShowPredictionDto>> GetNoShowPredictionsAsync(int branchId, DateTime date);
+    Task<List<NoShowPredictionDto>> GetNoShowPredictionsAsync(int branchId, DateTime fromDate, DateTime toDate);
 
     /// <summary>
     /// Get revenue prediction
@@ -238,6 +263,11 @@ public interface IAnalyticsService
     /// </summary>
     Task<bool> MarkAnomalyInvestigatedAsync(int anomalyId, int userId);
 
+    /// <summary>
+    /// Configure analytics alert
+    /// </summary>
+    Task<AnalyticsAlertConfigDto> ConfigureAlertAsync(AnalyticsAlertConfigDto config);
+
     #endregion
 
     #region Export & Sharing
@@ -245,7 +275,12 @@ public interface IAnalyticsService
     /// <summary>
     /// Export dashboard
     /// </summary>
-    Task<byte[]> ExportDashboardAsync(ExportDashboardDto request, int userId);
+    Task<byte[]> ExportDashboardAsync(int dashboardId, int branchId, string format, DateTime? startDate = null, DateTime? endDate = null);
+
+    /// <summary>
+    /// Export analytics data
+    /// </summary>
+    Task<byte[]> ExportAnalyticsDataAsync(int branchId, string reportType, string format, DateTime? startDate = null, DateTime? endDate = null);
 
     /// <summary>
     /// Share dashboard
