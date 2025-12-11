@@ -17,12 +17,12 @@ namespace XenonClinic.Api.Controllers;
 [Produces("application/json")]
 public class SalesController : BaseApiController
 {
-    private readonly IPharmacyService _salesService;
+    private readonly ISalesService _salesService;
     private readonly ICurrentUserService _currentUserService;
     private readonly ILogger<SalesController> _logger;
 
     public SalesController(
-        IPharmacyService salesService,
+        ISalesService salesService,
         ICurrentUserService currentUserService,
         ILogger<SalesController> logger)
     {

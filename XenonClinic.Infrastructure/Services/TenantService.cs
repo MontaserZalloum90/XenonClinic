@@ -364,7 +364,16 @@ public class TenantService : ITenantService
         }
         catch (Exception ex)
         {
-            await transaction.RollbackAsync();
+            // Safely attempt to rollback, handling potential rollback failure
+            try
+            {
+                await transaction.RollbackAsync();
+            }
+            catch (Exception rollbackEx)
+            {
+                _logger.LogWarning(rollbackEx, "Failed to rollback transaction for tenant {TenantId}", tenantId);
+            }
+
             _logger.LogError(ex, "Error checking company creation limit for tenant {TenantId}", tenantId);
 
             // Fallback to non-locking check for databases that don't support UPDLOCK
@@ -434,7 +443,16 @@ public class TenantService : ITenantService
         }
         catch (Exception ex)
         {
-            await transaction.RollbackAsync();
+            // Safely attempt to rollback, handling potential rollback failure
+            try
+            {
+                await transaction.RollbackAsync();
+            }
+            catch (Exception rollbackEx)
+            {
+                _logger.LogWarning(rollbackEx, "Failed to rollback transaction for tenant {TenantId}", tenantId);
+            }
+
             _logger.LogError(ex, "Error checking user creation limit for tenant {TenantId}", tenantId);
 
             // Fallback to non-locking check for databases that don't support UPDLOCK
