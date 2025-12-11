@@ -47,6 +47,13 @@ public class FinancialService : IFinancialService
 
     public async Task<Account> CreateAccountAsync(Account account)
     {
+        // Validate branch exists
+        var branchExists = await _context.Branches.AnyAsync(b => b.Id == account.BranchId);
+        if (!branchExists)
+        {
+            throw new KeyNotFoundException($"Branch with ID {account.BranchId} not found");
+        }
+
         _context.Accounts.Add(account);
         await _context.SaveChangesAsync();
         return account;
@@ -54,7 +61,14 @@ public class FinancialService : IFinancialService
 
     public async Task UpdateAccountAsync(Account account)
     {
-        _context.Accounts.Update(account);
+        // Validate account exists
+        var existingAccount = await _context.Accounts.FindAsync(account.Id);
+        if (existingAccount == null)
+        {
+            throw new KeyNotFoundException($"Account with ID {account.Id} not found");
+        }
+
+        _context.Entry(existingAccount).CurrentValues.SetValues(account);
         await _context.SaveChangesAsync();
     }
 
@@ -108,6 +122,12 @@ public class FinancialService : IFinancialService
 
     public async Task<IEnumerable<FinancialTransaction>> GetTransactionsByDateRangeAsync(int branchId, DateTime startDate, DateTime endDate)
     {
+        // Validate date range
+        if (endDate < startDate)
+        {
+            throw new ArgumentException("End date must be greater than or equal to start date", nameof(endDate));
+        }
+
         return await _context.FinancialTransactions
             .Include(t => t.Account)
             .Where(t => t.Account!.BranchId == branchId &&
@@ -227,6 +247,19 @@ public class FinancialService : IFinancialService
 
     public async Task<Invoice> CreateInvoiceAsync(Invoice invoice)
     {
+        // Validate branch exists
+        var branchExists = await _context.Branches.AnyAsync(b => b.Id == invoice.BranchId);
+        if (!branchExists)
+        {
+            throw new KeyNotFoundException($"Branch with ID {invoice.BranchId} not found");
+        }
+
+        // Validate total amount
+        if (invoice.TotalAmount <= 0)
+        {
+            throw new InvalidOperationException("Invoice total amount must be greater than zero");
+        }
+
         _context.Invoices.Add(invoice);
         await _context.SaveChangesAsync();
         return invoice;
@@ -305,6 +338,23 @@ public class FinancialService : IFinancialService
             throw new InvalidOperationException("Expense amount must be greater than zero");
         }
 
+        // Validate branch exists
+        var branchExists = await _context.Branches.AnyAsync(b => b.Id == expense.BranchId);
+        if (!branchExists)
+        {
+            throw new KeyNotFoundException($"Branch with ID {expense.BranchId} not found");
+        }
+
+        // Validate category exists if specified
+        if (expense.CategoryId.HasValue)
+        {
+            var categoryExists = await _context.ExpenseCategories.AnyAsync(c => c.Id == expense.CategoryId.Value);
+            if (!categoryExists)
+            {
+                throw new KeyNotFoundException($"Expense category with ID {expense.CategoryId.Value} not found");
+            }
+        }
+
         _context.Expenses.Add(expense);
         await _context.SaveChangesAsync();
         return expense;
@@ -332,6 +382,12 @@ public class FinancialService : IFinancialService
 
     public async Task<decimal> GetTotalRevenueAsync(int branchId, DateTime startDate, DateTime endDate)
     {
+        // Validate date range
+        if (endDate < startDate)
+        {
+            throw new ArgumentException("End date must be greater than or equal to start date", nameof(endDate));
+        }
+
         return await _context.FinancialTransactions
             .Where(t => t.Account!.BranchId == branchId &&
                    t.TransactionType == TransactionType.Credit &&
