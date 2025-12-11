@@ -376,9 +376,15 @@ public partial class TimerService : ITimerService
             // Fallback to TimeSpan.Parse
             return TimeSpan.Parse(duration);
         }
-        catch
+        catch (FormatException)
         {
-            return TimeSpan.FromHours(1); // Default fallback
+            // Duration format not recognized, use default
+            return TimeSpan.FromHours(1);
+        }
+        catch (OverflowException)
+        {
+            // Duration value too large, use default
+            return TimeSpan.FromHours(1);
         }
     }
 

@@ -111,8 +111,8 @@ public class ProcessMigrationService : IProcessMigrationService
         }
 
         // Validate activity mappings
-        var sourceActivities = sourceDefinition.Model.Activities.Keys.ToHashSet();
-        var targetActivities = targetDefinition.Model.Activities.Keys.ToHashSet();
+        var sourceActivities = (sourceDefinition.Model?.Activities?.Keys ?? Enumerable.Empty<string>()).ToHashSet();
+        var targetActivities = (targetDefinition.Model?.Activities?.Keys ?? Enumerable.Empty<string>()).ToHashSet();
 
         foreach (var mapping in plan.ActivityMappings)
         {
@@ -358,9 +358,16 @@ public class ProcessMigrationService : IProcessMigrationService
 
         _migrationExecutions[rollbackExecution.Id] = rollbackExecution;
 
-        // Get migration records for this execution
-        var records = _migrationRecords.Values
-            .SelectMany(r => r)
+        // Get migration records for this execution - take snapshot to avoid concurrent modification
+        var allRecords = new List<MigrationRecord>();
+        foreach (var kvp in _migrationRecords.ToArray())
+        {
+            lock (kvp.Value)
+            {
+                allRecords.AddRange(kvp.Value.Where(r => r != null));
+            }
+        }
+        var records = allRecords
             .Where(r => r.MigrationExecutionId == executionId)
             .ToList();
 
@@ -416,7 +423,7 @@ public class ProcessMigrationService : IProcessMigrationService
         var sourceDefinition = await _definitionService.GetByIdAsync(sourceDefinitionId, cancellationToken);
         var targetDefinition = await _definitionService.GetByIdAsync(targetDefinitionId, cancellationToken);
 
-        var targetActivities = targetDefinition?.Model.Activities.Keys.ToHashSet() ?? new HashSet<string>();
+        var targetActivities = (targetDefinition?.Model?.Activities?.Keys ?? Enumerable.Empty<string>()).ToHashSet();
 
         var migratableInstances = new List<MigratableInstance>();
 
@@ -427,7 +434,7 @@ public class ProcessMigrationService : IProcessMigrationService
                 InstanceId = instance.Id,
                 BusinessKey = instance.BusinessKey ?? "",
                 CurrentActivityId = instance.CurrentActivityId ?? "",
-                CurrentActivityName = sourceDefinition?.Model.Activities
+                CurrentActivityName = sourceDefinition?.Model?.Activities?
                     .GetValueOrDefault(instance.CurrentActivityId ?? "")?.Name ?? "",
                 StartedAt = instance.StartedAt,
                 PendingTaskCount = 0 // Would query actual pending tasks
@@ -460,7 +467,12 @@ public class ProcessMigrationService : IProcessMigrationService
     {
         if (_migrationRecords.TryGetValue(instanceId, out var records))
         {
-            return Task.FromResult<IList<MigrationRecord>>(records.OrderByDescending(r => r.MigratedAt).ToList());
+            List<MigrationRecord> snapshot;
+            lock (records)
+            {
+                snapshot = records.ToList();
+            }
+            return Task.FromResult<IList<MigrationRecord>>(snapshot.OrderByDescending(r => r.MigratedAt).ToList());
         }
 
         return Task.FromResult<IList<MigrationRecord>>(new List<MigrationRecord>());
@@ -470,8 +482,8 @@ public class ProcessMigrationService : IProcessMigrationService
 
     private void GenerateAutoMappings(MigrationPlan plan, Domain.Entities.ProcessDefinition sourceDefinition, Domain.Entities.ProcessDefinition targetDefinition)
     {
-        var sourceActivities = sourceDefinition.Model.Activities;
-        var targetActivities = targetDefinition.Model.Activities;
+        var sourceActivities = sourceDefinition.Model?.Activities ?? new Dictionary<string, ActivityDefinition>();
+        var targetActivities = targetDefinition.Model?.Activities ?? new Dictionary<string, ActivityDefinition>();
 
         // Map activities with same ID
         foreach (var sourceActivity in sourceActivities)
@@ -628,7 +640,7 @@ public class ProcessMigrationService : IProcessMigrationService
         }
 
         // Execute migration instructions
-        foreach (var instruction in plan.Instructions.OrderBy(i => i.Order))
+        foreach (var instruction in (plan.Instructions ?? Enumerable.Empty<MigrationInstruction>()).OrderBy(i => i.Order))
         {
             _logger.LogDebug("Executing instruction: {Type} for {ActivityId}",
                 instruction.Type, instruction.SourceActivityId);

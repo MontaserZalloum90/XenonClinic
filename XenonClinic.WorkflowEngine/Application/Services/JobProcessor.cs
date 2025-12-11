@@ -119,9 +119,23 @@ public class JobProcessor : IJobProcessor
 
         try
         {
-            var payload = !string.IsNullOrEmpty(job.PayloadJson)
-                ? JsonSerializer.Deserialize<Dictionary<string, object>>(job.PayloadJson, _jsonOptions)
-                : new Dictionary<string, object>();
+            Dictionary<string, object>? payload;
+            if (!string.IsNullOrEmpty(job.PayloadJson))
+            {
+                try
+                {
+                    payload = JsonSerializer.Deserialize<Dictionary<string, object>>(job.PayloadJson, _jsonOptions);
+                }
+                catch (JsonException ex)
+                {
+                    _logger.LogWarning(ex, "Failed to deserialize job payload for {JobId}", jobId);
+                    payload = new Dictionary<string, object>();
+                }
+            }
+            else
+            {
+                payload = new Dictionary<string, object>();
+            }
 
             object? result = null;
 
@@ -223,9 +237,11 @@ public class JobProcessor : IJobProcessor
 
         if (shouldRetry && job.RetryCount < job.MaxRetries)
         {
-            // Schedule retry with exponential backoff
-            var delay = TimeSpan.FromSeconds(
-                job.RetryDelaySeconds * Math.Pow(2, job.RetryCount - 1));
+            // Schedule retry with exponential backoff, capped to prevent overflow
+            var exponent = Math.Min(job.RetryCount - 1, 10); // Cap at 2^10 = 1024
+            var multiplier = Math.Pow(2, exponent);
+            var delaySeconds = Math.Min(job.RetryDelaySeconds * multiplier, TimeSpan.MaxValue.TotalSeconds - 1);
+            var delay = TimeSpan.FromSeconds(delaySeconds);
 
             job.Status = JobStatus.Retrying;
             job.NextRetryAt = DateTime.UtcNow.Add(delay);
@@ -317,6 +333,19 @@ public class JobProcessor : IJobProcessor
 
     private JobDto MapToDto(AsyncJob job)
     {
+        Dictionary<string, object>? payload = null;
+        if (!string.IsNullOrEmpty(job.PayloadJson))
+        {
+            try
+            {
+                payload = JsonSerializer.Deserialize<Dictionary<string, object>>(job.PayloadJson, _jsonOptions);
+            }
+            catch (JsonException)
+            {
+                // Keep payload as null if deserialization fails
+            }
+        }
+
         return new JobDto
         {
             Id = job.Id,
@@ -326,9 +355,7 @@ public class JobProcessor : IJobProcessor
             JobType = job.JobType,
             Status = job.Status,
             Priority = job.Priority,
-            Payload = !string.IsNullOrEmpty(job.PayloadJson)
-                ? JsonSerializer.Deserialize<Dictionary<string, object>>(job.PayloadJson, _jsonOptions)
-                : null,
+            Payload = payload,
             Result = job.ResultJson,
             ErrorMessage = job.ErrorMessage,
             RetryCount = job.RetryCount,

@@ -62,8 +62,9 @@ public class WebhookService : IWebhookService
 
         _subscriptions[subscription.Id] = subscription;
 
+        var eventTypes = subscription.EventTypes ?? Enumerable.Empty<string>();
         _logger.LogInformation("Registered webhook subscription {SubscriptionId} for events {EventTypes}",
-            subscription.Id, string.Join(", ", subscription.EventTypes));
+            subscription.Id, string.Join(", ", eventTypes));
 
         return Task.FromResult(subscription);
     }
@@ -116,7 +117,7 @@ public class WebhookService : IWebhookService
 
         if (!string.IsNullOrEmpty(eventType))
         {
-            query = query.Where(s => s.EventTypes.Any(et => MatchesEventType(eventType, et)));
+            query = query.Where(s => s.EventTypes != null && s.EventTypes.Any(et => MatchesEventType(eventType, et)));
         }
 
         return Task.FromResult<IList<WebhookSubscription>>(query.ToList());
@@ -265,11 +266,17 @@ public class WebhookService : IWebhookService
 
         try
         {
+            if (string.IsNullOrEmpty(signature))
+            {
+                return Task.FromResult(false);
+            }
+
             // Parse signature format (e.g., "sha256=abc123" or just "abc123")
             var signatureValue = signature;
-            if (signature.Contains('='))
+            var equalsIndex = signature.IndexOf('=');
+            if (equalsIndex >= 0 && equalsIndex < signature.Length - 1)
             {
-                signatureValue = signature.Split('=').Last();
+                signatureValue = signature.Substring(equalsIndex + 1);
             }
 
             // In production, compute HMAC and compare
@@ -278,8 +285,9 @@ public class WebhookService : IWebhookService
 
             return Task.FromResult(isValid);
         }
-        catch
+        catch (Exception ex)
         {
+            _logger.LogWarning(ex, "Error validating webhook signature for {WebhookId}", webhookId);
             return Task.FromResult(false);
         }
     }
@@ -291,7 +299,7 @@ public class WebhookService : IWebhookService
     public async Task NotifyWebhooksAsync(WorkflowEvent @event, CancellationToken cancellationToken = default)
     {
         var matchingSubscriptions = _subscriptions.Values
-            .Where(s => s.Active && s.EventTypes.Any(et => MatchesEventType(@event.EventType, et)))
+            .Where(s => s.Active && s.EventTypes != null && s.EventTypes.Any(et => MatchesEventType(@event.EventType, et)))
             .ToList();
 
         if (matchingSubscriptions.Count == 0)
@@ -312,9 +320,15 @@ public class WebhookService : IWebhookService
         WebhookDelivery? delivery = null;
         string? subscriptionId = null;
 
-        foreach (var kvp in _deliveryHistory)
+        // Take a snapshot to avoid concurrent modification
+        foreach (var kvp in _deliveryHistory.ToArray())
         {
-            delivery = kvp.Value.FirstOrDefault(d => d.Id == deliveryId);
+            List<WebhookDelivery> historySnapshot;
+            lock (kvp.Value)
+            {
+                historySnapshot = kvp.Value.ToList();
+            }
+            delivery = historySnapshot.FirstOrDefault(d => d.Id == deliveryId);
             if (delivery != null)
             {
                 subscriptionId = kvp.Key;
@@ -411,9 +425,12 @@ public class WebhookService : IWebhookService
             request.Content = new StringContent(payloadJson, Encoding.UTF8, "application/json");
 
             // Add custom headers
-            foreach (var header in subscription.CustomHeaders)
+            if (subscription.CustomHeaders != null)
             {
-                request.Headers.TryAddWithoutValidation(header.Key, header.Value);
+                foreach (var header in subscription.CustomHeaders)
+                {
+                    request.Headers.TryAddWithoutValidation(header.Key, header.Value);
+                }
             }
 
             // Add signature if secret is configured
@@ -545,11 +562,11 @@ public class WebhookService : IWebhookService
         return false;
     }
 
-    private static Dictionary<string, object> ExtractVariables(InboundWebhookPayload payload, Dictionary<string, string> mapping)
+    private static Dictionary<string, object> ExtractVariables(InboundWebhookPayload payload, Dictionary<string, string>? mapping)
     {
         var variables = new Dictionary<string, object>();
 
-        if (payload.JsonBody == null)
+        if (payload.JsonBody == null || mapping == null)
             return variables;
 
         foreach (var kvp in mapping)

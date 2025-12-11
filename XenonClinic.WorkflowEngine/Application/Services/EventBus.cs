@@ -22,6 +22,7 @@ public class EventBus : IEventBus
     private readonly List<PatternSubscriptionInfo> _patternSubscriptions = new();
     private readonly object _patternLock = new();
     private readonly List<IEventBusInterceptor> _interceptors = new();
+    private readonly object _interceptorsLock = new();
 
     public EventBus(ILogger<EventBus> logger, IServiceProvider serviceProvider)
     {
@@ -31,7 +32,10 @@ public class EventBus : IEventBus
 
     public void AddInterceptor(IEventBusInterceptor interceptor)
     {
-        _interceptors.Add(interceptor);
+        lock (_interceptorsLock)
+        {
+            _interceptors.Add(interceptor);
+        }
     }
 
     public async Task PublishAsync<TEvent>(TEvent @event, CancellationToken cancellationToken = default)
@@ -47,8 +51,13 @@ public class EventBus : IEventBus
         _logger.LogDebug("Publishing event {EventType} with ID {EventId} to topic {Topic}",
             @event.EventType, @event.EventId, topic);
 
-        // Run interceptors
-        foreach (var interceptor in _interceptors)
+        // Run interceptors - take snapshot to avoid concurrent modification
+        List<IEventBusInterceptor> interceptorSnapshot;
+        lock (_interceptorsLock)
+        {
+            interceptorSnapshot = _interceptors.ToList();
+        }
+        foreach (var interceptor in interceptorSnapshot)
         {
             try
             {
@@ -65,7 +74,12 @@ public class EventBus : IEventBus
         // Notify type-based subscribers
         if (_typeSubscriptions.TryGetValue(typeof(TEvent), out var typeHandlers))
         {
-            foreach (var handler in typeHandlers.ToList())
+            List<SubscriptionInfo> handlerSnapshot;
+            lock (typeHandlers)
+            {
+                handlerSnapshot = typeHandlers.ToList();
+            }
+            foreach (var handler in handlerSnapshot)
             {
                 tasks.Add(InvokeHandlerAsync(handler, @event, cancellationToken));
             }
@@ -74,7 +88,12 @@ public class EventBus : IEventBus
         // Notify topic-based subscribers
         if (_topicSubscriptions.TryGetValue(topic, out var topicHandlers))
         {
-            foreach (var handler in topicHandlers.ToList())
+            List<TopicSubscriptionInfo> topicHandlerSnapshot;
+            lock (topicHandlers)
+            {
+                topicHandlerSnapshot = topicHandlers.ToList();
+            }
+            foreach (var handler in topicHandlerSnapshot)
             {
                 tasks.Add(InvokeTopicHandlerAsync(handler, @event, cancellationToken));
             }

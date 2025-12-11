@@ -1,5 +1,6 @@
 namespace XenonClinic.WorkflowEngine.Application.Services;
 
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Net.Http.Json;
 using System.Text;
@@ -14,7 +15,7 @@ public class ServiceTaskExecutor : IServiceTaskExecutor
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly IExpressionEvaluator _expressionEvaluator;
     private readonly ILogger<ServiceTaskExecutor> _logger;
-    private readonly Dictionary<string, IServiceHandler> _handlers = new(StringComparer.OrdinalIgnoreCase);
+    private readonly ConcurrentDictionary<string, IServiceHandler> _handlers = new(StringComparer.OrdinalIgnoreCase);
     private readonly JsonSerializerOptions _jsonOptions;
 
     public ServiceTaskExecutor(
@@ -166,8 +167,9 @@ public class ServiceTaskExecutor : IServiceTaskExecutor
                         responseData = ExtractJsonPath(jsonElement, request.ResultPath);
                     }
                 }
-                catch
+                catch (JsonException)
                 {
+                    // Response is not valid JSON, keep as string
                     responseData = responseContent;
                 }
             }

@@ -39,12 +39,19 @@ public class EmailService : IEmailService
 
         try
         {
+            // Validate recipients
+            if (message.To == null || message.To.Count == 0)
+            {
+                throw new ArgumentException("At least one recipient is required", nameof(message));
+            }
+
             // Set default from if not specified
             message.From ??= _config.DefaultFrom;
 
+            var recipientList = string.Join(", ", message.To.Where(t => t != null).Select(t => t.Email ?? "unknown"));
             _logger.LogDebug("Sending email to {Recipients} with subject: {Subject}",
-                string.Join(", ", message.To.Select(t => t.Email)),
-                message.Subject);
+                recipientList,
+                message.Subject ?? "(no subject)");
 
             switch (_config.Provider.ToLowerInvariant())
             {
@@ -67,8 +74,12 @@ public class EmailService : IEmailService
             result.SentAt = DateTime.UtcNow;
 
             _logger.LogInformation("Email sent successfully to {Recipients}, MessageId: {MessageId}",
-                string.Join(", ", message.To.Select(t => t.Email)),
+                recipientList,
                 result.MessageId);
+        }
+        catch (ArgumentException)
+        {
+            throw; // Re-throw argument exceptions
         }
         catch (Exception ex)
         {
@@ -76,8 +87,10 @@ public class EmailService : IEmailService
             result.ErrorCode = "SEND_FAILED";
             result.ErrorMessage = ex.Message;
 
-            _logger.LogError(ex, "Failed to send email to {Recipients}",
-                string.Join(", ", message.To.Select(t => t.Email)));
+            var recipients = message.To != null
+                ? string.Join(", ", message.To.Where(t => t != null).Select(t => t.Email ?? "unknown"))
+                : "unknown";
+            _logger.LogError(ex, "Failed to send email to {Recipients}", recipients);
         }
 
         return result;
@@ -127,15 +140,21 @@ public class EmailService : IEmailService
             ["taskUrl"] = request.TaskUrl ?? "#"
         };
 
-        foreach (var kvp in request.AdditionalVariables)
+        if (request.AdditionalVariables != null)
         {
-            variables[kvp.Key] = kvp.Value;
+            foreach (var kvp in request.AdditionalVariables)
+            {
+                if (kvp.Key != null)
+                {
+                    variables[kvp.Key] = kvp.Value ?? "";
+                }
+            }
         }
 
         await SendTemplatedAsync(new TemplatedEmailRequest
         {
             TemplateKey = "task-assignment",
-            To = new List<EmailAddress> { new(request.AssigneeEmail, request.AssigneeName) },
+            To = new List<EmailAddress> { new(request.AssigneeEmail ?? "", request.AssigneeName) },
             Variables = variables
         }, cancellationToken);
     }

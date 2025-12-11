@@ -52,8 +52,11 @@ public class ProcessDefinitionService : IProcessDefinitionService
             var validation = await ValidateAsync(request.Model, cancellationToken);
             if (!validation.IsValid && !request.SaveAsDraft)
             {
+                var errorMessages = (validation.Errors ?? Enumerable.Empty<ValidationError>())
+                    .Where(e => e != null)
+                    .Select(e => e.Message ?? "Unknown error");
                 throw new InvalidOperationException(
-                    $"Process model validation failed: {string.Join(", ", validation.Errors.Select(e => e.Message))}");
+                    $"Process model validation failed: {string.Join(", ", errorMessages)}");
             }
         }
 
