@@ -131,7 +131,7 @@ public class PasswordResetService : IPasswordResetService
             TokenHash = tokenHash,
             UserType = userType,
             UserId = userId.Value,
-            Email = email.ToLower(),
+            Email = email.ToLowerInvariant(),
             ExpiresAt = DateTime.UtcNow.AddHours(_tokenExpiryHours),
             RequestedByIp = ipAddress,
             UserAgent = userAgent
@@ -164,7 +164,7 @@ public class PasswordResetService : IPasswordResetService
 
         var resetToken = await _context.PasswordResetTokens
             .FirstOrDefaultAsync(t => t.TokenHash == tokenHash &&
-                                      t.Email == email.ToLower());
+                                      t.Email == email.ToLowerInvariant());
 
         if (resetToken == null)
         {
