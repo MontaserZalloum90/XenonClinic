@@ -141,16 +141,65 @@ public class LabService : ILabService
         if (labOrder == null)
             throw new KeyNotFoundException($"Lab order with ID {labOrderId} not found");
 
+        // Validate status transition
+        ValidateStatusTransition(labOrder.Status, status);
+
         labOrder.Status = status;
         labOrder.UpdatedBy = userId;
         labOrder.UpdatedAt = DateTime.UtcNow;
 
-        if (status == LabOrderStatus.Completed)
+        // Set completion/receive/performed dates based on new status
+        switch (status)
         {
-            labOrder.CompletedDate = DateTime.UtcNow;
+            case LabOrderStatus.Received:
+                labOrder.ReceivedDate = DateTime.UtcNow;
+                labOrder.ReceivedBy = userId;
+                break;
+            case LabOrderStatus.InProgress:
+                labOrder.PerformedDate = DateTime.UtcNow;
+                labOrder.PerformedBy = userId;
+                break;
+            case LabOrderStatus.Completed:
+                labOrder.CompletedDate = DateTime.UtcNow;
+                break;
+            case LabOrderStatus.Approved:
+                labOrder.ApprovedDate = DateTime.UtcNow;
+                labOrder.ApprovedBy = userId;
+                break;
         }
 
         await _context.SaveChangesAsync();
+    }
+
+    /// <summary>
+    /// Validates that the status transition is valid.
+    /// </summary>
+    private static void ValidateStatusTransition(LabOrderStatus currentStatus, LabOrderStatus newStatus)
+    {
+        // Define valid transitions
+        var validTransitions = new Dictionary<LabOrderStatus, LabOrderStatus[]>
+        {
+            { LabOrderStatus.Pending, new[] { LabOrderStatus.Received, LabOrderStatus.InProgress, LabOrderStatus.Cancelled } },
+            { LabOrderStatus.Received, new[] { LabOrderStatus.InProgress, LabOrderStatus.Cancelled } },
+            { LabOrderStatus.InProgress, new[] { LabOrderStatus.Completed, LabOrderStatus.Cancelled } },
+            { LabOrderStatus.Completed, new[] { LabOrderStatus.Approved, LabOrderStatus.Rejected } },
+            { LabOrderStatus.Approved, Array.Empty<LabOrderStatus>() },  // Terminal state
+            { LabOrderStatus.Rejected, Array.Empty<LabOrderStatus>() },  // Terminal state
+            { LabOrderStatus.Cancelled, Array.Empty<LabOrderStatus>() }  // Terminal state
+        };
+
+        if (currentStatus == newStatus)
+        {
+            return; // No change, always valid
+        }
+
+        if (!validTransitions.TryGetValue(currentStatus, out var allowedStatuses) ||
+            !allowedStatuses.Contains(newStatus))
+        {
+            throw new InvalidOperationException(
+                $"Invalid status transition from {currentStatus} to {newStatus}. " +
+                $"Allowed transitions from {currentStatus}: {string.Join(", ", allowedStatuses)}");
+        }
     }
 
     public async Task DeleteLabOrderAsync(int id)

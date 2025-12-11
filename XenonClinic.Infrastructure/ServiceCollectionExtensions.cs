@@ -71,7 +71,9 @@ public static class ServiceCollectionExtensions
     {
         var redisConnectionString = configuration.GetConnectionString("Redis")
             ?? configuration["Redis:ConnectionString"]
-            ?? "localhost:6379";
+            ?? throw new InvalidOperationException(
+                "Redis connection string is required. " +
+                "Configure 'ConnectionStrings:Redis' or 'Redis:ConnectionString' in appsettings.json.");
 
         services.AddStackExchangeRedisCache(options =>
         {

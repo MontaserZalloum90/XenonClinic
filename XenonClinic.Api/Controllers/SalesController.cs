@@ -135,7 +135,7 @@ public class SalesController : BaseApiController
             var branchId = _currentUserService.BranchId;
             if (branchId == null) return ApiBadRequest("Branch context is required");
 
-            var invoiceNumber = await _salesService.GenerateInvoiceNumberAsync(branchId.Value);
+            var invoiceNumber = await _salesService.GenerateSaleInvoiceNumberAsync(branchId.Value);
             var items = dto.Items.Select(i => new SaleItem
             {
                 InventoryItemId = i.InventoryItemId,
@@ -323,10 +323,11 @@ public class SalesController : BaseApiController
             var branchId = _currentUserService.BranchId;
             if (branchId == null) return ApiBadRequest("Branch context is required");
 
+            var paymentNumber = await _salesService.GeneratePaymentNumberAsync(branchId.Value);
             var payment = new Payment
             {
                 BranchId = branchId.Value,
-                PaymentNumber = $"PAY-{DateTime.UtcNow:yyyyMMddHHmmss}",
+                PaymentNumber = paymentNumber,
                 PaymentDate = DateTime.UtcNow,
                 Amount = dto.Amount,
                 PaymentMethod = dto.PaymentMethod,
@@ -343,7 +344,7 @@ public class SalesController : BaseApiController
                 ReceivedBy = _currentUserService.UserId ?? string.Empty
             };
 
-            var created = await _salesService.AddPaymentAsync(payment);
+            var created = await _salesService.RecordPaymentAsync(payment);
             _logger.LogInformation("Payment recorded for sale {InvoiceNumber}: {Amount}", sale.InvoiceNumber, dto.Amount);
             return ApiCreated(MapToPaymentDto(created), message: "Payment recorded successfully");
         }
@@ -447,9 +448,10 @@ public class SalesController : BaseApiController
             var afterQuoteDiscount = subTotal - discountAmount;
             var taxAmount = dto.TaxPercentage.HasValue ? afterQuoteDiscount * (dto.TaxPercentage.Value / 100) : 0;
 
+            var quotationNumber = await _salesService.GenerateQuotationNumberAsync(branchId.Value);
             var quotation = new Quotation
             {
-                QuotationNumber = $"QUO-{DateTime.UtcNow:yyyyMMddHHmmss}",
+                QuotationNumber = quotationNumber,
                 QuotationDate = DateTime.UtcNow,
                 ExpiryDate = DateTime.UtcNow.AddDays(dto.ValidityDays),
                 Status = QuotationStatus.Draft,

@@ -96,4 +96,23 @@ public class PlatformAuthService : IPlatformAuthService
             Token = token
         };
     }
+
+    public async Task<Result> LogoutAsync(Guid adminId)
+    {
+        var admin = await _context.PlatformAdmins.FindAsync(adminId);
+        if (admin == null)
+        {
+            return "Admin not found";
+        }
+
+        admin.LastLogoutAt = DateTime.UtcNow;
+        await _context.SaveChangesAsync();
+
+        await _auditService.LogAsync("AdminLogout", "PlatformAdmin", admin.Id,
+            newValues: new { admin.Email, LogoutAt = admin.LastLogoutAt });
+
+        _logger.LogInformation("Platform admin {Email} logged out", admin.Email);
+
+        return Result.Success();
+    }
 }

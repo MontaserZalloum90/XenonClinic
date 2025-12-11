@@ -117,7 +117,7 @@ public class FinancialController : BaseApiController
 
         if (!HasBranchAccess(account.BranchId))
         {
-            throw new ForbiddenException(FinancialValidationMessages.BranchAccessDenied);
+            return ApiForbidden(FinancialValidationMessages.BranchAccessDenied);
         }
 
         var dto = MapToAccountDto(account);
@@ -140,7 +140,7 @@ public class FinancialController : BaseApiController
 
         if (!HasBranchAccess(account.BranchId))
         {
-            throw new ForbiddenException(FinancialValidationMessages.BranchAccessDenied);
+            return ApiForbidden(FinancialValidationMessages.BranchAccessDenied);
         }
 
         var balance = await _financialService.GetAccountBalanceAsync(id);
@@ -219,7 +219,7 @@ public class FinancialController : BaseApiController
 
         if (!HasBranchAccess(existingAccount.BranchId))
         {
-            throw new ForbiddenException(FinancialValidationMessages.BranchAccessDenied);
+            return ApiForbidden(FinancialValidationMessages.BranchAccessDenied);
         }
 
         existingAccount.AccountCode = dto.AccountCode;
@@ -257,7 +257,7 @@ public class FinancialController : BaseApiController
 
         if (!HasBranchAccess(account.BranchId))
         {
-            throw new ForbiddenException(FinancialValidationMessages.BranchAccessDenied);
+            return ApiForbidden(FinancialValidationMessages.BranchAccessDenied);
         }
 
         await _financialService.DeleteAccountAsync(id);
@@ -356,7 +356,7 @@ public class FinancialController : BaseApiController
 
         if (!HasBranchAccess(invoice.BranchId))
         {
-            throw new ForbiddenException(FinancialValidationMessages.BranchAccessDenied);
+            return ApiForbidden(FinancialValidationMessages.BranchAccessDenied);
         }
 
         var dto = MapToInvoiceDto(invoice);
@@ -380,7 +380,7 @@ public class FinancialController : BaseApiController
 
         if (!HasBranchAccess(invoice.BranchId))
         {
-            throw new ForbiddenException(FinancialValidationMessages.BranchAccessDenied);
+            return ApiForbidden(FinancialValidationMessages.BranchAccessDenied);
         }
 
         var dto = MapToInvoiceDto(invoice);
@@ -417,11 +417,11 @@ public class FinancialController : BaseApiController
         // Generate invoice number
         var invoiceNumber = await _financialService.GenerateInvoiceNumberAsync(branchId.Value);
 
-        // Calculate totals
-        var discountAmount = dto.DiscountAmount ?? (dto.SubTotal * (dto.DiscountPercentage ?? 0) / 100);
-        var taxableAmount = dto.SubTotal - discountAmount;
-        var taxAmount = taxableAmount * (dto.TaxPercentage ?? 5) / 100;
-        var totalAmount = taxableAmount + taxAmount;
+        // Calculate totals with proper currency precision
+        var discountAmount = dto.DiscountAmount ?? Math.Round(dto.SubTotal * (dto.DiscountPercentage ?? 0m) / 100m, 2, MidpointRounding.AwayFromZero);
+        var taxableAmount = Math.Round(dto.SubTotal - discountAmount, 2, MidpointRounding.AwayFromZero);
+        var taxAmount = Math.Round(taxableAmount * (dto.TaxPercentage ?? 5m) / 100m, 2, MidpointRounding.AwayFromZero);
+        var totalAmount = Math.Round(taxableAmount + taxAmount, 2, MidpointRounding.AwayFromZero);
 
         var invoice = new Invoice
         {
@@ -481,7 +481,7 @@ public class FinancialController : BaseApiController
 
         if (!HasBranchAccess(invoice.BranchId))
         {
-            throw new ForbiddenException(FinancialValidationMessages.BranchAccessDenied);
+            return ApiForbidden(FinancialValidationMessages.BranchAccessDenied);
         }
 
         if (invoice.IsFullyPaid)
@@ -633,7 +633,7 @@ public class FinancialController : BaseApiController
 
         if (!HasBranchAccess(expense.BranchId))
         {
-            throw new ForbiddenException(FinancialValidationMessages.BranchAccessDenied);
+            return ApiForbidden(FinancialValidationMessages.BranchAccessDenied);
         }
 
         var dto = MapToExpenseDto(expense);
@@ -718,7 +718,7 @@ public class FinancialController : BaseApiController
 
         if (!HasBranchAccess(existingExpense.BranchId))
         {
-            throw new ForbiddenException(FinancialValidationMessages.BranchAccessDenied);
+            return ApiForbidden(FinancialValidationMessages.BranchAccessDenied);
         }
 
         existingExpense.ExpenseDate = dto.ExpenseDate;
@@ -769,7 +769,7 @@ public class FinancialController : BaseApiController
 
         if (!HasBranchAccess(expense.BranchId))
         {
-            throw new ForbiddenException(FinancialValidationMessages.BranchAccessDenied);
+            return ApiForbidden(FinancialValidationMessages.BranchAccessDenied);
         }
 
         if (expense.Status != ExpenseStatus.Pending)
@@ -817,7 +817,7 @@ public class FinancialController : BaseApiController
 
         if (!HasBranchAccess(expense.BranchId))
         {
-            throw new ForbiddenException(FinancialValidationMessages.BranchAccessDenied);
+            return ApiForbidden(FinancialValidationMessages.BranchAccessDenied);
         }
 
         if (expense.Status != ExpenseStatus.Pending)

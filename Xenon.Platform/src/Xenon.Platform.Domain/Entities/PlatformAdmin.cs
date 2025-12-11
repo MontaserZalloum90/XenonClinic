@@ -17,6 +17,8 @@ public class PlatformAdmin : BaseEntity
 
     public DateTime? LastLoginAt { get; set; }
     public string? LastLoginIp { get; set; }
+    public DateTime? LastLogoutAt { get; set; }
+    public DateTime? TokenInvalidatedAt { get; set; }
 
     public int FailedLoginAttempts { get; set; } = 0;
     public DateTime? LockoutEndAt { get; set; }
