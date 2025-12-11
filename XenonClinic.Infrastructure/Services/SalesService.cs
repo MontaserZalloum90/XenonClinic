@@ -1281,24 +1281,25 @@ public class SalesService : ISalesService
     {
         var lineTotal = item.Quantity * item.UnitPrice;
 
-        // Calculate discount
+        // Calculate discount with proper rounding
         var discountAmount = item.DiscountAmount ?? 0;
         if (item.DiscountPercentage.HasValue && item.DiscountPercentage > 0)
         {
             discountAmount = lineTotal * (item.DiscountPercentage.Value / 100);
         }
-        item.DiscountAmount = discountAmount;
-        item.Subtotal = lineTotal - discountAmount;
+        // BUG FIX: Use proper decimal rounding for financial calculations
+        item.DiscountAmount = Math.Round(discountAmount, 2, MidpointRounding.AwayFromZero);
+        item.Subtotal = Math.Round(lineTotal - item.DiscountAmount.Value, 2, MidpointRounding.AwayFromZero);
 
-        // Calculate tax
+        // Calculate tax with proper rounding
         var taxAmount = item.TaxAmount ?? 0;
         if (item.TaxPercentage.HasValue && item.TaxPercentage > 0)
         {
             taxAmount = item.Subtotal * (item.TaxPercentage.Value / 100);
         }
-        item.TaxAmount = taxAmount;
+        item.TaxAmount = Math.Round(taxAmount, 2, MidpointRounding.AwayFromZero);
 
-        item.Total = item.Subtotal + taxAmount;
+        item.Total = Math.Round(item.Subtotal + item.TaxAmount.Value, 2, MidpointRounding.AwayFromZero);
     }
 
     private void CalculateQuotationTotals(Quotation quotation)
@@ -1333,24 +1334,25 @@ public class SalesService : ISalesService
     {
         var lineTotal = item.Quantity * item.UnitPrice;
 
-        // Calculate discount
+        // Calculate discount with proper rounding
         var discountAmount = item.DiscountAmount ?? 0;
         if (item.DiscountPercentage.HasValue && item.DiscountPercentage > 0)
         {
             discountAmount = lineTotal * (item.DiscountPercentage.Value / 100);
         }
-        item.DiscountAmount = discountAmount;
-        item.Subtotal = lineTotal - discountAmount;
+        // BUG FIX: Use proper decimal rounding for financial calculations
+        item.DiscountAmount = Math.Round(discountAmount, 2, MidpointRounding.AwayFromZero);
+        item.Subtotal = Math.Round(lineTotal - item.DiscountAmount.Value, 2, MidpointRounding.AwayFromZero);
 
-        // Calculate tax
+        // Calculate tax with proper rounding
         var taxAmount = item.TaxAmount ?? 0;
         if (item.TaxPercentage.HasValue && item.TaxPercentage > 0)
         {
             taxAmount = item.Subtotal * (item.TaxPercentage.Value / 100);
         }
-        item.TaxAmount = taxAmount;
+        item.TaxAmount = Math.Round(taxAmount, 2, MidpointRounding.AwayFromZero);
 
-        item.Total = item.Subtotal + taxAmount;
+        item.Total = Math.Round(item.Subtotal + item.TaxAmount.Value, 2, MidpointRounding.AwayFromZero);
     }
 
     private void UpdateSalePaymentStatus(Sale sale)

@@ -428,14 +428,28 @@ public class CaseService : ICaseService
         var year = DateTime.UtcNow.Year;
         var branchCode = branch?.Code ?? "BR";
 
-        // Get the count of cases for this branch this year
-        var startOfYear = new DateTime(year, 1, 1);
-        var count = await _context.Cases
-            .Where(c => c.BranchId == branchId && c.CreatedAt >= startOfYear)
-            .CountAsync();
+        // BUG FIX: Use transaction to prevent race condition in case number generation
+        // Without transaction, two concurrent requests could get the same sequence number
+        await using var transaction = await _context.Database.BeginTransactionAsync();
+        try
+        {
+            // Get the count of cases for this branch this year
+            var startOfYear = new DateTime(year, 1, 1);
+            var count = await _context.Cases
+                .Where(c => c.BranchId == branchId && c.CreatedAt >= startOfYear)
+                .CountAsync();
 
-        var sequence = (count + 1).ToString("D4");
-        return $"CASE-{branchCode}-{year}-{sequence}";
+            var sequence = (count + 1).ToString("D4");
+            var caseNumber = $"CASE-{branchCode}-{year}-{sequence}";
+
+            await transaction.CommitAsync();
+            return caseNumber;
+        }
+        catch
+        {
+            await transaction.RollbackAsync();
+            throw;
+        }
     }
 
     // ==================== Dashboard and Statistics ====================
