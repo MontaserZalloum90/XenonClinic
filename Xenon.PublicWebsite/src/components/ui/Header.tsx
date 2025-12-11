@@ -61,6 +61,7 @@ export function Header() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  // Close mobile menu and dropdowns when route changes
   useEffect(() => {
     setMobileMenuOpen(false);
     setActiveDropdown(null);

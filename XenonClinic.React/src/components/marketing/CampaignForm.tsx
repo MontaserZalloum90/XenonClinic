@@ -1,5 +1,6 @@
 import { useForm } from 'react-hook-form';
-import { CampaignType, CreateCampaignRequest } from '../../types/marketing';
+import { CampaignType } from '../../types/marketing';
+import type { CreateCampaignRequest } from '../../types/marketing';
 
 interface CampaignFormProps {
   initialData?: Partial<CreateCampaignRequest>;

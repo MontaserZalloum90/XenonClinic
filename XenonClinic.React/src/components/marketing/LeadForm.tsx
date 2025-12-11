@@ -1,5 +1,6 @@
 import { useForm } from 'react-hook-form';
-import { LeadSource, LeadPriority, CreateLeadRequest } from '../../types/marketing';
+import { LeadSource, LeadPriority } from '../../types/marketing';
+import type { CreateLeadRequest } from '../../types/marketing';
 
 interface LeadFormProps {
   initialData?: Partial<CreateLeadRequest>;
