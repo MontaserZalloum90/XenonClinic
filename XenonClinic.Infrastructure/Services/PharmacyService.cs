@@ -237,7 +237,7 @@ public class PharmacyService : IPharmacyService
 
         if (sale != null)
         {
-            sale.SubTotal = sale.Items.Sum(i => i.Quantity * i.UnitPrice);
+            sale.SubTotal = sale.Items?.Sum(i => i.Quantity * i.UnitPrice) ?? 0;
 
             // Calculate discount
             if (sale.DiscountPercentage.HasValue && sale.DiscountPercentage.Value > 0)
@@ -320,7 +320,7 @@ public class PharmacyService : IPharmacyService
 
         if (sale != null)
         {
-            sale.PaidAmount = sale.Payments.Sum(p => p.Amount);
+            sale.PaidAmount = sale.Payments?.Sum(p => p.Amount) ?? 0;
 
             if (sale.PaidAmount >= sale.Total)
             {

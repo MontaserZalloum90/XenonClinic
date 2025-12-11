@@ -78,10 +78,8 @@ public class SecurityController : ControllerBase
         if (result.HasValue)
         {
             // In production, send email with reset link containing the token
-            // For now, log it (in development only)
-#if DEBUG
-            Console.WriteLine($"Password reset token for {request.Email}: {result.Value.token}");
-#endif
+            // SECURITY: Never log sensitive tokens - they should be sent via secure email only
+            // Token generated and ready for secure email delivery
         }
 
         return Ok(new

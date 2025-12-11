@@ -572,9 +572,12 @@ public class SalesService : ISalesService
         if (payment != null)
         {
             var sale = payment.Sale;
-            sale.PaidAmount -= payment.Amount;
-            UpdateSalePaymentStatus(sale);
-            sale.UpdatedAt = DateTime.UtcNow;
+            if (sale != null)
+            {
+                sale.PaidAmount -= payment.Amount;
+                UpdateSalePaymentStatus(sale);
+                sale.UpdatedAt = DateTime.UtcNow;
+            }
 
             _context.Payments.Remove(payment);
             await _context.SaveChangesAsync();
@@ -597,7 +600,7 @@ public class SalesService : ISalesService
             throw new InvalidOperationException("Refund amount cannot exceed original payment amount");
         }
 
-        var sale = payment.Sale;
+        var sale = payment.Sale ?? throw new InvalidOperationException($"Sale not found for payment {paymentId}");
 
         // Record refund as negative payment
         var refundPayment = new Payment
