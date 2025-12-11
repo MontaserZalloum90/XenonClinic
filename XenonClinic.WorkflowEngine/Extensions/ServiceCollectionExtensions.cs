@@ -41,12 +41,22 @@ public static class ServiceCollectionExtensions
         // Designer services
         services.TryAddScoped<IWorkflowDesignerService, WorkflowDesignerService>();
 
-        // Enterprise workflow services
+        // Enterprise workflow services - Phase 1
         services.TryAddScoped<IProcessDefinitionService, ProcessDefinitionService>();
         services.TryAddScoped<IProcessExecutionService, ProcessExecutionService>();
         services.TryAddScoped<IHumanTaskService, HumanTaskService>();
         services.TryAddScoped<IExpressionEvaluator, ExpressionEvaluator>();
         services.TryAddScoped<IAuditService, AuditService>();
+
+        // Enterprise workflow services - Phase 2
+        services.TryAddScoped<ITimerService, TimerService>();
+        services.TryAddScoped<IJobProcessor, JobProcessor>();
+        services.TryAddScoped<IServiceTaskExecutor, ServiceTaskExecutor>();
+        services.TryAddScoped<IBusinessRulesEngine, BusinessRulesEngine>();
+        services.TryAddScoped<IMonitoringService, MonitoringService>();
+
+        // HTTP client for service tasks
+        services.AddHttpClient("WorkflowServiceTask");
 
         return services;
     }
@@ -140,6 +150,17 @@ public static class ServiceCollectionExtensions
         Action<DbContextOptionsBuilder> configureOptions)
     {
         builder.Services.AddDbContext<WorkflowEngineDbContext>(configureOptions);
+        return builder;
+    }
+
+    /// <summary>
+    /// Adds background services for processing timers and jobs.
+    /// Call this method to enable automatic processing of scheduled timers and background jobs.
+    /// </summary>
+    public static WorkflowEngineBuilder AddBackgroundProcessing(this WorkflowEngineBuilder builder)
+    {
+        builder.Services.AddHostedService<Infrastructure.BackgroundServices.WorkflowBackgroundService>();
+        builder.Services.AddHostedService<Infrastructure.BackgroundServices.WorkflowCleanupService>();
         return builder;
     }
 
