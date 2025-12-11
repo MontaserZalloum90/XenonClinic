@@ -115,9 +115,14 @@ public class ProcessInstancesController : ControllerBase
     [ProducesResponseType(404)]
     public async Task<IActionResult> SetVariables(
         Guid id,
-        [FromBody] Dictionary<string, object> variables,
+        [FromBody] Dictionary<string, object>? variables,
         CancellationToken cancellationToken = default)
     {
+        if (variables == null)
+        {
+            return BadRequest(new { message = "Variables are required" });
+        }
+
         try
         {
             var tenantId = GetTenantId();
@@ -144,6 +149,11 @@ public class ProcessInstancesController : ControllerBase
         [FromBody] Dictionary<string, object>? variables,
         CancellationToken cancellationToken = default)
     {
+        if (string.IsNullOrWhiteSpace(signalName))
+        {
+            return BadRequest(new { message = "Signal name is required" });
+        }
+
         try
         {
             var tenantId = GetTenantId();

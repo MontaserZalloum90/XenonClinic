@@ -137,6 +137,11 @@ public class HumanTasksController : ControllerBase
         [FromQuery] string assigneeUserId,
         CancellationToken cancellationToken = default)
     {
+        if (string.IsNullOrWhiteSpace(assigneeUserId))
+        {
+            return BadRequest(new { message = "Assignee user ID is required" });
+        }
+
         try
         {
             var tenantId = GetTenantId();
@@ -166,6 +171,11 @@ public class HumanTasksController : ControllerBase
         [FromQuery] string delegateUserId,
         CancellationToken cancellationToken = default)
     {
+        if (string.IsNullOrWhiteSpace(delegateUserId))
+        {
+            return BadRequest(new { message = "Delegate user ID is required" });
+        }
+
         try
         {
             var tenantId = GetTenantId();
@@ -246,6 +256,11 @@ public class HumanTasksController : ControllerBase
         [FromBody] AddCommentRequest request,
         CancellationToken cancellationToken = default)
     {
+        if (request == null || string.IsNullOrWhiteSpace(request.Content))
+        {
+            return BadRequest(new { message = "Comment content is required" });
+        }
+
         try
         {
             var tenantId = GetTenantId();
