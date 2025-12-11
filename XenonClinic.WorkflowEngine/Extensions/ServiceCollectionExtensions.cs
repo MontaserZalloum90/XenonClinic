@@ -1,11 +1,16 @@
 namespace XenonClinic.WorkflowEngine.Extensions;
 
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Options;
+using XenonClinic.WorkflowEngine.Application.Services;
 using XenonClinic.WorkflowEngine.Core.Abstractions;
 using XenonClinic.WorkflowEngine.Core.Engine;
 using XenonClinic.WorkflowEngine.Core.StateMachine;
+using XenonClinic.WorkflowEngine.Infrastructure.Data;
 using XenonClinic.WorkflowEngine.Persistence.Abstractions;
+using XenonClinic.WorkflowEngine.Persistence.EfCore;
 using XenonClinic.WorkflowEngine.Services;
 using XenonClinic.WorkflowEngine.Validation;
 
@@ -37,6 +42,55 @@ public static class ServiceCollectionExtensions
         // Designer services
         services.TryAddScoped<IWorkflowDesignerService, WorkflowDesignerService>();
 
+        // Enterprise workflow services - Phase 1
+        services.TryAddScoped<IProcessDefinitionService, ProcessDefinitionService>();
+        services.TryAddScoped<IProcessExecutionService, ProcessExecutionService>();
+        services.TryAddScoped<IHumanTaskService, HumanTaskService>();
+        services.TryAddScoped<IExpressionEvaluator, ExpressionEvaluator>();
+        services.TryAddScoped<IAuditService, AuditService>();
+
+        // Enterprise workflow services - Phase 2
+        services.TryAddScoped<ITimerService, TimerService>();
+        services.TryAddScoped<IJobProcessor, JobProcessor>();
+        services.TryAddScoped<IServiceTaskExecutor, ServiceTaskExecutor>();
+        services.TryAddScoped<IBusinessRulesEngine, BusinessRulesEngine>();
+        services.TryAddScoped<IMonitoringService, MonitoringService>();
+
+        // Enterprise workflow services - Phase 3: Integration & External Connectivity
+        services.TryAddSingleton<IEventBus, EventBus>();
+        services.TryAddSingleton<IConnectorFactory, ConnectorFactory>();
+        services.TryAddScoped<IWebhookService, WebhookService>();
+        services.TryAddScoped<IEmailService, EmailService>();
+        services.TryAddScoped<IDocumentService, DocumentService>();
+        services.TryAddScoped<IBpmnService, BpmnService>();
+
+        // Event bus interceptors
+        services.TryAddScoped<IEventBusInterceptor, AuditEventInterceptor>();
+
+        // Email notification handler
+        services.AddScoped<IExternalEventHandler, EmailNotificationEventHandler>();
+
+        // Enterprise workflow services - Phase 4: Advanced Features
+        services.TryAddScoped<ITenantService, TenantService>();
+        services.TryAddScoped<ITenantContextAccessor, TenantContextAccessor>();
+        services.TryAddScoped<IProcessMigrationService, ProcessMigrationService>();
+        services.TryAddScoped<ICompensationService, CompensationService>();
+        services.TryAddScoped<IWorkflowAuthorizationService, WorkflowAuthorizationService>();
+        services.TryAddSingleton<IWorkflowCacheService, InMemoryWorkflowCacheService>();
+        services.TryAddSingleton<IDistributedExecutionService, DistributedExecutionService>();
+
+        // HTTP clients
+        services.AddHttpClient("WorkflowServiceTask");
+        services.AddHttpClient("WebhookDelivery");
+        services.AddHttpClient("CompensationService");
+
+        // Email configuration
+        services.Configure<EmailConfiguration>(options =>
+        {
+            options.Provider = "Console"; // Default to console for development
+            options.DefaultFrom = new EmailAddress("noreply@xenonclinic.com", "XenonClinic Workflow");
+        });
+
         return services;
     }
 
@@ -48,6 +102,98 @@ public static class ServiceCollectionExtensions
         builder.Services.AddSingleton<IWorkflowDefinitionStore, InMemoryWorkflowDefinitionStore>();
         builder.Services.AddSingleton<IWorkflowInstanceStore, InMemoryWorkflowInstanceStore>();
         builder.Services.AddSingleton<IWorkflowTimerStore, InMemoryWorkflowTimerStore>();
+        return builder;
+    }
+
+    /// <summary>
+    /// Adds EF Core stores for production use with the specified connection string.
+    /// Provides transaction guarantees, distributed locking, and persistence.
+    /// </summary>
+    public static WorkflowEngineBuilder UseEfCoreStores(
+        this WorkflowEngineBuilder builder,
+        string connectionString,
+        Action<DbContextOptionsBuilder>? configureOptions = null)
+    {
+        builder.Services.AddDbContext<WorkflowDbContext>(options =>
+        {
+            options.UseSqlServer(connectionString, sqlOptions =>
+            {
+                sqlOptions.EnableRetryOnFailure(
+                    maxRetryCount: 3,
+                    maxRetryDelay: TimeSpan.FromSeconds(5),
+                    errorNumbersToAdd: null);
+            });
+
+            configureOptions?.Invoke(options);
+        });
+
+        builder.Services.AddScoped<IWorkflowDefinitionStore, EfCoreWorkflowDefinitionStore>();
+        builder.Services.AddScoped<IWorkflowInstanceStore, EfCoreWorkflowInstanceStore>();
+        builder.Services.AddScoped<IWorkflowTimerStore, EfCoreWorkflowTimerStore>();
+
+        return builder;
+    }
+
+    /// <summary>
+    /// Adds EF Core stores using an existing DbContext options configuration.
+    /// </summary>
+    public static WorkflowEngineBuilder UseEfCoreStores(
+        this WorkflowEngineBuilder builder,
+        Action<DbContextOptionsBuilder> configureOptions)
+    {
+        builder.Services.AddDbContext<WorkflowDbContext>(configureOptions);
+
+        builder.Services.AddScoped<IWorkflowDefinitionStore, EfCoreWorkflowDefinitionStore>();
+        builder.Services.AddScoped<IWorkflowInstanceStore, EfCoreWorkflowInstanceStore>();
+        builder.Services.AddScoped<IWorkflowTimerStore, EfCoreWorkflowTimerStore>();
+
+        return builder;
+    }
+
+    /// <summary>
+    /// Adds the enterprise workflow engine with full persistence using the specified connection string.
+    /// This includes process definitions, instances, human tasks, timers, and audit events.
+    /// </summary>
+    public static WorkflowEngineBuilder UseEnterpriseWorkflowEngine(
+        this WorkflowEngineBuilder builder,
+        string connectionString,
+        Action<DbContextOptionsBuilder>? configureOptions = null)
+    {
+        builder.Services.AddDbContext<WorkflowEngineDbContext>(options =>
+        {
+            options.UseSqlServer(connectionString, sqlOptions =>
+            {
+                sqlOptions.EnableRetryOnFailure(
+                    maxRetryCount: 3,
+                    maxRetryDelay: TimeSpan.FromSeconds(5),
+                    errorNumbersToAdd: null);
+            });
+
+            configureOptions?.Invoke(options);
+        });
+
+        return builder;
+    }
+
+    /// <summary>
+    /// Adds the enterprise workflow engine using an existing DbContext options configuration.
+    /// </summary>
+    public static WorkflowEngineBuilder UseEnterpriseWorkflowEngine(
+        this WorkflowEngineBuilder builder,
+        Action<DbContextOptionsBuilder> configureOptions)
+    {
+        builder.Services.AddDbContext<WorkflowEngineDbContext>(configureOptions);
+        return builder;
+    }
+
+    /// <summary>
+    /// Adds background services for processing timers and jobs.
+    /// Call this method to enable automatic processing of scheduled timers and background jobs.
+    /// </summary>
+    public static WorkflowEngineBuilder AddBackgroundProcessing(this WorkflowEngineBuilder builder)
+    {
+        builder.Services.AddHostedService<Infrastructure.BackgroundServices.WorkflowBackgroundService>();
+        builder.Services.AddHostedService<Infrastructure.BackgroundServices.WorkflowCleanupService>();
         return builder;
     }
 

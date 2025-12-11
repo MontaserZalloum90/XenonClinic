@@ -39,7 +39,8 @@ public class WorkflowContext : IWorkflowContext
 
     public T? GetVariable<T>(string name)
     {
-        if (_state.Variables.TryGetValue(name, out var value))
+        var variables = _state.Variables ?? new Dictionary<string, object?>();
+        if (variables.TryGetValue(name, out var value))
         {
             if (value == null) return default;
             if (value is T typed) return typed;
@@ -48,7 +49,15 @@ public class WorkflowContext : IWorkflowContext
             {
                 return (T)Convert.ChangeType(value, typeof(T));
             }
-            catch
+            catch (InvalidCastException)
+            {
+                return default;
+            }
+            catch (FormatException)
+            {
+                return default;
+            }
+            catch (OverflowException)
             {
                 return default;
             }
@@ -58,12 +67,14 @@ public class WorkflowContext : IWorkflowContext
 
     public void SetVariable(string name, object? value)
     {
+        _state.Variables ??= new Dictionary<string, object?>();
         _state.Variables[name] = value;
     }
 
     public T? GetInput<T>(string name)
     {
-        if (_state.Input.TryGetValue(name, out var value))
+        var input = _state.Input ?? new Dictionary<string, object?>();
+        if (input.TryGetValue(name, out var value))
         {
             if (value == null) return default;
             if (value is T typed) return typed;
@@ -72,7 +83,15 @@ public class WorkflowContext : IWorkflowContext
             {
                 return (T)Convert.ChangeType(value, typeof(T));
             }
-            catch
+            catch (InvalidCastException)
+            {
+                return default;
+            }
+            catch (FormatException)
+            {
+                return default;
+            }
+            catch (OverflowException)
             {
                 return default;
             }
@@ -82,13 +101,23 @@ public class WorkflowContext : IWorkflowContext
 
     public void SetOutput(string name, object? value)
     {
+        _state.Output ??= new Dictionary<string, object?>();
         _state.Output[name] = value;
     }
 
     public void Log(Abstractions.LogLevel level, string message, params object[] args)
     {
-        var formattedMessage = string.Format(message, args);
+        string formattedMessage;
+        try
+        {
+            formattedMessage = args.Length > 0 ? string.Format(message, args) : message;
+        }
+        catch (FormatException)
+        {
+            formattedMessage = message; // Fall back to unformatted message
+        }
 
+        _state.LogEntries ??= new List<WorkflowLogEntry>();
         _state.LogEntries.Add(new WorkflowLogEntry
         {
             Timestamp = DateTime.UtcNow,
@@ -113,6 +142,7 @@ public class WorkflowContext : IWorkflowContext
 
     public void AddAuditEntry(string action, string? details = null)
     {
+        _state.AuditEntries ??= new List<WorkflowAuditEntry>();
         _state.AuditEntries.Add(new WorkflowAuditEntry
         {
             Timestamp = DateTime.UtcNow,

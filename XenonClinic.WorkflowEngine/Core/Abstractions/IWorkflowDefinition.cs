@@ -289,7 +289,7 @@ public class ValidationResult
     /// <summary>
     /// Whether the validation passed
     /// </summary>
-    public bool IsValid => Errors.Count == 0;
+    public bool IsValid => Errors == null || Errors.Count == 0;
 
     /// <summary>
     /// Validation errors

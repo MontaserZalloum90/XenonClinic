@@ -5,10 +5,16 @@ using XenonClinic.WorkflowEngine.Core.Activities;
 using XenonClinic.WorkflowEngine.Persistence.Abstractions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.DependencyInjection;
+using System.Collections.Concurrent;
 using System.Diagnostics;
 
 /// <summary>
-/// Main workflow engine implementation.
+/// Main workflow engine implementation with production-ready features:
+/// - Distributed locking for multi-instance deployments
+/// - Timeout enforcement for parallel branches
+/// - Proper cancellation token propagation
+/// - Thread-safe parallel execution
+/// - Resource cleanup on timeout/cancellation
 /// </summary>
 public class WorkflowEngine : IWorkflowEngine
 {
@@ -17,6 +23,7 @@ public class WorkflowEngine : IWorkflowEngine
     private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<WorkflowEngine> _logger;
     private readonly WorkflowEngineOptions _options;
+    private readonly string _lockHolderId = $"engine_{Environment.MachineName}_{Guid.NewGuid():N}";
 
     public WorkflowEngine(
         IWorkflowDefinitionStore definitionStore,
@@ -110,28 +117,52 @@ public class WorkflowEngine : IWorkflowEngine
 
     private async Task<WorkflowExecutionResult> StartAsync(Guid instanceId, CancellationToken cancellationToken)
     {
-        var state = await _instanceStore.GetAsync(instanceId);
-        if (state == null)
+        // Acquire distributed lock to prevent concurrent execution
+        if (_options.EnableDistributedLocking)
         {
-            throw new WorkflowNotFoundException($"Workflow instance not found: {instanceId}");
+            var lockAcquired = await _instanceStore.TryAcquireLockAsync(
+                instanceId, _lockHolderId, _options.LockDuration);
+
+            if (!lockAcquired)
+            {
+                throw new WorkflowExecutionException(
+                    $"Could not acquire lock for workflow instance {instanceId}. Another process may be executing it.");
+            }
         }
 
-        if (state.Status != WorkflowStatus.Pending)
+        try
         {
-            throw new WorkflowInvalidStateException($"Cannot start workflow in state: {state.Status}");
-        }
+            var state = await _instanceStore.GetAsync(instanceId);
+            if (state == null)
+            {
+                throw new WorkflowNotFoundException($"Workflow instance not found: {instanceId}");
+            }
 
-        var definition = await _definitionStore.GetAsync(state.WorkflowId, state.Version);
-        if (definition == null)
+            if (state.Status != WorkflowStatus.Pending)
+            {
+                throw new WorkflowInvalidStateException($"Cannot start workflow in state: {state.Status}");
+            }
+
+            var definition = await _definitionStore.GetAsync(state.WorkflowId, state.Version);
+            if (definition == null)
+            {
+                throw new WorkflowNotFoundException($"Workflow definition not found: {state.WorkflowId} v{state.Version}");
+            }
+
+            state.Status = WorkflowStatus.Running;
+            state.StartedAt = DateTime.UtcNow;
+            state.CurrentActivityId = definition.StartActivityId;
+
+            return await ExecuteAsync(state, definition, cancellationToken);
+        }
+        finally
         {
-            throw new WorkflowNotFoundException($"Workflow definition not found: {state.WorkflowId} v{state.Version}");
+            // Always release the lock
+            if (_options.EnableDistributedLocking)
+            {
+                await _instanceStore.ReleaseLockAsync(instanceId, _lockHolderId);
+            }
         }
-
-        state.Status = WorkflowStatus.Running;
-        state.StartedAt = DateTime.UtcNow;
-        state.CurrentActivityId = definition.StartActivityId;
-
-        return await ExecuteAsync(state, definition, cancellationToken);
     }
 
     public async Task<WorkflowExecutionResult> StartNewAsync(
@@ -148,63 +179,91 @@ public class WorkflowEngine : IWorkflowEngine
         string bookmarkName,
         IDictionary<string, object?>? input = null)
     {
-        var state = await _instanceStore.GetAsync(instanceId);
-        if (state == null)
+        // Acquire distributed lock to prevent concurrent execution
+        if (_options.EnableDistributedLocking)
         {
-            throw new WorkflowNotFoundException($"Workflow instance not found: {instanceId}");
-        }
+            var lockAcquired = await _instanceStore.TryAcquireLockAsync(
+                instanceId, _lockHolderId, _options.LockDuration);
 
-        if (state.Status != WorkflowStatus.Suspended)
-        {
-            throw new WorkflowInvalidStateException($"Cannot resume workflow in state: {state.Status}");
-        }
-
-        var bookmark = state.Bookmarks.FirstOrDefault(b => b.Name == bookmarkName);
-        if (bookmark == null)
-        {
-            throw new WorkflowBookmarkNotFoundException($"Bookmark not found: {bookmarkName}");
-        }
-
-        var definition = await _definitionStore.GetAsync(state.WorkflowId, state.Version);
-        if (definition == null)
-        {
-            throw new WorkflowNotFoundException($"Workflow definition not found: {state.WorkflowId} v{state.Version}");
-        }
-
-        // Remove the bookmark
-        state.Bookmarks.Remove(bookmark);
-        state.Status = WorkflowStatus.Running;
-
-        // Create cancellation token with timeout
-        using var cts = new CancellationTokenSource(_options.DefaultActivityTimeout);
-        var cancellationToken = cts.Token;
-
-        // Get the activity that created the bookmark and resume it
-        if (bookmark.ActivityId != null)
-        {
-            var activity = definition.GetActivity(bookmark.ActivityId);
-            if (activity is ResumableActivityBase resumable)
+            if (!lockAcquired)
             {
-                using var scope = _serviceProvider.CreateScope();
-                var context = new WorkflowContext(state, scope.ServiceProvider, cancellationToken, _logger);
-
-                var result = await resumable.ResumeAsync(context, input);
-                if (result.IsSuccess)
-                {
-                    state.CompletedActivityIds.Add(bookmark.ActivityId);
-                    state.CompensationStack.Push(bookmark.ActivityId);
-
-                    // Continue execution from next activity
-                    var nextActivityId = result.NextActivityId ?? GetNextActivityId(definition, bookmark.ActivityId);
-                    if (nextActivityId != null)
-                    {
-                        state.CurrentActivityId = nextActivityId;
-                    }
-                }
+                throw new WorkflowExecutionException(
+                    $"Could not acquire lock for workflow instance {instanceId}. Another process may be executing it.");
             }
         }
 
-        return await ExecuteAsync(state, definition, cancellationToken);
+        try
+        {
+            var state = await _instanceStore.GetAsync(instanceId);
+            if (state == null)
+            {
+                throw new WorkflowNotFoundException($"Workflow instance not found: {instanceId}");
+            }
+
+            if (state.Status != WorkflowStatus.Suspended)
+            {
+                throw new WorkflowInvalidStateException($"Cannot resume workflow in state: {state.Status}");
+            }
+
+            var bookmark = state.Bookmarks.FirstOrDefault(b => b.Name == bookmarkName);
+            if (bookmark == null)
+            {
+                throw new WorkflowBookmarkNotFoundException($"Bookmark not found: {bookmarkName}");
+            }
+
+            var definition = await _definitionStore.GetAsync(state.WorkflowId, state.Version);
+            if (definition == null)
+            {
+                throw new WorkflowNotFoundException($"Workflow definition not found: {state.WorkflowId} v{state.Version}");
+            }
+
+            // Remove the bookmark
+            state.Bookmarks.Remove(bookmark);
+            state.Status = WorkflowStatus.Running;
+
+            // Create cancellation token with timeout
+            using var cts = new CancellationTokenSource(_options.DefaultActivityTimeout);
+            var cancellationToken = cts.Token;
+
+            // Get the activity that created the bookmark and resume it
+            if (bookmark.ActivityId != null)
+            {
+                var activity = definition.GetActivity(bookmark.ActivityId);
+                if (activity is ResumableActivityBase resumable)
+                {
+                    using var scope = _serviceProvider.CreateScope();
+                    var context = new WorkflowContext(state, scope.ServiceProvider, cancellationToken, _logger);
+
+                    var result = await resumable.ResumeAsync(context, input);
+                    if (result.IsSuccess)
+                    {
+                        state.AddCompletedActivity(bookmark.ActivityId);
+                        state.CompensationStack ??= new Stack<string>();
+                        if (bookmark.ActivityId != null)
+                        {
+                            state.CompensationStack.Push(bookmark.ActivityId);
+                        }
+
+                        // Continue execution from next activity
+                        var nextActivityId = result.NextActivityId ?? GetNextActivityId(definition, bookmark.ActivityId);
+                        if (nextActivityId != null)
+                        {
+                            state.CurrentActivityId = nextActivityId;
+                        }
+                    }
+                }
+            }
+
+            return await ExecuteAsync(state, definition, cancellationToken);
+        }
+        finally
+        {
+            // Always release the lock
+            if (_options.EnableDistributedLocking)
+            {
+                await _instanceStore.ReleaseLockAsync(instanceId, _lockHolderId);
+            }
+        }
     }
 
     public async Task CancelAsync(Guid instanceId, string? reason = null)
@@ -415,6 +474,7 @@ public class WorkflowEngine : IWorkflowEngine
                 }
 
                 activitiesExecuted++;
+                state.ActiveActivityIds ??= new List<string>();
                 state.ActiveActivityIds.Clear();
                 state.ActiveActivityIds.Add(state.CurrentActivityId);
 
@@ -476,11 +536,13 @@ public class WorkflowEngine : IWorkflowEngine
                 }
 
                 // Track completed activity
+                state.CompletedActivityIds ??= new List<string>();
                 if (!state.CompletedActivityIds.Contains(state.CurrentActivityId))
                 {
                     state.CompletedActivityIds.Add(state.CurrentActivityId);
                     if (activity.CanCompensate)
                     {
+                        state.CompensationStack ??= new Stack<string>();
                         state.CompensationStack.Push(state.CurrentActivityId);
                     }
                 }
@@ -572,41 +634,95 @@ public class WorkflowEngine : IWorkflowEngine
         var branch = new ParallelBranch
         {
             Id = branchId,
-            ParentActivityId = state.CurrentActivityId!,
+            ParentActivityId = state.CurrentActivityId ?? string.Empty,
             ActivityIds = branchActivityIds.ToList(),
             Status = ParallelBranchStatus.Running
         };
 
-        state.ParallelBranches[branchId] = branch;
+        // Thread-safe dictionary update
+        lock (state)
+        {
+            state.ParallelBranches[branchId] = branch;
+        }
 
-        // Execute branches in parallel using Task.WhenAll
+        // Thread-safe results collection
+        var results = new ConcurrentBag<(string activityId, ActivityResult result)>();
+        var errors = new ConcurrentBag<Exception>();
+
+        // Create a timeout for parallel execution
+        using var parallelCts = CancellationTokenSource.CreateLinkedTokenSource(context.CancellationToken);
+        parallelCts.CancelAfter(_options.ParallelBranchTimeout);
+
+        // Execute branches in parallel with timeout enforcement
         var branchTasks = branchActivityIds.Select(async activityId =>
         {
-            var activity = definition.GetActivity(activityId);
-            if (activity == null)
+            try
             {
-                return (activityId, ActivityResult.Failure("ACTIVITY_NOT_FOUND", $"Activity not found: {activityId}"));
-            }
+                var activity = definition.GetActivity(activityId);
+                if (activity == null)
+                {
+                    results.Add((activityId, ActivityResult.Failure("ACTIVITY_NOT_FOUND", $"Activity not found: {activityId}")));
+                    return;
+                }
 
-            // Check for cancellation before executing
-            if (context.CancellationToken.IsCancellationRequested)
+                // Check for cancellation before executing
+                if (parallelCts.Token.IsCancellationRequested)
+                {
+                    results.Add((activityId, ActivityResult.Failure("CANCELLED", "Execution cancelled or timed out")));
+                    return;
+                }
+
+                // Create activity-specific context with the parallel cancellation token
+                using var scope = _serviceProvider.CreateScope();
+                var activityContext = new WorkflowContext(state, scope.ServiceProvider, parallelCts.Token, _logger);
+
+                var result = await activity.ExecuteAsync(activityContext);
+                results.Add((activityId, result));
+            }
+            catch (OperationCanceledException)
             {
-                return (activityId, ActivityResult.Failure("CANCELLED", "Execution cancelled"));
+                results.Add((activityId, ActivityResult.Failure("TIMEOUT", "Activity execution timed out")));
             }
-
-            var result = await activity.ExecuteAsync(context);
-            return (activityId, result);
+            catch (Exception ex)
+            {
+                errors.Add(ex);
+                results.Add((activityId, ActivityResult.Failure("EXECUTION_ERROR", ex.Message, ex)));
+            }
         }).ToList();
 
-        var results = await Task.WhenAll(branchTasks);
+        try
+        {
+            // Wait for all branches with timeout
+            await Task.WhenAll(branchTasks).WaitAsync(_options.ParallelBranchTimeout, context.CancellationToken);
+        }
+        catch (TimeoutException)
+        {
+            _logger.LogWarning("Parallel branch execution timed out after {Timeout} for workflow {InstanceId}",
+                _options.ParallelBranchTimeout, state.Id);
 
-        // Process results
+            // Cancel any still-running tasks
+            await parallelCts.CancelAsync();
+
+            // Add timeout results for activities that didn't complete
+            var completedActivityIds = results.Select(r => r.activityId).ToHashSet();
+            foreach (var activityId in branchActivityIds.Where(id => !completedActivityIds.Contains(id)))
+            {
+                results.Add((activityId, ActivityResult.Failure("TIMEOUT", "Activity execution timed out")));
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            _logger.LogInformation("Parallel branch execution cancelled for workflow {InstanceId}", state.Id);
+            branch.Status = ParallelBranchStatus.Faulted;
+            return;
+        }
+
+        // Process results thread-safely
         var allSucceeded = true;
         foreach (var (activityId, result) in results)
         {
             if (result.IsSuccess)
             {
-                // Use thread-safe method
                 state.AddCompletedActivity(activityId);
             }
             else
@@ -615,6 +731,12 @@ public class WorkflowEngine : IWorkflowEngine
                 _logger.LogWarning("Parallel branch activity {ActivityId} failed: {Error}",
                     activityId, result.Error?.Message);
             }
+        }
+
+        // Log any unhandled exceptions
+        foreach (var error in errors)
+        {
+            _logger.LogError(error, "Unhandled exception in parallel branch execution for workflow {InstanceId}", state.Id);
         }
 
         branch.Status = allSucceeded ? ParallelBranchStatus.Completed : ParallelBranchStatus.Faulted;
@@ -631,7 +753,8 @@ public class WorkflowEngine : IWorkflowEngine
     private string? FindConvergingGateway(IWorkflowDefinition definition, string splitGatewayId)
     {
         // Find the parallel join gateway that corresponds to the split
-        foreach (var activity in definition.Activities.Values)
+        var activities = definition.Activities ?? new Dictionary<string, IActivity>();
+        foreach (var activity in activities.Values)
         {
             if (activity is ParallelGatewayActivity gateway && gateway.Direction == GatewayDirection.Join)
             {
@@ -651,7 +774,8 @@ public class WorkflowEngine : IWorkflowEngine
         ActivityError? error)
     {
         // Check for error boundary events
-        foreach (var activity in definition.Activities.Values)
+        var activities = definition.Activities ?? new Dictionary<string, IActivity>();
+        foreach (var activity in activities.Values)
         {
             if (activity is ErrorBoundaryActivity boundary
                 && boundary.AttachedToActivityId == state.CurrentActivityId
@@ -701,6 +825,7 @@ public class WorkflowEngine : IWorkflowEngine
         using var scope = _serviceProvider.CreateScope();
         var context = new WorkflowContext(state, scope.ServiceProvider, cancellationToken, _logger);
 
+        state.CompensationStack ??= new Stack<string>();
         while (state.CompensationStack.Count > 0)
         {
             // Check for cancellation - but allow compensation to proceed in critical cases
@@ -766,19 +891,49 @@ public class WorkflowEngine : IWorkflowEngine
 public class WorkflowEngineOptions
 {
     /// <summary>
-    /// Maximum number of activities to execute in a single execution run
+    /// Maximum number of activities to execute in a single execution run.
+    /// Prevents infinite loops in misconfigured workflows.
     /// </summary>
     public int MaxActivitiesPerExecution { get; set; } = 10000;
 
     /// <summary>
-    /// Default timeout for activity execution
+    /// Default timeout for individual activity execution.
     /// </summary>
     public TimeSpan DefaultActivityTimeout { get; set; } = TimeSpan.FromMinutes(5);
 
     /// <summary>
-    /// Whether to enable distributed locking for workflow execution
+    /// Whether to enable distributed locking for workflow execution.
+    /// Should be enabled in multi-instance deployments.
     /// </summary>
     public bool EnableDistributedLocking { get; set; } = true;
+
+    /// <summary>
+    /// Duration to hold the distributed lock during workflow execution.
+    /// Should be longer than the expected maximum execution time.
+    /// </summary>
+    public TimeSpan LockDuration { get; set; } = TimeSpan.FromMinutes(10);
+
+    /// <summary>
+    /// Timeout for parallel branch execution.
+    /// Individual branches will be cancelled if they exceed this timeout.
+    /// </summary>
+    public TimeSpan ParallelBranchTimeout { get; set; } = TimeSpan.FromMinutes(5);
+
+    /// <summary>
+    /// Maximum number of retry attempts for failed activities before marking workflow as faulted.
+    /// </summary>
+    public int MaxRetryAttempts { get; set; } = 3;
+
+    /// <summary>
+    /// Whether to persist workflow state after each activity completes.
+    /// Provides durability at the cost of performance.
+    /// </summary>
+    public bool PersistAfterEachActivity { get; set; } = false;
+
+    /// <summary>
+    /// Interval for refreshing the distributed lock during long-running executions.
+    /// </summary>
+    public TimeSpan LockRefreshInterval { get; set; } = TimeSpan.FromMinutes(2);
 }
 
 #region Exceptions

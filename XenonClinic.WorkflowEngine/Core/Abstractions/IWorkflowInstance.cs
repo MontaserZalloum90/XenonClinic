@@ -200,10 +200,13 @@ public class WorkflowInstanceState : IWorkflowInstance
     /// <summary>
     /// Thread-safe method to add a completed activity
     /// </summary>
-    public void AddCompletedActivity(string activityId)
+    public void AddCompletedActivity(string? activityId)
     {
+        if (string.IsNullOrEmpty(activityId)) return;
+
         lock (_syncLock)
         {
+            CompletedActivityIds ??= new List<string>();
             if (!CompletedActivityIds.Contains(activityId))
             {
                 CompletedActivityIds.Add(activityId);
@@ -214,10 +217,13 @@ public class WorkflowInstanceState : IWorkflowInstance
     /// <summary>
     /// Thread-safe method to add an active activity
     /// </summary>
-    public void AddActiveActivity(string activityId)
+    public void AddActiveActivity(string? activityId)
     {
+        if (string.IsNullOrEmpty(activityId)) return;
+
         lock (_syncLock)
         {
+            ActiveActivityIds ??= new List<string>();
             if (!ActiveActivityIds.Contains(activityId))
             {
                 ActiveActivityIds.Add(activityId);
@@ -228,11 +234,13 @@ public class WorkflowInstanceState : IWorkflowInstance
     /// <summary>
     /// Thread-safe method to remove an active activity
     /// </summary>
-    public void RemoveActiveActivity(string activityId)
+    public void RemoveActiveActivity(string? activityId)
     {
+        if (string.IsNullOrEmpty(activityId)) return;
+
         lock (_syncLock)
         {
-            ActiveActivityIds.Remove(activityId);
+            ActiveActivityIds?.Remove(activityId);
         }
     }
 }
