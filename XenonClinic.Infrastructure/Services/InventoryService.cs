@@ -117,6 +117,9 @@ public class InventoryService : IInventoryService
     public async Task<IEnumerable<InventoryTransaction>> GetTransactionsByItemIdAsync(int itemId)
     {
         return await _context.InventoryTransactions
+            .Include(t => t.InventoryItem)
+            .Include(t => t.Patient)
+            .Include(t => t.TransferToBranch)
             .Where(t => t.InventoryItemId == itemId)
             .OrderByDescending(t => t.TransactionDate)
             .ToListAsync();
@@ -126,6 +129,8 @@ public class InventoryService : IInventoryService
     {
         return await _context.InventoryTransactions
             .Include(t => t.InventoryItem)
+            .Include(t => t.Patient)
+            .Include(t => t.TransferToBranch)
             .Where(t => t.InventoryItem!.BranchId == branchId)
             .OrderByDescending(t => t.TransactionDate)
             .ToListAsync();

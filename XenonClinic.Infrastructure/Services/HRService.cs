@@ -138,6 +138,7 @@ public class HRService : IHRService
     public async Task<IEnumerable<Attendance>> GetAttendanceByEmployeeIdAsync(int employeeId, DateTime startDate, DateTime endDate)
     {
         return await _context.Attendances
+            .Include(a => a.Employee)
             .Where(a => a.EmployeeId == employeeId && a.Date >= startDate.Date && a.Date <= endDate.Date)
             .OrderByDescending(a => a.Date)
             .ToListAsync();
@@ -376,6 +377,9 @@ public class HRService : IHRService
     public async Task<IEnumerable<Department>> GetDepartmentsByBranchIdAsync(int branchId)
     {
         return await _context.Departments
+            .Include(d => d.Branch)
+            .Include(d => d.Manager)
+            .Include(d => d.Employees)
             .Where(d => d.BranchId == branchId)
             .OrderBy(d => d.Name)
             .ToListAsync();
@@ -426,6 +430,7 @@ public class HRService : IHRService
     public async Task<IEnumerable<JobPosition>> GetJobPositionsByBranchIdAsync(int branchId)
     {
         return await _context.JobPositions
+            .Include(jp => jp.Employees)
             .Where(jp => jp.BranchId == branchId)
             .OrderBy(jp => jp.Title)
             .ToListAsync();

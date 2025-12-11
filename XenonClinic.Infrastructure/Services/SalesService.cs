@@ -403,6 +403,7 @@ public class SalesService : ISalesService
     public async Task<IEnumerable<Payment>> GetPaymentsBySaleIdAsync(int saleId)
     {
         return await _context.Payments
+            .Include(p => p.Sale)
             .Where(p => p.SaleId == saleId)
             .OrderByDescending(p => p.PaymentDate)
             .ToListAsync();
@@ -624,6 +625,7 @@ public class SalesService : ISalesService
     {
         return await _context.Quotations
             .Include(q => q.Patient)
+            .Include(q => q.Branch)
             .Include(q => q.Items)
             .Where(q => q.BranchId == branchId)
             .OrderByDescending(q => q.QuotationDate)
