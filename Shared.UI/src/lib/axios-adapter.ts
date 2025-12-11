@@ -41,8 +41,7 @@ export function configureAxiosInstance(
     (response) => response,
     async (error: AxiosError) => {
       if (error.response?.status === 401) {
-        tokenStorage.clearToken();
-        tokenStorage.clearUserData();
+        tokenStorage.removeToken();
         options.onUnauthorized?.();
       }
       return Promise.reject(error);

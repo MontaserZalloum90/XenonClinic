@@ -1,94 +1,132 @@
-# Xenon Clinic CRM – Executive Deck
+# Xenon Platform – Executive Deck
 
 ## 1. Brand & Vision
-- **Brand**: XENON – premium, tech-forward audiology CRM.
+- **Brand**: XENON – premium, tech-forward Healthcare & Business Management Platform.
 - **Promise**: Faster clinic operations, consistent patient experiences, and actionable insights.
 - **Visual language**: Deep blues, neon accents, rounded cards, soft shadows.
-- **Responsiveness**: Mobile-first Bootstrap 5 layout.
+- **Responsiveness**: Mobile-first responsive design with Tailwind CSS.
 
 ## 2. Product Snapshot
-- Multi-branch, license-governed SaaS for audiology clinics.
-- Admin + role-based access (Admin, BranchAdmin, Audiologist, Receptionist, Technician).
-- Modern MVC + Razor Pages UI with Identity auth and clean Bootstrap skin.
+- Multi-tenant, multi-branch SaaS platform for healthcare clinics and trading companies.
+- Comprehensive role-based access (Admin, BranchAdmin, Doctor, Nurse, Receptionist, etc.).
+- Modern React 19 + TypeScript SPA with REST API backend.
 - Optimized for Emirates ID capture, analytics, and high-throughput front desk workflows.
+- Public marketing website with demo request and trial signup functionality.
 
 ## 3. Architecture Overview
-- **Solution**: ASP.NET Core 8, clean 3-project split.
+- **Solution**: Full-stack monorepo with .NET 8 backend and React 19 frontend.
   - `XenonClinic.Core`: Domain entities, enums, interfaces, services.
-  - `XenonClinic.Infrastructure`: EF Core, SQL Server, DbContext, repositories, seed.
-  - `XenonClinic.Web`: MVC + Razor Pages, controllers, views, assets.
-- **Persistence**: EF Core Code-First + migrations; seeded demo data.
-- **Identity**: Custom `ApplicationUser` with branch affinity + user-branch join.
-- **Charts**: Chart.js for dashboards and analytics.
+  - `XenonClinic.Infrastructure`: EF Core, PostgreSQL, DbContext, repositories, seed.
+  - `Xenon.Platform`: Platform API for tenant management and authentication.
+  - `XenonClinic.React`: Admin dashboard (React + TypeScript + Vite).
+  - `Xenon.PublicWebsite`: Public marketing website (React + TypeScript + Vite).
+  - `Shared.UI`: Reusable component library (@xenon/ui) shared across frontends.
+  - `XenonClinic.WorkflowEngine`: Business process automation engine.
+- **Persistence**: EF Core Code-First + migrations with PostgreSQL; seeded demo data.
+- **Identity**: JWT-based authentication with multi-tenant context.
+- **Charts**: Recharts for dashboards and analytics.
+- **Caching**: Redis for session and data caching (optional).
 
 ## 4. Branding Implementation
-- Branch-specific logo + primary color applied to login, sidebar, navbar, dashboards, invoices.
-- Fallback to default **XENON** logo when a branch logo is missing.
-- Global footer: “Powered by XENON Technologies”.
+- Tenant-specific logo + primary color applied to login, sidebar, navbar, dashboards, invoices.
+- Fallback to default **XENON** logo when a tenant logo is missing.
+- Global footer: "Powered by XENON Technologies".
+- Bilingual support (English/Arabic) with RTL layout support.
 
 ## 5. Core Domain Model
-- **Branch** ↔ **ApplicationUser** (primary + many-to-many via `UserBranch`).
-- **Patients** with demographics, Emirates ID, hearing loss type.
+- **Tenant** → **Branch** → **User** hierarchy for multi-tenant isolation.
+- **Patients** with demographics, Emirates ID, medical history.
 - **Appointments** (type, status) linked to branches and patients.
-- **AudiologyVisits** + **Audiograms** with raw JSON data storage.
-- **HearingDevices**, **Invoices** (amount, payment status).
-- **LicenseConfig** governing branch and user caps.
+- **Laboratory** orders with specimen tracking and results.
+- **Pharmacy** prescriptions and dispensing.
+- **Audiology** visits with audiogram charting.
+- **Financial** invoices, payments, and reporting.
+- **HR** employee management, attendance, and payroll.
+- **Inventory** stock management and reorder alerts.
+- **Marketing** campaigns, leads, and patient outreach.
 
-## 6. License Guardrails
-- `ILicenseGuardService` enforces MaxBranches / MaxUsers and expiry / active flags.
-- Controllers use guardrails before creating branches/users; show friendly blocking messages.
-- License config seeded (3 branches, 20 users, active) for demo.
+## 6. Multi-Tenant Architecture
+- Complete tenant isolation with separate data contexts.
+- Per-tenant configuration and branding.
+- Subscription-based licensing with plan tiers (Starter, Growth, Enterprise).
+- Branch-level access control within tenants.
 
 ## 7. Emirates ID (Mock) Flow
-- Patient Create page offers **“Read Emirates ID”**.
-- AJAX call hits `/Patients/ReadEid`, simulates `http://localhost:5005/eid/read`.
+- Patient Create page offers **"Read Emirates ID"**.
+- API call to EID reader service.
 - Returns EmiratesId, English/Arabic names, DOB, gender, nationality.
-- JS auto-fills the form; detects duplicates and prompts to open existing record.
+- Auto-fills the form; detects duplicates and prompts to open existing record.
 
 ## 8. UX Highlights
-- Left sidebar with branch branding + core navigation.
+- Left sidebar with tenant branding + core navigation.
 - Top navbar: active branch selector (for admins) + profile menu.
-- Dashboard: KPI cards, upcoming appointments table, 7-day visits chart.
-- DataTable-like lists: search, filter, paging; client + server validation.
-- Consistent rounded cards, shadows, iconography (Bootstrap Icons / FontAwesome).
+- Dashboard: KPI cards across all modules, charts, system health status.
+- DataTable-like lists: search, filter, pagination, bulk actions.
+- Consistent rounded cards, shadows, Lucide icons.
+- Keyboard shortcuts for power users (Ctrl+N, Ctrl+K, etc.).
+- Mobile-responsive card views for all list pages.
 
 ## 9. Analytics – Operational
 - Overview KPIs: total patients, appointments (period), completed visits, revenue.
 - Filters: date ranges (7/30 days, month, custom) + branch selector.
-- Charts: appointments per day, revenue per day, appointment type breakdown, top device models.
-- Branch-aware data scoping respecting user role and primary branch.
+- Charts: appointments per day, revenue per day, appointment type breakdown.
+- Multi-module activity overview with real-time data.
 
-## 10. Analytics – Audiology Insights
-- Diagnosis counts (top 5) and hearing loss type distribution (pie).
-- Age distribution buckets (<20, 20–40, 40–60, 60+).
-- Repeat-visit rate (patients with >3 visits).
-- Efficient LINQ queries with grouping; scoped to branch context.
+## 10. Module Analytics
+- **Patients**: Demographics distribution, new registrations.
+- **Laboratory**: Pending orders, urgent orders, turnaround time.
+- **Pharmacy**: Pending prescriptions, dispensed today.
+- **Financial**: Monthly revenue, unpaid invoices.
+- **Inventory**: Total items, low stock alerts.
+- **HR**: Total employees, active staff count.
 
 ## 11. Seed Data
-- LicenseConfig: active, MaxBranches=3, MaxUsers=20.
+- Multi-tenant demo setup with sample tenants.
 - Demo branches: Dubai, Sharjah, Abu Dhabi with placeholder logos/colors.
-- Users: Admin, Branch Admin, Audiologist, Receptionist seeded with roles.
-- Patients: 30–50 realistic names across branches with mixed hearing loss types.
-- Appointments: 100+ across past/future; varied types and statuses.
-- Visits/Audiograms: Linked to completed appointments with sample audiogram JSON.
-- Devices & Invoices: Realistic models, warranties, amounts (300–8000), paid/pending/cancelled.
+- Users: Admin, Branch Admin, Doctor, Receptionist seeded with roles.
+- Patients: Sample patient records across branches.
+- Appointments: Varied types and statuses across past/future.
+- Laboratory and Pharmacy orders with sample data.
 
 ## 12. Security & Roles
-- ASP.NET Core Identity cookie auth.
-- Role-guarded controllers/actions; branch scoping for non-admins.
-- Admins can switch branches; normal users locked to primary branch.
+- JWT-based authentication with refresh tokens.
+- Role-based access control with granular permissions.
+- Branch-level data scoping for non-admin users.
+- HIPAA-ready security measures.
+- Audit logging for compliance.
 
 ## 13. Deployment & Ops
-- SQL Server backend; EF Core migrations for schema.
-- `dotnet publish` for hosting; environment-configurable connection strings.
-- Static assets bundled under `wwwroot`; CDN-friendly.
+- **Docker Compose** for full-stack deployment.
+- PostgreSQL database with EF Core migrations.
+- Redis for caching (optional).
+- Nginx reverse proxy for production.
+- GitHub Actions CI/CD pipelines.
+- Health check endpoints for monitoring.
 
-## 14. Implementation Status (Repo)
-- Complete solution scaffold with projects, DbContext, entities, services, seeds, controllers, views, layout, and analytics pages committed.
-- README documents SDK install, restore, migrations, run, and smoke testing steps.
+## 14. Public Website Features
+- Marketing landing page with feature highlights.
+- Pricing page with interactive calculator.
+- Demo request wizard with business type selection.
+- Contact form with inquiry type routing.
+- FAQ sections and trust badges.
+- Testimonials from Gulf region clients.
 
-## 15. Next Steps / Enhancements
-- Add automated UI tests (Playwright) and API integration tests.
-- Introduce feature flags for premium analytics packs.
-- Add offline-capable EID reader plugin when device SDK is available.
-- Harden audit logging and observability (structured logs, tracing).
+## 15. Testing Infrastructure
+- **Backend**: xUnit tests with code coverage.
+- **Frontend**: Vitest + Testing Library for unit tests.
+- **E2E**: Playwright tests for admin and public websites.
+- **Storybook**: Component documentation and visual testing.
+
+## 16. Implementation Status
+- Complete full-stack platform with all core modules.
+- Admin dashboard with 8+ functional modules.
+- Public website with marketing pages and demo signup.
+- Shared UI component library with design tokens.
+- Comprehensive documentation and deployment guides.
+
+## 17. Next Steps / Enhancements
+- Expand E2E test coverage across all modules.
+- Add real-time notifications with SignalR.
+- Implement offline-capable EID reader plugin.
+- Enhance audit logging and observability (structured logs, tracing).
+- Add advanced reporting and export features.

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent, act } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { ToastProvider, useToast } from '../components/Toast/Toast';
 
 // Helper component to trigger toast
@@ -34,7 +34,7 @@ describe('Toast', () => {
   });
 
   it('shows different toast types', async () => {
-    const { rerender } = render(
+    render(
       <ToastProvider>
         <ToastTrigger type="error" message="Error message" />
       </ToastProvider>

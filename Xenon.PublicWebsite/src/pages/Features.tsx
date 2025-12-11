@@ -135,7 +135,7 @@ export default function FeaturesPage() {
                 </>
               );
 
-              if ('link' in module) {
+              if ('link' in module && module.link) {
                 return (
                   <Link key={module.name} to={module.link} className="card card-hover block">
                     {CardContent}

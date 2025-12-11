@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { workflowDesignerApi } from '../../components/workflow/workflowApi';
 import { WorkflowDesigner } from '../../components/workflow/WorkflowDesigner';
 import type {
@@ -7,18 +7,17 @@ import type {
   NodeTypeCatalog,
   WorkflowValidationResult,
 } from '../../components/workflow/types';
-import { Toast } from '../../components/ui/Toast';
+import { useToast } from '../../components/ui/Toast';
 
 export function WorkflowEditor() {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
+  const { showToast } = useToast();
   const [workflow, setWorkflow] = useState<WorkflowDesignModel | null>(null);
   const [nodeTypes, setNodeTypes] = useState<NodeTypeCatalog | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
   // Fetch workflow and node types
   useEffect(() => {
@@ -72,12 +71,9 @@ export function WorkflowEditor() {
       const saved = await workflowDesignerApi.saveWorkflow(id, workflow);
       setWorkflow(saved);
       setHasUnsavedChanges(false);
-      setToast({ message: 'Workflow saved successfully', type: 'success' });
+      showToast('success', 'Workflow saved successfully');
     } catch (err) {
-      setToast({
-        message: err instanceof Error ? err.message : 'Failed to save workflow',
-        type: 'error',
-      });
+      showToast('error', err instanceof Error ? err.message : 'Failed to save workflow');
     } finally {
       setSaving(false);
     }
@@ -92,19 +88,13 @@ export function WorkflowEditor() {
     try {
       const result = await workflowDesignerApi.validateWorkflow(workflow);
       if (result.isValid) {
-        setToast({ message: 'Workflow is valid', type: 'success' });
+        showToast('success', 'Workflow is valid');
       } else {
-        setToast({
-          message: `Validation failed: ${result.errors.length} error(s)`,
-          type: 'error',
-        });
+        showToast('error', `Validation failed: ${result.errors.length} error(s)`);
       }
       return result;
     } catch (err) {
-      setToast({
-        message: err instanceof Error ? err.message : 'Validation failed',
-        type: 'error',
-      });
+      showToast('error', err instanceof Error ? err.message : 'Validation failed');
       return { isValid: false, errors: [], warnings: [] };
     }
   };
@@ -121,12 +111,9 @@ export function WorkflowEditor() {
     try {
       const published = await workflowDesignerApi.publishWorkflow(id, workflow.version);
       setWorkflow(published);
-      setToast({ message: 'Workflow published successfully', type: 'success' });
+      showToast('success', 'Workflow published successfully');
     } catch (err) {
-      setToast({
-        message: err instanceof Error ? err.message : 'Failed to publish workflow',
-        type: 'error',
-      });
+      showToast('error', err instanceof Error ? err.message : 'Failed to publish workflow');
     }
   };
 
@@ -146,10 +133,7 @@ export function WorkflowEditor() {
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
     } catch (err) {
-      setToast({
-        message: err instanceof Error ? err.message : 'Failed to export workflow',
-        type: 'error',
-      });
+      showToast('error', err instanceof Error ? err.message : 'Failed to export workflow');
     }
   };
 
@@ -255,15 +239,6 @@ export function WorkflowEditor() {
           onSave={handleSave}
         />
       </div>
-
-      {/* Toast notifications */}
-      {toast && (
-        <Toast
-          message={toast.message}
-          type={toast.type}
-          onClose={() => setToast(null)}
-        />
-      )}
     </div>
   );
 }

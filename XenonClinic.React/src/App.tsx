@@ -16,7 +16,7 @@ import { PharmacyList } from './pages/Pharmacy/PharmacyList';
 import { RadiologyList } from './pages/Radiology/RadiologyList';
 import { AudiologyList } from './pages/Audiology/AudiologyList';
 import { MarketingList } from './pages/Marketing/MarketingList';
-import { AdminDashboard } from './pages/Admin';
+import { AdminDashboard, TranslationManagement } from './pages/Admin';
 import { NotFound, Forbidden } from './pages/Error';
 
 // Create React Query client

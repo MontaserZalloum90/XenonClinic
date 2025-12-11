@@ -118,9 +118,9 @@ export function DataTable<T>({
                 <th className="w-12 px-4 py-3">
                   <input
                     type="checkbox"
-                    checked={allSelected}
+                    checked={!!allSelected}
                     ref={(el) => {
-                      if (el) el.indeterminate = someSelected && !allSelected;
+                      if (el) el.indeterminate = !!(someSelected && !allSelected);
                     }}
                     onChange={onSelectAll}
                     className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
