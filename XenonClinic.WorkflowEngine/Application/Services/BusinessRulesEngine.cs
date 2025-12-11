@@ -13,7 +13,7 @@ public class BusinessRulesEngine : IBusinessRulesEngine
     private readonly IExpressionEvaluator _expressionEvaluator;
     private readonly IMemoryCache _cache;
     private readonly ILogger<BusinessRulesEngine> _logger;
-    private readonly Dictionary<string, RuleSetDto> _ruleSets = new();
+    private readonly System.Collections.Concurrent.ConcurrentDictionary<string, RuleSetDto> _ruleSets = new();
     private readonly JsonSerializerOptions _jsonOptions;
 
     private static readonly TimeSpan CacheDuration = TimeSpan.FromMinutes(5);
@@ -61,8 +61,8 @@ public class BusinessRulesEngine : IBusinessRulesEngine
             var workingFacts = new Dictionary<string, object>(facts);
 
             // Evaluate rules in priority order
-            var orderedRules = ruleSet.Rules
-                .Where(r => r.IsEnabled)
+            var orderedRules = (ruleSet.Rules ?? Enumerable.Empty<RuleDto>())
+                .Where(r => r != null && r.IsEnabled)
                 .OrderBy(r => r.Priority)
                 .ToList();
 
@@ -72,17 +72,26 @@ public class BusinessRulesEngine : IBusinessRulesEngine
 
                 try
                 {
+                    // Skip rules with empty conditions
+                    if (string.IsNullOrWhiteSpace(rule.Condition))
+                    {
+                        result.Logs.Add($"Skipping rule '{rule.Name}' - no condition defined");
+                        continue;
+                    }
+
                     var conditionResult = await _expressionEvaluator.EvaluateConditionAsync(
                         rule.Condition, workingFacts);
 
                     if (conditionResult)
                     {
-                        result.FiredRules.Add(rule.Name);
+                        result.FiredRules.Add(rule.Name ?? rule.Id);
                         result.Logs.Add($"Rule '{rule.Name}' fired");
 
-                        // Execute actions
-                        foreach (var action in rule.Actions)
+                        // Execute actions (handle null actions list)
+                        var actions = rule.Actions ?? Enumerable.Empty<RuleActionDto>();
+                        foreach (var action in actions)
                         {
+                            if (action == null) continue;
                             await ExecuteActionAsync(action, workingFacts, result, cancellationToken);
                         }
 
@@ -284,17 +293,25 @@ public class BusinessRulesEngine : IBusinessRulesEngine
         return Task.CompletedTask;
     }
 
-    private async Task<object> EvaluateValueAsync(object? value, Dictionary<string, object> facts)
+    private async Task<object?> EvaluateValueAsync(object? value, Dictionary<string, object> facts)
     {
         if (value == null)
-            return null!;
+            return null;
 
         if (value is string strValue)
         {
             // Check if it's an expression
             if (strValue.StartsWith("${") || strValue.StartsWith("#{"))
             {
-                return await _expressionEvaluator.EvaluateAsync(strValue, facts);
+                try
+                {
+                    return await _expressionEvaluator.EvaluateAsync(strValue, facts);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to evaluate expression: {Expression}", strValue);
+                    return strValue; // Return original value on failure
+                }
             }
         }
 

@@ -327,25 +327,44 @@ public class InMemoryWorkflowCacheService : IWorkflowCacheService, IDisposable
     {
         // Rough estimate - in production use proper memory tracking
         long total = 0;
-        foreach (var entry in _cache.Values)
+        foreach (var entry in _cache.Values.ToList()) // ToList to avoid concurrent modification issues
         {
-            total += entry.Key.Length * 2; // String chars
-            if (entry.Value is string s)
+            try
             {
-                total += s.Length * 2;
+                total += entry.Key.Length * 2; // String chars
+                if (entry.Value == null)
+                {
+                    // Null values take minimal space
+                    total += 8;
+                }
+                else if (entry.Value is string s)
+                {
+                    total += s.Length * 2;
+                }
+                else
+                {
+                    // Estimate based on JSON serialization
+                    try
+                    {
+                        var json = JsonSerializer.Serialize(entry.Value);
+                        total += json.Length * 2;
+                    }
+                    catch (NotSupportedException)
+                    {
+                        // Type cannot be serialized, use default estimate
+                        total += 1000;
+                    }
+                    catch (JsonException)
+                    {
+                        // JSON serialization failed, use default estimate
+                        total += 1000;
+                    }
+                }
             }
-            else
+            catch (Exception ex)
             {
-                // Estimate based on JSON serialization
-                try
-                {
-                    var json = JsonSerializer.Serialize(entry.Value);
-                    total += json.Length * 2;
-                }
-                catch
-                {
-                    total += 1000; // Default estimate
-                }
+                _logger.LogDebug(ex, "Error estimating memory for cache entry {Key}", entry.Key);
+                total += 1000; // Default estimate on error
             }
         }
         return total;
@@ -354,9 +373,13 @@ public class InMemoryWorkflowCacheService : IWorkflowCacheService, IDisposable
     private Dictionary<string, long> GetEntriesByTag()
     {
         var result = new Dictionary<string, long>();
-        foreach (var kvp in _tagIndex)
+        foreach (var kvp in _tagIndex.ToList()) // ToList to get snapshot
         {
-            result[kvp.Key] = kvp.Value.Count;
+            // Lock the HashSet when reading count to ensure thread safety
+            lock (kvp.Value)
+            {
+                result[kvp.Key] = kvp.Value.Count;
+            }
         }
         return result;
     }

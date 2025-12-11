@@ -25,9 +25,13 @@ public class TenantService : ITenantService
         IEnumerable<ITenantResolutionStrategy> resolutionStrategies,
         ILogger<TenantService> logger)
     {
-        _tenantContextAccessor = tenantContextAccessor;
-        _resolutionStrategies = resolutionStrategies.OrderByDescending(s => s.Priority);
-        _logger = logger;
+        _tenantContextAccessor = tenantContextAccessor ?? throw new ArgumentNullException(nameof(tenantContextAccessor));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+
+        // Order resolution strategies by priority (handle null gracefully)
+        _resolutionStrategies = (resolutionStrategies ?? Enumerable.Empty<ITenantResolutionStrategy>())
+            .OrderByDescending(s => s.Priority)
+            .ToList(); // Materialize to avoid multiple enumeration
 
         // Register default tenant
         EnsureDefaultTenant();

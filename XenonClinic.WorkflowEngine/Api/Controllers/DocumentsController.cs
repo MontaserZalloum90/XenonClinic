@@ -58,15 +58,28 @@ public class DocumentsController : ControllerBase
         string documentId,
         CancellationToken cancellationToken)
     {
-        var documents = await _documentService.GetProcessDocumentsAsync("", cancellationToken);
-        var document = documents.FirstOrDefault(d => d.Id == documentId);
+        if (string.IsNullOrWhiteSpace(documentId))
+        {
+            return BadRequest(new { message = "Document ID is required" });
+        }
+
+        // Try to get document directly if service supports it
+        var document = await _documentService.GetDocumentAsync(documentId, cancellationToken);
 
         if (document == null)
         {
             return NotFound(new { message = $"Document '{documentId}' not found" });
         }
 
-        return File(document.Content, document.ContentType, document.FileName);
+        if (document.Content == null || document.Content.Length == 0)
+        {
+            return NotFound(new { message = $"Document '{documentId}' has no content" });
+        }
+
+        var contentType = document.ContentType ?? "application/octet-stream";
+        var fileName = document.FileName ?? $"document-{documentId}";
+
+        return File(document.Content, contentType, fileName);
     }
 
     /// <summary>
@@ -203,9 +216,29 @@ public class DocumentsController : ControllerBase
         [FromForm] string? description,
         [FromForm] string? category,
         [FromForm] TemplateEngine engine,
-        IFormFile file,
+        IFormFile? file,
         CancellationToken cancellationToken)
     {
+        if (file == null || file.Length == 0)
+        {
+            return BadRequest(new { message = "A file is required" });
+        }
+
+        if (string.IsNullOrWhiteSpace(tenantId))
+        {
+            return BadRequest(new { message = "Tenant ID is required" });
+        }
+
+        if (string.IsNullOrWhiteSpace(key))
+        {
+            return BadRequest(new { message = "Template key is required" });
+        }
+
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            return BadRequest(new { message = "Template name is required" });
+        }
+
         using var memoryStream = new MemoryStream();
         await file.CopyToAsync(memoryStream, cancellationToken);
 
@@ -229,9 +262,14 @@ public class DocumentsController : ControllerBase
 
     #region Helper Methods
 
-    private static DocumentFormat GetDocumentFormat(string fileName)
+    private static DocumentFormat GetDocumentFormat(string? fileName)
     {
-        var extension = Path.GetExtension(fileName).ToLowerInvariant();
+        if (string.IsNullOrEmpty(fileName))
+        {
+            return DocumentFormat.Html;
+        }
+
+        var extension = Path.GetExtension(fileName)?.ToLowerInvariant() ?? "";
         return extension switch
         {
             ".html" or ".htm" => DocumentFormat.Html,

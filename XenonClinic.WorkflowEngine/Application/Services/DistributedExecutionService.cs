@@ -524,15 +524,19 @@ public class DistributedExecutionService : IDistributedExecutionService, IDispos
 
     private ClusterNode? SelectRoundRobin(List<ClusterNode> nodes)
     {
-        if (!nodes.Any()) return null;
-        var index = Interlocked.Increment(ref _roundRobinIndex) % nodes.Count;
+        if (nodes.Count == 0) return null;
+
+        // Use unchecked to handle integer overflow gracefully
+        var currentIndex = unchecked((uint)Interlocked.Increment(ref _roundRobinIndex));
+        var index = (int)(currentIndex % (uint)nodes.Count);
         return nodes[index];
     }
 
     private static ClusterNode? SelectLeastLoaded(List<ClusterNode> nodes)
     {
         return nodes
-            .Where(n => n.Metrics.ActiveJobs < n.Capabilities.MaxConcurrentJobs)
+            .Where(n => n.Metrics != null && n.Capabilities != null &&
+                        n.Metrics.ActiveJobs < n.Capabilities.MaxConcurrentJobs)
             .OrderBy(n => n.Metrics.ActiveJobs)
             .ThenBy(n => n.Metrics.CpuUsagePercent)
             .FirstOrDefault();
@@ -540,12 +544,12 @@ public class DistributedExecutionService : IDistributedExecutionService, IDispos
 
     private static ClusterNode? SelectRandom(List<ClusterNode> nodes)
     {
-        if (!nodes.Any()) return null;
-        var random = new Random();
-        return nodes[random.Next(nodes.Count)];
+        if (nodes.Count == 0) return null;
+        // Use Random.Shared for thread-safe random selection (.NET 6+)
+        return nodes[Random.Shared.Next(nodes.Count)];
     }
 
-    private static string GetLocalIpAddress()
+    private string GetLocalIpAddress()
     {
         try
         {
@@ -554,8 +558,14 @@ public class DistributedExecutionService : IDistributedExecutionService, IDispos
             var endPoint = socket.LocalEndPoint as IPEndPoint;
             return endPoint?.Address.ToString() ?? "127.0.0.1";
         }
-        catch
+        catch (SocketException ex)
         {
+            _logger.LogDebug(ex, "Could not determine local IP address, using localhost");
+            return "127.0.0.1";
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Unexpected error determining local IP address");
             return "127.0.0.1";
         }
     }

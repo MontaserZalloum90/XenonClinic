@@ -806,13 +806,16 @@ public class HumanTaskService : IHumanTaskService
             .FirstOrDefaultAsync(d => d.Id == instance.ProcessDefinitionId, cancellationToken);
     }
 
-    private async Task AddActionAsync(
+    private Task AddActionAsync(
         HumanTask task,
         string actionType,
         string userId,
         Dictionary<string, object>? data = null,
         CancellationToken cancellationToken = default)
     {
+        // Check cancellation before doing work
+        cancellationToken.ThrowIfCancellationRequested();
+
         var action = new TaskAction
         {
             Id = Guid.NewGuid().ToString(),
@@ -824,15 +827,16 @@ public class HumanTaskService : IHumanTaskService
         };
 
         _context.TaskActions.Add(action);
+        return Task.CompletedTask;
     }
 
-    private async Task AddActionAsync(
+    private Task AddActionAsync(
         HumanTask task,
         string actionType,
         string userId,
         CancellationToken cancellationToken)
     {
-        await AddActionAsync(task, actionType, userId, null, cancellationToken);
+        return AddActionAsync(task, actionType, userId, null, cancellationToken);
     }
 
     private List<string> DeserializeList(string? json)
@@ -844,8 +848,10 @@ public class HumanTaskService : IHumanTaskService
         {
             return JsonSerializer.Deserialize<List<string>>(json, _jsonOptions) ?? new List<string>();
         }
-        catch
+        catch (JsonException ex)
         {
+            // Log the deserialization failure for debugging
+            _logger.LogWarning(ex, "Failed to deserialize JSON list: {Json}", json?.Substring(0, Math.Min(100, json?.Length ?? 0)));
             return new List<string>();
         }
     }

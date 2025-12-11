@@ -94,9 +94,9 @@ public class CompensationService : ICompensationService
             var state = await GetOrCreateCompensationStateAsync(request.ProcessInstanceId, cancellationToken);
             state.IsCompensating = true;
 
-            // Get compensable activities
-            var activitiesToCompensate = state.CompensableActivities
-                .Where(a => a.HasCompensationHandler && !a.IsCompensated)
+            // Get compensable activities (handle null)
+            var activitiesToCompensate = (state.CompensableActivities ?? Enumerable.Empty<CompensableActivity>())
+                .Where(a => a != null && a.HasCompensationHandler && !a.IsCompensated)
                 .ToList();
 
             // Filter from specific activity if requested
@@ -123,8 +123,22 @@ public class CompensationService : ICompensationService
             if (request.Mode == CompensationMode.ParallelAll)
             {
                 var tasks = activitiesToCompensate.Select(a =>
-                    CompensateActivityInternalAsync(execution, a, request.Variables, cancellationToken));
-                await Task.WhenAll(tasks);
+                    CompensateActivityInternalAsync(execution, a, request.Variables ?? new Dictionary<string, object>(), cancellationToken));
+                var results = await Task.WhenAll(tasks);
+
+                // Process results
+                foreach (var result in results)
+                {
+                    execution.Results.Add(result);
+                    if (result.Success)
+                    {
+                        execution.CompensatedActivities++;
+                    }
+                    else
+                    {
+                        execution.FailedActivities++;
+                    }
+                }
             }
             else
             {
@@ -194,7 +208,8 @@ public class CompensationService : ICompensationService
     public async Task<CompensationResult> CompensateActivityAsync(string processInstanceId, string activityInstanceId, CancellationToken cancellationToken = default)
     {
         var state = await GetOrCreateCompensationStateAsync(processInstanceId, cancellationToken);
-        var activity = state.CompensableActivities.FirstOrDefault(a => a.ActivityInstanceId == activityInstanceId);
+        var activity = (state.CompensableActivities ?? Enumerable.Empty<CompensableActivity>())
+            .FirstOrDefault(a => a?.ActivityInstanceId == activityInstanceId);
 
         if (activity == null)
         {
@@ -233,7 +248,11 @@ public class CompensationService : ICompensationService
     {
         if (_history.TryGetValue(processInstanceId, out var records))
         {
-            return Task.FromResult<IList<CompensationRecord>>(records.OrderByDescending(r => r.CompensatedAt).ToList());
+            // Lock when reading to avoid concurrent modification
+            lock (records)
+            {
+                return Task.FromResult<IList<CompensationRecord>>(records.OrderByDescending(r => r.CompensatedAt).ToList());
+            }
         }
         return Task.FromResult<IList<CompensationRecord>>(new List<CompensationRecord>());
     }
@@ -242,17 +261,23 @@ public class CompensationService : ICompensationService
 
     public Task<Saga> CreateSagaAsync(CreateSagaRequest request, CancellationToken cancellationToken = default)
     {
+        if (request == null)
+        {
+            throw new ArgumentNullException(nameof(request));
+        }
+
         var saga = new Saga
         {
             Id = Guid.NewGuid().ToString(),
-            Name = request.Name,
+            Name = request.Name ?? "Unnamed Saga",
             ProcessInstanceId = request.ProcessInstanceId,
             Status = SagaStatus.Created,
-            Context = request.Context,
+            Context = request.Context ?? new Dictionary<string, object>(),
             CreatedAt = DateTime.UtcNow
         };
 
-        foreach (var stepRequest in request.Steps.OrderBy(s => s.Order))
+        var steps = request.Steps ?? Enumerable.Empty<CreateSagaStepRequest>();
+        foreach (var stepRequest in steps.Where(s => s != null).OrderBy(s => s.Order))
         {
             saga.Steps.Add(new SagaStep
             {

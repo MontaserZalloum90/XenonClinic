@@ -84,14 +84,16 @@ public class WorkflowAuthorizationService : IWorkflowAuthorizationService
 
             if (_roles.TryGetValue(assignment.RoleId, out var role) && role.IsActive)
             {
-                // Add global permissions
-                foreach (var perm in role.Permissions)
+                // Add global permissions (handle null)
+                var rolePermissions = role.Permissions ?? Enumerable.Empty<Permission>();
+                foreach (var perm in rolePermissions)
                 {
                     permissions.Add(perm);
                 }
 
-                // Add resource-specific permissions
-                foreach (var resourcePerm in role.ResourcePermissions)
+                // Add resource-specific permissions (handle null)
+                var resourcePermissions = role.ResourcePermissions ?? Enumerable.Empty<ResourcePermission>();
+                foreach (var resourcePerm in resourcePermissions)
                 {
                     if (resourcePerm.ResourceType == resourceType)
                     {
@@ -108,9 +110,25 @@ public class WorkflowAuthorizationService : IWorkflowAuthorizationService
                                     ["resourceId"] = resourceId ?? ""
                                 };
 
-                                var result = await _expressionEvaluator.EvaluateAsync(resourcePerm.Condition, context);
-                                if (result is not true)
-                                    continue;
+                                try
+                                {
+                                    var result = await _expressionEvaluator.EvaluateAsync(resourcePerm.Condition, context);
+                                    // Check if result is truthy (true boolean or non-null/non-empty value)
+                                    var isTruthy = result switch
+                                    {
+                                        bool b => b,
+                                        string s => !string.IsNullOrEmpty(s) && !s.Equals("false", StringComparison.OrdinalIgnoreCase),
+                                        null => false,
+                                        _ => true
+                                    };
+                                    if (!isTruthy)
+                                        continue;
+                                }
+                                catch (Exception ex)
+                                {
+                                    _logger.LogWarning(ex, "Failed to evaluate permission condition: {Condition}", resourcePerm.Condition);
+                                    continue; // Fail closed - deny permission on expression error
+                                }
                             }
 
                             foreach (var perm in resourcePerm.Permissions)
@@ -213,10 +231,16 @@ public class WorkflowAuthorizationService : IWorkflowAuthorizationService
 
             _roles.TryRemove(roleId, out _);
 
-            // Remove all assignments for this role
-            foreach (var userRoles in _userRoles.Values)
+            // Remove all assignments for this role (get snapshot of keys to avoid concurrent modification)
+            foreach (var userId in _userRoles.Keys.ToList())
             {
-                userRoles.RemoveAll(a => a.RoleId == roleId);
+                if (_userRoles.TryGetValue(userId, out var userRoles))
+                {
+                    lock (userRoles)
+                    {
+                        userRoles.RemoveAll(a => a.RoleId == roleId);
+                    }
+                }
             }
 
             _logger.LogInformation("Deleted role {RoleId}", roleId);
@@ -297,7 +321,11 @@ public class WorkflowAuthorizationService : IWorkflowAuthorizationService
     {
         if (_userRoles.TryGetValue(userId, out var userRoles))
         {
-            return Task.FromResult<IList<UserRoleAssignment>>(userRoles.ToList());
+            // Lock when reading to ensure thread safety
+            lock (userRoles)
+            {
+                return Task.FromResult<IList<UserRoleAssignment>>(userRoles.ToList());
+            }
         }
 
         return Task.FromResult<IList<UserRoleAssignment>>(new List<UserRoleAssignment>());

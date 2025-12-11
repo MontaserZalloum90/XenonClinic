@@ -111,8 +111,9 @@ public class ProcessExecutionService : IProcessExecutionService
 
         await _context.SaveChangesAsync(cancellationToken);
 
-        // Find and execute start event
-        var startEvent = model.Activities?.OfType<StartEventDefinition>().FirstOrDefault();
+        // Find and execute start event - check both Activities and Elements
+        var startEvent = model.Activities?.OfType<StartEventDefinition>().FirstOrDefault()
+            ?? model.Elements?.OfType<StartEventDefinition>().FirstOrDefault();
         if (startEvent == null)
         {
             throw new InvalidOperationException("Process model has no start event.");
@@ -255,7 +256,7 @@ public class ProcessExecutionService : IProcessExecutionService
 
             foreach (var activityId in activeActivityIds.ToList())
             {
-                var activity = model.Activities?.FirstOrDefault(a => a.Id == activityId);
+                var activity = GetActivityFromModel(model, activityId);
                 if (activity is IntermediateCatchEventDefinition catchEvent &&
                     catchEvent.EventType == "signal" &&
                     catchEvent.SignalRef == signalName)
@@ -445,7 +446,7 @@ public class ProcessExecutionService : IProcessExecutionService
 
             // Get the model and re-execute
             var model = await GetProcessModelAsync(instance.ProcessDefinitionId, instance.ProcessVersion, cancellationToken);
-            var activity = model.Activities?.FirstOrDefault(a => a.Id == activityInstance.ActivityId);
+            var activity = GetActivityFromModel(model, activityInstance.ActivityId);
 
             if (activity == null)
             {
@@ -710,7 +711,7 @@ public class ProcessExecutionService : IProcessExecutionService
 
         foreach (var flow in outgoingFlows)
         {
-            var targetActivity = model.Activities?.FirstOrDefault(a => a.Id == flow.TargetRef);
+            var targetActivity = GetActivityFromModel(model, flow.TargetRef);
             if (targetActivity != null)
             {
                 await ExecuteActivityAsync(instance, model, targetActivity, userId, cancellationToken);
@@ -966,7 +967,7 @@ public class ProcessExecutionService : IProcessExecutionService
         await _context.SaveChangesAsync(cancellationToken);
 
         // Execute target activity
-        var targetActivity = model.Activities?.FirstOrDefault(a => a.Id == selectedFlow.TargetRef);
+        var targetActivity = GetActivityFromModel(model, selectedFlow.TargetRef);
         if (targetActivity != null)
         {
             await ExecuteActivityAsync(instance, model, targetActivity, userId, cancellationToken);
@@ -1004,7 +1005,7 @@ public class ProcessExecutionService : IProcessExecutionService
             // Execute all outgoing paths
             foreach (var flow in outgoingFlows)
             {
-                var targetActivity = model.Activities?.FirstOrDefault(a => a.Id == flow.TargetRef);
+                var targetActivity = GetActivityFromModel(model, flow.TargetRef);
                 if (targetActivity != null)
                 {
                     await ExecuteActivityAsync(instance, model, targetActivity, userId, cancellationToken);
@@ -1043,7 +1044,7 @@ public class ProcessExecutionService : IProcessExecutionService
                 // Execute outgoing paths
                 foreach (var flow in outgoingFlows)
                 {
-                    var targetActivity = model.Activities?.FirstOrDefault(a => a.Id == flow.TargetRef);
+                    var targetActivity = GetActivityFromModel(model, flow.TargetRef);
                     if (targetActivity != null)
                     {
                         await ExecuteActivityAsync(instance, model, targetActivity, userId, cancellationToken);
@@ -1062,13 +1063,15 @@ public class ProcessExecutionService : IProcessExecutionService
         CancellationToken cancellationToken)
     {
         // For embedded sub-process, execute the start event within it
-        var startEvent = subProcess.Activities?.OfType<StartEventDefinition>().FirstOrDefault();
+        var startEvent = subProcess.Activities?.OfType<StartEventDefinition>().FirstOrDefault()
+            ?? subProcess.Elements?.OfType<StartEventDefinition>().FirstOrDefault();
         if (startEvent != null)
         {
             // Create a nested process model context
             var subModel = new ProcessModel
             {
-                Activities = subProcess.Activities,
+                Activities = subProcess.Activities ?? subProcess.Elements?.ToList(),
+                Elements = subProcess.Elements,
                 SequenceFlows = subProcess.SequenceFlows
             };
 
@@ -1229,7 +1232,16 @@ public class ProcessExecutionService : IProcessExecutionService
                 break;
             case double dbl:
                 variable.Type = VariableType.Number;
-                variable.NumberValue = (decimal)dbl;
+                // Use Convert.ToDecimal to handle potential precision/overflow issues
+                variable.NumberValue = double.IsNaN(dbl) || double.IsInfinity(dbl)
+                    ? 0m
+                    : Convert.ToDecimal(Math.Round(dbl, 10));
+                break;
+            case float flt:
+                variable.Type = VariableType.Number;
+                variable.NumberValue = float.IsNaN(flt) || float.IsInfinity(flt)
+                    ? 0m
+                    : Convert.ToDecimal(flt);
                 break;
             case bool b:
                 variable.Type = VariableType.Boolean;
@@ -1275,6 +1287,23 @@ public class ProcessExecutionService : IProcessExecutionService
             result = result.Replace($"#{{{kvp.Key}}}", kvp.Value?.ToString() ?? "");
         }
         return result;
+    }
+
+    /// <summary>
+    /// Gets an activity from the process model, checking both Activities and Elements collections.
+    /// </summary>
+    private static ActivityDefinition? GetActivityFromModel(ProcessModel model, string activityId)
+    {
+        if (string.IsNullOrEmpty(activityId))
+            return null;
+
+        // Check Activities collection first
+        var activity = model.Activities?.FirstOrDefault(a => a.Id == activityId);
+        if (activity != null)
+            return activity;
+
+        // Fall back to Elements collection
+        return model.Elements?.FirstOrDefault(e => e.Id == activityId);
     }
 
     private ProcessInstanceDto MapToDto(ProcessInstance instance, ProcessDefinition? definition)
