@@ -241,9 +241,13 @@ public class PatientController : BaseApiController
             await _patientService.CreateOrUpdateMedicalHistoryAsync(medicalHistory);
         }
 
+        // SECURITY FIX: Do not log Emirates ID (PII) - log only last 4 characters for reference
+        var maskedEmiratesId = createdPatient.EmiratesId.Length > 4
+            ? $"***{createdPatient.EmiratesId[^4..]}"
+            : "****";
         _logger.LogInformation(
-            "Patient created: {PatientId}, EmiratesId: {EmiratesId}, Branch: {BranchId}, By: {UserId}",
-            createdPatient.Id, createdPatient.EmiratesId, branchId, _userContext.UserId);
+            "Patient created: {PatientId}, EmiratesId: {MaskedEmiratesId}, Branch: {BranchId}, By: {UserId}",
+            createdPatient.Id, maskedEmiratesId, branchId, _userContext.UserId);
 
         var resultDto = MapToDto(createdPatient);
         return ApiCreated(resultDto, $"/api/patient/{createdPatient.Id}");
@@ -486,11 +490,53 @@ public class PatientController : BaseApiController
             throw new ForbiddenException(PatientValidationMessages.BranchAccessDenied);
         }
 
-        // Decode file content
+        // BUG FIX: Validate file extension to prevent malicious file uploads
+        var allowedExtensions = new[] { ".pdf", ".doc", ".docx", ".jpg", ".jpeg", ".png", ".gif", ".txt", ".rtf" };
+        var fileExtension = Path.GetExtension(dto.FileName)?.ToLowerInvariant();
+        if (string.IsNullOrEmpty(fileExtension) || !allowedExtensions.Contains(fileExtension))
+        {
+            return ApiBadRequest($"File type not allowed. Allowed types: {string.Join(", ", allowedExtensions)}");
+        }
+
+        // BUG FIX: Validate content type matches extension
+        var validContentTypes = new Dictionary<string, string[]>
+        {
+            { ".pdf", new[] { "application/pdf" } },
+            { ".doc", new[] { "application/msword" } },
+            { ".docx", new[] { "application/vnd.openxmlformats-officedocument.wordprocessingml.document" } },
+            { ".jpg", new[] { "image/jpeg" } },
+            { ".jpeg", new[] { "image/jpeg" } },
+            { ".png", new[] { "image/png" } },
+            { ".gif", new[] { "image/gif" } },
+            { ".txt", new[] { "text/plain" } },
+            { ".rtf", new[] { "application/rtf", "text/rtf" } }
+        };
+
+        if (validContentTypes.TryGetValue(fileExtension, out var expectedContentTypes) &&
+            !expectedContentTypes.Contains(dto.ContentType?.ToLowerInvariant()))
+        {
+            return ApiBadRequest("Content type does not match file extension");
+        }
+
+        // Decode file content with error handling
         byte[]? fileBytes = null;
         if (!string.IsNullOrEmpty(dto.FileContent))
         {
-            fileBytes = Convert.FromBase64String(dto.FileContent);
+            try
+            {
+                fileBytes = Convert.FromBase64String(dto.FileContent);
+            }
+            catch (FormatException)
+            {
+                return ApiBadRequest("Invalid file content encoding. Expected valid base64 string.");
+            }
+
+            // BUG FIX: Validate file size (max 10MB)
+            const int maxFileSizeBytes = 10 * 1024 * 1024;
+            if (fileBytes.Length > maxFileSizeBytes)
+            {
+                return ApiBadRequest("File size exceeds maximum allowed (10MB)");
+            }
         }
 
         var document = new PatientDocument
@@ -500,7 +546,7 @@ public class PatientController : BaseApiController
             DocumentType = dto.DocumentType,
             Description = dto.Description,
             FileName = dto.FileName,
-            FileExtension = Path.GetExtension(dto.FileName),
+            FileExtension = fileExtension,
             FileSize = fileBytes?.Length ?? 0,
             ContentType = dto.ContentType,
             UploadedAt = DateTime.UtcNow,

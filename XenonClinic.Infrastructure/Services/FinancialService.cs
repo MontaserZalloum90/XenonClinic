@@ -151,7 +151,18 @@ public class FinancialService : IFinancialService
             throw new InvalidOperationException("Transaction amount must be greater than zero");
         }
 
+        // BUG FIX: Validate transaction date is not in the future
+        if (transaction.TransactionDate > DateTime.UtcNow.AddDays(1))
+        {
+            throw new InvalidOperationException("Transaction date cannot be in the future");
+        }
+
+        // BUG FIX: Use proper decimal rounding for financial amounts
+        transaction.Amount = Math.Round(transaction.Amount, 2, MidpointRounding.AwayFromZero);
+
         // Use database transaction to prevent race conditions
+        // Note: For high-concurrency scenarios, consider using optimistic concurrency
+        // with row versioning on the Account entity to detect conflicts
         await using var dbTransaction = await _context.Database.BeginTransactionAsync();
         try
         {
@@ -161,13 +172,19 @@ public class FinancialService : IFinancialService
                 throw new KeyNotFoundException($"Account with ID {transaction.AccountId} not found");
             }
 
+            // BUG FIX: Validate account is active before allowing transactions
+            if (!account.IsActive)
+            {
+                throw new InvalidOperationException("Cannot create transaction on an inactive account");
+            }
+
             _context.FinancialTransactions.Add(transaction);
 
             // Update account balance atomically based on account type
             // For Assets/Expenses: Debits increase balance, Credits decrease balance
             // For Liabilities/Revenue/Equity: Credits increase balance, Debits decrease balance
             var balanceChange = CalculateBalanceChange(account.AccountType, transaction.TransactionType, transaction.Amount);
-            account.Balance += balanceChange;
+            account.Balance = Math.Round(account.Balance + balanceChange, 2, MidpointRounding.AwayFromZero);
 
             await _context.SaveChangesAsync();
             await dbTransaction.CommitAsync();
@@ -425,6 +442,15 @@ public class FinancialService : IFinancialService
         {
             throw new InvalidOperationException("Expense amount must be greater than zero");
         }
+
+        // BUG FIX: Validate expense date is not in the future
+        if (expense.ExpenseDate > DateTime.UtcNow.AddDays(1))
+        {
+            throw new InvalidOperationException("Expense date cannot be in the future");
+        }
+
+        // BUG FIX: Use proper decimal rounding for financial amounts
+        expense.Amount = Math.Round(expense.Amount, 2, MidpointRounding.AwayFromZero);
 
         // Validate branch exists
         var branchExists = await _context.Branches.AnyAsync(b => b.Id == expense.BranchId);

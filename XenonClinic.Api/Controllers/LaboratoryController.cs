@@ -509,13 +509,28 @@ public class LaboratoryController : BaseApiController
     {
         try
         {
+            // SECURITY FIX: Require branch context for patient queries
+            var branchId = _currentUserService.BranchId;
+            if (branchId == null)
+            {
+                return ApiBadRequest("Branch context is required");
+            }
+
             var orders = await _labService.GetLabOrdersByPatientIdAsync(patientId);
-            var filteredOrders = orders.Where(o => HasBranchAccess(o.BranchId));
+            var filteredOrders = orders.Where(o => HasBranchAccess(o.BranchId)).ToList();
+
+            // SECURITY FIX: Log if no accessible orders found (potential unauthorized access attempt)
+            if (!filteredOrders.Any())
+            {
+                _logger.LogWarning("Patient lab orders query returned no accessible results: PatientId={PatientId}, UserId={UserId}",
+                    patientId, _currentUserService.UserId);
+            }
+
             return ApiOk(filteredOrders.Select(MapToLabOrderDto));
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error getting lab orders for patient {PatientId}", patientId);
+            _logger.LogError(ex, "Error getting lab orders for patient");
             return ApiServerError("Failed to retrieve patient lab orders");
         }
     }
@@ -811,6 +826,28 @@ public class LaboratoryController : BaseApiController
             if (branchId == null)
             {
                 return ApiBadRequest("Branch context is required");
+            }
+
+            // SECURITY FIX: Validate the attachment path to prevent path traversal attacks
+            if (!string.IsNullOrEmpty(dto.AttachmentPath))
+            {
+                // Reject paths containing traversal patterns
+                if (dto.AttachmentPath.Contains("..") ||
+                    dto.AttachmentPath.Contains("://") ||
+                    Path.IsPathRooted(dto.AttachmentPath))
+                {
+                    _logger.LogWarning("Potential path traversal attempt in lab result attachment: Path={Path}, UserId={UserId}",
+                        dto.AttachmentPath, _currentUserService.UserId);
+                    return ApiBadRequest("Invalid attachment path");
+                }
+
+                // Only allow alphanumeric, dash, underscore, dot, and forward slash
+                var invalidChars = dto.AttachmentPath.Where(c =>
+                    !char.IsLetterOrDigit(c) && c != '-' && c != '_' && c != '.' && c != '/').ToList();
+                if (invalidChars.Any())
+                {
+                    return ApiBadRequest("Attachment path contains invalid characters");
+                }
             }
 
             var result = new LabResult

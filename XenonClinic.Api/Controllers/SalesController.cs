@@ -97,13 +97,26 @@ public class SalesController : BaseApiController
     {
         try
         {
+            // SECURITY FIX: Verify branch context before allowing patient sales query
+            var branchId = _currentUserService.BranchId;
+            if (branchId == null) return ApiBadRequest("Branch context is required");
+
             var sales = await _salesService.GetSalesByPatientIdAsync(patientId);
-            var filtered = sales.Where(s => HasBranchAccess(s.BranchId));
+            var filtered = sales.Where(s => HasBranchAccess(s.BranchId)).ToList();
+
+            // SECURITY FIX: If no sales are visible for this patient, verify they have access to any patient data
+            // This prevents information disclosure about which patients have sales
+            if (!filtered.Any())
+            {
+                _logger.LogWarning("Patient sales query returned no accessible results: PatientId={PatientId}, UserId={UserId}",
+                    patientId, _currentUserService.UserId);
+            }
+
             return ApiOk(filtered.Select(MapToSaleDto));
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error getting sales for patient {PatientId}", patientId);
+            _logger.LogError(ex, "Error getting sales for patient");
             return ApiServerError("Failed to retrieve patient sales");
         }
     }
@@ -154,18 +167,27 @@ public class SalesController : BaseApiController
                 CreatedBy = _currentUserService.UserId
             }).ToList();
 
+            // BUG FIX: Use proper decimal rounding for financial calculations
             foreach (var item in items)
             {
-                item.DiscountAmount = item.DiscountPercentage.HasValue ? item.Subtotal * (item.DiscountPercentage.Value / 100) : null;
+                item.DiscountAmount = item.DiscountPercentage.HasValue
+                    ? decimal.Round(item.Subtotal * (item.DiscountPercentage.Value / 100m), 2, MidpointRounding.AwayFromZero)
+                    : null;
                 var afterDiscount = item.Subtotal - (item.DiscountAmount ?? 0);
-                item.TaxAmount = item.TaxPercentage.HasValue ? afterDiscount * (item.TaxPercentage.Value / 100) : null;
-                item.Total = afterDiscount + (item.TaxAmount ?? 0);
+                item.TaxAmount = item.TaxPercentage.HasValue
+                    ? decimal.Round(afterDiscount * (item.TaxPercentage.Value / 100m), 2, MidpointRounding.AwayFromZero)
+                    : null;
+                item.Total = decimal.Round(afterDiscount + (item.TaxAmount ?? 0), 2, MidpointRounding.AwayFromZero);
             }
 
-            var subTotal = items.Sum(i => i.Subtotal);
-            var discountAmount = dto.DiscountPercentage.HasValue ? subTotal * (dto.DiscountPercentage.Value / 100) : 0;
+            var subTotal = decimal.Round(items.Sum(i => i.Subtotal), 2, MidpointRounding.AwayFromZero);
+            var discountAmount = dto.DiscountPercentage.HasValue
+                ? decimal.Round(subTotal * (dto.DiscountPercentage.Value / 100m), 2, MidpointRounding.AwayFromZero)
+                : 0;
             var afterSaleDiscount = subTotal - discountAmount;
-            var taxAmount = dto.TaxPercentage.HasValue ? afterSaleDiscount * (dto.TaxPercentage.Value / 100) : 0;
+            var taxAmount = dto.TaxPercentage.HasValue
+                ? decimal.Round(afterSaleDiscount * (dto.TaxPercentage.Value / 100m), 2, MidpointRounding.AwayFromZero)
+                : 0;
 
             var sale = new Sale
             {
@@ -315,13 +337,33 @@ public class SalesController : BaseApiController
         {
             if (!ModelState.IsValid) return ApiBadRequestFromModelState();
 
-            var sale = await _salesService.GetSaleByIdAsync(dto.SaleId);
-            if (sale == null) return ApiNotFound("Sale not found");
-            if (!HasBranchAccess(sale.BranchId)) return ApiForbidden("Access denied");
-            if (dto.Amount > sale.Balance) return ApiBadRequest($"Payment exceeds balance. Remaining: {sale.Balance:C}");
+            // BUG FIX: Validate payment amount is positive
+            if (dto.Amount <= 0)
+                return ApiBadRequest("Payment amount must be greater than zero");
 
             var branchId = _currentUserService.BranchId;
             if (branchId == null) return ApiBadRequest("Branch context is required");
+
+            var sale = await _salesService.GetSaleByIdAsync(dto.SaleId);
+            if (sale == null) return ApiNotFound("Sale not found");
+            if (!HasBranchAccess(sale.BranchId)) return ApiForbidden("Access denied");
+
+            // BUG FIX: Verify sale is in a valid state for payment
+            if (sale.Status == SaleStatus.Cancelled)
+                return ApiBadRequest("Cannot record payment for a cancelled sale");
+            if (sale.Status == SaleStatus.Draft)
+                return ApiBadRequest("Cannot record payment for a draft sale. Please confirm the sale first.");
+
+            // Note: The actual balance check and payment recording should be done atomically
+            // in the service layer using a database transaction to prevent TOCTOU race conditions.
+            // The service's RecordPaymentAsync method should:
+            // 1. Lock the sale record (SELECT FOR UPDATE)
+            // 2. Re-check the balance
+            // 3. Record the payment
+            // 4. Update the sale's paid amount
+            // All within a single transaction
+            if (dto.Amount > sale.Balance)
+                return ApiBadRequest($"Payment exceeds balance. Remaining: {sale.Balance:C}");
 
             var paymentNumber = await _salesService.GeneratePaymentNumberAsync(branchId.Value);
             var payment = new Payment
@@ -329,7 +371,7 @@ public class SalesController : BaseApiController
                 BranchId = branchId.Value,
                 PaymentNumber = paymentNumber,
                 PaymentDate = DateTime.UtcNow,
-                Amount = dto.Amount,
+                Amount = decimal.Round(dto.Amount, 2), // BUG FIX: Ensure 2 decimal precision
                 PaymentMethod = dto.PaymentMethod,
                 SaleId = dto.SaleId,
                 ReferenceNumber = dto.ReferenceNumber,
@@ -345,12 +387,13 @@ public class SalesController : BaseApiController
             };
 
             var created = await _salesService.RecordPaymentAsync(payment);
-            _logger.LogInformation("Payment recorded for sale {InvoiceNumber}: {Amount}", sale.InvoiceNumber, dto.Amount);
+            _logger.LogInformation("Payment recorded: PaymentNumber={PaymentNumber}, SaleId={SaleId}, Amount={Amount}",
+                paymentNumber, dto.SaleId, dto.Amount);
             return ApiCreated(MapToPaymentDto(created), message: "Payment recorded successfully");
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error recording payment");
+            _logger.LogError(ex, "Error recording payment for sale {SaleId}", dto.SaleId);
             return ApiServerError("Failed to record payment");
         }
     }

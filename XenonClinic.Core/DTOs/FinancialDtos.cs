@@ -77,7 +77,7 @@ public class InvoiceDto
     public string InvoiceNumber { get; set; } = string.Empty;
     public int PatientId { get; set; }
     public string? PatientName { get; set; }
-    public string? PatientEmiratesId { get; set; }
+    // SECURITY FIX: Removed PatientEmiratesId - PII should not be exposed in invoice responses
     public DateTime InvoiceDate { get; set; }
     public DateTime? DueDate { get; set; }
     public InvoiceStatus Status { get; set; }

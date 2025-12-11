@@ -1042,7 +1042,7 @@ public class FinancialController : BaseApiController
             InvoiceNumber = invoice.InvoiceNumber,
             PatientId = invoice.PatientId,
             PatientName = invoice.Patient?.FullNameEn,
-            PatientEmiratesId = invoice.Patient?.EmiratesId,
+            // SECURITY FIX: Removed PatientEmiratesId - PII should not be exposed in invoice responses
             InvoiceDate = invoice.InvoiceDate,
             DueDate = invoice.DueDate,
             Status = invoice.Status,
