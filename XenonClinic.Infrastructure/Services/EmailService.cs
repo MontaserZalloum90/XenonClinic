@@ -2,6 +2,7 @@ using Microsoft.Extensions.Logging;
 using System.Net;
 using System.Net.Mail;
 using XenonClinic.Core.Interfaces;
+using XenonClinic.Core.Utilities;
 
 namespace XenonClinic.Infrastructure.Services;
 
@@ -50,29 +51,34 @@ public class EmailService : IEmailService
 
             await smtpClient.SendMailAsync(mailMessage);
 
-            _logger.LogInformation("Email sent successfully to {Email} for company {CompanyId}", toEmail, companyId);
+            // BUG FIX: Mask email in logs to prevent PII exposure
+            _logger.LogInformation("Email sent successfully to {Email} for company {CompanyId}", LoggingHelpers.MaskEmail(toEmail), companyId);
             return true;
         }
         catch (SmtpException ex)
         {
+            // BUG FIX: Mask email in logs to prevent PII exposure
             _logger.LogError(ex, "SMTP error sending email to {Email} for company {CompanyId}. Status: {StatusCode}",
-                toEmail, companyId, ex.StatusCode);
+                LoggingHelpers.MaskEmail(toEmail), companyId, ex.StatusCode);
             return false;
         }
         catch (SmtpFailedRecipientException ex)
         {
+            // BUG FIX: Mask email in logs to prevent PII exposure
             _logger.LogError(ex, "Failed recipient error sending email to {Email} for company {CompanyId}. Status: {StatusCode}",
-                toEmail, companyId, ex.StatusCode);
+                LoggingHelpers.MaskEmail(toEmail), companyId, ex.StatusCode);
             return false;
         }
         catch (InvalidOperationException ex)
         {
-            _logger.LogError(ex, "Invalid operation error sending email to {Email} for company {CompanyId}", toEmail, companyId);
+            // BUG FIX: Mask email in logs to prevent PII exposure
+            _logger.LogError(ex, "Invalid operation error sending email to {Email} for company {CompanyId}", LoggingHelpers.MaskEmail(toEmail), companyId);
             return false;
         }
         catch (ArgumentException ex)
         {
-            _logger.LogError(ex, "Invalid email address {Email} for company {CompanyId}", toEmail, companyId);
+            // BUG FIX: Mask email in logs to prevent PII exposure
+            _logger.LogError(ex, "Invalid email address {Email} for company {CompanyId}", LoggingHelpers.MaskEmail(toEmail), companyId);
             return false;
         }
     }

@@ -189,40 +189,47 @@ public class PushNotificationService : IPushNotificationService
 
     #region Send Notifications
 
+    /// <summary>
+    /// BUG FIX: Optimized to use batch queries instead of N+1 queries for user/patient IDs.
+    /// </summary>
     public async Task<PushNotificationResponseDto> SendNotificationAsync(PushNotificationRequestDto request)
     {
         var deviceTokens = new List<string>();
 
-        // Get device tokens for users
+        // BUG FIX: Collect all user IDs to batch load instead of N+1 queries
+        var allUserIds = new List<int>();
         if (request.UserId.HasValue)
         {
-            var userTokens = await GetActiveDeviceTokensForUserAsync(request.UserId.Value);
+            allUserIds.Add(request.UserId.Value);
+        }
+        if (request.UserIds?.Any() == true)
+        {
+            allUserIds.AddRange(request.UserIds);
+        }
+
+        // Batch load device tokens for all users in a single query
+        if (allUserIds.Any())
+        {
+            var userTokens = await GetActiveDeviceTokensForUsersAsync(allUserIds.Distinct());
             deviceTokens.AddRange(userTokens);
         }
 
-        if (request.UserIds?.Any() == true)
-        {
-            foreach (var userId in request.UserIds)
-            {
-                var userTokens = await GetActiveDeviceTokensForUserAsync(userId);
-                deviceTokens.AddRange(userTokens);
-            }
-        }
-
-        // Get device tokens for patients
+        // BUG FIX: Collect all patient IDs to batch load instead of N+1 queries
+        var allPatientIds = new List<int>();
         if (request.PatientId.HasValue)
         {
-            var patientTokens = await GetActiveDeviceTokensForPatientAsync(request.PatientId.Value);
-            deviceTokens.AddRange(patientTokens);
+            allPatientIds.Add(request.PatientId.Value);
         }
-
         if (request.PatientIds?.Any() == true)
         {
-            foreach (var patientId in request.PatientIds)
-            {
-                var patientTokens = await GetActiveDeviceTokensForPatientAsync(patientId);
-                deviceTokens.AddRange(patientTokens);
-            }
+            allPatientIds.AddRange(request.PatientIds);
+        }
+
+        // Batch load device tokens for all patients in a single query
+        if (allPatientIds.Any())
+        {
+            var patientTokens = await GetActiveDeviceTokensForPatientsAsync(allPatientIds.Distinct());
+            deviceTokens.AddRange(patientTokens);
         }
 
         if (!string.IsNullOrEmpty(request.Topic))
@@ -797,11 +804,12 @@ public class PushNotificationService : IPushNotificationService
 
     public async Task<TopicSubscriptionResponseDto> UnsubscribeFromTopicAsync(TopicSubscriptionDto dto)
     {
+        // BUG FIX: Add null checks instead of null-forgiving operators to prevent NullReferenceException
         var subscription = await _context.TopicSubscriptions
             .Include(s => s.Topic)
             .Include(s => s.Device)
-            .FirstOrDefaultAsync(s => s.Topic!.Name == dto.TopicName &&
-                                      s.Device!.DeviceToken == dto.DeviceToken);
+            .FirstOrDefaultAsync(s => s.Topic != null && s.Topic.Name == dto.TopicName &&
+                                      s.Device != null && s.Device.DeviceToken == dto.DeviceToken);
 
         if (subscription == null)
         {
@@ -825,11 +833,12 @@ public class PushNotificationService : IPushNotificationService
 
     public async Task<IEnumerable<string>> GetDeviceTopicsAsync(string deviceToken)
     {
+        // BUG FIX: Add null checks instead of null-forgiving operators to prevent NullReferenceException
         return await _context.TopicSubscriptions
             .Include(s => s.Topic)
             .Include(s => s.Device)
-            .Where(s => s.Device!.DeviceToken == deviceToken && s.IsActive)
-            .Select(s => s.Topic!.Name)
+            .Where(s => s.Device != null && s.Device.DeviceToken == deviceToken && s.IsActive && s.Topic != null)
+            .Select(s => s.Topic!.Name) // Null-forgiving is safe here due to the Where clause filter
             .ToListAsync();
     }
 
@@ -1266,10 +1275,44 @@ public class PushNotificationService : IPushNotificationService
             .ToListAsync();
     }
 
+    /// <summary>
+    /// BUG FIX: Batch method to load device tokens for multiple users in a single query.
+    /// Replaces N+1 queries when sending notifications to multiple users.
+    /// </summary>
+    private async Task<IEnumerable<string>> GetActiveDeviceTokensForUsersAsync(IEnumerable<int> userIds)
+    {
+        var userIdList = userIds.ToList();
+        if (!userIdList.Any())
+            return Enumerable.Empty<string>();
+
+        return await _context.PushDevices
+            .AsNoTracking()
+            .Where(d => d.UserId.HasValue && userIdList.Contains(d.UserId.Value) && d.IsActive)
+            .Select(d => d.DeviceToken)
+            .ToListAsync();
+    }
+
     private async Task<IEnumerable<string>> GetActiveDeviceTokensForPatientAsync(int patientId)
     {
         return await _context.PushDevices
             .Where(d => d.PatientId == patientId && d.IsActive)
+            .Select(d => d.DeviceToken)
+            .ToListAsync();
+    }
+
+    /// <summary>
+    /// BUG FIX: Batch method to load device tokens for multiple patients in a single query.
+    /// Replaces N+1 queries when sending notifications to multiple patients.
+    /// </summary>
+    private async Task<IEnumerable<string>> GetActiveDeviceTokensForPatientsAsync(IEnumerable<int> patientIds)
+    {
+        var patientIdList = patientIds.ToList();
+        if (!patientIdList.Any())
+            return Enumerable.Empty<string>();
+
+        return await _context.PushDevices
+            .AsNoTracking()
+            .Where(d => d.PatientId.HasValue && patientIdList.Contains(d.PatientId.Value) && d.IsActive)
             .Select(d => d.DeviceToken)
             .ToListAsync();
     }

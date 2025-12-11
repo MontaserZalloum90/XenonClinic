@@ -337,14 +337,25 @@ public class SalesService : ISalesService
         // Calculate item totals
         CalculateSaleItemTotals(saleItem);
 
-        saleItem.CreatedAt = DateTime.UtcNow;
-        _context.SaleItems.Add(saleItem);
-        await _context.SaveChangesAsync();
+        // BUG FIX: Use transaction for atomic item creation and total recalculation
+        await using var dbTransaction = await _context.Database.BeginTransactionAsync();
+        try
+        {
+            saleItem.CreatedAt = DateTime.UtcNow;
+            _context.SaleItems.Add(saleItem);
+            await _context.SaveChangesAsync();
 
-        // Recalculate sale totals
-        await RecalculateSaleTotalsAsync(saleItem.SaleId);
+            // Recalculate sale totals
+            await RecalculateSaleTotalsAsync(saleItem.SaleId);
 
-        return saleItem;
+            await dbTransaction.CommitAsync();
+            return saleItem;
+        }
+        catch
+        {
+            await dbTransaction.RollbackAsync();
+            throw;
+        }
     }
 
     public async Task UpdateSaleItemAsync(SaleItem saleItem)
@@ -371,12 +382,24 @@ public class SalesService : ISalesService
             throw new ArgumentException("Quantity must be greater than zero", nameof(saleItem));
         }
 
-        CalculateSaleItemTotals(saleItem);
-        _context.Entry(existingItem).CurrentValues.SetValues(saleItem);
-        await _context.SaveChangesAsync();
+        // BUG FIX: Use transaction for atomic item update and total recalculation
+        await using var dbTransaction = await _context.Database.BeginTransactionAsync();
+        try
+        {
+            CalculateSaleItemTotals(saleItem);
+            _context.Entry(existingItem).CurrentValues.SetValues(saleItem);
+            await _context.SaveChangesAsync();
 
-        // Recalculate sale totals
-        await RecalculateSaleTotalsAsync(saleItem.SaleId);
+            // Recalculate sale totals
+            await RecalculateSaleTotalsAsync(saleItem.SaleId);
+
+            await dbTransaction.CommitAsync();
+        }
+        catch
+        {
+            await dbTransaction.RollbackAsync();
+            throw;
+        }
     }
 
     public async Task DeleteSaleItemAsync(int id)
@@ -392,12 +415,24 @@ public class SalesService : ISalesService
                 throw new InvalidOperationException("Can only delete items from draft sales");
             }
 
-            var saleId = saleItem.SaleId;
-            _context.SaleItems.Remove(saleItem);
-            await _context.SaveChangesAsync();
+            // BUG FIX: Use transaction for atomic item deletion and total recalculation
+            await using var dbTransaction = await _context.Database.BeginTransactionAsync();
+            try
+            {
+                var saleId = saleItem.SaleId;
+                _context.SaleItems.Remove(saleItem);
+                await _context.SaveChangesAsync();
 
-            // Recalculate sale totals
-            await RecalculateSaleTotalsAsync(saleId);
+                // Recalculate sale totals
+                await RecalculateSaleTotalsAsync(saleId);
+
+                await dbTransaction.CommitAsync();
+            }
+            catch
+            {
+                await dbTransaction.RollbackAsync();
+                throw;
+            }
         }
     }
 
@@ -499,37 +534,58 @@ public class SalesService : ISalesService
             throw new InvalidOperationException("Payment amount must be greater than zero");
         }
 
-        var remainingBalance = sale.Total - sale.PaidAmount;
-        if (payment.Amount > remainingBalance)
+        // BUG FIX: Use proper decimal rounding for financial amounts
+        payment.Amount = Math.Round(payment.Amount, 2, MidpointRounding.AwayFromZero);
+
+        // BUG FIX: Use transaction to prevent race condition in concurrent payments
+        await using var dbTransaction = await _context.Database.BeginTransactionAsync();
+        try
         {
-            throw new InvalidOperationException(
-                $"Payment amount ({payment.Amount:C}) exceeds remaining balance ({remainingBalance:C})");
-        }
+            // Re-read the sale with fresh data inside transaction to prevent TOCTOU
+            var currentSale = await _context.Sales.FindAsync(sale.Id);
+            if (currentSale == null)
+            {
+                throw new KeyNotFoundException($"Sale with ID {sale.Id} not found");
+            }
 
-        // Generate payment number if not provided
-        if (string.IsNullOrEmpty(payment.PaymentNumber))
+            var remainingBalance = currentSale.Total - currentSale.PaidAmount;
+            if (payment.Amount > remainingBalance)
+            {
+                throw new InvalidOperationException(
+                    $"Payment amount ({payment.Amount:C}) exceeds remaining balance ({remainingBalance:C})");
+            }
+
+            // Generate payment number if not provided
+            if (string.IsNullOrEmpty(payment.PaymentNumber))
+            {
+                payment.PaymentNumber = await GeneratePaymentNumberAsync(currentSale.BranchId);
+            }
+
+            payment.CreatedAt = DateTime.UtcNow;
+            _context.Payments.Add(payment);
+
+            // Update sale paid amount and status
+            currentSale.PaidAmount += payment.Amount;
+            currentSale.UpdatedAt = DateTime.UtcNow;
+
+            if (currentSale.PaidAmount >= currentSale.Total)
+            {
+                currentSale.PaymentStatus = PaymentStatus.Paid;
+            }
+            else if (currentSale.PaidAmount > 0)
+            {
+                currentSale.PaymentStatus = PaymentStatus.Partial;
+            }
+
+            await _context.SaveChangesAsync();
+            await dbTransaction.CommitAsync();
+            return payment;
+        }
+        catch
         {
-            payment.PaymentNumber = await GeneratePaymentNumberAsync(sale.BranchId);
+            await dbTransaction.RollbackAsync();
+            throw;
         }
-
-        payment.CreatedAt = DateTime.UtcNow;
-        _context.Payments.Add(payment);
-
-        // Update sale paid amount and status
-        sale.PaidAmount += payment.Amount;
-        sale.UpdatedAt = DateTime.UtcNow;
-
-        if (sale.PaidAmount >= sale.Total)
-        {
-            sale.PaymentStatus = PaymentStatus.Paid;
-        }
-        else if (sale.PaidAmount > 0)
-        {
-            sale.PaymentStatus = PaymentStatus.Partial;
-        }
-
-        await _context.SaveChangesAsync();
-        return payment;
     }
 
     public async Task UpdatePaymentAsync(Payment payment)
@@ -548,19 +604,30 @@ public class SalesService : ISalesService
             throw new ArgumentException("Payment amount must be greater than zero", nameof(payment));
         }
 
-        // Recalculate sale totals if amount changed
-        if (existingPayment.Amount != payment.Amount)
+        // BUG FIX: Use transaction for atomic payment update and sale recalculation
+        await using var dbTransaction = await _context.Database.BeginTransactionAsync();
+        try
         {
-            var sale = await _context.Sales.FindAsync(existingPayment.SaleId);
-            if (sale != null)
+            // Recalculate sale totals if amount changed
+            if (existingPayment.Amount != payment.Amount)
             {
-                sale.PaidAmount = sale.PaidAmount - existingPayment.Amount + payment.Amount;
-                UpdateSalePaymentStatus(sale);
+                var sale = await _context.Sales.FindAsync(existingPayment.SaleId);
+                if (sale != null)
+                {
+                    sale.PaidAmount = sale.PaidAmount - existingPayment.Amount + payment.Amount;
+                    UpdateSalePaymentStatus(sale);
+                }
             }
-        }
 
-        _context.Entry(existingPayment).CurrentValues.SetValues(payment);
-        await _context.SaveChangesAsync();
+            _context.Entry(existingPayment).CurrentValues.SetValues(payment);
+            await _context.SaveChangesAsync();
+            await dbTransaction.CommitAsync();
+        }
+        catch
+        {
+            await dbTransaction.RollbackAsync();
+            throw;
+        }
     }
 
     public async Task DeletePaymentAsync(int id)
@@ -571,16 +638,27 @@ public class SalesService : ISalesService
 
         if (payment != null)
         {
-            var sale = payment.Sale;
-            if (sale != null)
+            // BUG FIX: Use transaction for atomic payment deletion and sale update
+            await using var dbTransaction = await _context.Database.BeginTransactionAsync();
+            try
             {
-                sale.PaidAmount -= payment.Amount;
-                UpdateSalePaymentStatus(sale);
-                sale.UpdatedAt = DateTime.UtcNow;
-            }
+                var sale = payment.Sale;
+                if (sale != null)
+                {
+                    sale.PaidAmount -= payment.Amount;
+                    UpdateSalePaymentStatus(sale);
+                    sale.UpdatedAt = DateTime.UtcNow;
+                }
 
-            _context.Payments.Remove(payment);
-            await _context.SaveChangesAsync();
+                _context.Payments.Remove(payment);
+                await _context.SaveChangesAsync();
+                await dbTransaction.CommitAsync();
+            }
+            catch
+            {
+                await dbTransaction.RollbackAsync();
+                throw;
+            }
         }
     }
 
@@ -602,35 +680,46 @@ public class SalesService : ISalesService
 
         var sale = payment.Sale ?? throw new InvalidOperationException($"Sale not found for payment {paymentId}");
 
-        // Record refund as negative payment
-        var refundPayment = new Payment
+        // BUG FIX: Use transaction for atomic refund creation and sale update
+        await using var dbTransaction = await _context.Database.BeginTransactionAsync();
+        try
         {
-            SaleId = sale.Id,
-            PaymentNumber = await GeneratePaymentNumberAsync(sale.BranchId),
-            Amount = -refundAmount,
-            PaymentMethod = payment.PaymentMethod,
-            PaymentDate = DateTime.UtcNow,
-            Notes = $"Refund for payment {payment.PaymentNumber}. {reason}",
-            ReferenceNumber = payment.ReferenceNumber,
-            CreatedAt = DateTime.UtcNow
-        };
+            // Record refund as negative payment
+            var refundPayment = new Payment
+            {
+                SaleId = sale.Id,
+                PaymentNumber = await GeneratePaymentNumberAsync(sale.BranchId),
+                Amount = -refundAmount,
+                PaymentMethod = payment.PaymentMethod,
+                PaymentDate = DateTime.UtcNow,
+                Notes = $"Refund for payment {payment.PaymentNumber}. {reason}",
+                ReferenceNumber = payment.ReferenceNumber,
+                CreatedAt = DateTime.UtcNow
+            };
 
-        _context.Payments.Add(refundPayment);
+            _context.Payments.Add(refundPayment);
 
-        // Update sale
-        sale.PaidAmount -= refundAmount;
-        if (sale.PaidAmount <= 0)
-        {
-            sale.PaymentStatus = PaymentStatus.Refunded;
-            sale.Status = SaleStatus.Refunded;
+            // Update sale
+            sale.PaidAmount -= refundAmount;
+            if (sale.PaidAmount <= 0)
+            {
+                sale.PaymentStatus = PaymentStatus.Refunded;
+                sale.Status = SaleStatus.Refunded;
+            }
+            else
+            {
+                UpdateSalePaymentStatus(sale);
+            }
+            sale.UpdatedAt = DateTime.UtcNow;
+
+            await _context.SaveChangesAsync();
+            await dbTransaction.CommitAsync();
         }
-        else
+        catch
         {
-            UpdateSalePaymentStatus(sale);
+            await dbTransaction.RollbackAsync();
+            throw;
         }
-        sale.UpdatedAt = DateTime.UtcNow;
-
-        await _context.SaveChangesAsync();
     }
 
     public async Task<string> GeneratePaymentNumberAsync(int branchId)
@@ -1006,14 +1095,25 @@ public class SalesService : ISalesService
         // Calculate item totals
         CalculateQuotationItemTotals(quotationItem);
 
-        quotationItem.CreatedAt = DateTime.UtcNow;
-        _context.QuotationItems.Add(quotationItem);
-        await _context.SaveChangesAsync();
+        // BUG FIX: Use transaction for atomic item creation and total recalculation
+        await using var dbTransaction = await _context.Database.BeginTransactionAsync();
+        try
+        {
+            quotationItem.CreatedAt = DateTime.UtcNow;
+            _context.QuotationItems.Add(quotationItem);
+            await _context.SaveChangesAsync();
 
-        // Recalculate quotation totals
-        await RecalculateQuotationTotalsAsync(quotationItem.QuotationId);
+            // Recalculate quotation totals
+            await RecalculateQuotationTotalsAsync(quotationItem.QuotationId);
 
-        return quotationItem;
+            await dbTransaction.CommitAsync();
+            return quotationItem;
+        }
+        catch
+        {
+            await dbTransaction.RollbackAsync();
+            throw;
+        }
     }
 
     public async Task UpdateQuotationItemAsync(QuotationItem quotationItem)
@@ -1040,12 +1140,24 @@ public class SalesService : ISalesService
             throw new ArgumentException("Quantity must be greater than zero", nameof(quotationItem));
         }
 
-        CalculateQuotationItemTotals(quotationItem);
-        _context.Entry(existingItem).CurrentValues.SetValues(quotationItem);
-        await _context.SaveChangesAsync();
+        // BUG FIX: Use transaction for atomic item update and total recalculation
+        await using var dbTransaction = await _context.Database.BeginTransactionAsync();
+        try
+        {
+            CalculateQuotationItemTotals(quotationItem);
+            _context.Entry(existingItem).CurrentValues.SetValues(quotationItem);
+            await _context.SaveChangesAsync();
 
-        // Recalculate quotation totals
-        await RecalculateQuotationTotalsAsync(quotationItem.QuotationId);
+            // Recalculate quotation totals
+            await RecalculateQuotationTotalsAsync(quotationItem.QuotationId);
+
+            await dbTransaction.CommitAsync();
+        }
+        catch
+        {
+            await dbTransaction.RollbackAsync();
+            throw;
+        }
     }
 
     public async Task DeleteQuotationItemAsync(int id)
@@ -1061,12 +1173,24 @@ public class SalesService : ISalesService
                 throw new InvalidOperationException("Can only delete items from draft quotations");
             }
 
-            var quotationId = quotationItem.QuotationId;
-            _context.QuotationItems.Remove(quotationItem);
-            await _context.SaveChangesAsync();
+            // BUG FIX: Use transaction for atomic item deletion and total recalculation
+            await using var dbTransaction = await _context.Database.BeginTransactionAsync();
+            try
+            {
+                var quotationId = quotationItem.QuotationId;
+                _context.QuotationItems.Remove(quotationItem);
+                await _context.SaveChangesAsync();
 
-            // Recalculate quotation totals
-            await RecalculateQuotationTotalsAsync(quotationId);
+                // Recalculate quotation totals
+                await RecalculateQuotationTotalsAsync(quotationId);
+
+                await dbTransaction.CommitAsync();
+            }
+            catch
+            {
+                await dbTransaction.RollbackAsync();
+                throw;
+            }
         }
     }
 
@@ -1260,24 +1384,25 @@ public class SalesService : ISalesService
     {
         var lineTotal = item.Quantity * item.UnitPrice;
 
-        // Calculate discount
+        // Calculate discount with proper rounding
         var discountAmount = item.DiscountAmount ?? 0;
         if (item.DiscountPercentage.HasValue && item.DiscountPercentage > 0)
         {
             discountAmount = lineTotal * (item.DiscountPercentage.Value / 100);
         }
-        item.DiscountAmount = discountAmount;
-        item.Subtotal = lineTotal - discountAmount;
+        // BUG FIX: Use proper decimal rounding for financial calculations
+        item.DiscountAmount = Math.Round(discountAmount, 2, MidpointRounding.AwayFromZero);
+        item.Subtotal = Math.Round(lineTotal - item.DiscountAmount.Value, 2, MidpointRounding.AwayFromZero);
 
-        // Calculate tax
+        // Calculate tax with proper rounding
         var taxAmount = item.TaxAmount ?? 0;
         if (item.TaxPercentage.HasValue && item.TaxPercentage > 0)
         {
             taxAmount = item.Subtotal * (item.TaxPercentage.Value / 100);
         }
-        item.TaxAmount = taxAmount;
+        item.TaxAmount = Math.Round(taxAmount, 2, MidpointRounding.AwayFromZero);
 
-        item.Total = item.Subtotal + taxAmount;
+        item.Total = Math.Round(item.Subtotal + item.TaxAmount.Value, 2, MidpointRounding.AwayFromZero);
     }
 
     private void CalculateQuotationTotals(Quotation quotation)
@@ -1312,24 +1437,25 @@ public class SalesService : ISalesService
     {
         var lineTotal = item.Quantity * item.UnitPrice;
 
-        // Calculate discount
+        // Calculate discount with proper rounding
         var discountAmount = item.DiscountAmount ?? 0;
         if (item.DiscountPercentage.HasValue && item.DiscountPercentage > 0)
         {
             discountAmount = lineTotal * (item.DiscountPercentage.Value / 100);
         }
-        item.DiscountAmount = discountAmount;
-        item.Subtotal = lineTotal - discountAmount;
+        // BUG FIX: Use proper decimal rounding for financial calculations
+        item.DiscountAmount = Math.Round(discountAmount, 2, MidpointRounding.AwayFromZero);
+        item.Subtotal = Math.Round(lineTotal - item.DiscountAmount.Value, 2, MidpointRounding.AwayFromZero);
 
-        // Calculate tax
+        // Calculate tax with proper rounding
         var taxAmount = item.TaxAmount ?? 0;
         if (item.TaxPercentage.HasValue && item.TaxPercentage > 0)
         {
             taxAmount = item.Subtotal * (item.TaxPercentage.Value / 100);
         }
-        item.TaxAmount = taxAmount;
+        item.TaxAmount = Math.Round(taxAmount, 2, MidpointRounding.AwayFromZero);
 
-        item.Total = item.Subtotal + taxAmount;
+        item.Total = Math.Round(item.Subtotal + item.TaxAmount.Value, 2, MidpointRounding.AwayFromZero);
     }
 
     private void UpdateSalePaymentStatus(Sale sale)

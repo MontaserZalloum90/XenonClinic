@@ -178,7 +178,26 @@ public class Repository<T> : IRepository<T> where T : class
         Expression<Func<T, bool>> predicate,
         params Expression<Func<T, object>>[] includes)
     {
-        IQueryable<T> query = _dbSet;
+        return await FirstOrDefaultInternalAsync(predicate, trackChanges: true, includes);
+    }
+
+    /// <summary>
+    /// BUG FIX: Add read-only variant of FirstOrDefaultAsync for API consistency
+    /// and to prevent unnecessary change tracking overhead.
+    /// </summary>
+    public virtual async Task<T?> FirstOrDefaultReadOnlyAsync(
+        Expression<Func<T, bool>> predicate,
+        params Expression<Func<T, object>>[] includes)
+    {
+        return await FirstOrDefaultInternalAsync(predicate, trackChanges: false, includes);
+    }
+
+    private async Task<T?> FirstOrDefaultInternalAsync(
+        Expression<Func<T, bool>> predicate,
+        bool trackChanges,
+        params Expression<Func<T, object>>[] includes)
+    {
+        IQueryable<T> query = trackChanges ? _dbSet : _dbSet.AsNoTracking();
 
         foreach (var include in includes)
         {

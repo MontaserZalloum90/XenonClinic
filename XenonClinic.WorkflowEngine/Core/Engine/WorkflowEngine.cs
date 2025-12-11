@@ -117,21 +117,25 @@ public class WorkflowEngine : IWorkflowEngine
 
     private async Task<WorkflowExecutionResult> StartAsync(Guid instanceId, CancellationToken cancellationToken)
     {
-        // Acquire distributed lock to prevent concurrent execution
-        if (_options.EnableDistributedLocking)
-        {
-            var lockAcquired = await _instanceStore.TryAcquireLockAsync(
-                instanceId, _lockHolderId, _options.LockDuration);
-
-            if (!lockAcquired)
-            {
-                throw new WorkflowExecutionException(
-                    $"Could not acquire lock for workflow instance {instanceId}. Another process may be executing it.");
-            }
-        }
+        // BUG FIX: Move lock acquisition inside try block to ensure lock is released
+        // even if TryAcquireLockAsync throws an exception
+        var lockAcquired = false;
 
         try
         {
+            // Acquire distributed lock to prevent concurrent execution
+            if (_options.EnableDistributedLocking)
+            {
+                lockAcquired = await _instanceStore.TryAcquireLockAsync(
+                    instanceId, _lockHolderId, _options.LockDuration);
+
+                if (!lockAcquired)
+                {
+                    throw new WorkflowExecutionException(
+                        $"Could not acquire lock for workflow instance {instanceId}. Another process may be executing it.");
+                }
+            }
+
             var state = await _instanceStore.GetAsync(instanceId);
             if (state == null)
             {
@@ -157,8 +161,8 @@ public class WorkflowEngine : IWorkflowEngine
         }
         finally
         {
-            // Always release the lock
-            if (_options.EnableDistributedLocking)
+            // BUG FIX: Only release the lock if we successfully acquired it
+            if (_options.EnableDistributedLocking && lockAcquired)
             {
                 await _instanceStore.ReleaseLockAsync(instanceId, _lockHolderId);
             }
@@ -179,21 +183,24 @@ public class WorkflowEngine : IWorkflowEngine
         string bookmarkName,
         IDictionary<string, object?>? input = null)
     {
-        // Acquire distributed lock to prevent concurrent execution
-        if (_options.EnableDistributedLocking)
-        {
-            var lockAcquired = await _instanceStore.TryAcquireLockAsync(
-                instanceId, _lockHolderId, _options.LockDuration);
-
-            if (!lockAcquired)
-            {
-                throw new WorkflowExecutionException(
-                    $"Could not acquire lock for workflow instance {instanceId}. Another process may be executing it.");
-            }
-        }
+        // BUG FIX: Move lock acquisition inside try block and track lock state
+        var lockAcquired = false;
 
         try
         {
+            // Acquire distributed lock to prevent concurrent execution
+            if (_options.EnableDistributedLocking)
+            {
+                lockAcquired = await _instanceStore.TryAcquireLockAsync(
+                    instanceId, _lockHolderId, _options.LockDuration);
+
+                if (!lockAcquired)
+                {
+                    throw new WorkflowExecutionException(
+                        $"Could not acquire lock for workflow instance {instanceId}. Another process may be executing it.");
+                }
+            }
+
             var state = await _instanceStore.GetAsync(instanceId);
             if (state == null)
             {
@@ -258,8 +265,8 @@ public class WorkflowEngine : IWorkflowEngine
         }
         finally
         {
-            // Always release the lock
-            if (_options.EnableDistributedLocking)
+            // BUG FIX: Only release the lock if we successfully acquired it
+            if (_options.EnableDistributedLocking && lockAcquired)
             {
                 await _instanceStore.ReleaseLockAsync(instanceId, _lockHolderId);
             }
@@ -268,52 +275,102 @@ public class WorkflowEngine : IWorkflowEngine
 
     public async Task CancelAsync(Guid instanceId, string? reason = null)
     {
-        var state = await _instanceStore.GetAsync(instanceId);
-        if (state == null)
+        // BUG FIX: Acquire lock before modifying state to prevent race conditions
+        var lockAcquired = false;
+
+        try
         {
-            throw new WorkflowNotFoundException($"Workflow instance not found: {instanceId}");
+            if (_options.EnableDistributedLocking)
+            {
+                lockAcquired = await _instanceStore.TryAcquireLockAsync(
+                    instanceId, _lockHolderId, _options.LockDuration);
+
+                if (!lockAcquired)
+                {
+                    throw new WorkflowExecutionException(
+                        $"Could not acquire lock for workflow instance {instanceId}. Another process may be executing it.");
+                }
+            }
+
+            var state = await _instanceStore.GetAsync(instanceId);
+            if (state == null)
+            {
+                throw new WorkflowNotFoundException($"Workflow instance not found: {instanceId}");
+            }
+
+            if (state.Status is WorkflowStatus.Completed or WorkflowStatus.Cancelled or WorkflowStatus.Compensated)
+            {
+                throw new WorkflowInvalidStateException($"Cannot cancel workflow in state: {state.Status}");
+            }
+
+            state.Status = WorkflowStatus.Cancelled;
+            state.CompletedAt = DateTime.UtcNow;
+            state.AuditEntries.Add(new WorkflowAuditEntry
+            {
+                Timestamp = DateTime.UtcNow,
+                Action = "Cancelled",
+                Details = reason
+            });
+
+            await _instanceStore.SaveAsync(state);
+
+            _logger.LogInformation("Workflow instance cancelled: {InstanceId}, Reason: {Reason}",
+                instanceId, reason ?? "Not specified");
         }
-
-        if (state.Status is WorkflowStatus.Completed or WorkflowStatus.Cancelled or WorkflowStatus.Compensated)
+        finally
         {
-            throw new WorkflowInvalidStateException($"Cannot cancel workflow in state: {state.Status}");
+            if (_options.EnableDistributedLocking && lockAcquired)
+            {
+                await _instanceStore.ReleaseLockAsync(instanceId, _lockHolderId);
+            }
         }
-
-        state.Status = WorkflowStatus.Cancelled;
-        state.CompletedAt = DateTime.UtcNow;
-        state.AuditEntries.Add(new WorkflowAuditEntry
-        {
-            Timestamp = DateTime.UtcNow,
-            Action = "Cancelled",
-            Details = reason
-        });
-
-        await _instanceStore.SaveAsync(state);
-
-        _logger.LogInformation("Workflow instance cancelled: {InstanceId}, Reason: {Reason}",
-            instanceId, reason ?? "Not specified");
     }
 
     public async Task TerminateAsync(Guid instanceId, string? reason = null)
     {
-        var state = await _instanceStore.GetAsync(instanceId);
-        if (state == null)
+        // BUG FIX: Acquire lock before modifying state to prevent race conditions
+        var lockAcquired = false;
+
+        try
         {
-            throw new WorkflowNotFoundException($"Workflow instance not found: {instanceId}");
+            if (_options.EnableDistributedLocking)
+            {
+                lockAcquired = await _instanceStore.TryAcquireLockAsync(
+                    instanceId, _lockHolderId, _options.LockDuration);
+
+                if (!lockAcquired)
+                {
+                    throw new WorkflowExecutionException(
+                        $"Could not acquire lock for workflow instance {instanceId}. Another process may be executing it.");
+                }
+            }
+
+            var state = await _instanceStore.GetAsync(instanceId);
+            if (state == null)
+            {
+                throw new WorkflowNotFoundException($"Workflow instance not found: {instanceId}");
+            }
+
+            state.Status = WorkflowStatus.Faulted;
+            state.CompletedAt = DateTime.UtcNow;
+            state.Error = new WorkflowError
+            {
+                Code = "TERMINATED",
+                Message = reason ?? "Workflow terminated"
+            };
+
+            await _instanceStore.SaveAsync(state);
+
+            _logger.LogWarning("Workflow instance terminated: {InstanceId}, Reason: {Reason}",
+                instanceId, reason ?? "Not specified");
         }
-
-        state.Status = WorkflowStatus.Faulted;
-        state.CompletedAt = DateTime.UtcNow;
-        state.Error = new WorkflowError
+        finally
         {
-            Code = "TERMINATED",
-            Message = reason ?? "Workflow terminated"
-        };
-
-        await _instanceStore.SaveAsync(state);
-
-        _logger.LogWarning("Workflow instance terminated: {InstanceId}, Reason: {Reason}",
-            instanceId, reason ?? "Not specified");
+            if (_options.EnableDistributedLocking && lockAcquired)
+            {
+                await _instanceStore.ReleaseLockAsync(instanceId, _lockHolderId);
+            }
+        }
     }
 
     public async Task<WorkflowExecutionResult> RetryAsync(Guid instanceId)
@@ -466,6 +523,15 @@ public class WorkflowEngine : IWorkflowEngine
                     });
                     break;
                 }
+                // BUG FIX: Check for infinite loops BEFORE executing the activity
+                // Use >= instead of > to enforce exact limit
+                if (activitiesExecuted >= _options.MaxActivitiesPerExecution)
+                {
+                    throw new WorkflowExecutionException(
+                        $"Maximum activities ({_options.MaxActivitiesPerExecution}) exceeded. " +
+                        "This may indicate an infinite loop in the workflow definition.");
+                }
+
                 var activity = definition.GetActivity(state.CurrentActivityId);
                 if (activity == null)
                 {
@@ -584,13 +650,7 @@ public class WorkflowEngine : IWorkflowEngine
                 }
 
                 state.CurrentActivityId = nextActivityId;
-
-                // Safety check for infinite loops
-                if (activitiesExecuted > _options.MaxActivitiesPerExecution)
-                {
-                    throw new WorkflowExecutionException(
-                        $"Maximum activities ({_options.MaxActivitiesPerExecution}) exceeded");
-                }
+                // BUG FIX: Removed redundant safety check - now checked at start of loop
             }
         }
         catch (Exception ex)

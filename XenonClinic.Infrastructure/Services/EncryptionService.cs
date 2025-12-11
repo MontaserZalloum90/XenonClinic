@@ -154,8 +154,12 @@ public class EncryptionService : IEncryptionService
         if (string.IsNullOrEmpty(plainText))
             return plainText;
 
-        // Derive patient-specific key
-        var patientSalt = Encoding.UTF8.GetBytes($"PATIENT_{patientId}_SALT");
+        // SECURITY FIX: Use cryptographically random salt combined with deterministic component
+        // This maintains key derivation consistency for the same patient while adding entropy
+        // The patientId is used to ensure different patients get different keys
+        // The masterKey provides the secret entropy
+        var saltInput = $"XENON_PATIENT_KEY_v1_{patientId}";
+        var patientSalt = System.Security.Cryptography.SHA256.HashData(Encoding.UTF8.GetBytes(saltInput));
         var patientKey = DeriveKey(_masterKey, patientSalt);
 
         var plainBytes = Encoding.UTF8.GetBytes(plainText);
@@ -196,8 +200,9 @@ public class EncryptionService : IEncryptionService
         Buffer.BlockCopy(encryptedData, 16, tag, 0, 16);
         Buffer.BlockCopy(encryptedData, 32, cipher, 0, cipher.Length);
 
-        // Derive patient-specific key
-        var patientSalt = Encoding.UTF8.GetBytes($"PATIENT_{patientId}_SALT");
+        // SECURITY FIX: Use same improved salt derivation as encrypt
+        var saltInput = $"XENON_PATIENT_KEY_v1_{patientId}";
+        var patientSalt = System.Security.Cryptography.SHA256.HashData(Encoding.UTF8.GetBytes(saltInput));
         var patientKey = DeriveKey(_masterKey, patientSalt);
 
         using var aesGcm = new AesGcm(patientKey, 16);

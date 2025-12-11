@@ -55,8 +55,15 @@ public class Invoice : IBranchEntity
     public DateTime? UpdatedAt { get; set; }
     public string? UpdatedBy { get; set; }
 
+    /// <summary>
+    /// BUG FIX: Row version for optimistic concurrency control.
+    /// Prevents race conditions in concurrent payment processing.
+    /// </summary>
+    public byte[] RowVersion { get; set; } = Array.Empty<byte>();
+
     // Computed Properties
-    public decimal RemainingAmount => TotalAmount - PaidAmount;
+    // BUG FIX: Use proper rounding to ensure consistent 2 decimal places for currency
+    public decimal RemainingAmount => Math.Round(TotalAmount - PaidAmount, 2, MidpointRounding.AwayFromZero);
     public bool IsFullyPaid => PaidAmount >= TotalAmount && TotalAmount > 0;
     public bool IsOverdue => DueDate.HasValue && DueDate.Value < DateTime.UtcNow && !IsFullyPaid;
 }

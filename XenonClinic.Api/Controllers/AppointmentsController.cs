@@ -72,16 +72,36 @@ public class AppointmentsController : BaseApiController
 
         if (request.DateFrom.HasValue && request.DateTo.HasValue)
         {
+            // Validate date range to prevent excessive queries
+            if ((request.DateTo.Value - request.DateFrom.Value).TotalDays > 365)
+            {
+                return ApiBadRequest("Date range cannot exceed 365 days");
+            }
             appointments = await _appointmentService.GetAppointmentsByDateRangeAsync(
                 branchId.Value, request.DateFrom.Value, request.DateTo.Value);
         }
         else if (request.PatientId.HasValue)
         {
+            // SECURITY FIX: Verify user has access to this patient's data
+            var patient = await _patientService.GetPatientByIdAsync(request.PatientId.Value);
+            if (patient == null)
+            {
+                return ApiBadRequest("Patient not found");
+            }
+            if (!HasBranchAccess(patient.BranchId))
+            {
+                _logger.LogWarning("Unauthorized patient appointment access attempt: PatientId={PatientId}, UserId={UserId}",
+                    request.PatientId.Value, _userContext.UserId);
+                return ApiBadRequest("You do not have access to this patient's appointments");
+            }
             appointments = await _appointmentService.GetAppointmentsByPatientIdAsync(request.PatientId.Value);
         }
         else if (request.ProviderId.HasValue)
         {
+            // SECURITY FIX: Verify provider belongs to current branch
             appointments = await _appointmentService.GetAppointmentsByProviderIdAsync(request.ProviderId.Value);
+            // Filter to only appointments in accessible branches
+            appointments = appointments.Where(a => HasBranchAccess(a.BranchId));
         }
         else if (request.Status.HasValue)
         {
@@ -363,6 +383,7 @@ public class AppointmentsController : BaseApiController
     /// </summary>
     [HttpDelete("{id:int}")]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> DeleteAppointment(int id)
     {
@@ -377,11 +398,22 @@ public class AppointmentsController : BaseApiController
             throw new ForbiddenException(AppointmentValidationMessages.BranchAccessDenied);
         }
 
+        // BUG FIX: Prevent deletion of completed or in-progress appointments
+        if (appointment.Status == AppointmentStatus.Completed)
+        {
+            return ApiBadRequest("Cannot delete a completed appointment. Completed appointments must be retained for medical records.");
+        }
+
+        if (appointment.Status == AppointmentStatus.CheckedIn)
+        {
+            return ApiBadRequest("Cannot delete an appointment after patient check-in. Please cancel the appointment instead.");
+        }
+
         await _appointmentService.DeleteAppointmentAsync(id);
 
         _logger.LogInformation(
-            "Appointment deleted: {AppointmentId}, By: {UserId}",
-            id, _userContext.UserId);
+            "Appointment deleted: {AppointmentId}, Status: {Status}, By: {UserId}",
+            id, appointment.Status, _userContext.UserId);
 
         return ApiOk("Appointment deleted successfully");
     }
@@ -689,7 +721,8 @@ public class AppointmentsController : BaseApiController
             Id = appointment.Id,
             PatientId = appointment.PatientId,
             PatientName = appointment.Patient?.FullNameEn,
-            PatientEmiratesId = appointment.Patient?.EmiratesId,
+            // SECURITY FIX: Removed PatientEmiratesId - sensitive PII should not be exposed in appointment responses
+            // Emirates ID should only be accessible through dedicated patient identity verification endpoints
             BranchId = appointment.BranchId,
             BranchName = appointment.Branch?.Name,
             ProviderId = appointment.ProviderId,

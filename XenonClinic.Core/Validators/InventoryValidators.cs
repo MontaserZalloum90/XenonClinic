@@ -61,9 +61,16 @@ public class CreateInventoryItemValidator : AbstractValidator<CreateInventoryIte
             .MaximumLength(100).WithMessage(InventoryValidationMessages.LocationTooLong)
             .When(x => !string.IsNullOrEmpty(x.Location));
 
+        // BUG FIX: Use GreaterThanOrEqualTo - items expiring today are still usable
         RuleFor(x => x.ExpiryDate)
-            .GreaterThan(DateTime.UtcNow.Date).WithMessage(InventoryValidationMessages.ExpiryDateInvalid)
+            .GreaterThanOrEqualTo(DateTime.UtcNow.Date).WithMessage(InventoryValidationMessages.ExpiryDateInvalid)
             .When(x => x.ExpiryDate.HasValue);
+
+        // BUG FIX: Validate selling price >= cost price to prevent financial losses
+        RuleFor(x => x.SellingPrice)
+            .GreaterThanOrEqualTo(x => x.CostPrice)
+            .WithMessage("Selling price must be greater than or equal to cost price")
+            .When(x => x.SellingPrice > 0);
 
         RuleFor(x => x.Notes)
             .MaximumLength(1000).WithMessage("Notes cannot exceed 1000 characters")

@@ -584,6 +584,12 @@ public class HRController : BaseApiController
             return ApiNotFound(HRValidationMessages.JobPositionNotFound);
         }
 
+        // SECURITY FIX: Add branch access check
+        if (!HasBranchAccess(position.BranchId))
+        {
+            throw new ForbiddenException(HRValidationMessages.BranchAccessDenied);
+        }
+
         var dto = MapToJobPositionDto(position);
         return ApiOk(dto);
     }
@@ -686,6 +692,12 @@ public class HRController : BaseApiController
         if (position == null)
         {
             return ApiNotFound(HRValidationMessages.JobPositionNotFound);
+        }
+
+        // SECURITY FIX: Add branch access check
+        if (!HasBranchAccess(position.BranchId))
+        {
+            throw new ForbiddenException(HRValidationMessages.BranchAccessDenied);
         }
 
         await _hrService.DeleteJobPositionAsync(id);
@@ -839,6 +851,19 @@ public class HRController : BaseApiController
         if (attendance == null)
         {
             return ApiNotFound(HRValidationMessages.AttendanceNotFound);
+        }
+
+        // SECURITY FIX: Verify branch access via employee
+        var employee = await _hrService.GetEmployeeByIdAsync(attendance.EmployeeId);
+        if (employee != null && !HasBranchAccess(employee.BranchId))
+        {
+            throw new ForbiddenException(HRValidationMessages.BranchAccessDenied);
+        }
+
+        // BUG FIX: Validate checkout time is after checkin time
+        if (attendance.CheckInTime.HasValue && dto.CheckOutTime < attendance.CheckInTime.Value)
+        {
+            return ApiBadRequest("Check-out time cannot be before check-in time");
         }
 
         var updatedAttendance = await _hrService.CheckOutAsync(dto.AttendanceId, dto.CheckOutTime);
@@ -1014,6 +1039,13 @@ public class HRController : BaseApiController
             return ApiNotFound(HRValidationMessages.LeaveRequestNotFound);
         }
 
+        // SECURITY FIX: Verify branch access via employee
+        var employee = await _hrService.GetEmployeeByIdAsync(leaveRequest.EmployeeId);
+        if (employee != null && !HasBranchAccess(employee.BranchId))
+        {
+            throw new ForbiddenException(HRValidationMessages.BranchAccessDenied);
+        }
+
         var dto = MapToLeaveRequestDto(leaveRequest);
         return ApiOk(dto);
     }
@@ -1102,12 +1134,20 @@ public class HRController : BaseApiController
             return ApiNotFound(HRValidationMessages.LeaveRequestNotFound);
         }
 
+        // SECURITY FIX: Verify branch access before allowing approval
+        var employee = await _hrService.GetEmployeeByIdAsync(leaveRequest.EmployeeId);
+        if (employee != null && !HasBranchAccess(employee.BranchId))
+        {
+            throw new ForbiddenException(HRValidationMessages.BranchAccessDenied);
+        }
+
         if (leaveRequest.Status != LeaveStatus.Pending)
         {
             return ApiBadRequest(HRValidationMessages.LeaveAlreadyApproved);
         }
 
-        await _hrService.ApproveLeaveRequestAsync(id, _userContext.UserId ?? "system");
+        // BUG FIX: Use RequireUserId() to ensure audit trail integrity
+        await _hrService.ApproveLeaveRequestAsync(id, _userContext.RequireUserId());
 
         _logger.LogInformation(
             "Leave request approved: {LeaveRequestId}, By: {UserId}",
@@ -1141,16 +1181,24 @@ public class HRController : BaseApiController
             return ApiNotFound(HRValidationMessages.LeaveRequestNotFound);
         }
 
+        // SECURITY FIX: Verify branch access before allowing rejection
+        var employee = await _hrService.GetEmployeeByIdAsync(leaveRequest.EmployeeId);
+        if (employee != null && !HasBranchAccess(employee.BranchId))
+        {
+            throw new ForbiddenException(HRValidationMessages.BranchAccessDenied);
+        }
+
         if (leaveRequest.Status != LeaveStatus.Pending)
         {
             return ApiBadRequest(HRValidationMessages.LeaveAlreadyRejected);
         }
 
-        await _hrService.RejectLeaveRequestAsync(id, _userContext.UserId ?? "system", dto.RejectionReason);
+        // BUG FIX: Use RequireUserId() to ensure audit trail integrity
+        await _hrService.RejectLeaveRequestAsync(id, _userContext.RequireUserId(), dto.RejectionReason);
 
         _logger.LogInformation(
-            "Leave request rejected: {LeaveRequestId}, Reason: {Reason}, By: {UserId}",
-            id, dto.RejectionReason, _userContext.UserId);
+            "Leave request rejected: {LeaveRequestId}, By: {UserId}",
+            id, _userContext.UserId);
 
         var updatedRequest = await _hrService.GetLeaveRequestByIdAsync(id);
         var resultDto = MapToLeaveRequestDto(updatedRequest!);

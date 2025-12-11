@@ -302,14 +302,31 @@ public class SecurityController : BaseApiController
 
     /// <summary>
     /// Validate a password against policy.
+    /// BUG FIX: Removed AllowAnonymous to prevent unauthenticated password enumeration.
+    /// Users can only validate their own password, not test passwords for other users.
     /// </summary>
     [HttpPost("validate-password")]
-    [AllowAnonymous]
+    [Authorize]
     [ProducesResponseType(typeof(ApiResponse<PasswordValidationResult>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> ValidatePassword([FromBody] ValidatePasswordRequest request)
     {
+        // BUG FIX: Require authenticated user and only allow validating own password
+        var currentUserId = _userContext.UserId;
+        if (currentUserId == null)
+        {
+            return ApiUnauthorized("Authentication required");
+        }
+
+        // BUG FIX: Prevent testing passwords for other users (security vulnerability)
+        if (request.UserId.HasValue && request.UserId.Value != currentUserId)
+        {
+            return ApiForbidden("Cannot validate password for other users");
+        }
+
         var branchId = _tenantContext.BranchId ?? request.BranchId ?? 0;
-        var result = await _securityConfigService.ValidatePasswordAsync(request.Password, branchId, request.UserId);
+        var result = await _securityConfigService.ValidatePasswordAsync(request.Password, branchId, currentUserId);
         return ApiOk(result);
     }
 

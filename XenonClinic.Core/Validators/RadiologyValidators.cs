@@ -175,8 +175,9 @@ public class CreateRadiologyOrderValidator : AbstractValidator<CreateRadiologyOr
             .MaximumLength(1000).WithMessage("Notes cannot exceed 1000 characters")
             .When(x => !string.IsNullOrEmpty(x.Notes));
 
+        // BUG FIX: Remove -1 hour grace - cannot schedule imaging studies in the past
         RuleFor(x => x.ScheduledDate)
-            .GreaterThan(DateTime.UtcNow.AddHours(-1)).WithMessage("Scheduled date cannot be in the past")
+            .GreaterThan(DateTime.UtcNow).WithMessage("Scheduled date cannot be in the past")
             .When(x => x.ScheduledDate.HasValue);
 
         RuleFor(x => x.DiscountPercentage)
@@ -241,8 +242,9 @@ public class UpdateRadiologyOrderValidator : AbstractValidator<UpdateRadiologyOr
             .MaximumLength(1000).WithMessage("Notes cannot exceed 1000 characters")
             .When(x => !string.IsNullOrEmpty(x.Notes));
 
+        // BUG FIX: Remove -1 hour grace - cannot schedule imaging studies in the past
         RuleFor(x => x.ScheduledDate)
-            .GreaterThan(DateTime.UtcNow.AddHours(-1)).WithMessage("Scheduled date cannot be in the past")
+            .GreaterThan(DateTime.UtcNow).WithMessage("Scheduled date cannot be in the past")
             .When(x => x.ScheduledDate.HasValue);
     }
 }

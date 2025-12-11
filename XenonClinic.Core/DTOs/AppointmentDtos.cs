@@ -10,7 +10,7 @@ public class AppointmentDto
     public int Id { get; set; }
     public int PatientId { get; set; }
     public string? PatientName { get; set; }
-    public string? PatientEmiratesId { get; set; }
+    // SECURITY FIX: Removed PatientEmiratesId - PII should not be exposed in general DTOs
     public int BranchId { get; set; }
     public string? BranchName { get; set; }
     public int? ProviderId { get; set; }

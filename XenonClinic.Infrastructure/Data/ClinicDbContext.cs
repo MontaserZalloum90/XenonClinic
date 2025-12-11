@@ -499,6 +499,12 @@ public class ClinicDbContext : IdentityDbContext<Entities.ApplicationUser>
     {
         base.OnModelCreating(builder);
 
+        // BUG FIX: Apply security entity configurations (was never called before)
+        builder.ConfigureSecurityEntities();
+
+        // BUG FIX: Apply soft delete filters to all ISoftDelete entities
+        builder.ApplySoftDeleteFilter();
+
         // ========================================
         // Multi-tenancy Configuration
         // ========================================
@@ -835,6 +841,13 @@ public class ClinicDbContext : IdentityDbContext<Entities.ApplicationUser>
         builder.Entity<Invoice>()
             .Property(i => i.PaidAmount)
             .HasPrecision(18, 2);
+
+        // BUG FIX: Configure RowVersion as a concurrency token for optimistic locking.
+        // This prevents race conditions in concurrent payment processing.
+        builder.Entity<Invoice>()
+            .Property(i => i.RowVersion)
+            .IsRowVersion()
+            .IsConcurrencyToken();
 
         // Supplier configuration
         builder.Entity<Supplier>()

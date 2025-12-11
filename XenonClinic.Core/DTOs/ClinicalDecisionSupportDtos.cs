@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace XenonClinic.Core.DTOs;
 
 #region Drug Interactions
@@ -7,8 +9,14 @@ namespace XenonClinic.Core.DTOs;
 /// </summary>
 public class DrugInteractionCheckDto
 {
+    [Required(ErrorMessage = "Patient ID is required")]
+    [Range(1, int.MaxValue, ErrorMessage = "Patient ID must be a positive integer")]
     public int PatientId { get; set; }
+
+    [Required(ErrorMessage = "At least one medication code is required")]
+    [MinLength(1, ErrorMessage = "At least one medication code is required")]
     public List<string> MedicationCodes { get; set; } = new();
+
     public List<string>? NewMedicationCodes { get; set; }
     public bool IncludeOtcMedications { get; set; } = true;
     public bool IncludeSupplements { get; set; } = true;
@@ -66,9 +74,17 @@ public class DrugInteractionResultDto
 /// </summary>
 public class AllergyCheckRequestDto
 {
+    [Required(ErrorMessage = "Patient ID is required")]
+    [Range(1, int.MaxValue, ErrorMessage = "Patient ID must be a positive integer")]
     public int PatientId { get; set; }
+
+    [Required(ErrorMessage = "Medication code is required")]
+    [StringLength(50, ErrorMessage = "Medication code cannot exceed 50 characters")]
     public string MedicationCode { get; set; } = string.Empty;
+
+    [StringLength(200, ErrorMessage = "Medication name cannot exceed 200 characters")]
     public string? MedicationName { get; set; }
+
     public List<string>? ActiveIngredients { get; set; }
 }
 
@@ -185,16 +201,31 @@ public class PatientCareGapSummaryDto
 /// </summary>
 public class DiagnosisSuggestionRequestDto
 {
+    [Required(ErrorMessage = "Patient ID is required")]
+    [Range(1, int.MaxValue, ErrorMessage = "Patient ID must be a positive integer")]
     public int PatientId { get; set; }
+
+    [Required(ErrorMessage = "At least one symptom is required")]
+    [MinLength(1, ErrorMessage = "At least one symptom is required")]
     public List<string> Symptoms { get; set; } = new();
+
     public List<string>? VitalSignAbnormalities { get; set; }
     public List<string>? LabAbnormalities { get; set; }
+
+    [StringLength(500, ErrorMessage = "Chief complaint cannot exceed 500 characters")]
     public string? ChiefComplaint { get; set; }
+
+    [Range(0, 150, ErrorMessage = "Patient age must be between 0 and 150")]
     public int? PatientAge { get; set; }
+
+    [StringLength(20, ErrorMessage = "Patient gender cannot exceed 20 characters")]
     public string? PatientGender { get; set; }
+
     public List<string>? ExistingConditions { get; set; }
     public List<string>? CurrentMedications { get; set; }
     public bool IncludeDifferentials { get; set; } = true;
+
+    [Range(1, 50, ErrorMessage = "Max suggestions must be between 1 and 50")]
     public int MaxSuggestions { get; set; } = 10;
 }
 
@@ -243,13 +274,35 @@ public class DiagnosisSuggestionResultDto
 /// </summary>
 public class DosageCheckRequestDto
 {
+    [Required(ErrorMessage = "Patient ID is required")]
+    [Range(1, int.MaxValue, ErrorMessage = "Patient ID must be a positive integer")]
     public int PatientId { get; set; }
+
+    [Required(ErrorMessage = "Medication code is required")]
+    [StringLength(50, ErrorMessage = "Medication code cannot exceed 50 characters")]
     public string MedicationCode { get; set; } = string.Empty;
+
+    [Required(ErrorMessage = "Medication name is required")]
+    [StringLength(200, ErrorMessage = "Medication name cannot exceed 200 characters")]
     public string MedicationName { get; set; } = string.Empty;
+
+    [Required(ErrorMessage = "Proposed dose is required")]
+    [Range(0.001, 100000, ErrorMessage = "Proposed dose must be between 0.001 and 100000")]
     public decimal ProposedDose { get; set; }
+
+    [Required(ErrorMessage = "Dose unit is required")]
+    [StringLength(20, ErrorMessage = "Dose unit cannot exceed 20 characters")]
     public string DoseUnit { get; set; } = string.Empty;
+
+    [Required(ErrorMessage = "Frequency is required")]
+    [StringLength(50, ErrorMessage = "Frequency cannot exceed 50 characters")]
     public string Frequency { get; set; } = string.Empty;
+
+    [Required(ErrorMessage = "Route is required")]
+    [StringLength(50, ErrorMessage = "Route cannot exceed 50 characters")]
     public string Route { get; set; } = string.Empty;
+
+    [StringLength(200, ErrorMessage = "Indication cannot exceed 200 characters")]
     public string? Indication { get; set; }
 }
 

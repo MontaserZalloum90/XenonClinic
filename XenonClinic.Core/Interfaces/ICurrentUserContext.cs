@@ -50,4 +50,32 @@ public interface ICurrentUserContext
     /// Checks if the current user is authenticated.
     /// </summary>
     bool IsAuthenticated { get; }
+
+    /// <summary>
+    /// Gets the current user's ID synchronously (cached value).
+    /// Returns null if user is not authenticated.
+    /// BUG FIX: Added to support synchronous access patterns in controllers.
+    /// </summary>
+    string? UserId { get; }
+
+    /// <summary>
+    /// Requires the user to be authenticated and returns their ID.
+    /// BUG FIX: Throws UnauthorizedAccessException if user is not authenticated,
+    /// preventing "system" fallback in audit trails.
+    /// </summary>
+    string RequireUserId();
+
+    /// <summary>
+    /// Gets the current user's primary branch ID synchronously.
+    /// BUG FIX: Added for controllers that need synchronous access.
+    /// </summary>
+    int? BranchId { get; }
+}
+
+/// <summary>
+/// BUG FIX: Alias interface for backwards compatibility with controllers
+/// that reference ICurrentUserService. This consolidates user context access.
+/// </summary>
+public interface ICurrentUserService : ICurrentUserContext
+{
 }

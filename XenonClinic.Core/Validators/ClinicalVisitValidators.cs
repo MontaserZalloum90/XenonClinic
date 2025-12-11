@@ -562,17 +562,19 @@ public class CreateOphthalmologyVisitValidator : CreateClinicalVisitBaseValidato
         if (commonValues.Contains(acuity.ToUpperInvariant()))
             return true;
 
-        // Check Snellen format (number/number)
+        // Check Snellen format (number/number) with valid positive values
         if (acuity.Contains('/'))
         {
             var parts = acuity.Split('/');
             if (parts.Length == 2 &&
-                decimal.TryParse(parts[0], out _) &&
-                decimal.TryParse(parts[1], out _))
+                decimal.TryParse(parts[0], out var numerator) &&
+                decimal.TryParse(parts[1], out var denominator) &&
+                numerator > 0 && denominator > 0)
                 return true;
         }
 
-        return true; // Allow other formats for flexibility
+        // BUG FIX: Return false for invalid formats instead of allowing anything
+        return false;
     }
 }
 

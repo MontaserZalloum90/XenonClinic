@@ -1,7 +1,10 @@
+using System.ComponentModel.DataAnnotations;
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using XenonClinic.Core.DTOs;
 using XenonClinic.Core.Interfaces;
+using XenonClinic.Core.Utilities;
 
 namespace XenonClinic.Api.Controllers;
 
@@ -14,6 +17,11 @@ public class PatientPortalController : BaseApiController
     private readonly IPatientPortalService _portalService;
     private readonly ILogger<PatientPortalController> _logger;
 
+    // File upload constraints
+    private static readonly string[] AllowedImageExtensions = { ".jpg", ".jpeg", ".png", ".gif", ".webp" };
+    private const int MaxFileSizeBytes = 5 * 1024 * 1024; // 5MB
+    private static readonly string[] AllowedMimeTypes = { "image/jpeg", "image/png", "image/gif", "image/webp" };
+
     public PatientPortalController(
         IPatientPortalService portalService,
         ILogger<PatientPortalController> logger)
@@ -22,6 +30,83 @@ public class PatientPortalController : BaseApiController
         _logger = logger;
     }
 
+    #region Helper Methods
+
+    /// <summary>
+    /// Validates that the authenticated user has access to the specified patient's data.
+    /// CRITICAL SECURITY: Prevents unauthorized access to other patients' data.
+    /// </summary>
+    private bool ValidatePatientAccess(int patientId)
+    {
+        // Get the authenticated user's patient ID from claims
+        var userPatientIdClaim = User.FindFirst("patient_id")?.Value
+            ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        if (string.IsNullOrEmpty(userPatientIdClaim))
+        {
+            _logger.LogWarning("Patient access validation failed: No patient ID claim found for user");
+            return false;
+        }
+
+        if (!int.TryParse(userPatientIdClaim, out var userPatientId))
+        {
+            _logger.LogWarning("Patient access validation failed: Invalid patient ID claim format");
+            return false;
+        }
+
+        if (userPatientId != patientId)
+        {
+            _logger.LogWarning(
+                "SECURITY: User {UserPatientId} attempted to access data for patient {RequestedPatientId}",
+                userPatientId, patientId);
+            return false;
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// Gets the authenticated patient's ID from claims
+    /// </summary>
+    private int? GetAuthenticatedPatientId()
+    {
+        var patientIdClaim = User.FindFirst("patient_id")?.Value
+            ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        if (int.TryParse(patientIdClaim, out var patientId))
+            return patientId;
+
+        return null;
+    }
+
+    /// <summary>
+    /// Validates file upload for security
+    /// </summary>
+    private (bool IsValid, string? ErrorMessage) ValidateFileUpload(IFormFile file)
+    {
+        if (file == null || file.Length == 0)
+            return (false, "No file uploaded");
+
+        if (file.Length > MaxFileSizeBytes)
+            return (false, $"File size exceeds maximum allowed ({MaxFileSizeBytes / 1024 / 1024}MB)");
+
+        var extension = Path.GetExtension(file.FileName)?.ToLowerInvariant();
+        if (string.IsNullOrEmpty(extension) || !AllowedImageExtensions.Contains(extension))
+            return (false, $"Invalid file type. Allowed types: {string.Join(", ", AllowedImageExtensions)}");
+
+        if (!AllowedMimeTypes.Contains(file.ContentType?.ToLowerInvariant()))
+            return (false, $"Invalid content type. Allowed types: {string.Join(", ", AllowedMimeTypes)}");
+
+        // Check for double extensions (security)
+        var fileName = Path.GetFileNameWithoutExtension(file.FileName);
+        if (fileName.Contains('.'))
+            return (false, "Invalid filename format");
+
+        return (true, null);
+    }
+
+    #endregion
+
     #region Authentication
 
     /// <summary>
@@ -29,21 +114,30 @@ public class PatientPortalController : BaseApiController
     /// </summary>
     [HttpPost("register")]
     [AllowAnonymous]
-    [ProducesResponseType(typeof(ApiResponse<PortalRegistrationResponseDto>), 200)]
-    [ProducesResponseType(typeof(ApiResponse), 400)]
+    [ProducesResponseType(typeof(ApiResponse<PortalRegistrationResponseDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<ApiResponse<PortalRegistrationResponseDto>>> Register(
-        [FromQuery] int branchId,
+        [FromQuery][Range(1, int.MaxValue, ErrorMessage = "Valid branch ID is required")] int branchId,
         [FromBody] PortalRegistrationDto request)
     {
         if (!ModelState.IsValid)
             return ApiBadRequestFromModelState();
 
-        var result = await _portalService.RegisterAsync(branchId, request);
+        try
+        {
+            var result = await _portalService.RegisterAsync(branchId, request);
 
-        if (!result.Success)
-            return ApiBadRequest(result.Message ?? "Registration failed");
+            if (!result.Success)
+                return ApiBadRequest(result.Message ?? "Registration failed");
 
-        return ApiOk(result, "Registration successful. Please verify your email.");
+            return ApiOk(result, "Registration successful. Please verify your email.");
+        }
+        catch (Exception ex)
+        {
+            // BUG FIX: Mask email in logs to prevent PII exposure
+            _logger.LogError(ex, "Error during patient portal registration for email: {Email}", LoggingHelpers.MaskEmail(request.Email));
+            return ApiServerError("An error occurred during registration");
+        }
     }
 
     /// <summary>
@@ -51,19 +145,34 @@ public class PatientPortalController : BaseApiController
     /// </summary>
     [HttpPost("login")]
     [AllowAnonymous]
-    [ProducesResponseType(typeof(ApiResponse<PortalLoginResponseDto>), 200)]
-    [ProducesResponseType(typeof(ApiResponse), 401)]
+    [ProducesResponseType(typeof(ApiResponse<PortalLoginResponseDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status401Unauthorized)]
     public async Task<ActionResult<ApiResponse<PortalLoginResponseDto>>> Login([FromBody] PortalLoginDto request)
     {
         if (!ModelState.IsValid)
             return ApiBadRequestFromModelState();
 
-        var result = await _portalService.LoginAsync(request);
+        try
+        {
+            var result = await _portalService.LoginAsync(request);
 
-        if (!result.Success)
-            return ApiUnauthorized(result.Message ?? "Invalid credentials");
+            if (!result.Success)
+            {
+                // BUG FIX: Mask email in logs to prevent PII exposure
+                _logger.LogWarning("Failed login attempt for email: {Email}", LoggingHelpers.MaskEmail(request.Email));
+                return ApiUnauthorized(result.Message ?? "Invalid credentials");
+            }
 
-        return ApiOk(result);
+            // BUG FIX: Mask email in logs to prevent PII exposure
+            _logger.LogInformation("Successful login for email: {Email}", LoggingHelpers.MaskEmail(request.Email));
+            return ApiOk(result);
+        }
+        catch (Exception ex)
+        {
+            // BUG FIX: Mask email in logs to prevent PII exposure
+            _logger.LogError(ex, "Error during patient portal login for email: {Email}", LoggingHelpers.MaskEmail(request.Email));
+            return ApiServerError("An error occurred during login");
+        }
     }
 
     /// <summary>
@@ -71,10 +180,14 @@ public class PatientPortalController : BaseApiController
     /// </summary>
     [HttpPost("verify-email")]
     [AllowAnonymous]
-    [ProducesResponseType(typeof(ApiResponse), 200)]
-    [ProducesResponseType(typeof(ApiResponse), 400)]
-    public async Task<ActionResult<ApiResponse>> VerifyEmail([FromQuery] string token)
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<ApiResponse>> VerifyEmail(
+        [FromQuery][Required(ErrorMessage = "Verification token is required")] string token)
     {
+        if (string.IsNullOrWhiteSpace(token) || token.Length > 500)
+            return ApiBadRequest("Invalid verification token");
+
         var success = await _portalService.VerifyEmailAsync(token);
 
         if (!success)
@@ -88,9 +201,13 @@ public class PatientPortalController : BaseApiController
     /// </summary>
     [HttpPost("forgot-password")]
     [AllowAnonymous]
-    [ProducesResponseType(typeof(ApiResponse), 200)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status200OK)]
     public async Task<ActionResult<ApiResponse>> ForgotPassword([FromBody] ForgotPasswordRequest request)
     {
+        if (!ModelState.IsValid)
+            return ApiBadRequestFromModelState();
+
+        // Rate limiting should be implemented at middleware level
         await _portalService.RequestPasswordResetAsync(request.Email);
 
         // Always return success to prevent email enumeration
@@ -102,10 +219,13 @@ public class PatientPortalController : BaseApiController
     /// </summary>
     [HttpPost("reset-password")]
     [AllowAnonymous]
-    [ProducesResponseType(typeof(ApiResponse), 200)]
-    [ProducesResponseType(typeof(ApiResponse), 400)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<ApiResponse>> ResetPassword([FromBody] ResetPasswordRequest request)
     {
+        if (!ModelState.IsValid)
+            return ApiBadRequestFromModelState();
+
         var success = await _portalService.ResetPasswordAsync(request.Token, request.NewPassword);
 
         if (!success)
@@ -119,17 +239,24 @@ public class PatientPortalController : BaseApiController
     /// </summary>
     [HttpPost("change-password")]
     [Authorize]
-    [ProducesResponseType(typeof(ApiResponse), 200)]
-    [ProducesResponseType(typeof(ApiResponse), 400)]
-    public async Task<ActionResult<ApiResponse>> ChangePassword(
-        [FromQuery] int patientId,
-        [FromBody] ChangePasswordRequest request)
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status403Forbidden)]
+    public async Task<ActionResult<ApiResponse>> ChangePassword([FromBody] ChangePasswordRequest request)
     {
-        var success = await _portalService.ChangePasswordAsync(patientId, request.CurrentPassword, request.NewPassword);
+        if (!ModelState.IsValid)
+            return ApiBadRequestFromModelState();
+
+        var patientId = GetAuthenticatedPatientId();
+        if (!patientId.HasValue)
+            return ApiForbidden("Unable to identify authenticated patient");
+
+        var success = await _portalService.ChangePasswordAsync(patientId.Value, request.CurrentPassword, request.NewPassword);
 
         if (!success)
             return ApiBadRequest("Current password is incorrect");
 
+        _logger.LogInformation("Password changed for patient: {PatientId}", patientId.Value);
         return ApiOk("Password changed successfully");
     }
 
@@ -138,10 +265,13 @@ public class PatientPortalController : BaseApiController
     /// </summary>
     [HttpPost("refresh-token")]
     [AllowAnonymous]
-    [ProducesResponseType(typeof(ApiResponse<PortalLoginResponseDto>), 200)]
-    [ProducesResponseType(typeof(ApiResponse), 401)]
+    [ProducesResponseType(typeof(ApiResponse<PortalLoginResponseDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status401Unauthorized)]
     public async Task<ActionResult<ApiResponse<PortalLoginResponseDto>>> RefreshToken([FromBody] RefreshTokenRequest request)
     {
+        if (!ModelState.IsValid)
+            return ApiBadRequestFromModelState();
+
         var result = await _portalService.RefreshTokenAsync(request.RefreshToken);
 
         if (!result.Success)
@@ -159,10 +289,15 @@ public class PatientPortalController : BaseApiController
     /// </summary>
     [HttpGet("dashboard")]
     [Authorize]
-    [ProducesResponseType(typeof(ApiResponse<PatientPortalDashboardDto>), 200)]
-    public async Task<ActionResult<ApiResponse<PatientPortalDashboardDto>>> GetDashboard([FromQuery] int patientId)
+    [ProducesResponseType(typeof(ApiResponse<PatientPortalDashboardDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status403Forbidden)]
+    public async Task<ActionResult<ApiResponse<PatientPortalDashboardDto>>> GetDashboard()
     {
-        var dashboard = await _portalService.GetDashboardAsync(patientId);
+        var patientId = GetAuthenticatedPatientId();
+        if (!patientId.HasValue)
+            return ApiForbidden("Unable to identify authenticated patient");
+
+        var dashboard = await _portalService.GetDashboardAsync(patientId.Value);
         return ApiOk(dashboard);
     }
 
@@ -171,10 +306,15 @@ public class PatientPortalController : BaseApiController
     /// </summary>
     [HttpGet("profile")]
     [Authorize]
-    [ProducesResponseType(typeof(ApiResponse<PatientPortalProfileDto>), 200)]
-    public async Task<ActionResult<ApiResponse<PatientPortalProfileDto>>> GetProfile([FromQuery] int patientId)
+    [ProducesResponseType(typeof(ApiResponse<PatientPortalProfileDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status403Forbidden)]
+    public async Task<ActionResult<ApiResponse<PatientPortalProfileDto>>> GetProfile()
     {
-        var profile = await _portalService.GetProfileAsync(patientId);
+        var patientId = GetAuthenticatedPatientId();
+        if (!patientId.HasValue)
+            return ApiForbidden("Unable to identify authenticated patient");
+
+        var profile = await _portalService.GetProfileAsync(patientId.Value);
         return ApiOk(profile);
     }
 
@@ -183,12 +323,19 @@ public class PatientPortalController : BaseApiController
     /// </summary>
     [HttpPut("profile")]
     [Authorize]
-    [ProducesResponseType(typeof(ApiResponse<PatientPortalProfileDto>), 200)]
+    [ProducesResponseType(typeof(ApiResponse<PatientPortalProfileDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status403Forbidden)]
     public async Task<ActionResult<ApiResponse<PatientPortalProfileDto>>> UpdateProfile(
-        [FromQuery] int patientId,
         [FromBody] UpdatePatientProfileDto request)
     {
-        var profile = await _portalService.UpdateProfileAsync(patientId, request);
+        if (!ModelState.IsValid)
+            return ApiBadRequestFromModelState();
+
+        var patientId = GetAuthenticatedPatientId();
+        if (!patientId.HasValue)
+            return ApiForbidden("Unable to identify authenticated patient");
+
+        var profile = await _portalService.UpdateProfileAsync(patientId.Value, request);
         return ApiOk(profile, "Profile updated successfully");
     }
 
@@ -197,19 +344,38 @@ public class PatientPortalController : BaseApiController
     /// </summary>
     [HttpPost("profile/photo")]
     [Authorize]
-    [ProducesResponseType(typeof(ApiResponse<string>), 200)]
-    public async Task<ActionResult<ApiResponse<string>>> UploadProfilePhoto(
-        [FromQuery] int patientId,
-        IFormFile file)
+    [RequestSizeLimit(MaxFileSizeBytes)]
+    [ProducesResponseType(typeof(ApiResponse<string>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status403Forbidden)]
+    public async Task<ActionResult<ApiResponse<string>>> UploadProfilePhoto(IFormFile file)
     {
-        if (file == null || file.Length == 0)
-            return ApiBadRequest("No file uploaded");
+        var patientId = GetAuthenticatedPatientId();
+        if (!patientId.HasValue)
+            return ApiForbidden("Unable to identify authenticated patient");
 
-        using var stream = new MemoryStream();
-        await file.CopyToAsync(stream);
-        var photoUrl = await _portalService.UploadProfilePhotoAsync(patientId, stream.ToArray(), file.FileName);
+        // Validate file upload
+        var (isValid, errorMessage) = ValidateFileUpload(file);
+        if (!isValid)
+            return ApiBadRequest(errorMessage!);
 
-        return ApiOk(photoUrl, "Photo uploaded successfully");
+        try
+        {
+            using var stream = new MemoryStream();
+            await file.CopyToAsync(stream);
+
+            // Sanitize filename
+            var safeFileName = Path.GetRandomFileName() + Path.GetExtension(file.FileName).ToLowerInvariant();
+
+            var photoUrl = await _portalService.UploadProfilePhotoAsync(patientId.Value, stream.ToArray(), safeFileName);
+
+            return ApiOk(photoUrl, "Photo uploaded successfully");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error uploading profile photo for patient: {PatientId}", patientId.Value);
+            return ApiServerError("An error occurred while uploading the photo");
+        }
     }
 
     #endregion
@@ -221,11 +387,15 @@ public class PatientPortalController : BaseApiController
     /// </summary>
     [HttpGet("appointments/upcoming")]
     [Authorize]
-    [ProducesResponseType(typeof(ApiResponse<IEnumerable<PortalAppointmentSummaryDto>>), 200)]
-    public async Task<ActionResult<ApiResponse<IEnumerable<PortalAppointmentSummaryDto>>>> GetUpcomingAppointments(
-        [FromQuery] int patientId)
+    [ProducesResponseType(typeof(ApiResponse<IEnumerable<PortalAppointmentSummaryDto>>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status403Forbidden)]
+    public async Task<ActionResult<ApiResponse<IEnumerable<PortalAppointmentSummaryDto>>>> GetUpcomingAppointments()
     {
-        var appointments = await _portalService.GetUpcomingAppointmentsAsync(patientId);
+        var patientId = GetAuthenticatedPatientId();
+        if (!patientId.HasValue)
+            return ApiForbidden("Unable to identify authenticated patient");
+
+        var appointments = await _portalService.GetUpcomingAppointmentsAsync(patientId.Value);
         return ApiOk(appointments);
     }
 
@@ -234,27 +404,34 @@ public class PatientPortalController : BaseApiController
     /// </summary>
     [HttpGet("appointments/past")]
     [Authorize]
-    [ProducesResponseType(typeof(ApiResponse<IEnumerable<PortalAppointmentSummaryDto>>), 200)]
+    [ProducesResponseType(typeof(ApiResponse<IEnumerable<PortalAppointmentSummaryDto>>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status403Forbidden)]
     public async Task<ActionResult<ApiResponse<IEnumerable<PortalAppointmentSummaryDto>>>> GetPastAppointments(
-        [FromQuery] int patientId,
-        [FromQuery] int limit = 20)
+        [FromQuery][Range(1, 100, ErrorMessage = "Limit must be between 1 and 100")] int limit = 20)
     {
-        var appointments = await _portalService.GetPastAppointmentsAsync(patientId, limit);
+        var patientId = GetAuthenticatedPatientId();
+        if (!patientId.HasValue)
+            return ApiForbidden("Unable to identify authenticated patient");
+
+        var appointments = await _portalService.GetPastAppointmentsAsync(patientId.Value, limit);
         return ApiOk(appointments);
     }
 
     /// <summary>
     /// Get appointment details
     /// </summary>
-    [HttpGet("appointments/{appointmentId}")]
+    [HttpGet("appointments/{appointmentId:int}")]
     [Authorize]
-    [ProducesResponseType(typeof(ApiResponse<PortalAppointmentDto>), 200)]
-    [ProducesResponseType(typeof(ApiResponse), 404)]
-    public async Task<ActionResult<ApiResponse<PortalAppointmentDto>>> GetAppointment(
-        [FromQuery] int patientId,
-        int appointmentId)
+    [ProducesResponseType(typeof(ApiResponse<PortalAppointmentDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<ApiResponse<PortalAppointmentDto>>> GetAppointment(int appointmentId)
     {
-        var appointment = await _portalService.GetAppointmentAsync(patientId, appointmentId);
+        var patientId = GetAuthenticatedPatientId();
+        if (!patientId.HasValue)
+            return ApiForbidden("Unable to identify authenticated patient");
+
+        var appointment = await _portalService.GetAppointmentAsync(patientId.Value, appointmentId);
 
         if (appointment == null)
             return ApiNotFound("Appointment not found");
@@ -267,13 +444,23 @@ public class PatientPortalController : BaseApiController
     /// </summary>
     [HttpGet("appointments/slots")]
     [Authorize]
-    [ProducesResponseType(typeof(ApiResponse<IEnumerable<PortalAppointmentSlotDto>>), 200)]
+    [ProducesResponseType(typeof(ApiResponse<IEnumerable<PortalAppointmentSlotDto>>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<ApiResponse<IEnumerable<PortalAppointmentSlotDto>>>> GetAvailableSlots(
-        [FromQuery] int branchId,
-        [FromQuery] int doctorId,
+        [FromQuery][Range(1, int.MaxValue, ErrorMessage = "Valid branch ID is required")] int branchId,
+        [FromQuery][Range(1, int.MaxValue, ErrorMessage = "Valid doctor ID is required")] int doctorId,
         [FromQuery] DateTime startDate,
         [FromQuery] DateTime endDate)
     {
+        if (startDate >= endDate)
+            return ApiBadRequest("Start date must be before end date");
+
+        if (startDate < DateTime.Today)
+            return ApiBadRequest("Start date cannot be in the past");
+
+        if ((endDate - startDate).TotalDays > 90)
+            return ApiBadRequest("Date range cannot exceed 90 days");
+
         var slots = await _portalService.GetAvailableSlotsAsync(branchId, doctorId, startDate, endDate);
         return ApiOk(slots);
     }
@@ -283,10 +470,10 @@ public class PatientPortalController : BaseApiController
     /// </summary>
     [HttpGet("appointments/doctors")]
     [Authorize]
-    [ProducesResponseType(typeof(ApiResponse<IEnumerable<PortalDoctorDto>>), 200)]
+    [ProducesResponseType(typeof(ApiResponse<IEnumerable<PortalDoctorDto>>), StatusCodes.Status200OK)]
     public async Task<ActionResult<ApiResponse<IEnumerable<PortalDoctorDto>>>> GetDoctorsForBooking(
-        [FromQuery] int branchId,
-        [FromQuery] string? specialty = null)
+        [FromQuery][Range(1, int.MaxValue, ErrorMessage = "Valid branch ID is required")] int branchId,
+        [FromQuery][StringLength(100, ErrorMessage = "Specialty cannot exceed 100 characters")] string? specialty = null)
     {
         var doctors = await _portalService.GetDoctorsForBookingAsync(branchId, specialty);
         return ApiOk(doctors);
@@ -297,32 +484,50 @@ public class PatientPortalController : BaseApiController
     /// </summary>
     [HttpPost("appointments")]
     [Authorize]
-    [ProducesResponseType(typeof(ApiResponse<PortalAppointmentDto>), 201)]
-    [ProducesResponseType(typeof(ApiResponse), 400)]
+    [ProducesResponseType(typeof(ApiResponse<PortalAppointmentDto>), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status403Forbidden)]
     public async Task<ActionResult<ApiResponse<PortalAppointmentDto>>> BookAppointment(
-        [FromQuery] int patientId,
         [FromBody] PortalBookAppointmentDto request)
     {
         if (!ModelState.IsValid)
             return ApiBadRequestFromModelState();
 
-        var appointment = await _portalService.BookAppointmentAsync(patientId, request);
-        return ApiCreated(appointment, message: "Appointment booked successfully");
+        var patientId = GetAuthenticatedPatientId();
+        if (!patientId.HasValue)
+            return ApiForbidden("Unable to identify authenticated patient");
+
+        if (request.PreferredDate < DateTime.Today)
+            return ApiBadRequest("Cannot book appointments in the past");
+
+        try
+        {
+            var appointment = await _portalService.BookAppointmentAsync(patientId.Value, request);
+            return ApiCreated(appointment, message: "Appointment booked successfully");
+        }
+        catch (InvalidOperationException ex)
+        {
+            return ApiBadRequest(ex.Message);
+        }
     }
 
     /// <summary>
     /// Cancel an appointment
     /// </summary>
-    [HttpDelete("appointments/{appointmentId}")]
+    [HttpDelete("appointments/{appointmentId:int}")]
     [Authorize]
-    [ProducesResponseType(typeof(ApiResponse), 200)]
-    [ProducesResponseType(typeof(ApiResponse), 400)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status403Forbidden)]
     public async Task<ActionResult<ApiResponse>> CancelAppointment(
-        [FromQuery] int patientId,
         int appointmentId,
-        [FromQuery] string? reason = null)
+        [FromQuery][StringLength(500, ErrorMessage = "Reason cannot exceed 500 characters")] string? reason = null)
     {
-        var success = await _portalService.CancelAppointmentAsync(patientId, appointmentId, reason);
+        var patientId = GetAuthenticatedPatientId();
+        if (!patientId.HasValue)
+            return ApiForbidden("Unable to identify authenticated patient");
+
+        var success = await _portalService.CancelAppointmentAsync(patientId.Value, appointmentId, reason);
 
         if (!success)
             return ApiBadRequest("Unable to cancel appointment");
@@ -333,18 +538,32 @@ public class PatientPortalController : BaseApiController
     /// <summary>
     /// Reschedule an appointment
     /// </summary>
-    [HttpPut("appointments/{appointmentId}/reschedule")]
+    [HttpPut("appointments/{appointmentId:int}/reschedule")]
     [Authorize]
-    [ProducesResponseType(typeof(ApiResponse<PortalAppointmentDto>), 200)]
-    [ProducesResponseType(typeof(ApiResponse), 400)]
+    [ProducesResponseType(typeof(ApiResponse<PortalAppointmentDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status403Forbidden)]
     public async Task<ActionResult<ApiResponse<PortalAppointmentDto>>> RescheduleAppointment(
-        [FromQuery] int patientId,
         int appointmentId,
         [FromQuery] DateTime newDate,
-        [FromQuery] string? newTime = null)
+        [FromQuery][StringLength(10, ErrorMessage = "Time format invalid")] string? newTime = null)
     {
-        var appointment = await _portalService.RescheduleAppointmentAsync(patientId, appointmentId, newDate, newTime);
-        return ApiOk(appointment, "Appointment rescheduled successfully");
+        var patientId = GetAuthenticatedPatientId();
+        if (!patientId.HasValue)
+            return ApiForbidden("Unable to identify authenticated patient");
+
+        if (newDate < DateTime.Today)
+            return ApiBadRequest("Cannot reschedule to a past date");
+
+        try
+        {
+            var appointment = await _portalService.RescheduleAppointmentAsync(patientId.Value, appointmentId, newDate, newTime);
+            return ApiOk(appointment, "Appointment rescheduled successfully");
+        }
+        catch (InvalidOperationException ex)
+        {
+            return ApiBadRequest(ex.Message);
+        }
     }
 
     #endregion
@@ -356,11 +575,15 @@ public class PatientPortalController : BaseApiController
     /// </summary>
     [HttpGet("medical-records")]
     [Authorize]
-    [ProducesResponseType(typeof(ApiResponse<PortalMedicalRecordsSummaryDto>), 200)]
-    public async Task<ActionResult<ApiResponse<PortalMedicalRecordsSummaryDto>>> GetMedicalRecordsSummary(
-        [FromQuery] int patientId)
+    [ProducesResponseType(typeof(ApiResponse<PortalMedicalRecordsSummaryDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status403Forbidden)]
+    public async Task<ActionResult<ApiResponse<PortalMedicalRecordsSummaryDto>>> GetMedicalRecordsSummary()
     {
-        var records = await _portalService.GetMedicalRecordsSummaryAsync(patientId);
+        var patientId = GetAuthenticatedPatientId();
+        if (!patientId.HasValue)
+            return ApiForbidden("Unable to identify authenticated patient");
+
+        var records = await _portalService.GetMedicalRecordsSummaryAsync(patientId.Value);
         return ApiOk(records);
     }
 
@@ -369,28 +592,35 @@ public class PatientPortalController : BaseApiController
     /// </summary>
     [HttpGet("medical-records/visits")]
     [Authorize]
-    [ProducesResponseType(typeof(ApiResponse<IEnumerable<PortalVisitSummaryDto>>), 200)]
+    [ProducesResponseType(typeof(ApiResponse<IEnumerable<PortalVisitSummaryDto>>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status403Forbidden)]
     public async Task<ActionResult<ApiResponse<IEnumerable<PortalVisitSummaryDto>>>> GetVisitHistory(
-        [FromQuery] int patientId,
-        [FromQuery] int? year = null,
-        [FromQuery] int limit = 50)
+        [FromQuery][Range(2000, 2100, ErrorMessage = "Invalid year")] int? year = null,
+        [FromQuery][Range(1, 100, ErrorMessage = "Limit must be between 1 and 100")] int limit = 50)
     {
-        var visits = await _portalService.GetVisitHistoryAsync(patientId, year, limit);
+        var patientId = GetAuthenticatedPatientId();
+        if (!patientId.HasValue)
+            return ApiForbidden("Unable to identify authenticated patient");
+
+        var visits = await _portalService.GetVisitHistoryAsync(patientId.Value, year, limit);
         return ApiOk(visits);
     }
 
     /// <summary>
     /// Get visit details
     /// </summary>
-    [HttpGet("medical-records/visits/{visitId}")]
+    [HttpGet("medical-records/visits/{visitId:int}")]
     [Authorize]
-    [ProducesResponseType(typeof(ApiResponse<PortalVisitDetailDto>), 200)]
-    [ProducesResponseType(typeof(ApiResponse), 404)]
-    public async Task<ActionResult<ApiResponse<PortalVisitDetailDto>>> GetVisitDetail(
-        [FromQuery] int patientId,
-        int visitId)
+    [ProducesResponseType(typeof(ApiResponse<PortalVisitDetailDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<ApiResponse<PortalVisitDetailDto>>> GetVisitDetail(int visitId)
     {
-        var visit = await _portalService.GetVisitDetailAsync(patientId, visitId);
+        var patientId = GetAuthenticatedPatientId();
+        if (!patientId.HasValue)
+            return ApiForbidden("Unable to identify authenticated patient");
+
+        var visit = await _portalService.GetVisitDetailAsync(patientId.Value, visitId);
 
         if (visit == null)
             return ApiNotFound("Visit not found");
@@ -403,11 +633,15 @@ public class PatientPortalController : BaseApiController
     /// </summary>
     [HttpGet("medical-records/allergies")]
     [Authorize]
-    [ProducesResponseType(typeof(ApiResponse<IEnumerable<PortalAllergyDto>>), 200)]
-    public async Task<ActionResult<ApiResponse<IEnumerable<PortalAllergyDto>>>> GetAllergies(
-        [FromQuery] int patientId)
+    [ProducesResponseType(typeof(ApiResponse<IEnumerable<PortalAllergyDto>>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status403Forbidden)]
+    public async Task<ActionResult<ApiResponse<IEnumerable<PortalAllergyDto>>>> GetAllergies()
     {
-        var allergies = await _portalService.GetAllergiesAsync(patientId);
+        var patientId = GetAuthenticatedPatientId();
+        if (!patientId.HasValue)
+            return ApiForbidden("Unable to identify authenticated patient");
+
+        var allergies = await _portalService.GetAllergiesAsync(patientId.Value);
         return ApiOk(allergies);
     }
 
@@ -416,11 +650,15 @@ public class PatientPortalController : BaseApiController
     /// </summary>
     [HttpGet("medical-records/immunizations")]
     [Authorize]
-    [ProducesResponseType(typeof(ApiResponse<IEnumerable<PortalImmunizationDto>>), 200)]
-    public async Task<ActionResult<ApiResponse<IEnumerable<PortalImmunizationDto>>>> GetImmunizations(
-        [FromQuery] int patientId)
+    [ProducesResponseType(typeof(ApiResponse<IEnumerable<PortalImmunizationDto>>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status403Forbidden)]
+    public async Task<ActionResult<ApiResponse<IEnumerable<PortalImmunizationDto>>>> GetImmunizations()
     {
-        var immunizations = await _portalService.GetImmunizationsAsync(patientId);
+        var patientId = GetAuthenticatedPatientId();
+        if (!patientId.HasValue)
+            return ApiForbidden("Unable to identify authenticated patient");
+
+        var immunizations = await _portalService.GetImmunizationsAsync(patientId.Value);
         return ApiOk(immunizations);
     }
 
@@ -429,12 +667,16 @@ public class PatientPortalController : BaseApiController
     /// </summary>
     [HttpGet("medical-records/vitals")]
     [Authorize]
-    [ProducesResponseType(typeof(ApiResponse<IEnumerable<PortalVitalSignsDto>>), 200)]
+    [ProducesResponseType(typeof(ApiResponse<IEnumerable<PortalVitalSignsDto>>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status403Forbidden)]
     public async Task<ActionResult<ApiResponse<IEnumerable<PortalVitalSignsDto>>>> GetVitalSignsHistory(
-        [FromQuery] int patientId,
-        [FromQuery] int limit = 20)
+        [FromQuery][Range(1, 100, ErrorMessage = "Limit must be between 1 and 100")] int limit = 20)
     {
-        var vitals = await _portalService.GetVitalSignsHistoryAsync(patientId, limit);
+        var patientId = GetAuthenticatedPatientId();
+        if (!patientId.HasValue)
+            return ApiForbidden("Unable to identify authenticated patient");
+
+        var vitals = await _portalService.GetVitalSignsHistoryAsync(patientId.Value, limit);
         return ApiOk(vitals);
     }
 
@@ -443,12 +685,17 @@ public class PatientPortalController : BaseApiController
     /// </summary>
     [HttpGet("medical-records/download")]
     [Authorize]
-    [ProducesResponseType(typeof(FileContentResult), 200)]
+    [ProducesResponseType(typeof(FileContentResult), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> DownloadMedicalRecords(
-        [FromQuery] int patientId,
-        [FromQuery] string format = "pdf")
+        [FromQuery][RegularExpression("^(pdf|json)$", ErrorMessage = "Format must be 'pdf' or 'json'")] string format = "pdf")
     {
-        var data = await _portalService.DownloadMedicalRecordsAsync(patientId, format);
+        var patientId = GetAuthenticatedPatientId();
+        if (!patientId.HasValue)
+            return StatusCode(StatusCodes.Status403Forbidden, ApiResponse.Failure("Unable to identify authenticated patient"));
+
+        var data = await _portalService.DownloadMedicalRecordsAsync(patientId.Value, format);
         var contentType = format.ToLower() == "pdf" ? "application/pdf" : "application/json";
         return File(data, contentType, $"medical-records.{format}");
     }
@@ -462,28 +709,35 @@ public class PatientPortalController : BaseApiController
     /// </summary>
     [HttpGet("lab-results")]
     [Authorize]
-    [ProducesResponseType(typeof(ApiResponse<IEnumerable<PortalLabResultSummaryDto>>), 200)]
+    [ProducesResponseType(typeof(ApiResponse<IEnumerable<PortalLabResultSummaryDto>>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status403Forbidden)]
     public async Task<ActionResult<ApiResponse<IEnumerable<PortalLabResultSummaryDto>>>> GetLabResults(
-        [FromQuery] int patientId,
-        [FromQuery] int? year = null,
-        [FromQuery] int limit = 50)
+        [FromQuery][Range(2000, 2100, ErrorMessage = "Invalid year")] int? year = null,
+        [FromQuery][Range(1, 100, ErrorMessage = "Limit must be between 1 and 100")] int limit = 50)
     {
-        var results = await _portalService.GetLabResultsAsync(patientId, year, limit);
+        var patientId = GetAuthenticatedPatientId();
+        if (!patientId.HasValue)
+            return ApiForbidden("Unable to identify authenticated patient");
+
+        var results = await _portalService.GetLabResultsAsync(patientId.Value, year, limit);
         return ApiOk(results);
     }
 
     /// <summary>
     /// Get lab result details
     /// </summary>
-    [HttpGet("lab-results/{labResultId}")]
+    [HttpGet("lab-results/{labResultId:int}")]
     [Authorize]
-    [ProducesResponseType(typeof(ApiResponse<PortalLabResultDetailDto>), 200)]
-    [ProducesResponseType(typeof(ApiResponse), 404)]
-    public async Task<ActionResult<ApiResponse<PortalLabResultDetailDto>>> GetLabResultDetail(
-        [FromQuery] int patientId,
-        int labResultId)
+    [ProducesResponseType(typeof(ApiResponse<PortalLabResultDetailDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<ApiResponse<PortalLabResultDetailDto>>> GetLabResultDetail(int labResultId)
     {
-        var result = await _portalService.GetLabResultDetailAsync(patientId, labResultId);
+        var patientId = GetAuthenticatedPatientId();
+        if (!patientId.HasValue)
+            return ApiForbidden("Unable to identify authenticated patient");
+
+        var result = await _portalService.GetLabResultDetailAsync(patientId.Value, labResultId);
 
         if (result == null)
             return ApiNotFound("Lab result not found");
@@ -494,14 +748,17 @@ public class PatientPortalController : BaseApiController
     /// <summary>
     /// Download lab report
     /// </summary>
-    [HttpGet("lab-results/{labResultId}/download")]
+    [HttpGet("lab-results/{labResultId:int}/download")]
     [Authorize]
-    [ProducesResponseType(typeof(FileContentResult), 200)]
-    public async Task<IActionResult> DownloadLabReport(
-        [FromQuery] int patientId,
-        int labResultId)
+    [ProducesResponseType(typeof(FileContentResult), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> DownloadLabReport(int labResultId)
     {
-        var data = await _portalService.DownloadLabReportAsync(patientId, labResultId);
+        var patientId = GetAuthenticatedPatientId();
+        if (!patientId.HasValue)
+            return StatusCode(StatusCodes.Status403Forbidden, ApiResponse.Failure("Unable to identify authenticated patient"));
+
+        var data = await _portalService.DownloadLabReportAsync(patientId.Value, labResultId);
         return File(data, "application/pdf", $"lab-report-{labResultId}.pdf");
     }
 
@@ -514,11 +771,15 @@ public class PatientPortalController : BaseApiController
     /// </summary>
     [HttpGet("medications")]
     [Authorize]
-    [ProducesResponseType(typeof(ApiResponse<IEnumerable<PortalMedicationSummaryDto>>), 200)]
-    public async Task<ActionResult<ApiResponse<IEnumerable<PortalMedicationSummaryDto>>>> GetActiveMedications(
-        [FromQuery] int patientId)
+    [ProducesResponseType(typeof(ApiResponse<IEnumerable<PortalMedicationSummaryDto>>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status403Forbidden)]
+    public async Task<ActionResult<ApiResponse<IEnumerable<PortalMedicationSummaryDto>>>> GetActiveMedications()
     {
-        var medications = await _portalService.GetActiveMedicationsAsync(patientId);
+        var patientId = GetAuthenticatedPatientId();
+        if (!patientId.HasValue)
+            return ApiForbidden("Unable to identify authenticated patient");
+
+        var medications = await _portalService.GetActiveMedicationsAsync(patientId.Value);
         return ApiOk(medications);
     }
 
@@ -527,27 +788,34 @@ public class PatientPortalController : BaseApiController
     /// </summary>
     [HttpGet("prescriptions")]
     [Authorize]
-    [ProducesResponseType(typeof(ApiResponse<IEnumerable<PortalPrescriptionDetailDto>>), 200)]
+    [ProducesResponseType(typeof(ApiResponse<IEnumerable<PortalPrescriptionDetailDto>>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status403Forbidden)]
     public async Task<ActionResult<ApiResponse<IEnumerable<PortalPrescriptionDetailDto>>>> GetPrescriptionHistory(
-        [FromQuery] int patientId,
-        [FromQuery] int limit = 20)
+        [FromQuery][Range(1, 100, ErrorMessage = "Limit must be between 1 and 100")] int limit = 20)
     {
-        var prescriptions = await _portalService.GetPrescriptionHistoryAsync(patientId, limit);
+        var patientId = GetAuthenticatedPatientId();
+        if (!patientId.HasValue)
+            return ApiForbidden("Unable to identify authenticated patient");
+
+        var prescriptions = await _portalService.GetPrescriptionHistoryAsync(patientId.Value, limit);
         return ApiOk(prescriptions);
     }
 
     /// <summary>
     /// Get prescription details
     /// </summary>
-    [HttpGet("prescriptions/{prescriptionId}")]
+    [HttpGet("prescriptions/{prescriptionId:int}")]
     [Authorize]
-    [ProducesResponseType(typeof(ApiResponse<PortalPrescriptionDetailDto>), 200)]
-    [ProducesResponseType(typeof(ApiResponse), 404)]
-    public async Task<ActionResult<ApiResponse<PortalPrescriptionDetailDto>>> GetPrescriptionDetail(
-        [FromQuery] int patientId,
-        int prescriptionId)
+    [ProducesResponseType(typeof(ApiResponse<PortalPrescriptionDetailDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<ApiResponse<PortalPrescriptionDetailDto>>> GetPrescriptionDetail(int prescriptionId)
     {
-        var prescription = await _portalService.GetPrescriptionDetailAsync(patientId, prescriptionId);
+        var patientId = GetAuthenticatedPatientId();
+        if (!patientId.HasValue)
+            return ApiForbidden("Unable to identify authenticated patient");
+
+        var prescription = await _portalService.GetPrescriptionDetailAsync(patientId.Value, prescriptionId);
 
         if (prescription == null)
             return ApiNotFound("Prescription not found");
@@ -560,13 +828,19 @@ public class PatientPortalController : BaseApiController
     /// </summary>
     [HttpPost("prescriptions/refill")]
     [Authorize]
-    [ProducesResponseType(typeof(ApiResponse), 200)]
-    [ProducesResponseType(typeof(ApiResponse), 400)]
-    public async Task<ActionResult<ApiResponse>> RequestRefill(
-        [FromQuery] int patientId,
-        [FromBody] PortalRefillRequestDto request)
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status403Forbidden)]
+    public async Task<ActionResult<ApiResponse>> RequestRefill([FromBody] PortalRefillRequestDto request)
     {
-        var success = await _portalService.RequestRefillAsync(patientId, request);
+        if (!ModelState.IsValid)
+            return ApiBadRequestFromModelState();
+
+        var patientId = GetAuthenticatedPatientId();
+        if (!patientId.HasValue)
+            return ApiForbidden("Unable to identify authenticated patient");
+
+        var success = await _portalService.RequestRefillAsync(patientId.Value, request);
 
         if (!success)
             return ApiBadRequest("Unable to request refill");
@@ -583,25 +857,32 @@ public class PatientPortalController : BaseApiController
     /// </summary>
     [HttpGet("messages")]
     [Authorize]
-    [ProducesResponseType(typeof(ApiResponse<IEnumerable<PortalMessageThreadDto>>), 200)]
-    public async Task<ActionResult<ApiResponse<IEnumerable<PortalMessageThreadDto>>>> GetMessageThreads(
-        [FromQuery] int patientId)
+    [ProducesResponseType(typeof(ApiResponse<IEnumerable<PortalMessageThreadDto>>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status403Forbidden)]
+    public async Task<ActionResult<ApiResponse<IEnumerable<PortalMessageThreadDto>>>> GetMessageThreads()
     {
-        var threads = await _portalService.GetMessageThreadsAsync(patientId);
+        var patientId = GetAuthenticatedPatientId();
+        if (!patientId.HasValue)
+            return ApiForbidden("Unable to identify authenticated patient");
+
+        var threads = await _portalService.GetMessageThreadsAsync(patientId.Value);
         return ApiOk(threads);
     }
 
     /// <summary>
     /// Get messages in a thread
     /// </summary>
-    [HttpGet("messages/thread/{threadId}")]
+    [HttpGet("messages/thread/{threadId:int}")]
     [Authorize]
-    [ProducesResponseType(typeof(ApiResponse<IEnumerable<PortalMessageDto>>), 200)]
-    public async Task<ActionResult<ApiResponse<IEnumerable<PortalMessageDto>>>> GetMessages(
-        [FromQuery] int patientId,
-        int threadId)
+    [ProducesResponseType(typeof(ApiResponse<IEnumerable<PortalMessageDto>>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status403Forbidden)]
+    public async Task<ActionResult<ApiResponse<IEnumerable<PortalMessageDto>>>> GetMessages(int threadId)
     {
-        var messages = await _portalService.GetMessagesAsync(patientId, threadId);
+        var patientId = GetAuthenticatedPatientId();
+        if (!patientId.HasValue)
+            return ApiForbidden("Unable to identify authenticated patient");
+
+        var messages = await _portalService.GetMessagesAsync(patientId.Value, threadId);
         return ApiOk(messages);
     }
 
@@ -610,26 +891,42 @@ public class PatientPortalController : BaseApiController
     /// </summary>
     [HttpPost("messages")]
     [Authorize]
-    [ProducesResponseType(typeof(ApiResponse<PortalMessageDto>), 201)]
-    public async Task<ActionResult<ApiResponse<PortalMessageDto>>> SendMessage(
-        [FromQuery] int patientId,
-        [FromBody] PortalSendMessageDto request)
+    [ProducesResponseType(typeof(ApiResponse<PortalMessageDto>), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status403Forbidden)]
+    public async Task<ActionResult<ApiResponse<PortalMessageDto>>> SendMessage([FromBody] PortalSendMessageDto request)
     {
-        var message = await _portalService.SendMessageAsync(patientId, request);
-        return ApiCreated(message, message: "Message sent successfully");
+        if (!ModelState.IsValid)
+            return ApiBadRequestFromModelState();
+
+        var patientId = GetAuthenticatedPatientId();
+        if (!patientId.HasValue)
+            return ApiForbidden("Unable to identify authenticated patient");
+
+        try
+        {
+            var message = await _portalService.SendMessageAsync(patientId.Value, request);
+            return ApiCreated(message, message: "Message sent successfully");
+        }
+        catch (InvalidOperationException ex)
+        {
+            return ApiBadRequest(ex.Message);
+        }
     }
 
     /// <summary>
     /// Mark messages in thread as read
     /// </summary>
-    [HttpPut("messages/thread/{threadId}/read")]
+    [HttpPut("messages/thread/{threadId:int}/read")]
     [Authorize]
-    [ProducesResponseType(typeof(ApiResponse), 200)]
-    public async Task<ActionResult<ApiResponse>> MarkMessagesAsRead(
-        [FromQuery] int patientId,
-        int threadId)
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status403Forbidden)]
+    public async Task<ActionResult<ApiResponse>> MarkMessagesAsRead(int threadId)
     {
-        await _portalService.MarkMessagesAsReadAsync(patientId, threadId);
+        var patientId = GetAuthenticatedPatientId();
+        if (!patientId.HasValue)
+            return ApiForbidden("Unable to identify authenticated patient");
+
+        await _portalService.MarkMessagesAsReadAsync(patientId.Value, threadId);
         return ApiOk("Messages marked as read");
     }
 
@@ -638,10 +935,15 @@ public class PatientPortalController : BaseApiController
     /// </summary>
     [HttpGet("messages/unread-count")]
     [Authorize]
-    [ProducesResponseType(typeof(ApiResponse<int>), 200)]
-    public async Task<ActionResult<ApiResponse<int>>> GetUnreadMessageCount([FromQuery] int patientId)
+    [ProducesResponseType(typeof(ApiResponse<int>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status403Forbidden)]
+    public async Task<ActionResult<ApiResponse<int>>> GetUnreadMessageCount()
     {
-        var count = await _portalService.GetUnreadMessageCountAsync(patientId);
+        var patientId = GetAuthenticatedPatientId();
+        if (!patientId.HasValue)
+            return ApiForbidden("Unable to identify authenticated patient");
+
+        var count = await _portalService.GetUnreadMessageCountAsync(patientId.Value);
         return ApiOk(count);
     }
 
@@ -654,27 +956,34 @@ public class PatientPortalController : BaseApiController
     /// </summary>
     [HttpGet("billing/invoices")]
     [Authorize]
-    [ProducesResponseType(typeof(ApiResponse<IEnumerable<PortalInvoiceSummaryDto>>), 200)]
+    [ProducesResponseType(typeof(ApiResponse<IEnumerable<PortalInvoiceSummaryDto>>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status403Forbidden)]
     public async Task<ActionResult<ApiResponse<IEnumerable<PortalInvoiceSummaryDto>>>> GetInvoices(
-        [FromQuery] int patientId,
-        [FromQuery] string? status = null)
+        [FromQuery][RegularExpression("^(Pending|Paid|Overdue|Partial)?$", ErrorMessage = "Invalid status")] string? status = null)
     {
-        var invoices = await _portalService.GetInvoicesAsync(patientId, status);
+        var patientId = GetAuthenticatedPatientId();
+        if (!patientId.HasValue)
+            return ApiForbidden("Unable to identify authenticated patient");
+
+        var invoices = await _portalService.GetInvoicesAsync(patientId.Value, status);
         return ApiOk(invoices);
     }
 
     /// <summary>
     /// Get invoice details
     /// </summary>
-    [HttpGet("billing/invoices/{invoiceId}")]
+    [HttpGet("billing/invoices/{invoiceId:int}")]
     [Authorize]
-    [ProducesResponseType(typeof(ApiResponse<PortalInvoiceDetailDto>), 200)]
-    [ProducesResponseType(typeof(ApiResponse), 404)]
-    public async Task<ActionResult<ApiResponse<PortalInvoiceDetailDto>>> GetInvoiceDetail(
-        [FromQuery] int patientId,
-        int invoiceId)
+    [ProducesResponseType(typeof(ApiResponse<PortalInvoiceDetailDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<ApiResponse<PortalInvoiceDetailDto>>> GetInvoiceDetail(int invoiceId)
     {
-        var invoice = await _portalService.GetInvoiceDetailAsync(patientId, invoiceId);
+        var patientId = GetAuthenticatedPatientId();
+        if (!patientId.HasValue)
+            return ApiForbidden("Unable to identify authenticated patient");
+
+        var invoice = await _portalService.GetInvoiceDetailAsync(patientId.Value, invoiceId);
 
         if (invoice == null)
             return ApiNotFound("Invoice not found");
@@ -687,10 +996,15 @@ public class PatientPortalController : BaseApiController
     /// </summary>
     [HttpGet("billing/balance")]
     [Authorize]
-    [ProducesResponseType(typeof(ApiResponse<decimal>), 200)]
-    public async Task<ActionResult<ApiResponse<decimal>>> GetOutstandingBalance([FromQuery] int patientId)
+    [ProducesResponseType(typeof(ApiResponse<decimal>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status403Forbidden)]
+    public async Task<ActionResult<ApiResponse<decimal>>> GetOutstandingBalance()
     {
-        var balance = await _portalService.GetOutstandingBalanceAsync(patientId);
+        var patientId = GetAuthenticatedPatientId();
+        if (!patientId.HasValue)
+            return ApiForbidden("Unable to identify authenticated patient");
+
+        var balance = await _portalService.GetOutstandingBalanceAsync(patientId.Value);
         return ApiOk(balance);
     }
 
@@ -699,13 +1013,22 @@ public class PatientPortalController : BaseApiController
     /// </summary>
     [HttpPost("billing/pay")]
     [Authorize]
-    [ProducesResponseType(typeof(ApiResponse<PortalPaymentResponseDto>), 200)]
-    [ProducesResponseType(typeof(ApiResponse), 400)]
-    public async Task<ActionResult<ApiResponse<PortalPaymentResponseDto>>> MakePayment(
-        [FromQuery] int patientId,
-        [FromBody] PortalMakePaymentDto request)
+    [ProducesResponseType(typeof(ApiResponse<PortalPaymentResponseDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status403Forbidden)]
+    public async Task<ActionResult<ApiResponse<PortalPaymentResponseDto>>> MakePayment([FromBody] PortalMakePaymentDto request)
     {
-        var result = await _portalService.MakePaymentAsync(patientId, request);
+        if (!ModelState.IsValid)
+            return ApiBadRequestFromModelState();
+
+        var patientId = GetAuthenticatedPatientId();
+        if (!patientId.HasValue)
+            return ApiForbidden("Unable to identify authenticated patient");
+
+        if (request.Amount <= 0)
+            return ApiBadRequest("Payment amount must be greater than zero");
+
+        var result = await _portalService.MakePaymentAsync(patientId.Value, request);
 
         if (!result.Success)
             return ApiBadRequest(result.Message ?? "Payment failed");
@@ -716,28 +1039,34 @@ public class PatientPortalController : BaseApiController
     /// <summary>
     /// Download invoice PDF
     /// </summary>
-    [HttpGet("billing/invoices/{invoiceId}/download")]
+    [HttpGet("billing/invoices/{invoiceId:int}/download")]
     [Authorize]
-    [ProducesResponseType(typeof(FileContentResult), 200)]
-    public async Task<IActionResult> DownloadInvoice(
-        [FromQuery] int patientId,
-        int invoiceId)
+    [ProducesResponseType(typeof(FileContentResult), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> DownloadInvoice(int invoiceId)
     {
-        var data = await _portalService.DownloadInvoiceAsync(patientId, invoiceId);
+        var patientId = GetAuthenticatedPatientId();
+        if (!patientId.HasValue)
+            return StatusCode(StatusCodes.Status403Forbidden, ApiResponse.Failure("Unable to identify authenticated patient"));
+
+        var data = await _portalService.DownloadInvoiceAsync(patientId.Value, invoiceId);
         return File(data, "application/pdf", $"invoice-{invoiceId}.pdf");
     }
 
     /// <summary>
     /// Download payment receipt
     /// </summary>
-    [HttpGet("billing/receipts/{paymentId}/download")]
+    [HttpGet("billing/receipts/{paymentId:int}/download")]
     [Authorize]
-    [ProducesResponseType(typeof(FileContentResult), 200)]
-    public async Task<IActionResult> DownloadReceipt(
-        [FromQuery] int patientId,
-        int paymentId)
+    [ProducesResponseType(typeof(FileContentResult), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> DownloadReceipt(int paymentId)
     {
-        var data = await _portalService.DownloadReceiptAsync(patientId, paymentId);
+        var patientId = GetAuthenticatedPatientId();
+        if (!patientId.HasValue)
+            return StatusCode(StatusCodes.Status403Forbidden, ApiResponse.Failure("Unable to identify authenticated patient"));
+
+        var data = await _portalService.DownloadReceiptAsync(patientId.Value, paymentId);
         return File(data, "application/pdf", $"receipt-{paymentId}.pdf");
     }
 
@@ -750,26 +1079,33 @@ public class PatientPortalController : BaseApiController
     /// </summary>
     [HttpGet("notifications")]
     [Authorize]
-    [ProducesResponseType(typeof(ApiResponse<IEnumerable<PortalNotificationDto>>), 200)]
+    [ProducesResponseType(typeof(ApiResponse<IEnumerable<PortalNotificationDto>>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status403Forbidden)]
     public async Task<ActionResult<ApiResponse<IEnumerable<PortalNotificationDto>>>> GetNotifications(
-        [FromQuery] int patientId,
         [FromQuery] bool unreadOnly = false)
     {
-        var notifications = await _portalService.GetNotificationsAsync(patientId, unreadOnly);
+        var patientId = GetAuthenticatedPatientId();
+        if (!patientId.HasValue)
+            return ApiForbidden("Unable to identify authenticated patient");
+
+        var notifications = await _portalService.GetNotificationsAsync(patientId.Value, unreadOnly);
         return ApiOk(notifications);
     }
 
     /// <summary>
     /// Mark notification as read
     /// </summary>
-    [HttpPut("notifications/{notificationId}/read")]
+    [HttpPut("notifications/{notificationId:int}/read")]
     [Authorize]
-    [ProducesResponseType(typeof(ApiResponse), 200)]
-    public async Task<ActionResult<ApiResponse>> MarkNotificationAsRead(
-        [FromQuery] int patientId,
-        int notificationId)
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status403Forbidden)]
+    public async Task<ActionResult<ApiResponse>> MarkNotificationAsRead(int notificationId)
     {
-        await _portalService.MarkNotificationAsReadAsync(patientId, notificationId);
+        var patientId = GetAuthenticatedPatientId();
+        if (!patientId.HasValue)
+            return ApiForbidden("Unable to identify authenticated patient");
+
+        await _portalService.MarkNotificationAsReadAsync(patientId.Value, notificationId);
         return ApiOk("Notification marked as read");
     }
 
@@ -778,10 +1114,15 @@ public class PatientPortalController : BaseApiController
     /// </summary>
     [HttpPut("notifications/read-all")]
     [Authorize]
-    [ProducesResponseType(typeof(ApiResponse), 200)]
-    public async Task<ActionResult<ApiResponse>> MarkAllNotificationsAsRead([FromQuery] int patientId)
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status403Forbidden)]
+    public async Task<ActionResult<ApiResponse>> MarkAllNotificationsAsRead()
     {
-        await _portalService.MarkAllNotificationsAsReadAsync(patientId);
+        var patientId = GetAuthenticatedPatientId();
+        if (!patientId.HasValue)
+            return ApiForbidden("Unable to identify authenticated patient");
+
+        await _portalService.MarkAllNotificationsAsReadAsync(patientId.Value);
         return ApiOk("All notifications marked as read");
     }
 
@@ -790,11 +1131,15 @@ public class PatientPortalController : BaseApiController
     /// </summary>
     [HttpGet("notifications/preferences")]
     [Authorize]
-    [ProducesResponseType(typeof(ApiResponse<PortalNotificationPreferencesDto>), 200)]
-    public async Task<ActionResult<ApiResponse<PortalNotificationPreferencesDto>>> GetNotificationPreferences(
-        [FromQuery] int patientId)
+    [ProducesResponseType(typeof(ApiResponse<PortalNotificationPreferencesDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status403Forbidden)]
+    public async Task<ActionResult<ApiResponse<PortalNotificationPreferencesDto>>> GetNotificationPreferences()
     {
-        var preferences = await _portalService.GetNotificationPreferencesAsync(patientId);
+        var patientId = GetAuthenticatedPatientId();
+        if (!patientId.HasValue)
+            return ApiForbidden("Unable to identify authenticated patient");
+
+        var preferences = await _portalService.GetNotificationPreferencesAsync(patientId.Value);
         return ApiOk(preferences);
     }
 
@@ -803,39 +1148,64 @@ public class PatientPortalController : BaseApiController
     /// </summary>
     [HttpPut("notifications/preferences")]
     [Authorize]
-    [ProducesResponseType(typeof(ApiResponse<PortalNotificationPreferencesDto>), 200)]
+    [ProducesResponseType(typeof(ApiResponse<PortalNotificationPreferencesDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status403Forbidden)]
     public async Task<ActionResult<ApiResponse<PortalNotificationPreferencesDto>>> UpdateNotificationPreferences(
-        [FromQuery] int patientId,
         [FromBody] PortalNotificationPreferencesDto preferences)
     {
-        var updated = await _portalService.UpdateNotificationPreferencesAsync(patientId, preferences);
+        if (!ModelState.IsValid)
+            return ApiBadRequestFromModelState();
+
+        var patientId = GetAuthenticatedPatientId();
+        if (!patientId.HasValue)
+            return ApiForbidden("Unable to identify authenticated patient");
+
+        var updated = await _portalService.UpdateNotificationPreferencesAsync(patientId.Value, preferences);
         return ApiOk(updated, "Preferences updated successfully");
     }
 
     #endregion
 }
 
-#region Request Models
+#region Request Models with Validation
 
 public class ForgotPasswordRequest
 {
+    [Required(ErrorMessage = "Email is required")]
+    [EmailAddress(ErrorMessage = "Invalid email format")]
+    [StringLength(255, ErrorMessage = "Email cannot exceed 255 characters")]
     public string Email { get; set; } = string.Empty;
 }
 
 public class ResetPasswordRequest
 {
+    [Required(ErrorMessage = "Token is required")]
+    [StringLength(500, ErrorMessage = "Token cannot exceed 500 characters")]
     public string Token { get; set; } = string.Empty;
+
+    [Required(ErrorMessage = "New password is required")]
+    [StringLength(100, MinimumLength = 8, ErrorMessage = "Password must be between 8 and 100 characters")]
+    [RegularExpression(@"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$",
+        ErrorMessage = "Password must contain at least one uppercase, lowercase, number and special character")]
     public string NewPassword { get; set; } = string.Empty;
 }
 
 public class ChangePasswordRequest
 {
+    [Required(ErrorMessage = "Current password is required")]
     public string CurrentPassword { get; set; } = string.Empty;
+
+    [Required(ErrorMessage = "New password is required")]
+    [StringLength(100, MinimumLength = 8, ErrorMessage = "Password must be between 8 and 100 characters")]
+    [RegularExpression(@"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$",
+        ErrorMessage = "Password must contain at least one uppercase, lowercase, number and special character")]
     public string NewPassword { get; set; } = string.Empty;
 }
 
 public class RefreshTokenRequest
 {
+    [Required(ErrorMessage = "Refresh token is required")]
+    [StringLength(500, ErrorMessage = "Refresh token cannot exceed 500 characters")]
     public string RefreshToken { get; set; } = string.Empty;
 }
 

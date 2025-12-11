@@ -109,8 +109,29 @@ public class TenantIsolationSaveChangesInterceptor : SaveChangesInterceptor
 /// </summary>
 public class TenantIsolationViolationException : Exception
 {
+    /// <summary>
+    /// The tenant ID of the user attempting the operation.
+    /// </summary>
+    public string? SourceTenantId { get; }
+
+    /// <summary>
+    /// The tenant ID of the resource being accessed.
+    /// </summary>
+    public string? TargetTenantId { get; }
+
     public TenantIsolationViolationException(string message) : base(message) { }
+
     public TenantIsolationViolationException(string message, Exception innerException) : base(message, innerException) { }
+
+    /// <summary>
+    /// BUG FIX: Add constructor for two-tenant scenario (for test compatibility and better diagnostics)
+    /// </summary>
+    public TenantIsolationViolationException(string sourceTenantId, string targetTenantId)
+        : base($"Tenant isolation violation: User from tenant '{sourceTenantId}' attempted to access tenant '{targetTenantId}'")
+    {
+        SourceTenantId = sourceTenantId;
+        TargetTenantId = targetTenantId;
+    }
 }
 
 /// <summary>

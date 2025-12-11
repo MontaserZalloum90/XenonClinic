@@ -410,6 +410,18 @@ public class InventoryController : BaseApiController
                 return ApiBadRequestFromModelState();
             }
 
+            // BUG FIX: Validate quantity is positive
+            if (dto.Quantity <= 0)
+            {
+                return ApiBadRequest("Quantity must be greater than zero");
+            }
+
+            // BUG FIX: Validate unit cost is not negative
+            if (dto.UnitCost < 0)
+            {
+                return ApiBadRequest("Unit cost cannot be negative");
+            }
+
             var item = await _inventoryService.GetInventoryItemByIdAsync(dto.InventoryItemId);
             if (item == null)
             {
@@ -421,11 +433,12 @@ public class InventoryController : BaseApiController
                 return ApiForbidden("Access denied to this branch's inventory");
             }
 
+            // BUG FIX: Use RequireUserId() to ensure audit trail integrity
             var transaction = await _inventoryService.AddStockAsync(
                 dto.InventoryItemId,
                 dto.Quantity,
                 dto.UnitCost,
-                _currentUserService.UserId ?? "system",
+                _currentUserService.RequireUserId(),
                 dto.Notes);
 
             _logger.LogInformation("Stock added: {Quantity} units to item {ItemId} by {UserId}",
@@ -453,6 +466,12 @@ public class InventoryController : BaseApiController
                 return ApiBadRequestFromModelState();
             }
 
+            // BUG FIX: Validate quantity is positive
+            if (dto.Quantity <= 0)
+            {
+                return ApiBadRequest("Quantity must be greater than zero");
+            }
+
             var item = await _inventoryService.GetInventoryItemByIdAsync(dto.InventoryItemId);
             if (item == null)
             {
@@ -464,17 +483,26 @@ public class InventoryController : BaseApiController
                 return ApiForbidden("Access denied to this branch's inventory");
             }
 
-            // Check available stock
+            // NOTE: TOCTOU race condition exists between this check and the actual removal.
+            // The service layer's RemoveStockAsync should use database-level locking
+            // (e.g., optimistic concurrency with row versioning or pessimistic locking)
+            // to ensure atomic stock removal. The service should:
+            // 1. Lock the inventory item row (SELECT FOR UPDATE)
+            // 2. Re-check current stock level
+            // 3. Perform the removal if sufficient stock
+            // 4. Update the item's QuantityOnHand
+            // All within a single transaction
             var currentStock = await _inventoryService.GetCurrentStockLevelAsync(dto.InventoryItemId);
             if (currentStock < dto.Quantity)
             {
                 return ApiBadRequest($"Insufficient stock. Available: {currentStock}, Requested: {dto.Quantity}");
             }
 
+            // BUG FIX: Use RequireUserId() to ensure audit trail integrity
             var transaction = await _inventoryService.RemoveStockAsync(
                 dto.InventoryItemId,
                 dto.Quantity,
-                _currentUserService.UserId ?? "system",
+                _currentUserService.RequireUserId(),
                 dto.Notes);
 
             _logger.LogInformation("Stock removed: {Quantity} units from item {ItemId} by {UserId}",
@@ -502,6 +530,18 @@ public class InventoryController : BaseApiController
                 return ApiBadRequestFromModelState();
             }
 
+            // BUG FIX: Validate new quantity is not negative
+            if (dto.NewQuantity < 0)
+            {
+                return ApiBadRequest("Stock quantity cannot be negative");
+            }
+
+            // BUG FIX: Require a reason for stock adjustment (audit trail requirement)
+            if (string.IsNullOrWhiteSpace(dto.Reason))
+            {
+                return ApiBadRequest("A reason is required for stock adjustment");
+            }
+
             var item = await _inventoryService.GetInventoryItemByIdAsync(dto.InventoryItemId);
             if (item == null)
             {
@@ -513,14 +553,15 @@ public class InventoryController : BaseApiController
                 return ApiForbidden("Access denied to this branch's inventory");
             }
 
+            // BUG FIX: Use RequireUserId() to ensure audit trail integrity
             var transaction = await _inventoryService.AdjustStockAsync(
                 dto.InventoryItemId,
                 dto.NewQuantity,
-                _currentUserService.UserId ?? "system",
+                _currentUserService.RequireUserId(),
                 $"{dto.Reason}. {dto.Notes}".Trim());
 
-            _logger.LogInformation("Stock adjusted: item {ItemId} set to {Quantity} by {UserId}",
-                dto.InventoryItemId, dto.NewQuantity, _currentUserService.UserId);
+            _logger.LogInformation("Stock adjusted: item {ItemId} from {OldQuantity} to {NewQuantity} by {UserId}, Reason: {Reason}",
+                dto.InventoryItemId, item.QuantityOnHand, dto.NewQuantity, _currentUserService.UserId, dto.Reason);
 
             return ApiOk(MapToTransactionDto(transaction, item), "Stock adjusted successfully");
         }

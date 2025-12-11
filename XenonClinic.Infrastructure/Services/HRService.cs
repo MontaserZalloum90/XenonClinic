@@ -339,7 +339,22 @@ public class HRService : IHRService
         if (attendance.CheckInTime.HasValue && attendance.CheckOutTime.HasValue)
         {
             var duration = attendance.CheckOutTime.Value.ToTimeSpan() - attendance.CheckInTime.Value.ToTimeSpan();
-            attendance.TotalHours = (decimal)duration.TotalHours;
+
+            // BUG FIX: Handle overnight shifts where checkout is before checkin
+            // (e.g., checkin at 23:00, checkout at 07:00 next day)
+            if (duration.TotalHours < 0)
+            {
+                // Add 24 hours for overnight shifts
+                duration = duration.Add(TimeSpan.FromHours(24));
+            }
+
+            // BUG FIX: Validate reasonable work hours (max 24 hours per shift)
+            if (duration.TotalHours > 24)
+            {
+                throw new InvalidOperationException("Work duration cannot exceed 24 hours");
+            }
+
+            attendance.TotalHours = Math.Round((decimal)duration.TotalHours, 2);
         }
 
         await _context.SaveChangesAsync();

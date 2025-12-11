@@ -5,11 +5,14 @@ using Microsoft.Extensions.Logging;
 
 /// <summary>
 /// Default implementation of the workflow context.
+/// BUG FIX: Added thread-safe state modification for parallel branch execution.
 /// </summary>
 public class WorkflowContext : IWorkflowContext
 {
     private readonly ILogger? _logger;
     private readonly WorkflowInstanceState _state;
+    // BUG FIX: Lock object for thread-safe state modifications in parallel execution
+    private readonly object _stateLock = new();
 
     public Guid InstanceId => _state.Id;
     public string WorkflowId => _state.WorkflowId;
@@ -67,8 +70,12 @@ public class WorkflowContext : IWorkflowContext
 
     public void SetVariable(string name, object? value)
     {
-        _state.Variables ??= new Dictionary<string, object?>();
-        _state.Variables[name] = value;
+        // BUG FIX: Use lock to prevent race conditions in parallel branch execution
+        lock (_stateLock)
+        {
+            _state.Variables ??= new Dictionary<string, object?>();
+            _state.Variables[name] = value;
+        }
     }
 
     public T? GetInput<T>(string name)
@@ -101,8 +108,12 @@ public class WorkflowContext : IWorkflowContext
 
     public void SetOutput(string name, object? value)
     {
-        _state.Output ??= new Dictionary<string, object?>();
-        _state.Output[name] = value;
+        // BUG FIX: Use lock to prevent race conditions in parallel branch execution
+        lock (_stateLock)
+        {
+            _state.Output ??= new Dictionary<string, object?>();
+            _state.Output[name] = value;
+        }
     }
 
     public void Log(Abstractions.LogLevel level, string message, params object[] args)
@@ -117,14 +128,18 @@ public class WorkflowContext : IWorkflowContext
             formattedMessage = message; // Fall back to unformatted message
         }
 
-        _state.LogEntries ??= new List<WorkflowLogEntry>();
-        _state.LogEntries.Add(new WorkflowLogEntry
+        // BUG FIX: Use lock to prevent race conditions in parallel branch execution
+        lock (_stateLock)
         {
-            Timestamp = DateTime.UtcNow,
-            Level = level,
-            Message = formattedMessage,
-            ActivityId = _state.CurrentActivityId
-        });
+            _state.LogEntries ??= new List<WorkflowLogEntry>();
+            _state.LogEntries.Add(new WorkflowLogEntry
+            {
+                Timestamp = DateTime.UtcNow,
+                Level = level,
+                Message = formattedMessage,
+                ActivityId = _state.CurrentActivityId
+            });
+        }
 
         var msLogLevel = level switch
         {
@@ -142,14 +157,18 @@ public class WorkflowContext : IWorkflowContext
 
     public void AddAuditEntry(string action, string? details = null)
     {
-        _state.AuditEntries ??= new List<WorkflowAuditEntry>();
-        _state.AuditEntries.Add(new WorkflowAuditEntry
+        // BUG FIX: Use lock to prevent race conditions in parallel branch execution
+        lock (_stateLock)
         {
-            Timestamp = DateTime.UtcNow,
-            Action = action,
-            Details = details,
-            UserId = UserId,
-            ActivityId = _state.CurrentActivityId
-        });
+            _state.AuditEntries ??= new List<WorkflowAuditEntry>();
+            _state.AuditEntries.Add(new WorkflowAuditEntry
+            {
+                Timestamp = DateTime.UtcNow,
+                Action = action,
+                Details = details,
+                UserId = UserId,
+                ActivityId = _state.CurrentActivityId
+            });
+        }
     }
 }
