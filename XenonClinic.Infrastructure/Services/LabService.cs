@@ -94,6 +94,22 @@ public class LabService : ILabService
 
     public async Task<LabOrder> CreateLabOrderAsync(LabOrder labOrder)
     {
+        ArgumentNullException.ThrowIfNull(labOrder);
+
+        // Validate patient exists
+        var patientExists = await _context.Patients.AnyAsync(p => p.Id == labOrder.PatientId && !p.IsDeleted);
+        if (!patientExists)
+        {
+            throw new KeyNotFoundException($"Patient with ID {labOrder.PatientId} not found");
+        }
+
+        // Validate branch exists
+        var branchExists = await _context.Branches.AnyAsync(b => b.Id == labOrder.BranchId);
+        if (!branchExists)
+        {
+            throw new KeyNotFoundException($"Branch with ID {labOrder.BranchId} not found");
+        }
+
         _context.LabOrders.Add(labOrder);
         await _context.SaveChangesAsync();
         return labOrder;
@@ -101,8 +117,17 @@ public class LabService : ILabService
 
     public async Task UpdateLabOrderAsync(LabOrder labOrder)
     {
+        ArgumentNullException.ThrowIfNull(labOrder);
+
+        // Validate lab order exists
+        var existingOrder = await _context.LabOrders.FindAsync(labOrder.Id);
+        if (existingOrder == null)
+        {
+            throw new KeyNotFoundException($"Lab order with ID {labOrder.Id} not found");
+        }
+
         labOrder.UpdatedAt = DateTime.UtcNow;
-        _context.LabOrders.Update(labOrder);
+        _context.Entry(existingOrder).CurrentValues.SetValues(labOrder);
         await _context.SaveChangesAsync();
     }
 
@@ -185,6 +210,25 @@ public class LabService : ILabService
 
     public async Task<LabTest> CreateLabTestAsync(LabTest labTest)
     {
+        ArgumentNullException.ThrowIfNull(labTest);
+
+        // Validate branch exists
+        var branchExists = await _context.Branches.AnyAsync(b => b.Id == labTest.BranchId);
+        if (!branchExists)
+        {
+            throw new KeyNotFoundException($"Branch with ID {labTest.BranchId} not found");
+        }
+
+        // Validate external lab exists if specified
+        if (labTest.ExternalLabId.HasValue)
+        {
+            var externalLabExists = await _context.ExternalLabs.AnyAsync(e => e.Id == labTest.ExternalLabId.Value);
+            if (!externalLabExists)
+            {
+                throw new KeyNotFoundException($"External lab with ID {labTest.ExternalLabId.Value} not found");
+            }
+        }
+
         _context.LabTests.Add(labTest);
         await _context.SaveChangesAsync();
         return labTest;
@@ -192,8 +236,17 @@ public class LabService : ILabService
 
     public async Task UpdateLabTestAsync(LabTest labTest)
     {
+        ArgumentNullException.ThrowIfNull(labTest);
+
+        // Validate lab test exists
+        var existingTest = await _context.LabTests.FindAsync(labTest.Id);
+        if (existingTest == null)
+        {
+            throw new KeyNotFoundException($"Lab test with ID {labTest.Id} not found");
+        }
+
         labTest.UpdatedAt = DateTime.UtcNow;
-        _context.LabTests.Update(labTest);
+        _context.Entry(existingTest).CurrentValues.SetValues(labTest);
         await _context.SaveChangesAsync();
     }
 
@@ -242,6 +295,25 @@ public class LabService : ILabService
 
     public async Task<LabResult> CreateLabResultAsync(LabResult labResult)
     {
+        ArgumentNullException.ThrowIfNull(labResult);
+
+        // Validate lab order exists
+        var labOrderExists = await _context.LabOrders.AnyAsync(lo => lo.Id == labResult.LabOrderId);
+        if (!labOrderExists)
+        {
+            throw new KeyNotFoundException($"Lab order with ID {labResult.LabOrderId} not found");
+        }
+
+        // Validate lab test exists if specified
+        if (labResult.LabTestId.HasValue)
+        {
+            var labTestExists = await _context.LabTests.AnyAsync(lt => lt.Id == labResult.LabTestId.Value);
+            if (!labTestExists)
+            {
+                throw new KeyNotFoundException($"Lab test with ID {labResult.LabTestId.Value} not found");
+            }
+        }
+
         _context.LabResults.Add(labResult);
         await _context.SaveChangesAsync();
         return labResult;
@@ -249,8 +321,17 @@ public class LabService : ILabService
 
     public async Task UpdateLabResultAsync(LabResult labResult)
     {
+        ArgumentNullException.ThrowIfNull(labResult);
+
+        // Validate lab result exists
+        var existingResult = await _context.LabResults.FindAsync(labResult.Id);
+        if (existingResult == null)
+        {
+            throw new KeyNotFoundException($"Lab result with ID {labResult.Id} not found");
+        }
+
         labResult.UpdatedAt = DateTime.UtcNow;
-        _context.LabResults.Update(labResult);
+        _context.Entry(existingResult).CurrentValues.SetValues(labResult);
         await _context.SaveChangesAsync();
     }
 
@@ -293,6 +374,21 @@ public class LabService : ILabService
 
     public async Task<ExternalLab> CreateExternalLabAsync(ExternalLab externalLab)
     {
+        ArgumentNullException.ThrowIfNull(externalLab);
+
+        // Validate branch exists
+        var branchExists = await _context.Branches.AnyAsync(b => b.Id == externalLab.BranchId);
+        if (!branchExists)
+        {
+            throw new KeyNotFoundException($"Branch with ID {externalLab.BranchId} not found");
+        }
+
+        // Validate required fields
+        if (string.IsNullOrWhiteSpace(externalLab.Name))
+        {
+            throw new ArgumentException("External lab name is required", nameof(externalLab));
+        }
+
         _context.ExternalLabs.Add(externalLab);
         await _context.SaveChangesAsync();
         return externalLab;
@@ -300,8 +396,17 @@ public class LabService : ILabService
 
     public async Task UpdateExternalLabAsync(ExternalLab externalLab)
     {
+        ArgumentNullException.ThrowIfNull(externalLab);
+
+        // Validate external lab exists
+        var existingLab = await _context.ExternalLabs.FindAsync(externalLab.Id);
+        if (existingLab == null)
+        {
+            throw new KeyNotFoundException($"External lab with ID {externalLab.Id} not found");
+        }
+
         externalLab.UpdatedAt = DateTime.UtcNow;
-        _context.ExternalLabs.Update(externalLab);
+        _context.Entry(existingLab).CurrentValues.SetValues(externalLab);
         await _context.SaveChangesAsync();
     }
 

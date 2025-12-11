@@ -299,6 +299,8 @@ public class SalesService : ISalesService
 
     public async Task<SaleItem> AddSaleItemAsync(SaleItem saleItem)
     {
+        ArgumentNullException.ThrowIfNull(saleItem);
+
         var sale = await _context.Sales.FindAsync(saleItem.SaleId);
         if (sale == null)
         {
@@ -308,6 +310,22 @@ public class SalesService : ISalesService
         if (sale.Status != SaleStatus.Draft)
         {
             throw new InvalidOperationException("Can only add items to draft sales");
+        }
+
+        // Validate inventory item exists if specified
+        if (saleItem.InventoryItemId.HasValue)
+        {
+            var inventoryItemExists = await _context.InventoryItems.AnyAsync(i => i.Id == saleItem.InventoryItemId.Value);
+            if (!inventoryItemExists)
+            {
+                throw new KeyNotFoundException($"Inventory item with ID {saleItem.InventoryItemId.Value} not found");
+            }
+        }
+
+        // Validate quantity
+        if (saleItem.Quantity <= 0)
+        {
+            throw new ArgumentException("Quantity must be greater than zero", nameof(saleItem));
         }
 
         // Calculate item totals
@@ -325,6 +343,8 @@ public class SalesService : ISalesService
 
     public async Task UpdateSaleItemAsync(SaleItem saleItem)
     {
+        ArgumentNullException.ThrowIfNull(saleItem);
+
         var existingItem = await _context.SaleItems
             .Include(i => i.Sale)
             .FirstOrDefaultAsync(i => i.Id == saleItem.Id);
@@ -337,6 +357,12 @@ public class SalesService : ISalesService
         if (existingItem.Sale.Status != SaleStatus.Draft)
         {
             throw new InvalidOperationException("Can only update items in draft sales");
+        }
+
+        // Validate quantity
+        if (saleItem.Quantity <= 0)
+        {
+            throw new ArgumentException("Quantity must be greater than zero", nameof(saleItem));
         }
 
         CalculateSaleItemTotals(saleItem);
@@ -422,6 +448,8 @@ public class SalesService : ISalesService
 
     public async Task<Payment> RecordPaymentAsync(Payment payment)
     {
+        ArgumentNullException.ThrowIfNull(payment);
+
         var sale = await _context.Sales.FindAsync(payment.SaleId);
         if (sale == null)
         {
@@ -500,10 +528,18 @@ public class SalesService : ISalesService
 
     public async Task UpdatePaymentAsync(Payment payment)
     {
+        ArgumentNullException.ThrowIfNull(payment);
+
         var existingPayment = await _context.Payments.FindAsync(payment.Id);
         if (existingPayment == null)
         {
             throw new KeyNotFoundException($"Payment with ID {payment.Id} not found");
+        }
+
+        // Validate payment amount
+        if (payment.Amount <= 0)
+        {
+            throw new ArgumentException("Payment amount must be greater than zero", nameof(payment));
         }
 
         // Recalculate sale totals if amount changed
@@ -929,6 +965,8 @@ public class SalesService : ISalesService
 
     public async Task<QuotationItem> AddQuotationItemAsync(QuotationItem quotationItem)
     {
+        ArgumentNullException.ThrowIfNull(quotationItem);
+
         var quotation = await _context.Quotations.FindAsync(quotationItem.QuotationId);
         if (quotation == null)
         {
@@ -938,6 +976,22 @@ public class SalesService : ISalesService
         if (quotation.Status != QuotationStatus.Draft)
         {
             throw new InvalidOperationException("Can only add items to draft quotations");
+        }
+
+        // Validate inventory item exists if specified
+        if (quotationItem.InventoryItemId.HasValue)
+        {
+            var inventoryItemExists = await _context.InventoryItems.AnyAsync(i => i.Id == quotationItem.InventoryItemId.Value);
+            if (!inventoryItemExists)
+            {
+                throw new KeyNotFoundException($"Inventory item with ID {quotationItem.InventoryItemId.Value} not found");
+            }
+        }
+
+        // Validate quantity
+        if (quotationItem.Quantity <= 0)
+        {
+            throw new ArgumentException("Quantity must be greater than zero", nameof(quotationItem));
         }
 
         // Calculate item totals
@@ -955,6 +1009,8 @@ public class SalesService : ISalesService
 
     public async Task UpdateQuotationItemAsync(QuotationItem quotationItem)
     {
+        ArgumentNullException.ThrowIfNull(quotationItem);
+
         var existingItem = await _context.QuotationItems
             .Include(i => i.Quotation)
             .FirstOrDefaultAsync(i => i.Id == quotationItem.Id);
@@ -967,6 +1023,12 @@ public class SalesService : ISalesService
         if (existingItem.Quotation.Status != QuotationStatus.Draft)
         {
             throw new InvalidOperationException("Can only update items in draft quotations");
+        }
+
+        // Validate quantity
+        if (quotationItem.Quantity <= 0)
+        {
+            throw new ArgumentException("Quantity must be greater than zero", nameof(quotationItem));
         }
 
         CalculateQuotationItemTotals(quotationItem);
