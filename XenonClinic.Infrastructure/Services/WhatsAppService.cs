@@ -48,9 +48,15 @@ public class WhatsAppService : IWhatsAppService
                 return false;
             }
         }
-        catch (Exception ex)
+        catch (HttpRequestException ex)
         {
-            _logger.LogError(ex, "Error sending WhatsApp message to {PhoneNumber} for company {CompanyId}",
+            _logger.LogError(ex, "HTTP error sending WhatsApp message to {PhoneNumber} for company {CompanyId}",
+                toPhoneNumber, companyId);
+            return false;
+        }
+        catch (TaskCanceledException ex)
+        {
+            _logger.LogError(ex, "Timeout sending WhatsApp message to {PhoneNumber} for company {CompanyId}",
                 toPhoneNumber, companyId);
             return false;
         }
@@ -116,9 +122,14 @@ public class WhatsAppService : IWhatsAppService
                 return false;
             }
         }
-        catch (Exception ex)
+        catch (HttpRequestException ex)
         {
-            _logger.LogError(ex, "Error sending WhatsApp message via Twilio");
+            _logger.LogError(ex, "HTTP error sending WhatsApp message via Twilio");
+            return false;
+        }
+        catch (TaskCanceledException ex)
+        {
+            _logger.LogError(ex, "Timeout sending WhatsApp message via Twilio");
             return false;
         }
     }
@@ -162,9 +173,14 @@ public class WhatsAppService : IWhatsAppService
                 return false;
             }
         }
-        catch (Exception ex)
+        catch (HttpRequestException ex)
         {
-            _logger.LogError(ex, "Error sending WhatsApp message via WhatsApp Business API");
+            _logger.LogError(ex, "HTTP error sending WhatsApp message via WhatsApp Business API");
+            return false;
+        }
+        catch (TaskCanceledException ex)
+        {
+            _logger.LogError(ex, "Timeout sending WhatsApp message via WhatsApp Business API");
             return false;
         }
     }

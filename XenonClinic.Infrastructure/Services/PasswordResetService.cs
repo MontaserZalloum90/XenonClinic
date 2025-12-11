@@ -229,9 +229,14 @@ public class PasswordResetService : IPasswordResetService
                 .Select(line => line.Trim().Split(':'))
                 .Any(parts => parts.Length == 2 && parts[0].Equals(suffix, StringComparison.OrdinalIgnoreCase));
         }
-        catch (Exception ex)
+        catch (HttpRequestException ex)
         {
-            _logger.LogWarning(ex, "Failed to check password against HaveIBeenPwned");
+            _logger.LogWarning(ex, "HTTP error checking password against HaveIBeenPwned");
+            return false; // Don't block user if service is unavailable
+        }
+        catch (TaskCanceledException ex)
+        {
+            _logger.LogWarning(ex, "Timeout checking password against HaveIBeenPwned");
             return false; // Don't block user if service is unavailable
         }
     }

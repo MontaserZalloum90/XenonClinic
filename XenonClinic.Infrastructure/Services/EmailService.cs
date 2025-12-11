@@ -53,9 +53,26 @@ public class EmailService : IEmailService
             _logger.LogInformation("Email sent successfully to {Email} for company {CompanyId}", toEmail, companyId);
             return true;
         }
-        catch (Exception ex)
+        catch (SmtpException ex)
         {
-            _logger.LogError(ex, "Error sending email to {Email} for company {CompanyId}", toEmail, companyId);
+            _logger.LogError(ex, "SMTP error sending email to {Email} for company {CompanyId}. Status: {StatusCode}",
+                toEmail, companyId, ex.StatusCode);
+            return false;
+        }
+        catch (SmtpFailedRecipientException ex)
+        {
+            _logger.LogError(ex, "Failed recipient error sending email to {Email} for company {CompanyId}. Status: {StatusCode}",
+                toEmail, companyId, ex.StatusCode);
+            return false;
+        }
+        catch (InvalidOperationException ex)
+        {
+            _logger.LogError(ex, "Invalid operation error sending email to {Email} for company {CompanyId}", toEmail, companyId);
+            return false;
+        }
+        catch (ArgumentException ex)
+        {
+            _logger.LogError(ex, "Invalid email address {Email} for company {CompanyId}", toEmail, companyId);
             return false;
         }
     }

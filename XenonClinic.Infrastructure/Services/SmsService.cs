@@ -46,10 +46,15 @@ public class SmsService : ISmsService
 
             _logger.LogInformation("SMS sent successfully to {PhoneNumber}", MaskPhoneNumber(normalizedPhone));
         }
-        catch (Exception ex)
+        catch (HttpRequestException ex)
         {
-            _logger.LogError(ex, "Failed to send SMS to {PhoneNumber}", MaskPhoneNumber(normalizedPhone));
-            throw;
+            _logger.LogError(ex, "HTTP request failed while sending SMS to {PhoneNumber}", MaskPhoneNumber(normalizedPhone));
+            throw new InvalidOperationException($"Failed to send SMS: {ex.Message}", ex);
+        }
+        catch (TaskCanceledException ex)
+        {
+            _logger.LogError(ex, "SMS request timed out for {PhoneNumber}", MaskPhoneNumber(normalizedPhone));
+            throw new InvalidOperationException("SMS request timed out", ex);
         }
     }
 
