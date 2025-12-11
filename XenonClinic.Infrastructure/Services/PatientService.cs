@@ -67,21 +67,38 @@ public class PatientService : IPatientService
 
     public async Task<Patient> CreatePatientAsync(Patient patient)
     {
-        // Check for duplicate EmiratesId within the same branch
-        var existingPatient = await _context.Patients
-            .FirstOrDefaultAsync(p => p.EmiratesId == patient.EmiratesId &&
-                                       p.BranchId == patient.BranchId &&
-                                       !p.IsDeleted);
-
-        if (existingPatient != null)
+        // BUG FIX: Add null check for patient parameter
+        if (patient == null)
         {
-            throw new InvalidOperationException(
-                $"A patient with Emirates ID '{patient.EmiratesId}' already exists in this branch");
+            throw new ArgumentNullException(nameof(patient));
         }
 
-        _context.Patients.Add(patient);
-        await _context.SaveChangesAsync();
-        return patient;
+        // BUG FIX: Use transaction to prevent race condition on duplicate check
+        await using var transaction = await _context.Database.BeginTransactionAsync();
+        try
+        {
+            // Check for duplicate EmiratesId within the same branch
+            var existingPatient = await _context.Patients
+                .FirstOrDefaultAsync(p => p.EmiratesId == patient.EmiratesId &&
+                                           p.BranchId == patient.BranchId &&
+                                           !p.IsDeleted);
+
+            if (existingPatient != null)
+            {
+                throw new InvalidOperationException(
+                    $"A patient with Emirates ID '{patient.EmiratesId}' already exists in this branch");
+            }
+
+            _context.Patients.Add(patient);
+            await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
+            return patient;
+        }
+        catch
+        {
+            await transaction.RollbackAsync();
+            throw;
+        }
     }
 
     public async Task UpdatePatientAsync(Patient patient)
@@ -113,15 +130,29 @@ public class PatientService : IPatientService
 
     public async Task DeletePatientAsync(int id, string? deletedBy = null)
     {
-        var patient = await _context.Patients.FindAsync(id);
-        if (patient != null)
+        // BUG FIX: Validate id is positive
+        if (id <= 0)
         {
-            // Soft delete for healthcare compliance - patient records must be retained
-            patient.IsDeleted = true;
-            patient.DeletedAt = DateTime.UtcNow;
-            patient.DeletedBy = deletedBy;
-            await _context.SaveChangesAsync();
+            throw new ArgumentException("Patient ID must be greater than zero", nameof(id));
         }
+
+        var patient = await _context.Patients.FindAsync(id);
+        // BUG FIX: Throw exception instead of silent failure for IDOR prevention and audit compliance
+        if (patient == null)
+        {
+            throw new KeyNotFoundException($"Patient with ID {id} not found");
+        }
+
+        if (patient.IsDeleted)
+        {
+            throw new InvalidOperationException($"Patient with ID {id} has already been deleted");
+        }
+
+        // Soft delete for healthcare compliance - patient records must be retained
+        patient.IsDeleted = true;
+        patient.DeletedAt = DateTime.UtcNow;
+        patient.DeletedBy = deletedBy;
+        await _context.SaveChangesAsync();
     }
 
     // Legacy method signature for backward compatibility
@@ -214,12 +245,21 @@ public class PatientService : IPatientService
 
     public async Task DeleteDocumentAsync(int id)
     {
-        var document = await _context.PatientDocuments.FindAsync(id);
-        if (document != null)
+        // BUG FIX: Validate id is positive
+        if (id <= 0)
         {
-            _context.PatientDocuments.Remove(document);
-            await _context.SaveChangesAsync();
+            throw new ArgumentException("Document ID must be greater than zero", nameof(id));
         }
+
+        var document = await _context.PatientDocuments.FindAsync(id);
+        // BUG FIX: Throw exception instead of silent failure for audit compliance
+        if (document == null)
+        {
+            throw new KeyNotFoundException($"Document with ID {id} not found");
+        }
+
+        _context.PatientDocuments.Remove(document);
+        await _context.SaveChangesAsync();
     }
 
     #endregion
@@ -243,13 +283,22 @@ public class PatientService : IPatientService
 
     public async Task<Dictionary<string, int>> GetPatientsByGenderDistributionAsync(int branchId)
     {
+        // BUG FIX: Validate branchId is positive
+        if (branchId <= 0)
+        {
+            throw new ArgumentException("Branch ID must be greater than zero", nameof(branchId));
+        }
+
         var distribution = await _context.Patients
             .Where(p => p.BranchId == branchId && !p.IsDeleted)
             .GroupBy(p => p.Gender)
             .Select(g => new { Gender = g.Key, Count = g.Count() })
             .ToListAsync();
 
-        return distribution.ToDictionary(x => x.Gender, x => x.Count);
+        // BUG FIX: Handle null Gender values to prevent NullReferenceException
+        return distribution.ToDictionary(
+            x => x.Gender ?? "Unknown",
+            x => x.Count);
     }
 
     #endregion

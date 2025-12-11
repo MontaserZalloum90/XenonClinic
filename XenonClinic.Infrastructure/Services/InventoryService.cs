@@ -154,37 +154,91 @@ public class InventoryService : IInventoryService
 
     public async Task<InventoryTransaction> CreateTransactionAsync(InventoryTransaction transaction)
     {
-        // Use single SaveChanges for both transaction and stock update
-        _context.InventoryTransactions.Add(transaction);
+        // BUG FIX: Add null check for transaction parameter
+        if (transaction == null)
+        {
+            throw new ArgumentNullException(nameof(transaction));
+        }
 
-        // Update item stock level in same save
+        // BUG FIX: Validate quantity is positive
+        if (transaction.Quantity <= 0)
+        {
+            throw new InvalidOperationException("Transaction quantity must be greater than zero");
+        }
+
+        // BUG FIX: Validate item exists before transaction
         var item = await _context.InventoryItems.FindAsync(transaction.InventoryItemId);
-        if (item != null)
+        if (item == null)
+        {
+            throw new KeyNotFoundException($"Inventory item with ID {transaction.InventoryItemId} not found");
+        }
+
+        // BUG FIX: Use database transaction to ensure atomicity
+        await using var dbTransaction = await _context.Database.BeginTransactionAsync();
+        try
         {
             var stockChange = transaction.TransactionType == TransactionType.Credit
                 ? transaction.Quantity
                 : -transaction.Quantity;
+
+            // BUG FIX: Validate stock won't go negative for debits
+            if (transaction.TransactionType == TransactionType.Debit && item.CurrentStock < transaction.Quantity)
+            {
+                throw new InvalidOperationException($"Insufficient stock. Available: {item.CurrentStock}, Requested: {transaction.Quantity}");
+            }
+
+            _context.InventoryTransactions.Add(transaction);
+
+            // Update item stock level
             item.CurrentStock += stockChange;
             item.LastRestockDate = DateTime.UtcNow;
-        }
 
-        await _context.SaveChangesAsync();
-        return transaction;
+            await _context.SaveChangesAsync();
+            await dbTransaction.CommitAsync();
+            return transaction;
+        }
+        catch
+        {
+            await dbTransaction.RollbackAsync();
+            throw;
+        }
     }
 
     public async Task UpdateTransactionAsync(InventoryTransaction transaction)
     {
+        // BUG FIX: Add null check for transaction parameter
+        if (transaction == null)
+        {
+            throw new ArgumentNullException(nameof(transaction));
+        }
+
+        // BUG FIX: Validate quantity is positive
+        if (transaction.Quantity <= 0)
+        {
+            throw new InvalidOperationException("Transaction quantity must be greater than zero");
+        }
+
         // Get the old transaction to calculate difference
         var oldTransaction = await _context.InventoryTransactions
             .AsNoTracking()
             .FirstOrDefaultAsync(t => t.Id == transaction.Id);
 
-        _context.InventoryTransactions.Update(transaction);
-
-        // Recalculate item stock level in same save
-        var item = await _context.InventoryItems.FindAsync(transaction.InventoryItemId);
-        if (item != null && oldTransaction != null)
+        // BUG FIX: Throw exception if old transaction not found
+        if (oldTransaction == null)
         {
+            throw new KeyNotFoundException($"Transaction with ID {transaction.Id} not found");
+        }
+
+        // BUG FIX: Use database transaction to ensure atomicity
+        await using var dbTransaction = await _context.Database.BeginTransactionAsync();
+        try
+        {
+            var item = await _context.InventoryItems.FindAsync(transaction.InventoryItemId);
+            if (item == null)
+            {
+                throw new KeyNotFoundException($"Inventory item with ID {transaction.InventoryItemId} not found");
+            }
+
             // Reverse old transaction effect
             var oldStockChange = oldTransaction.TransactionType == TransactionType.Credit
                 ? oldTransaction.Quantity
@@ -194,31 +248,74 @@ public class InventoryService : IInventoryService
                 ? transaction.Quantity
                 : -transaction.Quantity;
 
-            item.CurrentStock = item.CurrentStock - oldStockChange + newStockChange;
-            item.LastRestockDate = DateTime.UtcNow;
-        }
+            var newStock = item.CurrentStock - oldStockChange + newStockChange;
 
-        await _context.SaveChangesAsync();
+            // BUG FIX: Validate stock won't go negative
+            if (newStock < 0)
+            {
+                throw new InvalidOperationException($"Cannot update transaction - would result in negative stock ({newStock})");
+            }
+
+            _context.InventoryTransactions.Update(transaction);
+            item.CurrentStock = newStock;
+            item.LastRestockDate = DateTime.UtcNow;
+
+            await _context.SaveChangesAsync();
+            await dbTransaction.CommitAsync();
+        }
+        catch
+        {
+            await dbTransaction.RollbackAsync();
+            throw;
+        }
     }
 
     public async Task DeleteTransactionAsync(int id)
     {
-        var transaction = await _context.InventoryTransactions.FindAsync(id);
-        if (transaction != null)
+        // BUG FIX: Validate id is positive
+        if (id <= 0)
         {
-            // Update item stock in same save
+            throw new ArgumentException("Transaction ID must be greater than zero", nameof(id));
+        }
+
+        var transaction = await _context.InventoryTransactions.FindAsync(id);
+        // BUG FIX: Throw exception instead of silent failure
+        if (transaction == null)
+        {
+            throw new KeyNotFoundException($"Transaction with ID {id} not found");
+        }
+
+        // BUG FIX: Use database transaction to ensure atomicity
+        await using var dbTransaction = await _context.Database.BeginTransactionAsync();
+        try
+        {
             var item = await _context.InventoryItems.FindAsync(transaction.InventoryItemId);
             if (item != null)
             {
                 var stockChange = transaction.TransactionType == TransactionType.Credit
                     ? -transaction.Quantity  // Reverse the credit
                     : transaction.Quantity;  // Reverse the debit
-                item.CurrentStock += stockChange;
+
+                var newStock = item.CurrentStock + stockChange;
+
+                // BUG FIX: Validate stock won't go negative after reversal
+                if (newStock < 0)
+                {
+                    throw new InvalidOperationException($"Cannot delete transaction - would result in negative stock ({newStock})");
+                }
+
+                item.CurrentStock = newStock;
                 item.LastRestockDate = DateTime.UtcNow;
             }
 
             _context.InventoryTransactions.Remove(transaction);
             await _context.SaveChangesAsync();
+            await dbTransaction.CommitAsync();
+        }
+        catch
+        {
+            await dbTransaction.RollbackAsync();
+            throw;
         }
     }
 

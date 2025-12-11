@@ -179,8 +179,12 @@ public class MfaService : IMfaService
         var smsKey = $"mfa_sms_{userId}";
         var emailKey = $"mfa_email_{userId}";
 
+        // SECURITY FIX: Use constant-time comparison to prevent timing attacks
         // Check SMS code
-        if (_cache.TryGetValue(smsKey, out string? smsCode) && smsCode == code)
+        if (_cache.TryGetValue(smsKey, out string? smsCode) && smsCode != null &&
+            CryptographicOperations.FixedTimeEquals(
+                System.Text.Encoding.UTF8.GetBytes(smsCode),
+                System.Text.Encoding.UTF8.GetBytes(code ?? string.Empty)))
         {
             _cache.Remove(smsKey);
             _logger.LogInformation("SMS code verified for user {UserId}, purpose: {Purpose}", userId, purpose);
@@ -188,7 +192,10 @@ public class MfaService : IMfaService
         }
 
         // Check email code
-        if (_cache.TryGetValue(emailKey, out string? emailCode) && emailCode == code)
+        if (_cache.TryGetValue(emailKey, out string? emailCode) && emailCode != null &&
+            CryptographicOperations.FixedTimeEquals(
+                System.Text.Encoding.UTF8.GetBytes(emailCode),
+                System.Text.Encoding.UTF8.GetBytes(code ?? string.Empty)))
         {
             _cache.Remove(emailKey);
             _logger.LogInformation("Email code verified for user {UserId}, purpose: {Purpose}", userId, purpose);

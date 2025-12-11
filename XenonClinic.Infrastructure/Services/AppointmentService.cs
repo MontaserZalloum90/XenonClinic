@@ -139,6 +139,12 @@ public class AppointmentService : IAppointmentService
 
     public async Task<Appointment> CreateAppointmentAsync(Appointment appointment)
     {
+        // BUG FIX: Add null check for appointment parameter
+        if (appointment == null)
+        {
+            throw new ArgumentNullException(nameof(appointment));
+        }
+
         // Validate patient exists
         var patientExists = await _context.Patients.AnyAsync(p => p.Id == appointment.PatientId && !p.IsDeleted);
         if (!patientExists)
@@ -169,25 +175,42 @@ public class AppointmentService : IAppointmentService
             throw new InvalidOperationException("Appointment end time must be after start time");
         }
 
-        // Validate appointment is not in the past (allow same-day appointments)
-        if (appointment.StartTime.Date < DateTime.UtcNow.Date)
+        // BUG FIX: Validate appointment is not in the past (including time, not just date)
+        if (appointment.StartTime < DateTime.UtcNow)
         {
             throw new InvalidOperationException("Cannot create appointments in the past");
         }
 
-        // Check for time slot availability
-        if (!await IsTimeSlotAvailableAsync(appointment.BranchId, appointment.ProviderId, appointment.StartTime, appointment.EndTime))
+        // BUG FIX: Use transaction to prevent double-booking race condition
+        await using var transaction = await _context.Database.BeginTransactionAsync();
+        try
         {
-            throw new InvalidOperationException("The requested time slot is not available");
-        }
+            // Check for time slot availability within transaction
+            if (!await IsTimeSlotAvailableAsync(appointment.BranchId, appointment.ProviderId, appointment.StartTime, appointment.EndTime))
+            {
+                throw new InvalidOperationException("The requested time slot is not available");
+            }
 
-        _context.Appointments.Add(appointment);
-        await _context.SaveChangesAsync();
-        return appointment;
+            _context.Appointments.Add(appointment);
+            await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
+            return appointment;
+        }
+        catch
+        {
+            await transaction.RollbackAsync();
+            throw;
+        }
     }
 
     public async Task UpdateAppointmentAsync(Appointment appointment)
     {
+        // BUG FIX: Add null check for appointment parameter
+        if (appointment == null)
+        {
+            throw new ArgumentNullException(nameof(appointment));
+        }
+
         // Validate appointment exists
         var existingAppointment = await _context.Appointments.FindAsync(appointment.Id);
         if (existingAppointment == null)
@@ -201,18 +224,48 @@ public class AppointmentService : IAppointmentService
             throw new InvalidOperationException("Appointment end time must be after start time");
         }
 
+        // BUG FIX: Check slot availability if time or provider changed
+        var timeOrProviderChanged = existingAppointment.StartTime != appointment.StartTime ||
+                                    existingAppointment.EndTime != appointment.EndTime ||
+                                    existingAppointment.ProviderId != appointment.ProviderId;
+
+        if (timeOrProviderChanged)
+        {
+            // BUG FIX: Validate appointment is not in the past
+            if (appointment.StartTime < DateTime.UtcNow)
+            {
+                throw new InvalidOperationException("Cannot update appointment to a past time");
+            }
+
+            // Check for time slot availability (excluding current appointment)
+            if (!await IsTimeSlotAvailableAsync(appointment.BranchId, appointment.ProviderId,
+                appointment.StartTime, appointment.EndTime, appointment.Id))
+            {
+                throw new InvalidOperationException("The requested time slot is not available");
+            }
+        }
+
         _context.Entry(existingAppointment).CurrentValues.SetValues(appointment);
         await _context.SaveChangesAsync();
     }
 
     public async Task DeleteAppointmentAsync(int id)
     {
-        var appointment = await _context.Appointments.FindAsync(id);
-        if (appointment != null)
+        // BUG FIX: Validate id is positive
+        if (id <= 0)
         {
-            _context.Appointments.Remove(appointment);
-            await _context.SaveChangesAsync();
+            throw new ArgumentException("Appointment ID must be greater than zero", nameof(id));
         }
+
+        var appointment = await _context.Appointments.FindAsync(id);
+        // BUG FIX: Throw exception instead of silent failure for audit compliance
+        if (appointment == null)
+        {
+            throw new KeyNotFoundException($"Appointment with ID {id} not found");
+        }
+
+        _context.Appointments.Remove(appointment);
+        await _context.SaveChangesAsync();
     }
 
     #endregion
@@ -337,7 +390,26 @@ public class AppointmentService : IAppointmentService
 
     public async Task<IEnumerable<DateTime>> GetAvailableSlotsAsync(int branchId, int? providerId, DateTime date, int durationMinutes = 30)
     {
+        // BUG FIX: Validate branchId is positive
+        if (branchId <= 0)
+        {
+            throw new ArgumentException("Branch ID must be greater than zero", nameof(branchId));
+        }
+
+        // BUG FIX: Validate durationMinutes to prevent infinite loop
+        if (durationMinutes <= 0)
+        {
+            throw new ArgumentException("Duration must be greater than zero", nameof(durationMinutes));
+        }
+
+        // BUG FIX: Validate durationMinutes has reasonable upper bound
+        if (durationMinutes > 480) // Max 8 hours
+        {
+            throw new ArgumentException("Duration cannot exceed 8 hours (480 minutes)", nameof(durationMinutes));
+        }
+
         var availableSlots = new List<DateTime>();
+        // TODO: Retrieve operating hours from Branch entity instead of hardcoding
         var startOfDay = date.Date.AddHours(8); // Start at 8 AM
         var endOfDay = date.Date.AddHours(18); // End at 6 PM
 
