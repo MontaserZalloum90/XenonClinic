@@ -223,6 +223,7 @@ public class LabService : ILabService
     public async Task<IEnumerable<LabResult>> GetLabResultsByOrderIdAsync(int labOrderId)
     {
         return await _context.LabResults
+            .Include(lr => lr.LabOrder)
             .Include(lr => lr.LabTest)
             .Where(lr => lr.LabOrderId == labOrderId)
             .OrderBy(lr => lr.TestDate)

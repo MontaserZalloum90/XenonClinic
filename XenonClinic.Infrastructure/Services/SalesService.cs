@@ -46,7 +46,9 @@ public class SalesService : ISalesService
     {
         return await _context.Sales
             .Include(s => s.Patient)
+            .Include(s => s.Branch)
             .Include(s => s.Items)
+            .Include(s => s.Quotation)
             .Where(s => s.BranchId == branchId)
             .OrderByDescending(s => s.SaleDate)
             .ToListAsync();
