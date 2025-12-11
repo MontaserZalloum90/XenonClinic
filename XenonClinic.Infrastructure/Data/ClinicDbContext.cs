@@ -238,6 +238,36 @@ public class ClinicDbContext : IdentityDbContext<Entities.ApplicationUser>
     public DbSet<AnalyticsDashboardSubscription> AnalyticsDashboardSubscriptions => Set<AnalyticsDashboardSubscription>();
 
     // ========================================
+    // Security & Compliance Entities
+    // ========================================
+    // Audit Trail
+    public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
+    public DbSet<AuditRetentionPolicy> AuditRetentionPolicies => Set<AuditRetentionPolicy>();
+    public DbSet<AuditAlertConfig> AuditAlertConfigs => Set<AuditAlertConfig>();
+
+    // RBAC
+    public DbSet<Permission> Permissions => Set<Permission>();
+    public DbSet<Role> Roles => Set<Role>();
+    public DbSet<RolePermission> RolePermissions => Set<RolePermission>();
+    public DbSet<UserRole> UserRoles => Set<UserRole>();
+    public DbSet<UserPermission> UserPermissions => Set<UserPermission>();
+    public DbSet<DataAccessRule> DataAccessRules => Set<DataAccessRule>();
+
+    // Patient Consent
+    public DbSet<PatientConsent> PatientConsents => Set<PatientConsent>();
+    public DbSet<ConsentHistory> ConsentHistory => Set<ConsentHistory>();
+    public DbSet<ConsentFormTemplate> ConsentFormTemplates => Set<ConsentFormTemplate>();
+
+    // Security Configuration
+    public DbSet<SecuritySettingsEntity> SecuritySettings => Set<SecuritySettingsEntity>();
+    public DbSet<SecretEntity> Secrets => Set<SecretEntity>();
+    public DbSet<ApiKeyEntity> ApiKeys => Set<ApiKeyEntity>();
+    public DbSet<PasswordHistoryEntity> PasswordHistory => Set<PasswordHistoryEntity>();
+
+    // Backup & Recovery
+    public DbSet<BackupRecord> BackupRecords => Set<BackupRecord>();
+
+    // ========================================
     // Dental Clinic Entities
     // ========================================
     public DbSet<DentalVisit> DentalVisits => Set<DentalVisit>();
