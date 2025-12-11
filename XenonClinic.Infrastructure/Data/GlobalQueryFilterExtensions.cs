@@ -78,15 +78,26 @@ public static class GlobalQueryFilterExtensions
         // Get the BranchId value: e.BranchId
         var branchIdAccess = Expression.Property(parameter, branchIdProperty);
 
+        // BUG FIX: Add null checks instead of using null-forgiving operators
         // Create: !tenantContextAccessor.ShouldFilterByBranch
         var shouldFilterProperty = typeof(ITenantContextAccessor).GetProperty(nameof(ITenantContextAccessor.ShouldFilterByBranch));
+        if (shouldFilterProperty == null)
+        {
+            throw new InvalidOperationException($"Property 'ShouldFilterByBranch' not found on ITenantContextAccessor");
+        }
+
         var tenantAccessorConstant = Expression.Constant(tenantContextAccessor);
-        var shouldFilterAccess = Expression.Property(tenantAccessorConstant, shouldFilterProperty!);
+        var shouldFilterAccess = Expression.Property(tenantAccessorConstant, shouldFilterProperty);
         var notShouldFilter = Expression.Not(shouldFilterAccess);
 
         // Create: tenantContextAccessor.HasBranchAccess(e.BranchId)
         var hasBranchAccessMethod = typeof(ITenantContextAccessor).GetMethod(nameof(ITenantContextAccessor.HasBranchAccess));
-        var hasBranchAccessCall = Expression.Call(tenantAccessorConstant, hasBranchAccessMethod!, branchIdAccess);
+        if (hasBranchAccessMethod == null)
+        {
+            throw new InvalidOperationException($"Method 'HasBranchAccess' not found on ITenantContextAccessor");
+        }
+
+        var hasBranchAccessCall = Expression.Call(tenantAccessorConstant, hasBranchAccessMethod, branchIdAccess);
 
         // Combine: !ShouldFilterByBranch || HasBranchAccess(e.BranchId)
         var filterExpression = Expression.OrElse(notShouldFilter, hasBranchAccessCall);
@@ -94,13 +105,35 @@ public static class GlobalQueryFilterExtensions
         // Create lambda: e => !ShouldFilterByBranch || HasBranchAccess(e.BranchId)
         var lambda = Expression.Lambda(filterExpression, parameter);
 
-        // Apply the filter using reflection since we have a runtime type
-        var entityMethod = typeof(ModelBuilder).GetMethod(nameof(ModelBuilder.Entity), Type.EmptyTypes);
-        var genericEntityMethod = entityMethod!.MakeGenericMethod(entityType);
-        var entityBuilder = genericEntityMethod.Invoke(modelBuilder, null);
+        try
+        {
+            // Apply the filter using reflection since we have a runtime type
+            var entityMethod = typeof(ModelBuilder).GetMethod(nameof(ModelBuilder.Entity), Type.EmptyTypes);
+            if (entityMethod == null)
+            {
+                throw new InvalidOperationException($"Method 'Entity' not found on ModelBuilder");
+            }
 
-        var hasQueryFilterMethod = entityBuilder!.GetType().GetMethod("HasQueryFilter");
-        hasQueryFilterMethod!.Invoke(entityBuilder, new object[] { lambda });
+            var genericEntityMethod = entityMethod.MakeGenericMethod(entityType);
+            var entityBuilder = genericEntityMethod.Invoke(modelBuilder, null);
+
+            if (entityBuilder == null)
+            {
+                throw new InvalidOperationException($"Failed to get EntityBuilder for type {entityType.Name}");
+            }
+
+            var hasQueryFilterMethod = entityBuilder.GetType().GetMethod("HasQueryFilter");
+            if (hasQueryFilterMethod == null)
+            {
+                throw new InvalidOperationException($"Method 'HasQueryFilter' not found on EntityBuilder");
+            }
+
+            hasQueryFilterMethod.Invoke(entityBuilder, new object[] { lambda });
+        }
+        catch (TargetInvocationException ex)
+        {
+            throw new InvalidOperationException($"Failed to apply query filter for type {entityType.Name}", ex.InnerException);
+        }
     }
 
     /// <summary>
@@ -116,9 +149,18 @@ public static class GlobalQueryFilterExtensions
         Func<bool> shouldFilter,
         Func<IReadOnlyList<int>?> getAccessibleBranches) where T : class, IBranchEntity
     {
+        // BUG FIX: Avoid calling getAccessibleBranches() twice - capture in local variable
+        // to prevent thread safety issues and ensure consistent results
         modelBuilder.Entity<T>().HasQueryFilter(e =>
-            !shouldFilter() ||
-            getAccessibleBranches() == null ||
-            getAccessibleBranches()!.Contains(e.BranchId));
+        {
+            if (!shouldFilter())
+                return true;
+
+            var branches = getAccessibleBranches();
+            if (branches == null)
+                return true;
+
+            return branches.Contains(e.BranchId);
+        });
     }
 }

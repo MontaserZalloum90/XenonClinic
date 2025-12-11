@@ -499,6 +499,12 @@ public class ClinicDbContext : IdentityDbContext<Entities.ApplicationUser>
     {
         base.OnModelCreating(builder);
 
+        // BUG FIX: Apply security entity configurations (was never called before)
+        builder.ConfigureSecurityEntities();
+
+        // BUG FIX: Apply soft delete filters to all ISoftDelete entities
+        builder.ApplySoftDeleteFilter();
+
         // ========================================
         // Multi-tenancy Configuration
         // ========================================

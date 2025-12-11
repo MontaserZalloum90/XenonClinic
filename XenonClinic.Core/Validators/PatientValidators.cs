@@ -368,9 +368,24 @@ public class PatientListRequestValidator : AbstractValidator<PatientListRequestD
         if (string.IsNullOrEmpty(term))
             return true;
 
-        // Block SQL injection and XSS patterns
-        var dangerousPatterns = new[] { "--", ";", "<", ">", "script", "drop", "delete" };
-        return !dangerousPatterns.Any(p => term.Contains(p, StringComparison.OrdinalIgnoreCase));
+        // BUG FIX: Enhanced XSS and SQL injection prevention patterns
+        // Block SQL injection patterns
+        var sqlInjectionPatterns = new[]
+        {
+            "--", "/*", "*/", ";", "xp_", "sp_", "drop", "delete", "insert", "update",
+            "exec", "execute", "truncate", "union", "select"
+        };
+
+        // Block XSS patterns including HTML tags and event handlers
+        var xssPatterns = new[]
+        {
+            "<", ">", "script", "iframe", "onerror", "onload", "onclick", "onmouseover",
+            "javascript:", "vbscript:", "&#", "&lt;", "&gt;", "&quot;", "&apos;",
+            "svg", "img src", "object", "embed", "frame"
+        };
+
+        var allPatterns = sqlInjectionPatterns.Concat(xssPatterns).ToArray();
+        return !allPatterns.Any(p => term.Contains(p, StringComparison.OrdinalIgnoreCase));
     }
 
     private static bool BeValidGender(string? gender) =>
