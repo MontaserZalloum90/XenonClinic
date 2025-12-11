@@ -128,7 +128,9 @@ public class RequestLoggingMiddleware
         var logMessage = new StringBuilder();
         logMessage.AppendLine($"HTTP Request - CorrelationId: {correlationId}, RequestId: {requestId}");
         logMessage.AppendLine($"  Method: {request.Method}");
-        logMessage.AppendLine($"  Path: {request.Path}{request.QueryString}");
+        // SECURITY FIX: Sanitize query string to prevent logging sensitive parameters
+        var sanitizedQueryString = SanitizeQueryString(request.QueryString.ToString());
+        logMessage.AppendLine($"  Path: {request.Path}{sanitizedQueryString}");
         logMessage.AppendLine($"  ContentType: {request.ContentType}");
         logMessage.AppendLine($"  ContentLength: {request.ContentLength}");
 
@@ -220,6 +222,33 @@ public class RequestLoggingMiddleware
         }
 
         return body;
+    }
+
+    /// <summary>
+    /// Sanitizes query string to prevent logging sensitive parameters.
+    /// </summary>
+    private static string SanitizeQueryString(string queryString)
+    {
+        if (string.IsNullOrEmpty(queryString)) return queryString;
+
+        // SECURITY FIX: Mask sensitive query parameters that may contain secrets
+        var sensitiveParams = new[] {
+            "password", "token", "secret", "apiKey", "api_key", "key",
+            "access_token", "refresh_token", "auth", "authorization",
+            "credentials", "credit_card", "ssn", "emiratesId"
+        };
+
+        foreach (var param in sensitiveParams)
+        {
+            // Match param=value patterns (case-insensitive)
+            queryString = System.Text.RegularExpressions.Regex.Replace(
+                queryString,
+                $@"([?&]){param}=[^&]*",
+                $"$1{param}=***MASKED***",
+                System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+        }
+
+        return queryString;
     }
 }
 

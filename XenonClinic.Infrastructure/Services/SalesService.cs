@@ -499,37 +499,58 @@ public class SalesService : ISalesService
             throw new InvalidOperationException("Payment amount must be greater than zero");
         }
 
-        var remainingBalance = sale.Total - sale.PaidAmount;
-        if (payment.Amount > remainingBalance)
+        // BUG FIX: Use proper decimal rounding for financial amounts
+        payment.Amount = Math.Round(payment.Amount, 2, MidpointRounding.AwayFromZero);
+
+        // BUG FIX: Use transaction to prevent race condition in concurrent payments
+        await using var dbTransaction = await _context.Database.BeginTransactionAsync();
+        try
         {
-            throw new InvalidOperationException(
-                $"Payment amount ({payment.Amount:C}) exceeds remaining balance ({remainingBalance:C})");
-        }
+            // Re-read the sale with fresh data inside transaction to prevent TOCTOU
+            var currentSale = await _context.Sales.FindAsync(sale.Id);
+            if (currentSale == null)
+            {
+                throw new KeyNotFoundException($"Sale with ID {sale.Id} not found");
+            }
 
-        // Generate payment number if not provided
-        if (string.IsNullOrEmpty(payment.PaymentNumber))
+            var remainingBalance = currentSale.Total - currentSale.PaidAmount;
+            if (payment.Amount > remainingBalance)
+            {
+                throw new InvalidOperationException(
+                    $"Payment amount ({payment.Amount:C}) exceeds remaining balance ({remainingBalance:C})");
+            }
+
+            // Generate payment number if not provided
+            if (string.IsNullOrEmpty(payment.PaymentNumber))
+            {
+                payment.PaymentNumber = await GeneratePaymentNumberAsync(currentSale.BranchId);
+            }
+
+            payment.CreatedAt = DateTime.UtcNow;
+            _context.Payments.Add(payment);
+
+            // Update sale paid amount and status
+            currentSale.PaidAmount += payment.Amount;
+            currentSale.UpdatedAt = DateTime.UtcNow;
+
+            if (currentSale.PaidAmount >= currentSale.Total)
+            {
+                currentSale.PaymentStatus = PaymentStatus.Paid;
+            }
+            else if (currentSale.PaidAmount > 0)
+            {
+                currentSale.PaymentStatus = PaymentStatus.Partial;
+            }
+
+            await _context.SaveChangesAsync();
+            await dbTransaction.CommitAsync();
+            return payment;
+        }
+        catch
         {
-            payment.PaymentNumber = await GeneratePaymentNumberAsync(sale.BranchId);
+            await dbTransaction.RollbackAsync();
+            throw;
         }
-
-        payment.CreatedAt = DateTime.UtcNow;
-        _context.Payments.Add(payment);
-
-        // Update sale paid amount and status
-        sale.PaidAmount += payment.Amount;
-        sale.UpdatedAt = DateTime.UtcNow;
-
-        if (sale.PaidAmount >= sale.Total)
-        {
-            sale.PaymentStatus = PaymentStatus.Paid;
-        }
-        else if (sale.PaidAmount > 0)
-        {
-            sale.PaymentStatus = PaymentStatus.Partial;
-        }
-
-        await _context.SaveChangesAsync();
-        return payment;
     }
 
     public async Task UpdatePaymentAsync(Payment payment)

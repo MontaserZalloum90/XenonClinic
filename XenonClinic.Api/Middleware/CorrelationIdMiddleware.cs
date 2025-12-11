@@ -48,7 +48,22 @@ public class CorrelationIdMiddleware
         if (context.Request.Headers.TryGetValue(CorrelationIdHeader, out var existingId) &&
             !string.IsNullOrEmpty(existingId))
         {
-            return existingId!;
+            // SECURITY FIX: Validate correlation ID length to prevent DoS attacks
+            // Max 64 chars is reasonable for a correlation ID (UUID = 36 chars)
+            var correlationId = existingId.ToString();
+            if (correlationId.Length > 64)
+            {
+                // Truncate oversized correlation IDs and generate new one for security
+                return Guid.NewGuid().ToString();
+            }
+
+            // SECURITY FIX: Validate correlation ID contains only safe characters
+            if (!System.Text.RegularExpressions.Regex.IsMatch(correlationId, @"^[a-zA-Z0-9\-_]+$"))
+            {
+                return Guid.NewGuid().ToString();
+            }
+
+            return correlationId;
         }
 
         return Guid.NewGuid().ToString();
