@@ -1,9 +1,11 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using Xenon.Platform.Domain.Entities;
+using Xenon.Platform.Infrastructure.Persistence;
 
 namespace Xenon.Platform.Infrastructure.Services;
 
@@ -13,13 +15,20 @@ public interface IJwtTokenService
     string GeneratePlatformAdminToken(PlatformAdmin admin);
     string GenerateTwoFactorToken(Guid userId, string userType, string email);
     ClaimsPrincipal? ValidateToken(string token, string audience);
+    /// <summary>
+    /// BUG FIX: Validates the JWT token and checks if the user has invalidated all tokens
+    /// after this token was issued. This is the recommended method to use for secure validation.
+    /// </summary>
+    Task<ClaimsPrincipal?> ValidateTokenWithInvalidationCheckAsync(string token, string audience);
     ClaimsPrincipal? ValidateTwoFactorToken(string token);
     DateTime GetTokenExpiry(string token);
+    DateTime? GetTokenIssuedAt(string token);
 }
 
 public class JwtTokenService : IJwtTokenService
 {
     private readonly IConfiguration _configuration;
+    private readonly PlatformDbContext _context;
     private readonly string _secretKey;
     private readonly string _issuer;
     private readonly string _tenantAudience;
@@ -29,9 +38,10 @@ public class JwtTokenService : IJwtTokenService
     private readonly string _twoFactorAudience;
     private readonly int _twoFactorTokenExpiryMinutes;
 
-    public JwtTokenService(IConfiguration configuration)
+    public JwtTokenService(IConfiguration configuration, PlatformDbContext context)
     {
         _configuration = configuration;
+        _context = context;
         _secretKey = configuration["Jwt:SecretKey"] ?? throw new InvalidOperationException("JWT SecretKey not configured");
         _issuer = configuration["Jwt:Issuer"] ?? "xenon-platform";
         _tenantAudience = configuration["Jwt:TenantAudience"] ?? "xenon-tenant";
@@ -152,6 +162,84 @@ public class JwtTokenService : IJwtTokenService
         {
             return DateTime.MinValue;
         }
+    }
+
+    /// <summary>
+    /// BUG FIX: Gets the issued at time from the JWT token.
+    /// Used to compare against TokenInvalidatedAt for security validation.
+    /// </summary>
+    public DateTime? GetTokenIssuedAt(string token)
+    {
+        try
+        {
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var jwtToken = tokenHandler.ReadJwtToken(token);
+            return jwtToken.IssuedAt;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// BUG FIX: Validates the JWT token and checks if the user has invalidated all tokens
+    /// after this token was issued. This prevents invalidated tokens from being used.
+    /// </summary>
+    public async Task<ClaimsPrincipal?> ValidateTokenWithInvalidationCheckAsync(string token, string audience)
+    {
+        // First, perform standard JWT validation
+        var principal = ValidateToken(token, audience);
+        if (principal == null)
+        {
+            return null;
+        }
+
+        // Get the user ID and realm from claims
+        var userIdClaim = principal.FindFirst(ClaimTypes.NameIdentifier)
+                          ?? principal.FindFirst(JwtRegisteredClaimNames.Sub);
+        var realmClaim = principal.FindFirst("realm");
+
+        if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var userId))
+        {
+            return null;
+        }
+
+        // Get the token issued at time
+        var issuedAt = GetTokenIssuedAt(token);
+        if (!issuedAt.HasValue)
+        {
+            return null;
+        }
+
+        // Check if user has invalidated tokens after this token was issued
+        DateTime? tokenInvalidatedAt = null;
+        var realm = realmClaim?.Value;
+
+        if (realm == "platform-admin")
+        {
+            tokenInvalidatedAt = await _context.PlatformAdmins
+                .AsNoTracking()
+                .Where(a => a.Id == userId)
+                .Select(a => a.TokenInvalidatedAt)
+                .FirstOrDefaultAsync();
+        }
+        else if (realm == "tenant")
+        {
+            tokenInvalidatedAt = await _context.TenantAdmins
+                .AsNoTracking()
+                .Where(a => a.Id == userId)
+                .Select(a => a.TokenInvalidatedAt)
+                .FirstOrDefaultAsync();
+        }
+
+        // If tokens were invalidated after this token was issued, reject it
+        if (tokenInvalidatedAt.HasValue && issuedAt.Value < tokenInvalidatedAt.Value)
+        {
+            return null;
+        }
+
+        return principal;
     }
 
     private string GenerateToken(List<Claim> claims, string audience, TimeSpan expiry)

@@ -842,6 +842,13 @@ public class ClinicDbContext : IdentityDbContext<Entities.ApplicationUser>
             .Property(i => i.PaidAmount)
             .HasPrecision(18, 2);
 
+        // BUG FIX: Configure RowVersion as a concurrency token for optimistic locking.
+        // This prevents race conditions in concurrent payment processing.
+        builder.Entity<Invoice>()
+            .Property(i => i.RowVersion)
+            .IsRowVersion()
+            .IsConcurrencyToken();
+
         // Supplier configuration
         builder.Entity<Supplier>()
             .HasIndex(s => s.Name);

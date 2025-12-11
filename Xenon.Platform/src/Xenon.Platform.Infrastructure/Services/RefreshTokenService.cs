@@ -123,7 +123,51 @@ public class RefreshTokenService : IRefreshTokenService
             return null;
         }
 
+        // BUG FIX: Check if user has invalidated all tokens after this token was created
+        // This ensures that calling InvalidateAllTokensAsync actually invalidates refresh tokens
+        var tokenInvalidatedAt = await GetUserTokenInvalidatedAtAsync(refreshToken.UserId, refreshToken.TokenType);
+        if (tokenInvalidatedAt.HasValue && refreshToken.CreatedAt < tokenInvalidatedAt.Value)
+        {
+            _logger.LogWarning(
+                "Refresh token {TokenId} was created before user's token invalidation time. Token is invalid.",
+                refreshToken.Id);
+
+            // Revoke this token since it's been invalidated
+            refreshToken.Revoke("Token invalidated by user");
+            await _context.SaveChangesAsync();
+
+            return null;
+        }
+
         return refreshToken;
+    }
+
+    /// <summary>
+    /// BUG FIX: Helper method to get user's TokenInvalidatedAt timestamp based on token type.
+    /// This ensures refresh tokens respect the token invalidation mechanism.
+    /// </summary>
+    private async Task<DateTime?> GetUserTokenInvalidatedAtAsync(Guid userId, string tokenType)
+    {
+        if (tokenType == RefreshTokenTypes.PlatformAdmin)
+        {
+            var admin = await _context.PlatformAdmins
+                .AsNoTracking()
+                .Where(a => a.Id == userId)
+                .Select(a => a.TokenInvalidatedAt)
+                .FirstOrDefaultAsync();
+            return admin;
+        }
+        else if (tokenType == RefreshTokenTypes.TenantAdmin)
+        {
+            var admin = await _context.TenantAdmins
+                .AsNoTracking()
+                .Where(a => a.Id == userId)
+                .Select(a => a.TokenInvalidatedAt)
+                .FirstOrDefaultAsync();
+            return admin;
+        }
+
+        return null;
     }
 
     public async Task<(string newToken, RefreshToken newEntity)?> RotateRefreshTokenAsync(

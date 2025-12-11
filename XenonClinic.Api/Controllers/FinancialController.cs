@@ -1,6 +1,7 @@
 using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using XenonClinic.Api.Middleware;
 using XenonClinic.Core.DTOs;
 using XenonClinic.Core.Entities;
@@ -459,10 +460,12 @@ public class FinancialController : BaseApiController
 
     /// <summary>
     /// Records a payment for an invoice.
+    /// BUG FIX: Added optimistic concurrency control to prevent race conditions.
     /// </summary>
     [HttpPost("invoices/{id:int}/payment")]
     [ProducesResponseType(typeof(ApiResponse<InvoiceDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status409Conflict)]
     public async Task<IActionResult> RecordPayment(int id, [FromBody] RecordPaymentDto dto)
     {
         dto.InvoiceId = id;
@@ -501,7 +504,23 @@ public class FinancialController : BaseApiController
         invoice.UpdatedAt = DateTime.UtcNow;
         invoice.UpdatedBy = _userContext.UserId;
 
-        await _financialService.UpdateInvoiceAsync(invoice);
+        try
+        {
+            await _financialService.UpdateInvoiceAsync(invoice);
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            // BUG FIX: Handle concurrent payment attempts with optimistic concurrency
+            _logger.LogWarning(
+                "Concurrent payment conflict for invoice: {InvoiceId}. Request by user: {UserId}",
+                id, _userContext.UserId);
+
+            return StatusCode(StatusCodes.Status409Conflict, new ApiResponse
+            {
+                Success = false,
+                Error = "The invoice was modified by another user. Please refresh and try again."
+            });
+        }
 
         _logger.LogInformation(
             "Payment recorded for invoice: {InvoiceId}, Amount: {Amount}, By: {UserId}",

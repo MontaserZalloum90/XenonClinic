@@ -32,9 +32,18 @@ public class RbacService : IRbacService
 
     #region Permission Management
 
+    /// <summary>
+    /// BUG FIX: Added AsNoTracking() and reasonable limit to prevent memory exhaustion.
+    /// Permissions are typically a finite set, but we still cap at 500 for safety.
+    /// </summary>
     public async Task<List<PermissionDto>> GetAllPermissionsAsync()
     {
-        var permissions = await _context.Set<Permission>().OrderBy(p => p.Category).ThenBy(p => p.Name).ToListAsync();
+        var permissions = await _context.Set<Permission>()
+            .AsNoTracking()
+            .OrderBy(p => p.Category)
+            .ThenBy(p => p.Name)
+            .Take(500) // BUG FIX: Limit to prevent unbounded query
+            .ToListAsync();
         return permissions.Select(MapToDto).ToList();
     }
 
@@ -123,16 +132,35 @@ public class RbacService : IRbacService
 
     #region Role Management
 
+    /// <summary>
+    /// BUG FIX: Added AsNoTracking(), limit, and optimized to reduce multiple queries.
+    /// </summary>
     public async Task<List<RoleDto>> GetAllRolesAsync(int? branchId = null)
     {
-        var query = _context.Set<Role>().Include(r => r.RolePermissions).ThenInclude(rp => rp.Permission).AsQueryable();
+        var query = _context.Set<Role>()
+            .AsNoTracking()
+            .Include(r => r.RolePermissions)
+            .ThenInclude(rp => rp.Permission)
+            .AsQueryable();
+
         if (branchId.HasValue)
             query = query.Where(r => r.BranchId == null || r.BranchId == branchId.Value);
-        
-        var roles = await query.OrderBy(r => r.Name).ToListAsync();
-        
-        var userCounts = await _context.Set<UserRole>().GroupBy(ur => ur.RoleId).Select(g => new { RoleId = g.Key, Count = g.Count() }).ToDictionaryAsync(x => x.RoleId, x => x.Count);
-        
+
+        // BUG FIX: Add limit to prevent unbounded query
+        var roles = await query
+            .OrderBy(r => r.Name)
+            .Take(200) // Reasonable limit for roles
+            .ToListAsync();
+
+        // BUG FIX: Only get counts for the roles we fetched
+        var roleIds = roles.Select(r => r.Id).ToList();
+        var userCounts = await _context.Set<UserRole>()
+            .AsNoTracking()
+            .Where(ur => roleIds.Contains(ur.RoleId))
+            .GroupBy(ur => ur.RoleId)
+            .Select(g => new { RoleId = g.Key, Count = g.Count() })
+            .ToDictionaryAsync(x => x.RoleId, x => x.Count);
+
         return roles.Select(r => MapToDto(r, userCounts.GetValueOrDefault(r.Id, 0))).ToList();
     }
 
@@ -342,12 +370,58 @@ public class RbacService : IRbacService
         return true;
     }
 
+    /// <summary>
+    /// BUG FIX: Optimized to batch load user roles instead of N+1 queries.
+    /// Also added a limit to prevent loading too many users at once.
+    /// </summary>
     public async Task<List<UserRoleDto>> GetUsersInRoleAsync(int roleId)
     {
-        var userRoles = await _context.Set<UserRole>().Where(ur => ur.RoleId == roleId).Select(ur => ur.UserId).ToListAsync();
+        // BUG FIX: Add limit to prevent loading unbounded users
+        var userIds = await _context.Set<UserRole>()
+            .AsNoTracking()
+            .Where(ur => ur.RoleId == roleId)
+            .Select(ur => ur.UserId)
+            .Take(500) // Limit to prevent performance issues
+            .ToListAsync();
+
+        if (!userIds.Any())
+            return new List<UserRoleDto>();
+
+        // BUG FIX: Batch load all user roles in one query instead of N+1
+        var allUserRoles = await _context.Set<UserRole>()
+            .AsNoTracking()
+            .Include(ur => ur.Role)
+            .ThenInclude(r => r.RolePermissions)
+            .ThenInclude(rp => rp.Permission)
+            .Where(ur => userIds.Contains(ur.UserId))
+            .ToListAsync();
+
+        var allDirectPerms = await _context.Set<UserPermission>()
+            .AsNoTracking()
+            .Include(up => up.Permission)
+            .Where(up => userIds.Contains(up.UserId))
+            .ToListAsync();
+
+        // Group by user ID and build results
         var results = new List<UserRoleDto>();
-        foreach (var userId in userRoles)
-            results.Add(await GetUserRolesAsync(userId));
+        foreach (var userId in userIds)
+        {
+            var userRoles = allUserRoles.Where(ur => ur.UserId == userId).ToList();
+            var directPerms = allDirectPerms.Where(up => up.UserId == userId).ToList();
+
+            var result = new UserRoleDto
+            {
+                UserId = userId,
+                Roles = userRoles.Select(ur => MapToDto(ur.Role, 0)).ToList(),
+                DirectPermissions = directPerms.Select(up => MapToDto(up.Permission)).ToList(),
+                EffectivePermissions = userRoles.SelectMany(ur => ur.Role.RolePermissions.Select(rp => rp.Permission.Code))
+                    .Union(directPerms.Select(up => up.Permission.Code))
+                    .Distinct().ToList()
+            };
+
+            results.Add(result);
+        }
+
         return results;
     }
 
@@ -488,10 +562,26 @@ public class RbacService : IRbacService
 
     #region Permission Matrix
 
+    /// <summary>
+    /// BUG FIX: Added AsNoTracking() and limits to prevent memory exhaustion.
+    /// </summary>
     public async Task<PermissionMatrixDto> GetPermissionMatrixAsync()
     {
-        var roles = await _context.Set<Role>().Include(r => r.RolePermissions).Where(r => r.IsActive).OrderBy(r => r.Name).ToListAsync();
-        var permissions = await _context.Set<Permission>().OrderBy(p => p.Category).ThenBy(p => p.Name).ToListAsync();
+        // BUG FIX: Added AsNoTracking() and limits
+        var roles = await _context.Set<Role>()
+            .AsNoTracking()
+            .Include(r => r.RolePermissions)
+            .Where(r => r.IsActive)
+            .OrderBy(r => r.Name)
+            .Take(200) // Limit roles
+            .ToListAsync();
+
+        var permissions = await _context.Set<Permission>()
+            .AsNoTracking()
+            .OrderBy(p => p.Category)
+            .ThenBy(p => p.Name)
+            .Take(500) // Limit permissions
+            .ToListAsync();
 
         var matrix = new PermissionMatrixDto
         {
