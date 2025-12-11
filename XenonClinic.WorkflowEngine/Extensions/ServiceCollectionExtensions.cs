@@ -3,6 +3,7 @@ namespace XenonClinic.WorkflowEngine.Extensions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Options;
 using XenonClinic.WorkflowEngine.Application.Services;
 using XenonClinic.WorkflowEngine.Core.Abstractions;
 using XenonClinic.WorkflowEngine.Core.Engine;
@@ -55,8 +56,30 @@ public static class ServiceCollectionExtensions
         services.TryAddScoped<IBusinessRulesEngine, BusinessRulesEngine>();
         services.TryAddScoped<IMonitoringService, MonitoringService>();
 
-        // HTTP client for service tasks
+        // Enterprise workflow services - Phase 3: Integration & External Connectivity
+        services.TryAddSingleton<IEventBus, EventBus>();
+        services.TryAddSingleton<IConnectorFactory, ConnectorFactory>();
+        services.TryAddScoped<IWebhookService, WebhookService>();
+        services.TryAddScoped<IEmailService, EmailService>();
+        services.TryAddScoped<IDocumentService, DocumentService>();
+        services.TryAddScoped<IBpmnService, BpmnService>();
+
+        // Event bus interceptors
+        services.TryAddScoped<IEventBusInterceptor, AuditEventInterceptor>();
+
+        // Email notification handler
+        services.AddScoped<IExternalEventHandler, EmailNotificationEventHandler>();
+
+        // HTTP clients
         services.AddHttpClient("WorkflowServiceTask");
+        services.AddHttpClient("WebhookDelivery");
+
+        // Email configuration
+        services.Configure<EmailConfiguration>(options =>
+        {
+            options.Provider = "Console"; // Default to console for development
+            options.DefaultFrom = new EmailAddress("noreply@xenonclinic.com", "XenonClinic Workflow");
+        });
 
         return services;
     }
