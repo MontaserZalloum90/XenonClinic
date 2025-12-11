@@ -1,11 +1,13 @@
 namespace XenonClinic.WorkflowEngine.Extensions;
 
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using XenonClinic.WorkflowEngine.Core.Abstractions;
 using XenonClinic.WorkflowEngine.Core.Engine;
 using XenonClinic.WorkflowEngine.Core.StateMachine;
 using XenonClinic.WorkflowEngine.Persistence.Abstractions;
+using XenonClinic.WorkflowEngine.Persistence.EfCore;
 using XenonClinic.WorkflowEngine.Services;
 using XenonClinic.WorkflowEngine.Validation;
 
@@ -48,6 +50,51 @@ public static class ServiceCollectionExtensions
         builder.Services.AddSingleton<IWorkflowDefinitionStore, InMemoryWorkflowDefinitionStore>();
         builder.Services.AddSingleton<IWorkflowInstanceStore, InMemoryWorkflowInstanceStore>();
         builder.Services.AddSingleton<IWorkflowTimerStore, InMemoryWorkflowTimerStore>();
+        return builder;
+    }
+
+    /// <summary>
+    /// Adds EF Core stores for production use with the specified connection string.
+    /// Provides transaction guarantees, distributed locking, and persistence.
+    /// </summary>
+    public static WorkflowEngineBuilder UseEfCoreStores(
+        this WorkflowEngineBuilder builder,
+        string connectionString,
+        Action<DbContextOptionsBuilder>? configureOptions = null)
+    {
+        builder.Services.AddDbContext<WorkflowDbContext>(options =>
+        {
+            options.UseSqlServer(connectionString, sqlOptions =>
+            {
+                sqlOptions.EnableRetryOnFailure(
+                    maxRetryCount: 3,
+                    maxRetryDelay: TimeSpan.FromSeconds(5),
+                    errorNumbersToAdd: null);
+            });
+
+            configureOptions?.Invoke(options);
+        });
+
+        builder.Services.AddScoped<IWorkflowDefinitionStore, EfCoreWorkflowDefinitionStore>();
+        builder.Services.AddScoped<IWorkflowInstanceStore, EfCoreWorkflowInstanceStore>();
+        builder.Services.AddScoped<IWorkflowTimerStore, EfCoreWorkflowTimerStore>();
+
+        return builder;
+    }
+
+    /// <summary>
+    /// Adds EF Core stores using an existing DbContext options configuration.
+    /// </summary>
+    public static WorkflowEngineBuilder UseEfCoreStores(
+        this WorkflowEngineBuilder builder,
+        Action<DbContextOptionsBuilder> configureOptions)
+    {
+        builder.Services.AddDbContext<WorkflowDbContext>(configureOptions);
+
+        builder.Services.AddScoped<IWorkflowDefinitionStore, EfCoreWorkflowDefinitionStore>();
+        builder.Services.AddScoped<IWorkflowInstanceStore, EfCoreWorkflowInstanceStore>();
+        builder.Services.AddScoped<IWorkflowTimerStore, EfCoreWorkflowTimerStore>();
+
         return builder;
     }
 

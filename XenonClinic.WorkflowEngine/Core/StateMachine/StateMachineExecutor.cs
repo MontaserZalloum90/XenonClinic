@@ -249,14 +249,25 @@ public class StateMachineExecutor<TState> : IStateMachineExecutor<TState> where 
             return StateTransitionResult<TState>.Failed(currentState, errorMessage, "INVALID_TRANSITION");
         }
 
-        // Create context
-        var context = new StateContext<TState, TEntity>(entity, currentState, targetState, options);
+        // Create context with cancellation token
+        var context = new StateContext<TState, TEntity>(entity, currentState, targetState, options, cancellationToken);
+
+        // Check for cancellation before guard evaluation
+        if (cancellationToken.IsCancellationRequested)
+        {
+            _logger.LogInformation("Transition cancelled before guard evaluation from {FromState} to {ToState}",
+                currentState, targetState);
+            return StateTransitionResult<TState>.Failed(currentState, "Transition cancelled", "CANCELLED");
+        }
 
         // Evaluate guards
         if (!options.SkipGuards && transition.Guards?.Count > 0)
         {
             foreach (var guard in transition.Guards)
             {
+                // Check cancellation between guard evaluations
+                cancellationToken.ThrowIfCancellationRequested();
+
                 try
                 {
                     var result = await guard.EvaluateAsync(entity, context);
@@ -269,6 +280,12 @@ public class StateMachineExecutor<TState> : IStateMachineExecutor<TState> where 
                         return StateTransitionResult<TState>.Failed(
                             currentState, message, result.ErrorCode ?? "GUARD_FAILED", guard.Id);
                     }
+                }
+                catch (OperationCanceledException)
+                {
+                    _logger.LogInformation("Transition cancelled during guard evaluation from {FromState} to {ToState}",
+                        currentState, targetState);
+                    return StateTransitionResult<TState>.Failed(currentState, "Transition cancelled", "CANCELLED");
                 }
                 catch (Exception ex)
                 {
@@ -291,6 +308,7 @@ public class StateMachineExecutor<TState> : IStateMachineExecutor<TState> where 
                 {
                     foreach (var action in currentStateDef.OnExit)
                     {
+                        cancellationToken.ThrowIfCancellationRequested();
                         await action.ExecuteAsync(entity, context);
                         executedActions.Add($"exit:{action.Id}");
                     }
@@ -301,6 +319,7 @@ public class StateMachineExecutor<TState> : IStateMachineExecutor<TState> where 
                 {
                     foreach (var action in transition.Actions)
                     {
+                        cancellationToken.ThrowIfCancellationRequested();
                         await action.ExecuteAsync(entity, context);
                         executedActions.Add($"transition:{action.Id}");
                     }
@@ -312,6 +331,7 @@ public class StateMachineExecutor<TState> : IStateMachineExecutor<TState> where 
                 {
                     foreach (var action in targetStateDef.OnEntry)
                     {
+                        cancellationToken.ThrowIfCancellationRequested();
                         await action.ExecuteAsync(entity, context);
                         executedActions.Add($"entry:{action.Id}");
                     }
@@ -322,6 +342,13 @@ public class StateMachineExecutor<TState> : IStateMachineExecutor<TState> where 
                 currentState, targetState, stateMachine.Id);
 
             return StateTransitionResult<TState>.Success(currentState, targetState, executedActions);
+        }
+        catch (OperationCanceledException)
+        {
+            _logger.LogInformation("Transition cancelled during action execution from {FromState} to {ToState}",
+                currentState, targetState);
+            return StateTransitionResult<TState>.Failed(
+                currentState, "Transition cancelled during action execution", "CANCELLED");
         }
         catch (Exception ex)
         {
@@ -351,7 +378,7 @@ public class StateMachineExecutor<TState> : IStateMachineExecutor<TState> where 
 
             if (transition.Guards?.Count > 0)
             {
-                var context = new StateContext<TState, TEntity>(entity, currentState, transition.ToState, options);
+                var context = new StateContext<TState, TEntity>(entity, currentState, transition.ToState, options, cancellationToken);
 
                 foreach (var guard in transition.Guards)
                 {
@@ -429,7 +456,7 @@ public class StateMachineExecutor<TState> : IStateMachineExecutor<TState> where 
         }
 
         options ??= new StateTransitionOptions();
-        var context = new StateContext<TState, TEntity>(entity, currentState, targetState, options);
+        var context = new StateContext<TState, TEntity>(entity, currentState, targetState, options, cancellationToken);
         var guardResults = new List<GuardEvaluationResult>();
         var allPassed = true;
 
@@ -490,7 +517,12 @@ internal class StateContext<TState, TEntity> : IStateContext<TState, TEntity> wh
     public IServiceProvider ServiceProvider { get; }
     public CancellationToken CancellationToken { get; }
 
-    public StateContext(TEntity entity, TState currentState, TState? targetState, StateTransitionOptions options)
+    public StateContext(
+        TEntity entity,
+        TState currentState,
+        TState? targetState,
+        StateTransitionOptions options,
+        CancellationToken cancellationToken = default)
     {
         Entity = entity;
         CurrentState = currentState;
@@ -499,7 +531,7 @@ internal class StateContext<TState, TEntity> : IStateContext<TState, TEntity> wh
         UserId = options.UserId;
         Data = options.Data;
         ServiceProvider = options.ServiceProvider ?? EmptyServiceProvider.Instance;
-        CancellationToken = default;
+        CancellationToken = cancellationToken;
     }
 }
 
