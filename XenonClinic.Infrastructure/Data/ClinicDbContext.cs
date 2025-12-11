@@ -24,6 +24,7 @@ using XenonClinic.Core.Entities.SleepMedicine;
 using XenonClinic.Core.Entities.Veterinary;
 using XenonClinic.Core.Interfaces;
 using XenonClinic.Infrastructure.Entities;
+using XenonClinic.Infrastructure.Services;
 
 namespace XenonClinic.Infrastructure.Data;
 
@@ -126,6 +127,115 @@ public class ClinicDbContext : IdentityDbContext<Entities.ApplicationUser>
 
     // OAuth Linked Accounts
     public DbSet<OAuthLinkedAccount> OAuthLinkedAccounts => Set<OAuthLinkedAccount>();
+
+    // ========================================
+    // Payment Gateway Entities
+    // ========================================
+    public DbSet<PaymentGatewayConfig> PaymentGatewayConfigs => Set<PaymentGatewayConfig>();
+    public DbSet<PaymentGatewayTransaction> PaymentGatewayTransactions => Set<PaymentGatewayTransaction>();
+
+    // ========================================
+    // Insurance Entities
+    // ========================================
+    public DbSet<InsuranceProvider> InsuranceProviders => Set<InsuranceProvider>();
+    public DbSet<InsurancePlan> InsurancePlans => Set<InsurancePlan>();
+    public DbSet<PatientInsurance> PatientInsurances => Set<PatientInsurance>();
+    public DbSet<InsuranceClaim> InsuranceClaims => Set<InsuranceClaim>();
+    public DbSet<InsuranceClaimItem> InsuranceClaimItems => Set<InsuranceClaimItem>();
+    public DbSet<InsurancePreAuthorization> InsurancePreAuthorizations => Set<InsurancePreAuthorization>();
+
+    // ========================================
+    // Medical Coding Entities
+    // ========================================
+    public DbSet<ICD10Code> ICD10Codes => Set<ICD10Code>();
+    public DbSet<CPTCode> CPTCodes => Set<CPTCode>();
+    public DbSet<HCPCSCode> HCPCSCodes => Set<HCPCSCode>();
+    public DbSet<MedicalCodeModifier> MedicalCodeModifiers => Set<MedicalCodeModifier>();
+
+    // ========================================
+    // Payroll Entities
+    // ========================================
+    public DbSet<PayrollPeriod> PayrollPeriods => Set<PayrollPeriod>();
+    public DbSet<Payslip> Payslips => Set<Payslip>();
+    public DbSet<WpsSubmission> WpsSubmissions => Set<WpsSubmission>();
+    public DbSet<SalaryComponent> SalaryComponents => Set<SalaryComponent>();
+    public DbSet<TaxConfiguration> TaxConfigurations => Set<TaxConfiguration>();
+
+    // ========================================
+    // DICOM/PACS Entities
+    // ========================================
+    public DbSet<DicomStudy> DicomStudies => Set<DicomStudy>();
+    public DbSet<DicomSeries> DicomSeries => Set<DicomSeries>();
+    public DbSet<DicomInstance> DicomInstances => Set<DicomInstance>();
+    public DbSet<RadiologyReport> RadiologyReports => Set<RadiologyReport>();
+    public DbSet<PacsServerConfig> PacsServerConfigs => Set<PacsServerConfig>();
+    public DbSet<DicomWorklistEntry> DicomWorklistEntries => Set<DicomWorklistEntry>();
+
+    // ========================================
+    // Patient Portal Entities
+    // ========================================
+    public DbSet<PortalAccount> PortalAccounts => Set<PortalAccount>();
+    public DbSet<MessageThread> MessageThreads => Set<MessageThread>();
+    public DbSet<Message> Messages => Set<Message>();
+    public DbSet<MessageAttachment> MessageAttachments => Set<MessageAttachment>();
+    public DbSet<RefillRequest> RefillRequests => Set<RefillRequest>();
+    public DbSet<PatientNotification> PatientNotifications => Set<PatientNotification>();
+    public DbSet<NotificationPreferences> NotificationPreferences => Set<NotificationPreferences>();
+
+    // ========================================
+    // Push Notification Entities
+    // ========================================
+    public DbSet<PushDevice> PushDevices => Set<PushDevice>();
+    public DbSet<PushNotificationTopic> PushNotificationTopics => Set<PushNotificationTopic>();
+    public DbSet<TopicSubscription> TopicSubscriptions => Set<TopicSubscription>();
+    public DbSet<NotificationTemplate> NotificationTemplates => Set<NotificationTemplate>();
+    public DbSet<NotificationTemplateLocalization> NotificationTemplateLocalizations => Set<NotificationTemplateLocalization>();
+    public DbSet<ScheduledPushNotification> ScheduledPushNotifications => Set<ScheduledPushNotification>();
+    public DbSet<PushNotificationHistoryEntry> PushNotificationHistory => Set<PushNotificationHistoryEntry>();
+    public DbSet<PushConfiguration> PushConfigurations => Set<PushConfiguration>();
+
+    // ========================================
+    // Custom Report Builder Entities
+    // ========================================
+    public DbSet<CustomReportDefinition> CustomReportDefinitions => Set<CustomReportDefinition>();
+    public DbSet<ReportSchedule> ReportSchedules => Set<ReportSchedule>();
+    public DbSet<SavedReport> SavedReports => Set<SavedReport>();
+    public DbSet<ReportExecutionHistoryEntry> ReportExecutionHistory => Set<ReportExecutionHistoryEntry>();
+    public DbSet<ReportWidget> ReportWidgets => Set<ReportWidget>();
+    public DbSet<ReportPermission> ReportPermissions => Set<ReportPermission>();
+
+    // ========================================
+    // Calendar Sync Entities
+    // ========================================
+    public DbSet<CalendarConnection> CalendarConnections => Set<CalendarConnection>();
+    public DbSet<CalendarSyncSettings> CalendarSyncSettings => Set<CalendarSyncSettings>();
+    public DbSet<AppointmentCalendarMapping> AppointmentCalendarMappings => Set<AppointmentCalendarMapping>();
+    public DbSet<CalendarSyncHistoryEntry> CalendarSyncHistory => Set<CalendarSyncHistoryEntry>();
+    public DbSet<CalendarSyncConflict> CalendarSyncConflicts => Set<CalendarSyncConflict>();
+    public DbSet<OAuthConfig> OAuthConfigs => Set<OAuthConfig>();
+    public DbSet<OAuthState> OAuthStates => Set<OAuthState>();
+
+    // ========================================
+    // Drug Database Entities
+    // ========================================
+    public DbSet<FormularyDrug> FormularyDrugs => Set<FormularyDrug>();
+    public DbSet<DrugPricing> DrugPricings => Set<DrugPricing>();
+    public DbSet<PatientAssistanceProgram> PatientAssistancePrograms => Set<PatientAssistanceProgram>();
+    public DbSet<ControlledSubstanceInfo> ControlledSubstanceInfos => Set<ControlledSubstanceInfo>();
+    public DbSet<DrugAdverseEvent> DrugAdverseEvents => Set<DrugAdverseEvent>();
+    public DbSet<DrugDatabaseUpdate> DrugDatabaseUpdates => Set<DrugDatabaseUpdate>();
+
+    // ========================================
+    // Advanced Analytics & BI Dashboard Entities
+    // ========================================
+    public DbSet<AnalyticsDashboard> AnalyticsDashboards => Set<AnalyticsDashboard>();
+    public DbSet<AnalyticsDashboardWidget> AnalyticsDashboardWidgets => Set<AnalyticsDashboardWidget>();
+    public DbSet<AnalyticsAlert> AnalyticsAlerts => Set<AnalyticsAlert>();
+    public DbSet<AnalyticsAlertRule> AnalyticsAlertRules => Set<AnalyticsAlertRule>();
+    public DbSet<AnalyticsAnomaly> AnalyticsAnomalies => Set<AnalyticsAnomaly>();
+    public DbSet<DashboardShare> DashboardShares => Set<DashboardShare>();
+    public DbSet<DashboardShareLink> DashboardShareLinks => Set<DashboardShareLink>();
+    public DbSet<AnalyticsDashboardSubscription> AnalyticsDashboardSubscriptions => Set<AnalyticsDashboardSubscription>();
 
     // ========================================
     // Dental Clinic Entities
