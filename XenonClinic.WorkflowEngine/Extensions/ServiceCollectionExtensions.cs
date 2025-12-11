@@ -70,9 +70,19 @@ public static class ServiceCollectionExtensions
         // Email notification handler
         services.AddScoped<IExternalEventHandler, EmailNotificationEventHandler>();
 
+        // Enterprise workflow services - Phase 4: Advanced Features
+        services.TryAddScoped<ITenantService, TenantService>();
+        services.TryAddScoped<ITenantContextAccessor, TenantContextAccessor>();
+        services.TryAddScoped<IProcessMigrationService, ProcessMigrationService>();
+        services.TryAddScoped<ICompensationService, CompensationService>();
+        services.TryAddScoped<IWorkflowAuthorizationService, WorkflowAuthorizationService>();
+        services.TryAddSingleton<IWorkflowCacheService, InMemoryWorkflowCacheService>();
+        services.TryAddSingleton<IDistributedExecutionService, DistributedExecutionService>();
+
         // HTTP clients
         services.AddHttpClient("WorkflowServiceTask");
         services.AddHttpClient("WebhookDelivery");
+        services.AddHttpClient("CompensationService");
 
         // Email configuration
         services.Configure<EmailConfiguration>(options =>
