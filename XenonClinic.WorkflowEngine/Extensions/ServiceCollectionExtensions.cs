@@ -3,9 +3,11 @@ namespace XenonClinic.WorkflowEngine.Extensions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using XenonClinic.WorkflowEngine.Application.Services;
 using XenonClinic.WorkflowEngine.Core.Abstractions;
 using XenonClinic.WorkflowEngine.Core.Engine;
 using XenonClinic.WorkflowEngine.Core.StateMachine;
+using XenonClinic.WorkflowEngine.Infrastructure.Data;
 using XenonClinic.WorkflowEngine.Persistence.Abstractions;
 using XenonClinic.WorkflowEngine.Persistence.EfCore;
 using XenonClinic.WorkflowEngine.Services;
@@ -38,6 +40,13 @@ public static class ServiceCollectionExtensions
 
         // Designer services
         services.TryAddScoped<IWorkflowDesignerService, WorkflowDesignerService>();
+
+        // Enterprise workflow services
+        services.TryAddScoped<IProcessDefinitionService, ProcessDefinitionService>();
+        services.TryAddScoped<IProcessExecutionService, ProcessExecutionService>();
+        services.TryAddScoped<IHumanTaskService, HumanTaskService>();
+        services.TryAddScoped<IExpressionEvaluator, ExpressionEvaluator>();
+        services.TryAddScoped<IAuditService, AuditService>();
 
         return services;
     }
@@ -95,6 +104,42 @@ public static class ServiceCollectionExtensions
         builder.Services.AddScoped<IWorkflowInstanceStore, EfCoreWorkflowInstanceStore>();
         builder.Services.AddScoped<IWorkflowTimerStore, EfCoreWorkflowTimerStore>();
 
+        return builder;
+    }
+
+    /// <summary>
+    /// Adds the enterprise workflow engine with full persistence using the specified connection string.
+    /// This includes process definitions, instances, human tasks, timers, and audit events.
+    /// </summary>
+    public static WorkflowEngineBuilder UseEnterpriseWorkflowEngine(
+        this WorkflowEngineBuilder builder,
+        string connectionString,
+        Action<DbContextOptionsBuilder>? configureOptions = null)
+    {
+        builder.Services.AddDbContext<WorkflowEngineDbContext>(options =>
+        {
+            options.UseSqlServer(connectionString, sqlOptions =>
+            {
+                sqlOptions.EnableRetryOnFailure(
+                    maxRetryCount: 3,
+                    maxRetryDelay: TimeSpan.FromSeconds(5),
+                    errorNumbersToAdd: null);
+            });
+
+            configureOptions?.Invoke(options);
+        });
+
+        return builder;
+    }
+
+    /// <summary>
+    /// Adds the enterprise workflow engine using an existing DbContext options configuration.
+    /// </summary>
+    public static WorkflowEngineBuilder UseEnterpriseWorkflowEngine(
+        this WorkflowEngineBuilder builder,
+        Action<DbContextOptionsBuilder> configureOptions)
+    {
+        builder.Services.AddDbContext<WorkflowEngineDbContext>(configureOptions);
         return builder;
     }
 
