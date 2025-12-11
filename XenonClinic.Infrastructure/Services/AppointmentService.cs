@@ -32,6 +32,7 @@ public class AppointmentService : IAppointmentService
     public async Task<IEnumerable<Appointment>> GetAppointmentsByBranchIdAsync(int branchId)
     {
         return await _context.Appointments
+            .AsNoTracking()
             .Include(a => a.Patient)
             .Include(a => a.Provider)
             .Where(a => a.BranchId == branchId)
@@ -42,6 +43,7 @@ public class AppointmentService : IAppointmentService
     public async Task<IEnumerable<Appointment>> GetAppointmentsByPatientIdAsync(int patientId)
     {
         return await _context.Appointments
+            .AsNoTracking()
             .Include(a => a.Branch)
             .Include(a => a.Provider)
             .Where(a => a.PatientId == patientId)
@@ -52,6 +54,7 @@ public class AppointmentService : IAppointmentService
     public async Task<IEnumerable<Appointment>> GetAppointmentsByProviderIdAsync(int providerId)
     {
         return await _context.Appointments
+            .AsNoTracking()
             .Include(a => a.Patient)
             .Include(a => a.Branch)
             .Where(a => a.ProviderId == providerId)
@@ -65,6 +68,7 @@ public class AppointmentService : IAppointmentService
         var endOfDay = startOfDay.AddDays(1);
 
         return await _context.Appointments
+            .AsNoTracking()
             .Include(a => a.Patient)
             .Include(a => a.Provider)
             .Where(a => a.BranchId == branchId &&
@@ -95,6 +99,7 @@ public class AppointmentService : IAppointmentService
     public async Task<IEnumerable<Appointment>> GetAppointmentsByStatusAsync(int branchId, AppointmentStatus status)
     {
         return await _context.Appointments
+            .AsNoTracking()
             .Include(a => a.Patient)
             .Include(a => a.Provider)
             .Where(a => a.BranchId == branchId && a.Status == status)

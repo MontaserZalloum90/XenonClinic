@@ -47,6 +47,7 @@ public class LabService : ILabService
     public async Task<IEnumerable<LabOrder>> GetLabOrdersByBranchIdAsync(int branchId)
     {
         return await _context.LabOrders
+            .AsNoTracking()
             .Include(lo => lo.Patient)
             .Include(lo => lo.ExternalLab)
             .Include(lo => lo.Items)
@@ -58,6 +59,7 @@ public class LabService : ILabService
     public async Task<IEnumerable<LabOrder>> GetLabOrdersByPatientIdAsync(int patientId)
     {
         return await _context.LabOrders
+            .AsNoTracking()
             .Include(lo => lo.Branch)
             .Include(lo => lo.Items)
                 .ThenInclude(i => i.LabTest)
@@ -70,6 +72,7 @@ public class LabService : ILabService
     public async Task<IEnumerable<LabOrder>> GetLabOrdersByStatusAsync(int branchId, LabOrderStatus status)
     {
         return await _context.LabOrders
+            .AsNoTracking()
             .Include(lo => lo.Patient)
             .Include(lo => lo.Items)
             .Where(lo => lo.BranchId == branchId && lo.Status == status)
@@ -85,6 +88,7 @@ public class LabService : ILabService
     public async Task<IEnumerable<LabOrder>> GetUrgentLabOrdersAsync(int branchId)
     {
         return await _context.LabOrders
+            .AsNoTracking()
             .Include(lo => lo.Patient)
             .Include(lo => lo.Items)
             .Where(lo => lo.BranchId == branchId && lo.IsUrgent && lo.Status != LabOrderStatus.Completed && lo.Status != LabOrderStatus.Cancelled)
@@ -185,6 +189,7 @@ public class LabService : ILabService
     public async Task<IEnumerable<LabTest>> GetLabTestsByBranchIdAsync(int branchId)
     {
         return await _context.LabTests
+            .AsNoTracking()
             .Include(lt => lt.ExternalLab)
             .Where(lt => lt.BranchId == branchId)
             .OrderBy(lt => lt.TestName)
@@ -194,6 +199,7 @@ public class LabService : ILabService
     public async Task<IEnumerable<LabTest>> GetActiveLabTestsAsync(int branchId)
     {
         return await _context.LabTests
+            .AsNoTracking()
             .Include(lt => lt.ExternalLab)
             .Where(lt => lt.BranchId == branchId && lt.IsActive)
             .OrderBy(lt => lt.TestName)
@@ -203,6 +209,7 @@ public class LabService : ILabService
     public async Task<IEnumerable<LabTest>> GetLabTestsByCategoryAsync(int branchId, TestCategory category)
     {
         return await _context.LabTests
+            .AsNoTracking()
             .Where(lt => lt.BranchId == branchId && lt.Category == category && lt.IsActive)
             .OrderBy(lt => lt.TestName)
             .ToListAsync();
@@ -276,6 +283,7 @@ public class LabService : ILabService
     public async Task<IEnumerable<LabResult>> GetLabResultsByOrderIdAsync(int labOrderId)
     {
         return await _context.LabResults
+            .AsNoTracking()
             .Include(lr => lr.LabOrder)
             .Include(lr => lr.LabTest)
             .Where(lr => lr.LabOrderId == labOrderId)
@@ -286,6 +294,7 @@ public class LabService : ILabService
     public async Task<IEnumerable<LabResult>> GetLabResultsByPatientIdAsync(int patientId)
     {
         return await _context.LabResults
+            .AsNoTracking()
             .Include(lr => lr.LabOrder)
             .Include(lr => lr.LabTest)
             .Where(lr => lr.LabOrder!.PatientId == patientId)
@@ -359,6 +368,7 @@ public class LabService : ILabService
     public async Task<IEnumerable<ExternalLab>> GetExternalLabsByBranchIdAsync(int branchId)
     {
         return await _context.ExternalLabs
+            .AsNoTracking()
             .Where(el => el.BranchId == branchId)
             .OrderBy(el => el.Name)
             .ToListAsync();
@@ -367,6 +377,7 @@ public class LabService : ILabService
     public async Task<IEnumerable<ExternalLab>> GetActiveExternalLabsAsync(int branchId)
     {
         return await _context.ExternalLabs
+            .AsNoTracking()
             .Where(el => el.BranchId == branchId && el.IsActive)
             .OrderBy(el => el.Name)
             .ToListAsync();

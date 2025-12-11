@@ -45,6 +45,7 @@ public class SalesService : ISalesService
     public async Task<IEnumerable<Sale>> GetSalesByBranchIdAsync(int branchId)
     {
         return await _context.Sales
+            .AsNoTracking()
             .Include(s => s.Patient)
             .Include(s => s.Branch)
             .Include(s => s.Items)
@@ -57,6 +58,7 @@ public class SalesService : ISalesService
     public async Task<IEnumerable<Sale>> GetSalesByPatientIdAsync(int patientId)
     {
         return await _context.Sales
+            .AsNoTracking()
             .Include(s => s.Items)
             .Include(s => s.Payments)
             .Where(s => s.PatientId == patientId)
@@ -67,6 +69,7 @@ public class SalesService : ISalesService
     public async Task<IEnumerable<Sale>> GetSalesByStatusAsync(int branchId, SaleStatus status)
     {
         return await _context.Sales
+            .AsNoTracking()
             .Include(s => s.Patient)
             .Where(s => s.BranchId == branchId && s.Status == status)
             .OrderByDescending(s => s.SaleDate)
@@ -76,6 +79,7 @@ public class SalesService : ISalesService
     public async Task<IEnumerable<Sale>> GetSalesByPaymentStatusAsync(int branchId, PaymentStatus status)
     {
         return await _context.Sales
+            .AsNoTracking()
             .Include(s => s.Patient)
             .Where(s => s.BranchId == branchId && s.PaymentStatus == status)
             .OrderByDescending(s => s.SaleDate)
@@ -85,6 +89,7 @@ public class SalesService : ISalesService
     public async Task<IEnumerable<Sale>> GetSalesByDateRangeAsync(int branchId, DateTime startDate, DateTime endDate)
     {
         return await _context.Sales
+            .AsNoTracking()
             .Include(s => s.Patient)
             .Include(s => s.Items)
             .Where(s => s.BranchId == branchId &&
@@ -98,6 +103,7 @@ public class SalesService : ISalesService
     {
         var now = DateTime.UtcNow;
         return await _context.Sales
+            .AsNoTracking()
             .Include(s => s.Patient)
             .Where(s => s.BranchId == branchId &&
                    s.DueDate.HasValue &&

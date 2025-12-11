@@ -32,6 +32,7 @@ public class FinancialService : IFinancialService
     public async Task<IEnumerable<Account>> GetAccountsByBranchIdAsync(int branchId)
     {
         return await _context.Accounts
+            .AsNoTracking()
             .Where(a => a.BranchId == branchId)
             .OrderBy(a => a.AccountName)
             .ToListAsync();
@@ -40,6 +41,7 @@ public class FinancialService : IFinancialService
     public async Task<IEnumerable<Account>> GetAccountsByTypeAsync(int branchId, AccountType accountType)
     {
         return await _context.Accounts
+            .AsNoTracking()
             .Where(a => a.BranchId == branchId && a.AccountType == accountType)
             .OrderBy(a => a.AccountName)
             .ToListAsync();
@@ -106,6 +108,7 @@ public class FinancialService : IFinancialService
     public async Task<IEnumerable<FinancialTransaction>> GetTransactionsByBranchIdAsync(int branchId)
     {
         return await _context.FinancialTransactions
+            .AsNoTracking()
             .Include(t => t.Account)
             .Where(t => t.Account!.BranchId == branchId)
             .OrderByDescending(t => t.TransactionDate)
@@ -115,6 +118,7 @@ public class FinancialService : IFinancialService
     public async Task<IEnumerable<FinancialTransaction>> GetTransactionsByAccountIdAsync(int accountId)
     {
         return await _context.FinancialTransactions
+            .AsNoTracking()
             .Where(t => t.AccountId == accountId)
             .OrderByDescending(t => t.TransactionDate)
             .ToListAsync();
@@ -129,6 +133,7 @@ public class FinancialService : IFinancialService
         }
 
         return await _context.FinancialTransactions
+            .AsNoTracking()
             .Include(t => t.Account)
             .Where(t => t.Account!.BranchId == branchId &&
                    t.TransactionDate >= startDate &&
@@ -232,6 +237,7 @@ public class FinancialService : IFinancialService
     public async Task<IEnumerable<Invoice>> GetInvoicesByBranchIdAsync(int branchId)
     {
         return await _context.Invoices
+            .AsNoTracking()
             .Where(i => i.BranchId == branchId)
             .OrderByDescending(i => i.InvoiceDate)
             .ToListAsync();
@@ -240,6 +246,7 @@ public class FinancialService : IFinancialService
     public async Task<IEnumerable<Invoice>> GetInvoicesByStatusAsync(int branchId, InvoiceStatus status)
     {
         return await _context.Invoices
+            .AsNoTracking()
             .Where(i => i.BranchId == branchId && i.Status == status)
             .OrderByDescending(i => i.InvoiceDate)
             .ToListAsync();
@@ -316,6 +323,7 @@ public class FinancialService : IFinancialService
     public async Task<IEnumerable<Expense>> GetExpensesByBranchIdAsync(int branchId)
     {
         return await _context.Expenses
+            .AsNoTracking()
             .Include(e => e.Category)
             .Where(e => e.BranchId == branchId)
             .OrderByDescending(e => e.ExpenseDate)
@@ -325,6 +333,7 @@ public class FinancialService : IFinancialService
     public async Task<IEnumerable<Expense>> GetExpensesByCategoryAsync(int branchId, int categoryId)
     {
         return await _context.Expenses
+            .AsNoTracking()
             .Where(e => e.BranchId == branchId && e.CategoryId == categoryId)
             .OrderByDescending(e => e.ExpenseDate)
             .ToListAsync();

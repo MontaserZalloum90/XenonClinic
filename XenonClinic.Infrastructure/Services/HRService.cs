@@ -51,6 +51,7 @@ public class HRService : IHRService
     public async Task<IEnumerable<Employee>> GetEmployeesByBranchIdAsync(int branchId)
     {
         return await _context.Employees
+            .AsNoTracking()
             .Include(e => e.Department)
             .Include(e => e.JobPosition)
             .Where(e => e.BranchId == branchId)
@@ -61,6 +62,7 @@ public class HRService : IHRService
     public async Task<IEnumerable<Employee>> GetActiveEmployeesAsync(int branchId)
     {
         return await _context.Employees
+            .AsNoTracking()
             .Include(e => e.Department)
             .Include(e => e.JobPosition)
             .Where(e => e.BranchId == branchId && e.EmploymentStatus == EmploymentStatus.Active)
@@ -71,6 +73,7 @@ public class HRService : IHRService
     public async Task<IEnumerable<Employee>> GetEmployeesByDepartmentAsync(int departmentId)
     {
         return await _context.Employees
+            .AsNoTracking()
             .Include(e => e.JobPosition)
             .Where(e => e.DepartmentId == departmentId)
             .OrderBy(e => e.FullNameEn)
@@ -80,6 +83,7 @@ public class HRService : IHRService
     public async Task<IEnumerable<Employee>> GetEmployeesByPositionAsync(int jobPositionId)
     {
         return await _context.Employees
+            .AsNoTracking()
             .Include(e => e.Department)
             .Where(e => e.JobPositionId == jobPositionId)
             .OrderBy(e => e.FullNameEn)
@@ -89,6 +93,7 @@ public class HRService : IHRService
     public async Task<IEnumerable<Employee>> GetEmployeesByStatusAsync(int branchId, EmploymentStatus status)
     {
         return await _context.Employees
+            .AsNoTracking()
             .Include(e => e.Department)
             .Include(e => e.JobPosition)
             .Where(e => e.BranchId == branchId && e.EmploymentStatus == status)
@@ -98,6 +103,43 @@ public class HRService : IHRService
 
     public async Task<Employee> CreateEmployeeAsync(Employee employee)
     {
+        ArgumentNullException.ThrowIfNull(employee);
+
+        // Validate branch exists
+        var branchExists = await _context.Branches.AnyAsync(b => b.Id == employee.BranchId);
+        if (!branchExists)
+        {
+            throw new KeyNotFoundException($"Branch with ID {employee.BranchId} not found");
+        }
+
+        // Validate department exists if specified
+        if (employee.DepartmentId > 0)
+        {
+            var departmentExists = await _context.Departments.AnyAsync(d => d.Id == employee.DepartmentId);
+            if (!departmentExists)
+            {
+                throw new KeyNotFoundException($"Department with ID {employee.DepartmentId} not found");
+            }
+        }
+
+        // Validate job position exists if specified
+        if (employee.JobPositionId.HasValue)
+        {
+            var positionExists = await _context.JobPositions.AnyAsync(jp => jp.Id == employee.JobPositionId.Value);
+            if (!positionExists)
+            {
+                throw new KeyNotFoundException($"Job position with ID {employee.JobPositionId.Value} not found");
+            }
+        }
+
+        // Check for duplicate employee code
+        var duplicateCode = await _context.Employees
+            .AnyAsync(e => e.EmployeeCode == employee.EmployeeCode && e.BranchId == employee.BranchId);
+        if (duplicateCode)
+        {
+            throw new InvalidOperationException($"An employee with code '{employee.EmployeeCode}' already exists in this branch");
+        }
+
         _context.Employees.Add(employee);
         await _context.SaveChangesAsync();
         return employee;
@@ -105,7 +147,17 @@ public class HRService : IHRService
 
     public async Task UpdateEmployeeAsync(Employee employee)
     {
-        _context.Employees.Update(employee);
+        ArgumentNullException.ThrowIfNull(employee);
+
+        // Validate employee exists
+        var existingEmployee = await _context.Employees.FindAsync(employee.Id);
+        if (existingEmployee == null)
+        {
+            throw new KeyNotFoundException($"Employee with ID {employee.Id} not found");
+        }
+
+        employee.UpdatedAt = DateTime.UtcNow;
+        _context.Entry(existingEmployee).CurrentValues.SetValues(employee);
         await _context.SaveChangesAsync();
     }
 
@@ -138,6 +190,7 @@ public class HRService : IHRService
     public async Task<IEnumerable<Attendance>> GetAttendanceByEmployeeIdAsync(int employeeId, DateTime startDate, DateTime endDate)
     {
         return await _context.Attendances
+            .AsNoTracking()
             .Include(a => a.Employee)
             .Where(a => a.EmployeeId == employeeId && a.Date >= startDate.Date && a.Date <= endDate.Date)
             .OrderByDescending(a => a.Date)
@@ -147,6 +200,7 @@ public class HRService : IHRService
     public async Task<IEnumerable<Attendance>> GetAttendanceByBranchIdAsync(int branchId, DateTime date)
     {
         return await _context.Attendances
+            .AsNoTracking()
             .Include(a => a.Employee)
                 .ThenInclude(e => e.Department)
             .Where(a => a.Employee!.BranchId == branchId && a.Date.Date == date.Date)
@@ -184,6 +238,23 @@ public class HRService : IHRService
 
     public async Task<Attendance> CreateAttendanceAsync(Attendance attendance)
     {
+        ArgumentNullException.ThrowIfNull(attendance);
+
+        // Validate employee exists
+        var employeeExists = await _context.Employees.AnyAsync(e => e.Id == attendance.EmployeeId);
+        if (!employeeExists)
+        {
+            throw new KeyNotFoundException($"Employee with ID {attendance.EmployeeId} not found");
+        }
+
+        // Check for duplicate attendance on the same day
+        var duplicateAttendance = await _context.Attendances
+            .AnyAsync(a => a.EmployeeId == attendance.EmployeeId && a.Date.Date == attendance.Date.Date);
+        if (duplicateAttendance)
+        {
+            throw new InvalidOperationException($"Attendance record already exists for employee {attendance.EmployeeId} on {attendance.Date:yyyy-MM-dd}");
+        }
+
         _context.Attendances.Add(attendance);
         await _context.SaveChangesAsync();
         return attendance;
@@ -191,7 +262,16 @@ public class HRService : IHRService
 
     public async Task UpdateAttendanceAsync(Attendance attendance)
     {
-        _context.Attendances.Update(attendance);
+        ArgumentNullException.ThrowIfNull(attendance);
+
+        // Validate attendance exists
+        var existingAttendance = await _context.Attendances.FindAsync(attendance.Id);
+        if (existingAttendance == null)
+        {
+            throw new KeyNotFoundException($"Attendance record with ID {attendance.Id} not found");
+        }
+
+        _context.Entry(existingAttendance).CurrentValues.SetValues(attendance);
         await _context.SaveChangesAsync();
     }
 
@@ -253,6 +333,7 @@ public class HRService : IHRService
     public async Task<IEnumerable<LeaveRequest>> GetLeaveRequestsByEmployeeIdAsync(int employeeId)
     {
         return await _context.LeaveRequests
+            .AsNoTracking()
             .Where(lr => lr.EmployeeId == employeeId)
             .OrderByDescending(lr => lr.RequestDate)
             .ToListAsync();
@@ -261,6 +342,7 @@ public class HRService : IHRService
     public async Task<IEnumerable<LeaveRequest>> GetLeaveRequestsByBranchIdAsync(int branchId)
     {
         return await _context.LeaveRequests
+            .AsNoTracking()
             .Include(lr => lr.Employee)
             .Where(lr => lr.Employee!.BranchId == branchId)
             .OrderByDescending(lr => lr.RequestDate)
@@ -275,6 +357,7 @@ public class HRService : IHRService
     public async Task<IEnumerable<LeaveRequest>> GetLeaveRequestsByStatusAsync(int branchId, LeaveRequestStatus status)
     {
         return await _context.LeaveRequests
+            .AsNoTracking()
             .Include(lr => lr.Employee)
             .Where(lr => lr.Employee!.BranchId == branchId && lr.Status == status)
             .OrderByDescending(lr => lr.RequestDate)
@@ -283,6 +366,38 @@ public class HRService : IHRService
 
     public async Task<LeaveRequest> CreateLeaveRequestAsync(LeaveRequest leaveRequest)
     {
+        ArgumentNullException.ThrowIfNull(leaveRequest);
+
+        // Validate employee exists
+        var employeeExists = await _context.Employees.AnyAsync(e => e.Id == leaveRequest.EmployeeId);
+        if (!employeeExists)
+        {
+            throw new KeyNotFoundException($"Employee with ID {leaveRequest.EmployeeId} not found");
+        }
+
+        // Validate date range
+        if (leaveRequest.EndDate < leaveRequest.StartDate)
+        {
+            throw new ArgumentException("End date must be greater than or equal to start date");
+        }
+
+        // Validate leave dates are in the future
+        if (leaveRequest.StartDate.Date < DateTime.UtcNow.Date)
+        {
+            throw new InvalidOperationException("Leave request start date cannot be in the past");
+        }
+
+        // Check for overlapping leave requests
+        var overlappingRequest = await _context.LeaveRequests
+            .AnyAsync(lr => lr.EmployeeId == leaveRequest.EmployeeId &&
+                      lr.Status != LeaveRequestStatus.Rejected &&
+                      lr.StartDate <= leaveRequest.EndDate &&
+                      lr.EndDate >= leaveRequest.StartDate);
+        if (overlappingRequest)
+        {
+            throw new InvalidOperationException("An overlapping leave request already exists for this period");
+        }
+
         _context.LeaveRequests.Add(leaveRequest);
         await _context.SaveChangesAsync();
         return leaveRequest;
@@ -290,7 +405,22 @@ public class HRService : IHRService
 
     public async Task UpdateLeaveRequestAsync(LeaveRequest leaveRequest)
     {
-        _context.LeaveRequests.Update(leaveRequest);
+        ArgumentNullException.ThrowIfNull(leaveRequest);
+
+        // Validate leave request exists
+        var existingRequest = await _context.LeaveRequests.FindAsync(leaveRequest.Id);
+        if (existingRequest == null)
+        {
+            throw new KeyNotFoundException($"Leave request with ID {leaveRequest.Id} not found");
+        }
+
+        // Only allow updates to pending requests
+        if (existingRequest.Status != LeaveRequestStatus.Pending)
+        {
+            throw new InvalidOperationException("Only pending leave requests can be modified");
+        }
+
+        _context.Entry(existingRequest).CurrentValues.SetValues(leaveRequest);
         await _context.SaveChangesAsync();
     }
 
@@ -377,6 +507,7 @@ public class HRService : IHRService
     public async Task<IEnumerable<Department>> GetDepartmentsByBranchIdAsync(int branchId)
     {
         return await _context.Departments
+            .AsNoTracking()
             .Include(d => d.Branch)
             .Include(d => d.Manager)
             .Include(d => d.Employees)
@@ -388,6 +519,7 @@ public class HRService : IHRService
     public async Task<IEnumerable<Department>> GetActiveDepartmentsAsync(int branchId)
     {
         return await _context.Departments
+            .AsNoTracking()
             .Where(d => d.BranchId == branchId && d.IsActive)
             .OrderBy(d => d.Name)
             .ToListAsync();
@@ -395,6 +527,23 @@ public class HRService : IHRService
 
     public async Task<Department> CreateDepartmentAsync(Department department)
     {
+        ArgumentNullException.ThrowIfNull(department);
+
+        // Validate branch exists
+        var branchExists = await _context.Branches.AnyAsync(b => b.Id == department.BranchId);
+        if (!branchExists)
+        {
+            throw new KeyNotFoundException($"Branch with ID {department.BranchId} not found");
+        }
+
+        // Check for duplicate department name in branch
+        var duplicateName = await _context.Departments
+            .AnyAsync(d => d.Name == department.Name && d.BranchId == department.BranchId);
+        if (duplicateName)
+        {
+            throw new InvalidOperationException($"A department with name '{department.Name}' already exists in this branch");
+        }
+
         _context.Departments.Add(department);
         await _context.SaveChangesAsync();
         return department;
@@ -402,15 +551,35 @@ public class HRService : IHRService
 
     public async Task UpdateDepartmentAsync(Department department)
     {
-        _context.Departments.Update(department);
+        ArgumentNullException.ThrowIfNull(department);
+
+        // Validate department exists
+        var existingDept = await _context.Departments.FindAsync(department.Id);
+        if (existingDept == null)
+        {
+            throw new KeyNotFoundException($"Department with ID {department.Id} not found");
+        }
+
+        department.UpdatedAt = DateTime.UtcNow;
+        _context.Entry(existingDept).CurrentValues.SetValues(department);
         await _context.SaveChangesAsync();
     }
 
     public async Task DeleteDepartmentAsync(int id)
     {
-        var department = await _context.Departments.FindAsync(id);
+        var department = await _context.Departments
+            .Include(d => d.Employees)
+            .FirstOrDefaultAsync(d => d.Id == id);
+
         if (department != null)
         {
+            // Check for employees in department
+            if (department.Employees?.Any() == true)
+            {
+                throw new InvalidOperationException(
+                    $"Cannot delete department '{department.Name}' because it has {department.Employees.Count} employees assigned");
+            }
+
             _context.Departments.Remove(department);
             await _context.SaveChangesAsync();
         }
@@ -430,6 +599,7 @@ public class HRService : IHRService
     public async Task<IEnumerable<JobPosition>> GetJobPositionsByBranchIdAsync(int branchId)
     {
         return await _context.JobPositions
+            .AsNoTracking()
             .Include(jp => jp.Employees)
             .Where(jp => jp.BranchId == branchId)
             .OrderBy(jp => jp.Title)
@@ -439,6 +609,7 @@ public class HRService : IHRService
     public async Task<IEnumerable<JobPosition>> GetJobPositionsByDepartmentAsync(int departmentId)
     {
         return await _context.JobPositions
+            .AsNoTracking()
             .Where(jp => jp.DepartmentId == departmentId)
             .OrderBy(jp => jp.Title)
             .ToListAsync();
@@ -446,6 +617,23 @@ public class HRService : IHRService
 
     public async Task<JobPosition> CreateJobPositionAsync(JobPosition jobPosition)
     {
+        ArgumentNullException.ThrowIfNull(jobPosition);
+
+        // Validate branch exists
+        var branchExists = await _context.Branches.AnyAsync(b => b.Id == jobPosition.BranchId);
+        if (!branchExists)
+        {
+            throw new KeyNotFoundException($"Branch with ID {jobPosition.BranchId} not found");
+        }
+
+        // Check for duplicate position title in branch
+        var duplicateTitle = await _context.JobPositions
+            .AnyAsync(jp => jp.Title == jobPosition.Title && jp.BranchId == jobPosition.BranchId);
+        if (duplicateTitle)
+        {
+            throw new InvalidOperationException($"A job position with title '{jobPosition.Title}' already exists in this branch");
+        }
+
         _context.JobPositions.Add(jobPosition);
         await _context.SaveChangesAsync();
         return jobPosition;
@@ -453,15 +641,35 @@ public class HRService : IHRService
 
     public async Task UpdateJobPositionAsync(JobPosition jobPosition)
     {
-        _context.JobPositions.Update(jobPosition);
+        ArgumentNullException.ThrowIfNull(jobPosition);
+
+        // Validate job position exists
+        var existingPosition = await _context.JobPositions.FindAsync(jobPosition.Id);
+        if (existingPosition == null)
+        {
+            throw new KeyNotFoundException($"Job position with ID {jobPosition.Id} not found");
+        }
+
+        jobPosition.UpdatedAt = DateTime.UtcNow;
+        _context.Entry(existingPosition).CurrentValues.SetValues(jobPosition);
         await _context.SaveChangesAsync();
     }
 
     public async Task DeleteJobPositionAsync(int id)
     {
-        var jobPosition = await _context.JobPositions.FindAsync(id);
+        var jobPosition = await _context.JobPositions
+            .Include(jp => jp.Employees)
+            .FirstOrDefaultAsync(jp => jp.Id == id);
+
         if (jobPosition != null)
         {
+            // Check for employees in this position
+            if (jobPosition.Employees?.Any() == true)
+            {
+                throw new InvalidOperationException(
+                    $"Cannot delete job position '{jobPosition.Title}' because it has {jobPosition.Employees.Count} employees assigned");
+            }
+
             _context.JobPositions.Remove(jobPosition);
             await _context.SaveChangesAsync();
         }

@@ -38,6 +38,7 @@ public class PatientService : IPatientService
     public async Task<IEnumerable<Patient>> GetPatientsByBranchIdAsync(int branchId)
     {
         return await _context.Patients
+            .AsNoTracking()
             .Where(p => p.BranchId == branchId && !p.IsDeleted)
             .OrderBy(p => p.FullNameEn)
             .ToListAsync();
@@ -180,6 +181,7 @@ public class PatientService : IPatientService
     public async Task<IEnumerable<PatientDocument>> GetPatientDocumentsAsync(int patientId)
     {
         return await _context.PatientDocuments
+            .AsNoTracking()
             .Where(d => d.PatientId == patientId)
             .OrderByDescending(d => d.UploadedAt)
             .ToListAsync();
