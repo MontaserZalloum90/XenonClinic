@@ -21,6 +21,44 @@ public class ClinicalDecisionSupportService : IClinicalDecisionSupportService
         _unitOfWork = unitOfWork;
     }
 
+    #region Helper Methods
+
+    /// <summary>
+    /// Sanitize input for logging to prevent log injection attacks
+    /// </summary>
+    private static string SanitizeLogInput(string? input)
+    {
+        if (string.IsNullOrEmpty(input))
+            return "[empty]";
+
+        // Remove newlines and control characters that could inject into logs
+        return input
+            .Replace("\n", "")
+            .Replace("\r", "")
+            .Replace("\t", " ")
+            .Trim();
+    }
+
+    /// <summary>
+    /// Validate patient ID
+    /// </summary>
+    private static void ValidatePatientId(int patientId)
+    {
+        if (patientId <= 0)
+            throw new ArgumentException("Invalid patient ID", nameof(patientId));
+    }
+
+    /// <summary>
+    /// Validate medication code
+    /// </summary>
+    private static void ValidateMedicationCode(string? medicationCode)
+    {
+        if (string.IsNullOrWhiteSpace(medicationCode))
+            throw new ArgumentException("Medication code is required", nameof(medicationCode));
+    }
+
+    #endregion
+
     #region Drug Interaction Checking
 
     public async Task<DrugInteractionResultDto> CheckDrugInteractionsAsync(DrugInteractionCheckDto request)
@@ -653,23 +691,39 @@ public class ClinicalDecisionSupportService : IClinicalDecisionSupportService
     public async Task<MedicationSafetyCheckResultDto> PerformMedicationSafetyCheckAsync(
         int patientId, string medicationCode, DosageCheckRequestDto? dosageInfo = null)
     {
+        // Input validation
+        if (patientId <= 0)
+            throw new ArgumentException("Invalid patient ID", nameof(patientId));
+
+        if (string.IsNullOrWhiteSpace(medicationCode))
+            throw new ArgumentException("Medication code is required", nameof(medicationCode));
+
+        // Sanitize medication code for logging (prevent log injection)
+        var sanitizedMedCode = SanitizeLogInput(medicationCode);
         _logger.LogInformation("Performing comprehensive safety check for patient: {PatientId}, medication: {MedicationCode}",
-            patientId, medicationCode);
+            patientId, sanitizedMedCode);
 
-        // Run all safety checks in parallel
-        var allergyCheck = await CheckAllergyContraindicationsAsync(new AllergyCheckRequestDto
+        // Run all safety checks in parallel for better performance
+        var allergyCheckTask = CheckAllergyContraindicationsAsync(new AllergyCheckRequestDto
         {
             PatientId = patientId,
             MedicationCode = medicationCode
         });
 
-        var interactionCheck = await CheckNewMedicationInteractionsAsync(patientId, medicationCode);
+        var interactionCheckTask = CheckNewMedicationInteractionsAsync(patientId, medicationCode);
 
-        var contraindicationCheck = await CheckContraindicationsAsync(new ContraindicationCheckRequestDto
+        var contraindicationCheckTask = CheckContraindicationsAsync(new ContraindicationCheckRequestDto
         {
             PatientId = patientId,
             MedicationCode = medicationCode
         });
+
+        // Wait for all tasks to complete
+        await Task.WhenAll(allergyCheckTask, interactionCheckTask, contraindicationCheckTask);
+
+        var allergyCheck = allergyCheckTask.Result;
+        var interactionCheck = interactionCheckTask.Result;
+        var contraindicationCheck = contraindicationCheckTask.Result;
 
         DosageCheckResultDto? dosageCheck = null;
         if (dosageInfo != null)

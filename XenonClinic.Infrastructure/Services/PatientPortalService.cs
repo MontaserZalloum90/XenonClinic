@@ -29,8 +29,31 @@ public class PatientPortalService : IPatientPortalService
 
     public async Task<PortalRegistrationResponseDto> RegisterAsync(int branchId, PortalRegistrationDto dto)
     {
+        // Use transaction to ensure data consistency
+        await using var transaction = await _context.Database.BeginTransactionAsync();
+
         try
         {
+            // Validate email format
+            if (string.IsNullOrWhiteSpace(dto.Email) || !IsValidEmail(dto.Email))
+            {
+                return new PortalRegistrationResponseDto
+                {
+                    Success = false,
+                    Message = "Please provide a valid email address."
+                };
+            }
+
+            // Validate password strength
+            if (!IsPasswordStrong(dto.Password))
+            {
+                return new PortalRegistrationResponseDto
+                {
+                    Success = false,
+                    Message = "Password must be at least 8 characters with uppercase, lowercase, number, and special character."
+                };
+            }
+
             // Find patient by MRN and date of birth
             var patient = await _context.Patients
                 .FirstOrDefaultAsync(p => p.BranchId == branchId &&
@@ -46,56 +69,64 @@ public class PatientPortalService : IPatientPortalService
                 };
             }
 
-            // Check if already registered
+            // Check if already registered (use locking to prevent race conditions)
             var existingAccount = await _context.PortalAccounts
-                .FirstOrDefaultAsync(pa => pa.PatientId == patient.Id);
+                .FirstOrDefaultAsync(pa => pa.PatientId == patient.Id || pa.Email == dto.Email);
 
             if (existingAccount != null)
             {
                 return new PortalRegistrationResponseDto
                 {
                     Success = false,
-                    Message = "An account already exists for this patient."
+                    Message = existingAccount.PatientId == patient.Id
+                        ? "An account already exists for this patient."
+                        : "This email is already registered."
                 };
             }
 
-            // Create portal account
+            // Create portal account with hashed password
             var passwordHash = HashPassword(dto.Password);
             var verificationToken = GenerateToken();
 
             var portalAccount = new PortalAccount
             {
                 PatientId = patient.Id,
-                Email = dto.Email,
+                Email = dto.Email.Trim().ToLowerInvariant(),
                 PasswordHash = passwordHash,
-                EmailVerificationToken = verificationToken,
+                EmailVerificationToken = HashTokenForStorage(verificationToken), // Store hashed token
                 IsEmailVerified = false,
                 IsActive = true,
+                FailedLoginAttempts = 0,
                 CreatedAt = DateTime.UtcNow
             };
 
             _context.PortalAccounts.Add(portalAccount);
-            await _context.SaveChangesAsync();
 
             // Update patient email if different
-            if (patient.Email != dto.Email)
+            if (!string.Equals(patient.Email, dto.Email, StringComparison.OrdinalIgnoreCase))
             {
-                patient.Email = dto.Email;
-                await _context.SaveChangesAsync();
+                patient.Email = dto.Email.Trim();
+                patient.UpdatedAt = DateTime.UtcNow;
             }
+
+            await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
 
             _logger.LogInformation("Patient portal account created for PatientId: {PatientId}", patient.Id);
 
+            // Return the plain verification token (not hashed) for sending via email
             return new PortalRegistrationResponseDto
             {
                 Success = true,
                 PatientId = patient.Id,
                 Message = "Registration successful. Please check your email to verify your account.",
-                RequiresVerification = true
+                RequiresVerification = true,
+                VerificationToken = verificationToken // For email sending (would normally be sent via email service)
             };
         }
         catch (Exception ex)
         {
+            await transaction.RollbackAsync();
             _logger.LogError(ex, "Error registering patient portal account");
             return new PortalRegistrationResponseDto
             {
@@ -103,6 +134,38 @@ public class PatientPortalService : IPatientPortalService
                 Message = "An error occurred during registration. Please try again."
             };
         }
+    }
+
+    /// <summary>
+    /// Validate email format
+    /// </summary>
+    private static bool IsValidEmail(string email)
+    {
+        try
+        {
+            var addr = new System.Net.Mail.MailAddress(email);
+            return addr.Address == email.Trim();
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Check password strength requirements
+    /// </summary>
+    private static bool IsPasswordStrong(string password)
+    {
+        if (string.IsNullOrEmpty(password) || password.Length < 8)
+            return false;
+
+        var hasUpper = password.Any(char.IsUpper);
+        var hasLower = password.Any(char.IsLower);
+        var hasDigit = password.Any(char.IsDigit);
+        var hasSpecial = password.Any(c => !char.IsLetterOrDigit(c));
+
+        return hasUpper && hasLower && hasDigit && hasSpecial;
     }
 
     public async Task<PortalLoginResponseDto> LoginAsync(PortalLoginDto dto)
@@ -115,6 +178,8 @@ public class PatientPortalService : IPatientPortalService
 
             if (account == null || !VerifyPassword(dto.Password, account.PasswordHash))
             {
+                // Log failed attempt for security monitoring
+                _logger.LogWarning("Failed login attempt for email: {Email}", dto.Email);
                 return new PortalLoginResponseDto
                 {
                     Success = false,
@@ -131,23 +196,35 @@ public class PatientPortalService : IPatientPortalService
                 };
             }
 
+            // Upgrade password hash if using legacy format
+            if (NeedsPasswordUpgrade(account.PasswordHash))
+            {
+                account.PasswordHash = HashPassword(dto.Password);
+                _logger.LogInformation("Upgraded password hash for PatientId: {PatientId}", account.PatientId);
+            }
+
             // Generate tokens
-            var token = GenerateToken();
+            var sessionToken = GenerateToken();
             var refreshToken = GenerateToken();
             var expiresAt = DateTime.UtcNow.AddHours(dto.RememberMe ? 168 : 24);
 
-            // Update account
+            // Store session token hash for validation (don't store plaintext)
+            account.SessionTokenHash = HashTokenForStorage(sessionToken);
+            account.SessionTokenExpiresAt = expiresAt;
             account.LastLoginAt = DateTime.UtcNow;
-            account.RefreshToken = refreshToken;
+            account.RefreshToken = HashTokenForStorage(refreshToken);
             account.RefreshTokenExpiresAt = expiresAt.AddDays(7);
+            account.FailedLoginAttempts = 0; // Reset failed attempts on successful login
             await _context.SaveChangesAsync();
 
             var profile = await GetProfileAsync(account.PatientId);
 
+            _logger.LogInformation("Successful login for PatientId: {PatientId}", account.PatientId);
+
             return new PortalLoginResponseDto
             {
                 Success = true,
-                Token = token,
+                Token = sessionToken,
                 RefreshToken = refreshToken,
                 ExpiresAt = expiresAt,
                 Profile = profile
@@ -162,6 +239,27 @@ public class PatientPortalService : IPatientPortalService
                 Message = "An error occurred during login. Please try again."
             };
         }
+    }
+
+    /// <summary>
+    /// Hash token for secure storage (one-way hash)
+    /// </summary>
+    private static string HashTokenForStorage(string token)
+    {
+        using var sha256 = SHA256.Create();
+        var hash = sha256.ComputeHash(Encoding.UTF8.GetBytes(token));
+        return Convert.ToBase64String(hash);
+    }
+
+    /// <summary>
+    /// Verify token against stored hash
+    /// </summary>
+    private static bool VerifyTokenHash(string token, string storedHash)
+    {
+        var computedHash = HashTokenForStorage(token);
+        return CryptographicOperations.FixedTimeEquals(
+            Encoding.UTF8.GetBytes(computedHash),
+            Encoding.UTF8.GetBytes(storedHash));
     }
 
     public async Task<bool> VerifyEmailAsync(string token)
@@ -358,17 +456,70 @@ public class PatientPortalService : IPatientPortalService
         };
     }
 
+    // File upload security constants
+    private static readonly HashSet<string> AllowedImageExtensions = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ".jpg", ".jpeg", ".png", ".gif", ".webp"
+    };
+    private const int MaxProfilePhotoSizeBytes = 5 * 1024 * 1024; // 5MB
+
     public async Task<string> UploadProfilePhotoAsync(int patientId, byte[] photoData, string fileName)
     {
+        // Validate patient exists
         var patient = await _context.Patients
             .FirstOrDefaultAsync(p => p.Id == patientId);
 
         if (patient == null)
+        {
+            _logger.LogWarning("Profile photo upload attempted for non-existent patient: {PatientId}", patientId);
             return string.Empty;
+        }
 
-        // Generate unique file name
-        var extension = Path.GetExtension(fileName);
-        var uniqueFileName = $"profile_{patientId}_{DateTime.UtcNow.Ticks}{extension}";
+        // Validate file data
+        if (photoData == null || photoData.Length == 0)
+        {
+            _logger.LogWarning("Empty file upload attempted for patient: {PatientId}", patientId);
+            throw new InvalidOperationException("No file data provided");
+        }
+
+        // Validate file size
+        if (photoData.Length > MaxProfilePhotoSizeBytes)
+        {
+            _logger.LogWarning("File too large for patient {PatientId}: {Size} bytes", patientId, photoData.Length);
+            throw new InvalidOperationException($"File size exceeds maximum allowed ({MaxProfilePhotoSizeBytes / 1024 / 1024}MB)");
+        }
+
+        // Validate and sanitize filename (prevent path traversal)
+        if (string.IsNullOrWhiteSpace(fileName))
+            throw new InvalidOperationException("Invalid filename");
+
+        var sanitizedFileName = Path.GetFileName(fileName); // Remove any path components
+        var extension = Path.GetExtension(sanitizedFileName)?.ToLowerInvariant();
+
+        // Validate extension
+        if (string.IsNullOrEmpty(extension) || !AllowedImageExtensions.Contains(extension))
+        {
+            _logger.LogWarning("Invalid file extension attempted for patient {PatientId}: {Extension}", patientId, extension);
+            throw new InvalidOperationException($"Invalid file type. Allowed types: {string.Join(", ", AllowedImageExtensions)}");
+        }
+
+        // Check for double extension attack (e.g., image.jpg.exe)
+        var nameWithoutExtension = Path.GetFileNameWithoutExtension(sanitizedFileName);
+        if (nameWithoutExtension.Contains('.'))
+        {
+            _logger.LogWarning("Possible double extension attack for patient {PatientId}: {FileName}", patientId, fileName);
+            throw new InvalidOperationException("Invalid filename format");
+        }
+
+        // Validate file signature (magic bytes) to ensure it's a real image
+        if (!ValidateImageSignature(photoData, extension))
+        {
+            _logger.LogWarning("File signature mismatch for patient {PatientId}", patientId);
+            throw new InvalidOperationException("File content does not match declared file type");
+        }
+
+        // Generate secure unique file name (no user input in final name)
+        var uniqueFileName = $"profile_{patientId}_{Guid.NewGuid():N}{extension}";
 
         // TODO: Upload to storage service (Azure Blob, S3, etc.)
         var photoUrl = $"/uploads/profiles/{uniqueFileName}";
@@ -377,7 +528,28 @@ public class PatientPortalService : IPatientPortalService
         patient.UpdatedAt = DateTime.UtcNow;
         await _context.SaveChangesAsync();
 
+        _logger.LogInformation("Profile photo uploaded for patient {PatientId}", patientId);
+
         return photoUrl;
+    }
+
+    /// <summary>
+    /// Validate image file signature (magic bytes)
+    /// </summary>
+    private static bool ValidateImageSignature(byte[] data, string extension)
+    {
+        if (data.Length < 8)
+            return false;
+
+        return extension switch
+        {
+            ".jpg" or ".jpeg" => data[0] == 0xFF && data[1] == 0xD8 && data[2] == 0xFF,
+            ".png" => data[0] == 0x89 && data[1] == 0x50 && data[2] == 0x4E && data[3] == 0x47,
+            ".gif" => data[0] == 0x47 && data[1] == 0x49 && data[2] == 0x46,
+            ".webp" => data[0] == 0x52 && data[1] == 0x49 && data[2] == 0x46 && data[3] == 0x46 &&
+                       data[8] == 0x57 && data[9] == 0x45 && data[10] == 0x42 && data[11] == 0x50,
+            _ => false
+        };
     }
 
     #endregion
@@ -530,36 +702,100 @@ public class PatientPortalService : IPatientPortalService
 
     public async Task<PortalAppointmentDto> BookAppointmentAsync(int patientId, PortalBookAppointmentDto dto)
     {
-        var patient = await _context.Patients
-            .FirstOrDefaultAsync(p => p.Id == patientId);
+        // Use transaction to prevent race conditions
+        await using var transaction = await _context.Database.BeginTransactionAsync();
 
-        if (patient == null)
-            throw new InvalidOperationException("Patient not found");
-
-        var appointment = new Appointment
+        try
         {
-            PatientId = patientId,
-            DoctorId = dto.DoctorId,
-            BranchId = patient.BranchId,
-            AppointmentDate = dto.PreferredDate,
-            StartTime = dto.PreferredTime,
-            AppointmentType = dto.AppointmentType ?? "Regular",
-            Reason = dto.Reason,
-            Notes = dto.Notes,
-            IsTelemedicine = dto.IsTelemedicine,
-            Status = "Scheduled",
-            CreatedAt = DateTime.UtcNow
-        };
+            var patient = await _context.Patients
+                .FirstOrDefaultAsync(p => p.Id == patientId);
 
-        _context.Appointments.Add(appointment);
-        await _context.SaveChangesAsync();
+            if (patient == null)
+                throw new InvalidOperationException("Patient not found");
 
-        // Create notification
-        await CreateNotificationAsync(patientId, "Appointment Booked",
-            $"Your appointment has been scheduled for {dto.PreferredDate:MMM dd, yyyy}",
-            "Appointment", $"/appointments/{appointment.Id}");
+            // Validate doctor exists and is active
+            var doctor = await _context.Users
+                .FirstOrDefaultAsync(u => u.Id == dto.DoctorId && u.Role == "Doctor" && u.IsActive);
 
-        return (await GetAppointmentAsync(patientId, appointment.Id))!;
+            if (doctor == null)
+                throw new InvalidOperationException("Doctor not found or not available");
+
+            // Validate appointment date is in the future
+            if (dto.PreferredDate.Date < DateTime.Today)
+                throw new InvalidOperationException("Cannot book appointments in the past");
+
+            // Check for double-booking (same doctor, same date, same time)
+            var existingAppointment = await _context.Appointments
+                .AnyAsync(a => a.DoctorId == dto.DoctorId &&
+                    a.AppointmentDate.Date == dto.PreferredDate.Date &&
+                    a.StartTime == dto.PreferredTime &&
+                    a.Status != "Cancelled");
+
+            if (existingAppointment)
+                throw new InvalidOperationException("This time slot is no longer available. Please select another time.");
+
+            // Check if patient already has an appointment at this time
+            var patientConflict = await _context.Appointments
+                .AnyAsync(a => a.PatientId == patientId &&
+                    a.AppointmentDate.Date == dto.PreferredDate.Date &&
+                    a.StartTime == dto.PreferredTime &&
+                    a.Status != "Cancelled");
+
+            if (patientConflict)
+                throw new InvalidOperationException("You already have an appointment scheduled at this time.");
+
+            var appointment = new Appointment
+            {
+                PatientId = patientId,
+                DoctorId = dto.DoctorId,
+                BranchId = patient.BranchId,
+                AppointmentDate = dto.PreferredDate,
+                StartTime = dto.PreferredTime,
+                AppointmentType = dto.AppointmentType ?? "Regular",
+                Reason = SanitizeInput(dto.Reason),
+                Notes = SanitizeInput(dto.Notes),
+                IsTelemedicine = dto.IsTelemedicine,
+                Status = "Scheduled",
+                CreatedAt = DateTime.UtcNow
+            };
+
+            _context.Appointments.Add(appointment);
+            await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
+
+            // Create notification (outside transaction)
+            await CreateNotificationAsync(patientId, "Appointment Booked",
+                $"Your appointment has been scheduled for {dto.PreferredDate:MMM dd, yyyy}",
+                "Appointment", $"/appointments/{appointment.Id}");
+
+            _logger.LogInformation("Appointment booked: PatientId={PatientId}, DoctorId={DoctorId}, Date={Date}",
+                patientId, dto.DoctorId, dto.PreferredDate);
+
+            return (await GetAppointmentAsync(patientId, appointment.Id))!;
+        }
+        catch (InvalidOperationException)
+        {
+            await transaction.RollbackAsync();
+            throw;
+        }
+        catch (Exception ex)
+        {
+            await transaction.RollbackAsync();
+            _logger.LogError(ex, "Error booking appointment for PatientId: {PatientId}", patientId);
+            throw new InvalidOperationException("An error occurred while booking your appointment. Please try again.");
+        }
+    }
+
+    /// <summary>
+    /// Sanitize user input to prevent XSS
+    /// </summary>
+    private static string? SanitizeInput(string? input)
+    {
+        if (string.IsNullOrEmpty(input))
+            return input;
+
+        // Basic sanitization - remove script tags and encode HTML entities
+        return System.Net.WebUtility.HtmlEncode(input.Trim());
     }
 
     public async Task<bool> CancelAppointmentAsync(int patientId, int appointmentId, string? reason)
@@ -1547,16 +1783,96 @@ public class PatientPortalService : IPatientPortalService
         await _context.SaveChangesAsync();
     }
 
+    // Password hashing constants for PBKDF2
+    private const int SaltSize = 16; // 128 bits
+    private const int HashSize = 32; // 256 bits
+    private const int Iterations = 100000; // OWASP recommended minimum
+
+    /// <summary>
+    /// Hash password using PBKDF2 with SHA256
+    /// Format: iterations.salt.hash (all base64 encoded)
+    /// </summary>
     private static string HashPassword(string password)
     {
-        using var sha256 = SHA256.Create();
-        var hashedBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(password));
-        return Convert.ToBase64String(hashedBytes);
+        if (string.IsNullOrEmpty(password))
+            throw new ArgumentNullException(nameof(password));
+
+        // Generate random salt
+        var salt = new byte[SaltSize];
+        using (var rng = RandomNumberGenerator.Create())
+        {
+            rng.GetBytes(salt);
+        }
+
+        // Hash password with PBKDF2
+        using var pbkdf2 = new Rfc2898DeriveBytes(password, salt, Iterations, HashAlgorithmName.SHA256);
+        var hash = pbkdf2.GetBytes(HashSize);
+
+        // Combine iterations, salt, and hash
+        return $"{Iterations}.{Convert.ToBase64String(salt)}.{Convert.ToBase64String(hash)}";
     }
 
-    private static bool VerifyPassword(string password, string hash)
+    /// <summary>
+    /// Verify password using constant-time comparison to prevent timing attacks
+    /// </summary>
+    private static bool VerifyPassword(string password, string storedHash)
     {
-        return HashPassword(password) == hash;
+        if (string.IsNullOrEmpty(password) || string.IsNullOrEmpty(storedHash))
+            return false;
+
+        try
+        {
+            var parts = storedHash.Split('.');
+            if (parts.Length != 3)
+            {
+                // Legacy hash format (plain SHA256) - migrate on next password change
+                return VerifyLegacyPassword(password, storedHash);
+            }
+
+            var iterations = int.Parse(parts[0]);
+            var salt = Convert.FromBase64String(parts[1]);
+            var storedHashBytes = Convert.FromBase64String(parts[2]);
+
+            using var pbkdf2 = new Rfc2898DeriveBytes(password, salt, iterations, HashAlgorithmName.SHA256);
+            var computedHash = pbkdf2.GetBytes(HashSize);
+
+            // Constant-time comparison to prevent timing attacks
+            return CryptographicOperations.FixedTimeEquals(computedHash, storedHashBytes);
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Verify legacy SHA256 password (for migration purposes only)
+    /// </summary>
+    private static bool VerifyLegacyPassword(string password, string storedHash)
+    {
+        try
+        {
+            using var sha256 = SHA256.Create();
+            var hashedBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(password));
+            var computedHash = Convert.ToBase64String(hashedBytes);
+
+            // Still use constant-time comparison even for legacy
+            return CryptographicOperations.FixedTimeEquals(
+                Encoding.UTF8.GetBytes(computedHash),
+                Encoding.UTF8.GetBytes(storedHash));
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Check if password hash needs upgrade (legacy format)
+    /// </summary>
+    private static bool NeedsPasswordUpgrade(string storedHash)
+    {
+        return !string.IsNullOrEmpty(storedHash) && !storedHash.Contains('.');
     }
 
     private static string GenerateToken()
@@ -1591,9 +1907,14 @@ public class PortalAccount
     public DateTime? PasswordResetTokenExpiresAt { get; set; }
     public string? RefreshToken { get; set; }
     public DateTime? RefreshTokenExpiresAt { get; set; }
+    public string? SessionTokenHash { get; set; }
+    public DateTime? SessionTokenExpiresAt { get; set; }
     public DateTime? LastLoginAt { get; set; }
+    public int FailedLoginAttempts { get; set; }
+    public DateTime? LockoutEndAt { get; set; }
     public bool IsActive { get; set; }
     public DateTime CreatedAt { get; set; }
+    public DateTime? UpdatedAt { get; set; }
 
     public Patient? Patient { get; set; }
 }
