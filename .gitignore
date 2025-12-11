@@ -26,3 +26,24 @@ packages/
 ## OS artifacts
 .DS_Store
 Thumbs.db
+
+## Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+## Build outputs
+dist/
+build/
+*.tsbuildinfo
+
+## Environment
+.env
+.env.local
+.env.*.local
+
+## Playwright
+test-results/
+playwright-report/
+playwright/.cache/
