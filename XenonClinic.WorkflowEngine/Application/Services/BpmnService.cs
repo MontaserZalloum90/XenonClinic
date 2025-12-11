@@ -225,7 +225,11 @@ public class BpmnService : IBpmnService
     public Task<ProcessModel> ParseAsync(string bpmnXml, CancellationToken cancellationToken = default)
     {
         var doc = XDocument.Parse(bpmnXml);
-        var root = doc.Root!;
+        var root = doc.Root;
+        if (root == null)
+        {
+            throw new InvalidOperationException("BPMN document has no root element");
+        }
 
         var processElement = root.Elements().FirstOrDefault(e => e.Name.LocalName == "process");
         if (processElement == null)
@@ -327,10 +331,10 @@ public class BpmnService : IBpmnService
                     IsHorizontal = bool.TryParse(shape.Attribute("isHorizontal")?.Value, out var hor) && hor,
                     Bounds = bounds != null ? new BpmnBounds
                     {
-                        X = double.Parse(bounds.Attribute("x")?.Value ?? "0", CultureInfo.InvariantCulture),
-                        Y = double.Parse(bounds.Attribute("y")?.Value ?? "0", CultureInfo.InvariantCulture),
-                        Width = double.Parse(bounds.Attribute("width")?.Value ?? "0", CultureInfo.InvariantCulture),
-                        Height = double.Parse(bounds.Attribute("height")?.Value ?? "0", CultureInfo.InvariantCulture)
+                        X = double.TryParse(bounds.Attribute("x")?.Value, NumberStyles.Float, CultureInfo.InvariantCulture, out var x) ? x : 0,
+                        Y = double.TryParse(bounds.Attribute("y")?.Value, NumberStyles.Float, CultureInfo.InvariantCulture, out var y) ? y : 0,
+                        Width = double.TryParse(bounds.Attribute("width")?.Value, NumberStyles.Float, CultureInfo.InvariantCulture, out var w) ? w : 0,
+                        Height = double.TryParse(bounds.Attribute("height")?.Value, NumberStyles.Float, CultureInfo.InvariantCulture, out var h) ? h : 0
                     } : new BpmnBounds()
                 });
             }
@@ -348,8 +352,8 @@ public class BpmnService : IBpmnService
                 {
                     edgeInfo.Waypoints.Add(new BpmnPoint
                     {
-                        X = double.Parse(waypoint.Attribute("x")?.Value ?? "0", CultureInfo.InvariantCulture),
-                        Y = double.Parse(waypoint.Attribute("y")?.Value ?? "0", CultureInfo.InvariantCulture)
+                        X = double.TryParse(waypoint.Attribute("x")?.Value, NumberStyles.Float, CultureInfo.InvariantCulture, out var wx) ? wx : 0,
+                        Y = double.TryParse(waypoint.Attribute("y")?.Value, NumberStyles.Float, CultureInfo.InvariantCulture, out var wy) ? wy : 0
                     });
                 }
 
@@ -371,7 +375,7 @@ public class BpmnService : IBpmnService
         }
 
         // Update shapes
-        foreach (var shapeUpdate in update.ShapeUpdates)
+        foreach (var shapeUpdate in update.ShapeUpdates ?? Enumerable.Empty<BpmnShapeUpdate>())
         {
             var shape = plane.Elements()
                 .FirstOrDefault(e => e.Name.LocalName == "BPMNShape" &&
@@ -391,7 +395,7 @@ public class BpmnService : IBpmnService
         }
 
         // Update edges
-        foreach (var edgeUpdate in update.EdgeUpdates)
+        foreach (var edgeUpdate in update.EdgeUpdates ?? Enumerable.Empty<BpmnEdgeUpdate>())
         {
             var edge = plane.Elements()
                 .FirstOrDefault(e => e.Name.LocalName == "BPMNEdge" &&
@@ -679,13 +683,15 @@ public class BpmnService : IBpmnService
         }
 
         // Add activities
-        foreach (var activity in model.Activities.Values)
+        var activities = model.Activities ?? new Dictionary<string, ActivityDefinition>();
+        foreach (var activity in activities.Values)
         {
             process.Add(CreateActivityElement(activity));
         }
 
         // Add sequence flows
-        foreach (var flow in model.SequenceFlows.Values)
+        var sequenceFlows = model.SequenceFlows ?? new Dictionary<string, SequenceFlowDefinition>();
+        foreach (var flow in sequenceFlows.Values)
         {
             process.Add(CreateSequenceFlowElement(flow));
         }
@@ -714,11 +720,11 @@ public class BpmnService : IBpmnService
             new XAttribute("name", activity.Name ?? ""));
 
         // Add incoming/outgoing references
-        foreach (var incoming in activity.Incoming)
+        foreach (var incoming in activity.Incoming ?? Enumerable.Empty<string>())
         {
             element.Add(new XElement(BpmnNs + "incoming", incoming));
         }
-        foreach (var outgoing in activity.Outgoing)
+        foreach (var outgoing in activity.Outgoing ?? Enumerable.Empty<string>())
         {
             element.Add(new XElement(BpmnNs + "outgoing", outgoing));
         }
@@ -761,7 +767,8 @@ public class BpmnService : IBpmnService
         // Add shapes for activities
         int x = 150;
         int y = 100;
-        foreach (var activity in model.Activities.Values)
+        var modelActivities = model.Activities ?? new Dictionary<string, ActivityDefinition>();
+        foreach (var activity in modelActivities.Values)
         {
             var (width, height) = GetShapeSize(activity.Type);
             plane.Add(new XElement(BpmndiNs + "BPMNShape",
@@ -782,7 +789,8 @@ public class BpmnService : IBpmnService
         }
 
         // Add edges for flows
-        foreach (var flow in model.SequenceFlows.Values)
+        var modelFlows = model.SequenceFlows ?? new Dictionary<string, SequenceFlowDefinition>();
+        foreach (var flow in modelFlows.Values)
         {
             plane.Add(new XElement(BpmndiNs + "BPMNEdge",
                 new XAttribute("id", $"{flow.Id}_di"),
