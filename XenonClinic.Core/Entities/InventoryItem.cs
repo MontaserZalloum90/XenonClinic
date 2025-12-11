@@ -1,8 +1,9 @@
 using XenonClinic.Core.Enums;
+using XenonClinic.Core.Interfaces;
 
 namespace XenonClinic.Core.Entities;
 
-public class InventoryItem
+public class InventoryItem : IBranchEntity
 {
     public int Id { get; set; }
     public string ItemCode { get; set; } = string.Empty;

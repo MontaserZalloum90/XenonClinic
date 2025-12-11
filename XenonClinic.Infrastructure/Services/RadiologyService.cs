@@ -46,6 +46,7 @@ public class RadiologyService : IRadiologyService
     public async Task<IEnumerable<LabOrder>> GetRadiologyOrdersByBranchIdAsync(int branchId)
     {
         return await _context.LabOrders
+            .AsNoTracking()
             .Include(o => o.OrderItems)
                 .ThenInclude(oi => oi.LabTest)
             .Where(o => o.BranchId == branchId)
@@ -56,6 +57,7 @@ public class RadiologyService : IRadiologyService
     public async Task<IEnumerable<LabOrder>> GetRadiologyOrdersByPatientIdAsync(int patientId)
     {
         return await _context.LabOrders
+            .AsNoTracking()
             .Include(o => o.Branch)
             .Include(o => o.OrderItems)
                 .ThenInclude(oi => oi.LabTest)
@@ -66,7 +68,14 @@ public class RadiologyService : IRadiologyService
 
     public async Task<IEnumerable<LabOrder>> GetRadiologyOrdersByDateRangeAsync(int branchId, DateTime startDate, DateTime endDate)
     {
+        // Validate date range
+        if (endDate < startDate)
+        {
+            throw new ArgumentException("End date must be greater than or equal to start date", nameof(endDate));
+        }
+
         return await _context.LabOrders
+            .AsNoTracking()
             .Include(o => o.OrderItems)
                 .ThenInclude(oi => oi.LabTest)
             .Where(o => o.BranchId == branchId &&
@@ -79,6 +88,7 @@ public class RadiologyService : IRadiologyService
     public async Task<IEnumerable<LabOrder>> GetPendingRadiologyOrdersAsync(int branchId)
     {
         return await _context.LabOrders
+            .AsNoTracking()
             .Include(o => o.OrderItems)
                 .ThenInclude(oi => oi.LabTest)
             .Where(o => o.BranchId == branchId &&
@@ -90,6 +100,7 @@ public class RadiologyService : IRadiologyService
     public async Task<IEnumerable<LabOrder>> GetCompletedRadiologyOrdersAsync(int branchId)
     {
         return await _context.LabOrders
+            .AsNoTracking()
             .Include(o => o.OrderItems)
                 .ThenInclude(oi => oi.LabTest)
             .Where(o => o.BranchId == branchId && o.Status == LabOrderStatus.Completed)
@@ -145,6 +156,7 @@ public class RadiologyService : IRadiologyService
     public async Task<IEnumerable<LabTest>> GetImagingStudiesByBranchIdAsync(int branchId)
     {
         return await _context.LabTests
+            .AsNoTracking()
             .Where(t => t.BranchId == branchId)
             .OrderBy(t => t.TestName)
             .ToListAsync();
@@ -153,6 +165,7 @@ public class RadiologyService : IRadiologyService
     public async Task<IEnumerable<LabTest>> GetActiveImagingStudiesAsync(int branchId)
     {
         return await _context.LabTests
+            .AsNoTracking()
             .Where(t => t.BranchId == branchId && t.IsActive)
             .OrderBy(t => t.TestName)
             .ToListAsync();
@@ -161,6 +174,7 @@ public class RadiologyService : IRadiologyService
     public async Task<IEnumerable<LabTest>> GetImagingStudiesByCategoryAsync(int branchId, string category)
     {
         return await _context.LabTests
+            .AsNoTracking()
             .Where(t => t.BranchId == branchId && t.Category == category)
             .OrderBy(t => t.TestName)
             .ToListAsync();
@@ -204,6 +218,7 @@ public class RadiologyService : IRadiologyService
     public async Task<IEnumerable<LabResult>> GetImagingResultsByOrderIdAsync(int orderId)
     {
         return await _context.LabResults
+            .AsNoTracking()
             .Include(r => r.LabTest)
             .Where(r => r.LabOrderId == orderId)
             .ToListAsync();
@@ -212,6 +227,7 @@ public class RadiologyService : IRadiologyService
     public async Task<IEnumerable<LabResult>> GetImagingResultsByPatientIdAsync(int patientId)
     {
         return await _context.LabResults
+            .AsNoTracking()
             .Include(r => r.LabOrder)
             .Include(r => r.LabTest)
             .Where(r => r.LabOrder!.PatientId == patientId)
@@ -252,6 +268,13 @@ public class RadiologyService : IRadiologyService
         if (order == null)
             throw new KeyNotFoundException($"Radiology order with ID {orderId} not found");
 
+        // Validate status transition: can only receive from Pending
+        if (order.Status != LabOrderStatus.Pending)
+        {
+            throw new InvalidOperationException(
+                $"Cannot receive order in {order.Status} status. Only pending orders can be received.");
+        }
+
         order.Status = LabOrderStatus.Received;
         order.ReceivedDate = DateTime.UtcNow;
         order.ReceivedBy = receivedBy;
@@ -263,6 +286,13 @@ public class RadiologyService : IRadiologyService
         var order = await _context.LabOrders.FindAsync(orderId);
         if (order == null)
             throw new KeyNotFoundException($"Radiology order with ID {orderId} not found");
+
+        // Validate status transition: can only start from Received or Pending
+        if (order.Status != LabOrderStatus.Received && order.Status != LabOrderStatus.Pending)
+        {
+            throw new InvalidOperationException(
+                $"Cannot start imaging for order in {order.Status} status. Only received or pending orders can be started.");
+        }
 
         order.Status = LabOrderStatus.InProgress;
         order.PerformedDate = DateTime.UtcNow;
@@ -276,6 +306,13 @@ public class RadiologyService : IRadiologyService
         if (order == null)
             throw new KeyNotFoundException($"Radiology order with ID {orderId} not found");
 
+        // Validate status transition: can only complete from InProgress
+        if (order.Status != LabOrderStatus.InProgress)
+        {
+            throw new InvalidOperationException(
+                $"Cannot complete order in {order.Status} status. Only in-progress orders can be completed.");
+        }
+
         order.Status = LabOrderStatus.Completed;
         order.CompletedDate = DateTime.UtcNow;
         await _context.SaveChangesAsync();
@@ -286,6 +323,13 @@ public class RadiologyService : IRadiologyService
         var order = await _context.LabOrders.FindAsync(orderId);
         if (order == null)
             throw new KeyNotFoundException($"Radiology order with ID {orderId} not found");
+
+        // Validate status transition: can only approve from Completed
+        if (order.Status != LabOrderStatus.Completed)
+        {
+            throw new InvalidOperationException(
+                $"Cannot approve order in {order.Status} status. Only completed orders can be approved.");
+        }
 
         order.Status = LabOrderStatus.Approved;
         order.ApprovedDate = DateTime.UtcNow;
@@ -298,6 +342,13 @@ public class RadiologyService : IRadiologyService
         var order = await _context.LabOrders.FindAsync(orderId);
         if (order == null)
             throw new KeyNotFoundException($"Radiology order with ID {orderId} not found");
+
+        // Validate status transition: cannot reject already rejected/cancelled orders
+        if (order.Status == LabOrderStatus.Rejected || order.Status == LabOrderStatus.Cancelled)
+        {
+            throw new InvalidOperationException(
+                $"Cannot reject order in {order.Status} status. Order is already {order.Status}.");
+        }
 
         order.Status = LabOrderStatus.Rejected;
         order.Notes = string.IsNullOrWhiteSpace(order.Notes)

@@ -38,6 +38,7 @@ public class PatientService : IPatientService
     public async Task<IEnumerable<Patient>> GetPatientsByBranchIdAsync(int branchId)
     {
         return await _context.Patients
+            .AsNoTracking()
             .Where(p => p.BranchId == branchId && !p.IsDeleted)
             .OrderBy(p => p.FullNameEn)
             .ToListAsync();
@@ -45,6 +46,15 @@ public class PatientService : IPatientService
 
     public async Task<IEnumerable<Patient>> SearchPatientsAsync(int branchId, string searchTerm)
     {
+        // Validate search term
+        if (string.IsNullOrWhiteSpace(searchTerm))
+        {
+            throw new ArgumentException("Search term cannot be empty", nameof(searchTerm));
+        }
+
+        // Trim and normalize search term
+        searchTerm = searchTerm.Trim();
+
         return await _context.Patients
             .Where(p => p.BranchId == branchId && !p.IsDeleted &&
                    (p.FullNameEn.Contains(searchTerm) ||
@@ -76,6 +86,13 @@ public class PatientService : IPatientService
 
     public async Task UpdatePatientAsync(Patient patient)
     {
+        // Validate patient exists
+        var currentPatient = await _context.Patients.FindAsync(patient.Id);
+        if (currentPatient == null || currentPatient.IsDeleted)
+        {
+            throw new KeyNotFoundException($"Patient with ID {patient.Id} not found");
+        }
+
         // Check for duplicate EmiratesId if changed
         var existingPatient = await _context.Patients
             .FirstOrDefaultAsync(p => p.EmiratesId == patient.EmiratesId &&
@@ -90,7 +107,7 @@ public class PatientService : IPatientService
         }
 
         patient.UpdatedAt = DateTime.UtcNow;
-        _context.Patients.Update(patient);
+        _context.Entry(currentPatient).CurrentValues.SetValues(patient);
         await _context.SaveChangesAsync();
     }
 
@@ -164,6 +181,7 @@ public class PatientService : IPatientService
     public async Task<IEnumerable<PatientDocument>> GetPatientDocumentsAsync(int patientId)
     {
         return await _context.PatientDocuments
+            .AsNoTracking()
             .Where(d => d.PatientId == patientId)
             .OrderByDescending(d => d.UploadedAt)
             .ToListAsync();
@@ -171,6 +189,24 @@ public class PatientService : IPatientService
 
     public async Task<PatientDocument> UploadDocumentAsync(PatientDocument document)
     {
+        // Validate patient exists
+        var patientExists = await _context.Patients.AnyAsync(p => p.Id == document.PatientId && !p.IsDeleted);
+        if (!patientExists)
+        {
+            throw new KeyNotFoundException($"Patient with ID {document.PatientId} not found");
+        }
+
+        // Validate required fields
+        if (string.IsNullOrWhiteSpace(document.FileName))
+        {
+            throw new ArgumentException("Document file name is required", nameof(document));
+        }
+
+        if (string.IsNullOrWhiteSpace(document.FilePath))
+        {
+            throw new ArgumentException("Document file path is required", nameof(document));
+        }
+
         _context.PatientDocuments.Add(document);
         await _context.SaveChangesAsync();
         return document;

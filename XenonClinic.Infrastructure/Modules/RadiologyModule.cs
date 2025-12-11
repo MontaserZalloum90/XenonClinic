@@ -27,38 +27,50 @@ public class RadiologyModule : ModuleBase
     {
         // Register Radiology services
         services.AddScoped<IRadiologyService, RadiologyService>();
-        Console.WriteLine($"[Module] {DisplayName} v{Version} - Services registered");
+#if DEBUG
+        System.Diagnostics.Debug.WriteLine($"[Module] {DisplayName} v{Version} - Services registered");
+#endif
     }
 
     public override void ConfigureDatabase(ModelBuilder modelBuilder)
     {
         // Radiology entities currently use Lab entities as a foundation
         // When specific RadiologyOrder/ImagingStudy entities are created, configure them here
-        Console.WriteLine($"[Module] {DisplayName} - Database entities configured");
+#if DEBUG
+        System.Diagnostics.Debug.WriteLine($"[Module] {DisplayName} - Database entities configured");
+#endif
     }
 
     public override void ConfigureRoutes(IEndpointRouteBuilder endpoints)
     {
         // Radiology routes are handled by MVC controllers with attribute routing
-        Console.WriteLine($"[Module] {DisplayName} - Routes configured");
+#if DEBUG
+        System.Diagnostics.Debug.WriteLine($"[Module] {DisplayName} - Routes configured");
+#endif
     }
 
     public override async Task SeedDataAsync(IServiceProvider serviceProvider)
     {
         // Radiology seed data will be added here when specific entities are created
         await Task.CompletedTask;
-        Console.WriteLine($"[Module] {DisplayName} - Seed data initialized");
+#if DEBUG
+        System.Diagnostics.Debug.WriteLine($"[Module] {DisplayName} - Seed data initialized");
+#endif
     }
 
     public override async Task OnInitializingAsync(IServiceProvider serviceProvider)
     {
-        Console.WriteLine($"[Module] {DisplayName} v{Version} - Initializing...");
+#if DEBUG
+        System.Diagnostics.Debug.WriteLine($"[Module] {DisplayName} v{Version} - Initializing...");
+#endif
         await Task.CompletedTask;
     }
 
     public override async Task OnInitializedAsync(IServiceProvider serviceProvider)
     {
-        Console.WriteLine($"[Module] {DisplayName} v{Version} - Initialized successfully");
+#if DEBUG
+        System.Diagnostics.Debug.WriteLine($"[Module] {DisplayName} v{Version} - Initialized successfully");
+#endif
         await Task.CompletedTask;
     }
 }

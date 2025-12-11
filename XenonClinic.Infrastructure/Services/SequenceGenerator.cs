@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using Microsoft.EntityFrameworkCore;
 using XenonClinic.Core.Interfaces;
 using XenonClinic.Infrastructure.Data;
@@ -7,14 +8,53 @@ namespace XenonClinic.Infrastructure.Services;
 /// <summary>
 /// Centralized service for generating sequential numbers/codes.
 /// Replaces duplicated sequence generation logic across multiple services.
+/// Thread-safe implementation using database-level locking.
 /// </summary>
 public class SequenceGenerator : ISequenceGenerator
 {
     private readonly ClinicDbContext _context;
 
+    // Static lock objects per branch+prefix combination to prevent race conditions
+    private static readonly ConcurrentDictionary<string, (SemaphoreSlim Semaphore, DateTime LastUsed)> _locks = new();
+
+    // Cleanup interval and max age for unused semaphores
+    private static readonly TimeSpan CleanupInterval = TimeSpan.FromMinutes(30);
+    private static readonly TimeSpan MaxSemaphoreAge = TimeSpan.FromHours(24);
+    private static DateTime _lastCleanup = DateTime.UtcNow;
+    private static readonly object _cleanupLock = new();
+
     public SequenceGenerator(ClinicDbContext context)
     {
         _context = context;
+    }
+
+    /// <summary>
+    /// Cleans up unused semaphores to prevent memory leaks.
+    /// </summary>
+    private static void CleanupUnusedSemaphores()
+    {
+        var now = DateTime.UtcNow;
+        if (now - _lastCleanup < CleanupInterval) return;
+
+        lock (_cleanupLock)
+        {
+            // Double-check after acquiring lock
+            if (now - _lastCleanup < CleanupInterval) return;
+            _lastCleanup = now;
+
+            var keysToRemove = _locks
+                .Where(kvp => now - kvp.Value.LastUsed > MaxSemaphoreAge)
+                .Select(kvp => kvp.Key)
+                .ToList();
+
+            foreach (var key in keysToRemove)
+            {
+                if (_locks.TryRemove(key, out var entry))
+                {
+                    entry.Semaphore.Dispose();
+                }
+            }
+        }
     }
 
     public async Task<string> GenerateSequenceAsync(
@@ -27,10 +67,31 @@ public class SequenceGenerator : ISequenceGenerator
         var today = DateTime.UtcNow.Date;
         var fullPrefix = $"{prefix}-{today.ToString(dateFormat)}";
 
-        var lastNumber = await GetLastSequenceNumberAsync(branchId, fullPrefix, sequenceType);
-        var nextNumber = lastNumber + 1;
+        // Create a unique lock key for this branch and prefix combination
+        var lockKey = $"{branchId}_{fullPrefix}_{sequenceType}";
 
-        return $"{fullPrefix}-{nextNumber.ToString($"D{numberWidth}")}";
+        // Periodically cleanup unused semaphores
+        CleanupUnusedSemaphores();
+
+        var entry = _locks.AddOrUpdate(
+            lockKey,
+            _ => (new SemaphoreSlim(1, 1), DateTime.UtcNow),
+            (_, existing) => (existing.Semaphore, DateTime.UtcNow));
+
+        var semaphore = entry.Semaphore;
+
+        await semaphore.WaitAsync();
+        try
+        {
+            var lastNumber = await GetLastSequenceNumberAsync(branchId, fullPrefix, sequenceType);
+            var nextNumber = lastNumber + 1;
+
+            return $"{fullPrefix}-{nextNumber.ToString($"D{numberWidth}")}";
+        }
+        finally
+        {
+            semaphore.Release();
+        }
     }
 
     public async Task<string> GenerateLabOrderNumberAsync(int branchId)

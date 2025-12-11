@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using XenonClinic.Core.Interfaces;
 using XenonClinic.Infrastructure.Data;
@@ -26,11 +27,67 @@ public static class ServiceCollectionExtensions
         // Repository pattern - generic data access
         services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 
+        // Unit of Work - transaction management across repositories
+        services.AddScoped<IUnitOfWork, UnitOfWork>();
+
+        // Tenant isolation service - runtime validation
+        services.AddScoped<ITenantIsolationService, TenantIsolationService>();
+
         return services;
     }
 
     /// <summary>
-    /// Adds health check services.
+    /// Adds database services with proper configuration including retry policies and connection resilience.
+    /// </summary>
+    /// <param name="services">The service collection.</param>
+    /// <param name="configuration">The configuration.</param>
+    /// <param name="isDevelopment">Whether running in development mode.</param>
+    public static IServiceCollection AddXenonDatabase(
+        this IServiceCollection services,
+        IConfiguration configuration,
+        bool isDevelopment = false)
+    {
+        return services.AddClinicDatabase(configuration, isDevelopment);
+    }
+
+    /// <summary>
+    /// Adds in-memory caching services.
+    /// Use AddDistributedCaching for Redis-based caching in production.
+    /// </summary>
+    public static IServiceCollection AddInMemoryCaching(this IServiceCollection services)
+    {
+        services.AddMemoryCache();
+        services.AddSingleton<ICacheService, CacheService>();
+        return services;
+    }
+
+    /// <summary>
+    /// Adds distributed caching using Redis.
+    /// Requires Redis connection configuration.
+    /// </summary>
+    public static IServiceCollection AddDistributedCaching(
+        this IServiceCollection services,
+        IConfiguration configuration)
+    {
+        var redisConnectionString = configuration.GetConnectionString("Redis")
+            ?? configuration["Redis:ConnectionString"]
+            ?? throw new InvalidOperationException(
+                "Redis connection string is required. " +
+                "Configure 'ConnectionStrings:Redis' or 'Redis:ConnectionString' in appsettings.json.");
+
+        services.AddStackExchangeRedisCache(options =>
+        {
+            options.Configuration = redisConnectionString;
+            options.InstanceName = "XenonClinic_";
+        });
+
+        services.AddSingleton<ICacheService, RedisCacheService>();
+
+        return services;
+    }
+
+    /// <summary>
+    /// Adds health check services with database and API checks.
     /// </summary>
     public static IServiceCollection AddXenonHealthChecks(this IServiceCollection services)
     {

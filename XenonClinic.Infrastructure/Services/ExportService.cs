@@ -30,7 +30,7 @@ public class ExportService : IExportService
         sb.AppendLine("<?mso-application progid=\"Excel.Sheet\"?>");
         sb.AppendLine("<Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\"");
         sb.AppendLine(" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\">");
-        sb.AppendLine($"<Worksheet ss:Name=\"{options.SheetName}\">");
+        sb.AppendLine($"<Worksheet ss:Name=\"{EscapeXml(options.SheetName)}\">");
         sb.AppendLine("<Table>");
 
         var properties = GetProperties<T>(options.IncludeColumns, options.ExcludeColumns);
@@ -238,19 +238,19 @@ public class ExportService : IExportService
 
         if (!string.IsNullOrEmpty(options.Title))
         {
-            sb.AppendLine($"<h1>{options.Title}</h1>");
+            sb.AppendLine($"<h1>{EscapeXml(options.Title)}</h1>");
         }
 
         if (!string.IsNullOrEmpty(options.WatermarkText))
         {
-            sb.AppendLine($"<div style=\"position:fixed;top:50%;left:50%;transform:translate(-50%,-50%)rotate(-45deg);opacity:0.1;font-size:72px;\">{options.WatermarkText}</div>");
+            sb.AppendLine($"<div style=\"position:fixed;top:50%;left:50%;transform:translate(-50%,-50%)rotate(-45deg);opacity:0.1;font-size:72px;\">{EscapeXml(options.WatermarkText)}</div>");
         }
 
         var properties = typeof(T).GetProperties();
         sb.AppendLine("<table><thead><tr>");
         foreach (var prop in properties)
         {
-            sb.AppendLine($"<th>{prop.Name}</th>");
+            sb.AppendLine($"<th>{EscapeXml(prop.Name)}</th>");
         }
         sb.AppendLine("</tr></thead><tbody>");
 
@@ -260,7 +260,8 @@ public class ExportService : IExportService
             foreach (var prop in properties)
             {
                 var value = prop.GetValue(item);
-                sb.AppendLine($"<td>{value}</td>");
+                // Escape HTML to prevent XSS injection in exported data
+                sb.AppendLine($"<td>{EscapeXml(value?.ToString() ?? string.Empty)}</td>");
             }
             sb.AppendLine("</tr>");
         }

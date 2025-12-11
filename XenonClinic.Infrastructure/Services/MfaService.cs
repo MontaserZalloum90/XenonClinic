@@ -150,7 +150,8 @@ public class MfaService : IMfaService
         await _smsService.SendAsync(phoneNumber, $"Your XenonClinic verification code is: {code}");
 
         _logger.LogInformation("SMS verification code sent to user {UserId}", userId);
-        return code;
+        // Security fix: Do not return the actual code - it should only be sent via SMS
+        return "Code sent successfully";
     }
 
     public async Task<string> SendEmailCodeAsync(string userId, string email)
@@ -169,7 +170,8 @@ public class MfaService : IMfaService
         });
 
         _logger.LogInformation("Email verification code sent to user {UserId}", userId);
-        return code;
+        // Security fix: Do not return the actual code - it should only be sent via email
+        return "Code sent successfully";
     }
 
     public Task<bool> VerifyCodeAsync(string userId, string code, MfaCodePurpose purpose)
@@ -311,7 +313,7 @@ public class MfaService : IMfaService
         using var rng = RandomNumberGenerator.Create();
         var bytes = new byte[5];
         rng.GetBytes(bytes);
-        return Convert.ToHexString(bytes).ToLower();
+        return Convert.ToHexString(bytes).ToLowerInvariant();
     }
 
     private static string HashCode(string code)

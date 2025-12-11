@@ -35,4 +35,18 @@ public interface ITenantAuthService
     /// <param name="slug">The slug to check</param>
     /// <returns>True if available</returns>
     Task<bool> IsSlugAvailableAsync(string slug);
+
+    /// <summary>
+    /// Logout a tenant admin and invalidate their tokens
+    /// </summary>
+    /// <param name="adminId">The admin ID from JWT claims</param>
+    /// <returns>Success or failure result</returns>
+    Task<Result> LogoutAsync(Guid adminId);
+
+    /// <summary>
+    /// Invalidate all tokens for a tenant admin (force re-login)
+    /// </summary>
+    /// <param name="adminId">The admin ID</param>
+    /// <returns>Success or failure result</returns>
+    Task<Result> InvalidateAllTokensAsync(Guid adminId);
 }

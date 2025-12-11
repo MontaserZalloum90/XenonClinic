@@ -45,8 +45,21 @@ public class FileStorageService : IFileStorageService
 
         EnsureDirectoryExists(folderPath);
 
-        await using var fileStream = new FileStream(filePath, FileMode.Create, FileAccess.Write);
-        await request.Stream.CopyToAsync(fileStream);
+        try
+        {
+            await using var fileStream = new FileStream(filePath, FileMode.Create, FileAccess.Write);
+            await request.Stream.CopyToAsync(fileStream);
+        }
+        catch (IOException ex)
+        {
+            _logger.LogError(ex, "Failed to write file to {FilePath}", filePath);
+            throw new InvalidOperationException($"Failed to upload file: {ex.Message}", ex);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            _logger.LogError(ex, "Access denied when writing file to {FilePath}", filePath);
+            throw new InvalidOperationException("Access denied while uploading file", ex);
+        }
 
         var fileInfo = new FileInfo(filePath);
 
@@ -86,8 +99,21 @@ public class FileStorageService : IFileStorageService
         var filePath = GetFilePath(fileId, metadata);
         if (!File.Exists(filePath)) return null;
 
-        var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
-        return new FileDownloadResult(stream, metadata.FileName, metadata.ContentType, metadata.SizeBytes);
+        try
+        {
+            var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
+            return new FileDownloadResult(stream, metadata.FileName, metadata.ContentType, metadata.SizeBytes);
+        }
+        catch (IOException ex)
+        {
+            _logger.LogError(ex, "Failed to open file for download: {FilePath}", filePath);
+            throw new InvalidOperationException($"Failed to download file: {ex.Message}", ex);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            _logger.LogError(ex, "Access denied when downloading file: {FilePath}", filePath);
+            throw new InvalidOperationException("Access denied while downloading file", ex);
+        }
     }
 
     public async Task<bool> DeleteAsync(string fileId)
@@ -98,7 +124,20 @@ public class FileStorageService : IFileStorageService
         var filePath = GetFilePath(fileId, metadata);
         if (File.Exists(filePath))
         {
-            File.Delete(filePath);
+            try
+            {
+                File.Delete(filePath);
+            }
+            catch (IOException ex)
+            {
+                _logger.LogError(ex, "Failed to delete file {FilePath}", filePath);
+                throw new InvalidOperationException($"Failed to delete file: {ex.Message}", ex);
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                _logger.LogError(ex, "Access denied when deleting file {FilePath}", filePath);
+                throw new InvalidOperationException("Access denied while deleting file", ex);
+            }
         }
 
         await DeleteMetadataAsync(fileId);
@@ -111,9 +150,22 @@ public class FileStorageService : IFileStorageService
         var metadataPath = GetMetadataPath(fileId);
         if (!File.Exists(metadataPath)) return Task.FromResult<FileMetadata?>(null);
 
-        var json = File.ReadAllText(metadataPath);
-        var metadata = System.Text.Json.JsonSerializer.Deserialize<FileMetadata>(json);
-        return Task.FromResult(metadata);
+        try
+        {
+            var json = File.ReadAllText(metadataPath);
+            var metadata = System.Text.Json.JsonSerializer.Deserialize<FileMetadata>(json);
+            return Task.FromResult(metadata);
+        }
+        catch (IOException ex)
+        {
+            _logger.LogError(ex, "Failed to read metadata from {MetadataPath}", metadataPath);
+            return Task.FromResult<FileMetadata?>(null);
+        }
+        catch (System.Text.Json.JsonException ex)
+        {
+            _logger.LogError(ex, "Failed to parse metadata JSON from {MetadataPath}", metadataPath);
+            return Task.FromResult<FileMetadata?>(null);
+        }
     }
 
     public Task<string?> GetTemporaryUrlAsync(string fileId, TimeSpan expiration)
@@ -140,8 +192,21 @@ public class FileStorageService : IFileStorageService
         var files = Directory.GetFiles(metadataDir, "*.json")
             .Select(f =>
             {
-                var json = File.ReadAllText(f);
-                return System.Text.Json.JsonSerializer.Deserialize<FileMetadata>(json);
+                try
+                {
+                    var json = File.ReadAllText(f);
+                    return System.Text.Json.JsonSerializer.Deserialize<FileMetadata>(json);
+                }
+                catch (IOException ex)
+                {
+                    _logger.LogWarning(ex, "Failed to read metadata file {Path}", f);
+                    return null;
+                }
+                catch (System.Text.Json.JsonException ex)
+                {
+                    _logger.LogWarning(ex, "Failed to parse metadata JSON from {Path}", f);
+                    return null;
+                }
             })
             .Where(m => m != null && (folder == null || m.Folder == folder))
             .Cast<FileMetadata>()
@@ -172,7 +237,21 @@ public class FileStorageService : IFileStorageService
         EnsureDirectoryExists(newFolderPath);
 
         var newPath = Path.Combine(newFolderPath, Path.GetFileName(currentPath));
-        File.Move(currentPath, newPath);
+
+        try
+        {
+            File.Move(currentPath, newPath);
+        }
+        catch (IOException ex)
+        {
+            _logger.LogError(ex, "Failed to move file from {Source} to {Destination}", currentPath, newPath);
+            throw new InvalidOperationException($"Failed to move file: {ex.Message}", ex);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            _logger.LogError(ex, "Access denied when moving file from {Source} to {Destination}", currentPath, newPath);
+            throw new InvalidOperationException("Access denied while moving file", ex);
+        }
 
         // Update metadata
         var updatedMetadata = metadata with { Folder = destinationFolder, ModifiedAt = DateTime.UtcNow };
@@ -187,9 +266,21 @@ public class FileStorageService : IFileStorageService
 
     private string GetFolderPath(string? folder)
     {
-        return string.IsNullOrEmpty(folder)
-            ? _settings.BasePath
-            : Path.Combine(_settings.BasePath, folder);
+        if (string.IsNullOrEmpty(folder))
+            return _settings.BasePath;
+
+        // Validate folder path to prevent path traversal attacks
+        var fullPath = Path.GetFullPath(Path.Combine(_settings.BasePath, folder));
+        var basePath = Path.GetFullPath(_settings.BasePath);
+
+        // Ensure the resolved path is within the base path
+        if (!fullPath.StartsWith(basePath, StringComparison.OrdinalIgnoreCase))
+        {
+            _logger.LogWarning("Path traversal attempt detected: {Folder}", folder);
+            throw new InvalidOperationException("Invalid folder path - path traversal not allowed");
+        }
+
+        return fullPath;
     }
 
     private string GetFilePath(string fileId, FileMetadata metadata)
@@ -210,13 +301,43 @@ public class FileStorageService : IFileStorageService
     {
         var path = GetMetadataPath(fileId);
         var json = System.Text.Json.JsonSerializer.Serialize(metadata);
-        await File.WriteAllTextAsync(path, json);
+
+        try
+        {
+            await File.WriteAllTextAsync(path, json);
+        }
+        catch (IOException ex)
+        {
+            _logger.LogError(ex, "Failed to save metadata to {Path}", path);
+            throw new InvalidOperationException($"Failed to save file metadata: {ex.Message}", ex);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            _logger.LogError(ex, "Access denied when saving metadata to {Path}", path);
+            throw new InvalidOperationException("Access denied while saving file metadata", ex);
+        }
     }
 
     private Task DeleteMetadataAsync(string fileId)
     {
         var path = GetMetadataPath(fileId);
-        if (File.Exists(path)) File.Delete(path);
+        if (File.Exists(path))
+        {
+            try
+            {
+                File.Delete(path);
+            }
+            catch (IOException ex)
+            {
+                _logger.LogWarning(ex, "Failed to delete metadata file {Path}", path);
+                // Non-critical - continue even if metadata deletion fails
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                _logger.LogWarning(ex, "Access denied when deleting metadata file {Path}", path);
+                // Non-critical - continue even if metadata deletion fails
+            }
+        }
         return Task.CompletedTask;
     }
 

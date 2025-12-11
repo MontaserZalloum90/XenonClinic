@@ -138,15 +138,22 @@ public class TenantProvisioningService : ITenantProvisioningService
             await using var connection = new SqlConnection(masterConnection);
             await connection.OpenAsync();
 
-            // Check if database exists
-            var checkCmd = new SqlCommand(
-                $"SELECT database_id FROM sys.databases WHERE name = '{databaseName}'",
+            // Check if database exists (parameterized query to prevent SQL injection)
+            await using var checkCmd = new SqlCommand(
+                "SELECT database_id FROM sys.databases WHERE name = @DatabaseName",
                 connection);
+            checkCmd.Parameters.AddWithValue("@DatabaseName", databaseName);
             var exists = await checkCmd.ExecuteScalarAsync() != null;
 
             if (!exists)
             {
-                var createCmd = new SqlCommand($"CREATE DATABASE [{databaseName}]", connection);
+                // Note: CREATE DATABASE doesn't support parameters for database name
+                // Validate database name to prevent SQL injection
+                if (!IsValidDatabaseName(databaseName))
+                {
+                    throw new InvalidOperationException($"Invalid database name: {databaseName}");
+                }
+                await using var createCmd = new SqlCommand($"CREATE DATABASE [{databaseName}]", connection);
                 await createCmd.ExecuteNonQueryAsync();
                 _logger.LogInformation("Created database {DatabaseName} for tenant {TenantId}",
                     databaseName, tenantId);
@@ -214,5 +221,27 @@ public class TenantProvisioningService : ITenantProvisioningService
     public async Task<bool> IsSlugAvailable(string slug)
     {
         return !await _context.Tenants.AnyAsync(t => t.Slug == slug);
+    }
+
+    /// <summary>
+    /// Validates that a database name is safe to use in SQL commands.
+    /// Prevents SQL injection by ensuring name only contains allowed characters.
+    /// </summary>
+    private static bool IsValidDatabaseName(string databaseName)
+    {
+        if (string.IsNullOrWhiteSpace(databaseName))
+            return false;
+
+        // Database names must:
+        // - Start with a letter or underscore
+        // - Contain only letters, digits, underscores, and hyphens
+        // - Be between 1 and 128 characters
+        if (databaseName.Length > 128)
+            return false;
+
+        // Use regex to validate safe characters only
+        return System.Text.RegularExpressions.Regex.IsMatch(
+            databaseName,
+            @"^[a-zA-Z_][a-zA-Z0-9_-]*$");
     }
 }

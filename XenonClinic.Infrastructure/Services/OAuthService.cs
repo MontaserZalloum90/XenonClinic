@@ -24,9 +24,11 @@ public class OAuthService : IOAuthService
     private readonly OAuthSettings _settings;
     private readonly ClinicDbContext _dbContext;
 
-    // JWKS cache with expiration
+    // JWKS cache with expiration and cleanup
     private static readonly ConcurrentDictionary<string, (JsonWebKeySet Keys, DateTime ExpiresAt)> _jwksCache = new();
     private static readonly TimeSpan JwksCacheDuration = TimeSpan.FromHours(1);
+    private static readonly TimeSpan CacheCleanupInterval = TimeSpan.FromMinutes(30);
+    private static DateTime _lastCacheCleanup = DateTime.UtcNow;
 
     public OAuthService(
         ILogger<OAuthService> logger,
@@ -81,9 +83,8 @@ public class OAuthService : IOAuthService
             ["client_secret"] = config.ClientSecret
         };
 
-        var response = await _httpClient.PostAsync(
-            config.TokenEndpoint,
-            new FormUrlEncodedContent(tokenRequest));
+        using var content = new FormUrlEncodedContent(tokenRequest);
+        using var response = await _httpClient.PostAsync(config.TokenEndpoint, content);
 
         response.EnsureSuccessStatusCode();
 
@@ -114,9 +115,8 @@ public class OAuthService : IOAuthService
             ["client_secret"] = config.ClientSecret
         };
 
-        var response = await _httpClient.PostAsync(
-            config.TokenEndpoint,
-            new FormUrlEncodedContent(tokenRequest));
+        using var content = new FormUrlEncodedContent(tokenRequest);
+        using var response = await _httpClient.PostAsync(config.TokenEndpoint, content);
 
         response.EnsureSuccessStatusCode();
 
@@ -136,10 +136,10 @@ public class OAuthService : IOAuthService
     {
         var config = GetProviderConfig(provider);
 
-        var request = new HttpRequestMessage(HttpMethod.Get, config.UserInfoEndpoint);
+        using var request = new HttpRequestMessage(HttpMethod.Get, config.UserInfoEndpoint);
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
-        var response = await _httpClient.SendAsync(request);
+        using var response = await _httpClient.SendAsync(request);
         response.EnsureSuccessStatusCode();
 
         var json = await response.Content.ReadFromJsonAsync<JsonElement>();
@@ -173,8 +173,8 @@ public class OAuthService : IOAuthService
             return;
         }
 
-        var content = new FormUrlEncodedContent(new[] { new KeyValuePair<string, string>("token", token) });
-        await _httpClient.PostAsync(revokeEndpoint, content);
+        using var content = new FormUrlEncodedContent(new[] { new KeyValuePair<string, string>("token", token) });
+        using var response = await _httpClient.PostAsync(revokeEndpoint, content);
 
         _logger.LogInformation("Token revoked for {Provider}", provider);
     }
@@ -270,6 +270,9 @@ public class OAuthService : IOAuthService
 
     private async Task<JsonWebKeySet?> GetJwksAsync(OAuthProvider provider, OAuthProviderConfig config)
     {
+        // Periodically cleanup expired cache entries to prevent memory leaks
+        CleanupExpiredCacheEntries();
+
         var jwksUri = config.JwksUri;
         if (string.IsNullOrEmpty(jwksUri))
         {
@@ -308,6 +311,27 @@ public class OAuthService : IOAuthService
         {
             _logger.LogError(ex, "Failed to fetch JWKS from {JwksUri}", jwksUri);
             return null;
+        }
+    }
+
+    /// <summary>
+    /// Cleans up expired JWKS cache entries to prevent memory leaks.
+    /// </summary>
+    private static void CleanupExpiredCacheEntries()
+    {
+        var now = DateTime.UtcNow;
+        if (now - _lastCacheCleanup < CacheCleanupInterval) return;
+
+        _lastCacheCleanup = now;
+
+        var expiredKeys = _jwksCache
+            .Where(kvp => kvp.Value.ExpiresAt < now)
+            .Select(kvp => kvp.Key)
+            .ToList();
+
+        foreach (var key in expiredKeys)
+        {
+            _jwksCache.TryRemove(key, out _);
         }
     }
 

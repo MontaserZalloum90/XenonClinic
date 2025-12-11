@@ -250,7 +250,7 @@ public static class CacheKeys
 
     // Generic list keys
     public static string List<T>(int branchId, int page = 1, int pageSize = 20) =>
-        $"{Prefix}:{typeof(T).Name.ToLower()}:branch:{branchId}:page:{page}:size:{pageSize}";
+        $"{Prefix}:{typeof(T).Name.ToLowerInvariant()}:branch:{branchId}:page:{page}:size:{pageSize}";
 
     // Auth keys
     public static string AuthConfig(int companyId) => $"{Prefix}:auth:company:{companyId}";

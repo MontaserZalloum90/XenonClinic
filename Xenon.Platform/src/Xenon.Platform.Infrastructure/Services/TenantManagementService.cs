@@ -30,7 +30,7 @@ public class TenantManagementService : ITenantManagementService
 
         if (!string.IsNullOrWhiteSpace(query.Search))
         {
-            var search = query.Search.ToLower();
+            var search = query.Search.ToLowerInvariant();
             dbQuery = dbQuery.Where(t =>
                 t.Name.ToLower().Contains(search) ||
                 t.Slug.ToLower().Contains(search) ||

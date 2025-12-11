@@ -38,6 +38,7 @@ public class InventoryService : IInventoryService
     public async Task<IEnumerable<InventoryItem>> GetInventoryItemsByBranchIdAsync(int branchId)
     {
         return await _context.InventoryItems
+            .AsNoTracking()
             .Include(i => i.Category)
             .Where(i => i.BranchId == branchId)
             .OrderBy(i => i.ItemName)
@@ -47,6 +48,7 @@ public class InventoryService : IInventoryService
     public async Task<IEnumerable<InventoryItem>> GetActiveInventoryItemsAsync(int branchId)
     {
         return await _context.InventoryItems
+            .AsNoTracking()
             .Include(i => i.Category)
             .Where(i => i.BranchId == branchId && i.IsActive)
             .OrderBy(i => i.ItemName)
@@ -56,6 +58,7 @@ public class InventoryService : IInventoryService
     public async Task<IEnumerable<InventoryItem>> GetLowStockItemsAsync(int branchId)
     {
         return await _context.InventoryItems
+            .AsNoTracking()
             .Include(i => i.Category)
             .Where(i => i.BranchId == branchId &&
                    i.IsActive &&
@@ -117,6 +120,10 @@ public class InventoryService : IInventoryService
     public async Task<IEnumerable<InventoryTransaction>> GetTransactionsByItemIdAsync(int itemId)
     {
         return await _context.InventoryTransactions
+            .AsNoTracking()
+            .Include(t => t.InventoryItem)
+            .Include(t => t.Patient)
+            .Include(t => t.TransferToBranch)
             .Where(t => t.InventoryItemId == itemId)
             .OrderByDescending(t => t.TransactionDate)
             .ToListAsync();
@@ -125,7 +132,10 @@ public class InventoryService : IInventoryService
     public async Task<IEnumerable<InventoryTransaction>> GetTransactionsByBranchIdAsync(int branchId)
     {
         return await _context.InventoryTransactions
+            .AsNoTracking()
             .Include(t => t.InventoryItem)
+            .Include(t => t.Patient)
+            .Include(t => t.TransferToBranch)
             .Where(t => t.InventoryItem!.BranchId == branchId)
             .OrderByDescending(t => t.TransactionDate)
             .ToListAsync();
@@ -134,6 +144,7 @@ public class InventoryService : IInventoryService
     public async Task<IEnumerable<InventoryTransaction>> GetTransactionsByTypeAsync(int branchId, TransactionType transactionType)
     {
         return await _context.InventoryTransactions
+            .AsNoTracking()
             .Include(t => t.InventoryItem)
             .Where(t => t.InventoryItem!.BranchId == branchId &&
                    t.TransactionType == transactionType)
@@ -143,22 +154,51 @@ public class InventoryService : IInventoryService
 
     public async Task<InventoryTransaction> CreateTransactionAsync(InventoryTransaction transaction)
     {
+        // Use single SaveChanges for both transaction and stock update
         _context.InventoryTransactions.Add(transaction);
+
+        // Update item stock level in same save
+        var item = await _context.InventoryItems.FindAsync(transaction.InventoryItemId);
+        if (item != null)
+        {
+            var stockChange = transaction.TransactionType == TransactionType.Credit
+                ? transaction.Quantity
+                : -transaction.Quantity;
+            item.CurrentStock += stockChange;
+            item.LastRestockDate = DateTime.UtcNow;
+        }
+
         await _context.SaveChangesAsync();
-
-        // Update item stock level
-        await UpdateItemStockLevelAsync(transaction.InventoryItemId);
-
         return transaction;
     }
 
     public async Task UpdateTransactionAsync(InventoryTransaction transaction)
     {
-        _context.InventoryTransactions.Update(transaction);
-        await _context.SaveChangesAsync();
+        // Get the old transaction to calculate difference
+        var oldTransaction = await _context.InventoryTransactions
+            .AsNoTracking()
+            .FirstOrDefaultAsync(t => t.Id == transaction.Id);
 
-        // Recalculate item stock level
-        await UpdateItemStockLevelAsync(transaction.InventoryItemId);
+        _context.InventoryTransactions.Update(transaction);
+
+        // Recalculate item stock level in same save
+        var item = await _context.InventoryItems.FindAsync(transaction.InventoryItemId);
+        if (item != null && oldTransaction != null)
+        {
+            // Reverse old transaction effect
+            var oldStockChange = oldTransaction.TransactionType == TransactionType.Credit
+                ? oldTransaction.Quantity
+                : -oldTransaction.Quantity;
+            // Apply new transaction effect
+            var newStockChange = transaction.TransactionType == TransactionType.Credit
+                ? transaction.Quantity
+                : -transaction.Quantity;
+
+            item.CurrentStock = item.CurrentStock - oldStockChange + newStockChange;
+            item.LastRestockDate = DateTime.UtcNow;
+        }
+
+        await _context.SaveChangesAsync();
     }
 
     public async Task DeleteTransactionAsync(int id)
@@ -166,26 +206,18 @@ public class InventoryService : IInventoryService
         var transaction = await _context.InventoryTransactions.FindAsync(id);
         if (transaction != null)
         {
-            var itemId = transaction.InventoryItemId;
+            // Update item stock in same save
+            var item = await _context.InventoryItems.FindAsync(transaction.InventoryItemId);
+            if (item != null)
+            {
+                var stockChange = transaction.TransactionType == TransactionType.Credit
+                    ? -transaction.Quantity  // Reverse the credit
+                    : transaction.Quantity;  // Reverse the debit
+                item.CurrentStock += stockChange;
+                item.LastRestockDate = DateTime.UtcNow;
+            }
+
             _context.InventoryTransactions.Remove(transaction);
-            await _context.SaveChangesAsync();
-
-            // Recalculate item stock level
-            await UpdateItemStockLevelAsync(itemId);
-        }
-    }
-
-    private async Task UpdateItemStockLevelAsync(int itemId)
-    {
-        var item = await _context.InventoryItems.FindAsync(itemId);
-        if (item != null)
-        {
-            var stockLevel = await _context.InventoryTransactions
-                .Where(t => t.InventoryItemId == itemId)
-                .SumAsync(t => t.TransactionType == TransactionType.Credit ? t.Quantity : -t.Quantity);
-
-            item.CurrentStock = stockLevel;
-            item.LastRestockDate = DateTime.UtcNow;
             await _context.SaveChangesAsync();
         }
     }
@@ -215,6 +247,15 @@ public class InventoryService : IInventoryService
             if (item == null)
                 throw new KeyNotFoundException($"Inventory item with ID {itemId} not found");
 
+            // Validate against MaxStockLevel if set
+            if (item.MaxStockLevel.HasValue && (item.CurrentStock + quantity) > item.MaxStockLevel.Value)
+            {
+                throw new InvalidOperationException(
+                    $"Adding {quantity} units would exceed maximum stock level of {item.MaxStockLevel.Value}. " +
+                    $"Current stock: {item.CurrentStock}");
+            }
+
+            var newStockLevel = item.CurrentStock + quantity;
             var transaction = new InventoryTransaction
             {
                 InventoryItemId = itemId,
@@ -224,13 +265,14 @@ public class InventoryService : IInventoryService
                 TotalCost = quantity * unitCost,
                 TransactionDate = DateTime.UtcNow,
                 PerformedBy = userId,
-                Notes = notes ?? "Stock added"
+                Notes = notes ?? "Stock added",
+                QuantityAfterTransaction = newStockLevel
             };
 
             _context.InventoryTransactions.Add(transaction);
 
             // Update item stock level and unit cost in single save
-            item.CurrentStock += quantity;
+            item.CurrentStock = newStockLevel;
             item.UnitCost = unitCost;
             item.LastRestockDate = DateTime.UtcNow;
 
@@ -265,6 +307,20 @@ public class InventoryService : IInventoryService
             if (item.CurrentStock < quantity)
                 throw new InvalidOperationException($"Insufficient stock. Available: {item.CurrentStock}, Requested: {quantity}");
 
+            // Check for expired items - prevent dispensing expired stock
+            if (item.ExpiryDate.HasValue && item.ExpiryDate.Value.Date < DateTime.UtcNow.Date)
+            {
+                throw new InvalidOperationException(
+                    $"Cannot remove stock from expired item. Expiry date: {item.ExpiryDate.Value:yyyy-MM-dd}. " +
+                    "Please dispose of expired stock and adjust inventory.");
+            }
+
+            // Warn if stock will fall below reorder level
+            var remainingStock = item.CurrentStock - quantity;
+            var stockWarning = remainingStock <= item.ReorderLevel
+                ? $" Warning: Stock level ({remainingStock}) is at or below reorder level ({item.ReorderLevel})."
+                : "";
+
             var transaction = new InventoryTransaction
             {
                 InventoryItemId = itemId,
@@ -274,7 +330,8 @@ public class InventoryService : IInventoryService
                 TotalCost = quantity * item.UnitCost,
                 TransactionDate = DateTime.UtcNow,
                 PerformedBy = userId,
-                Notes = notes ?? "Stock removed"
+                Notes = (notes ?? "Stock removed") + stockWarning,
+                QuantityAfterTransaction = remainingStock
             };
 
             _context.InventoryTransactions.Add(transaction);

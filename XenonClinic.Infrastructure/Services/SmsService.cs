@@ -46,10 +46,15 @@ public class SmsService : ISmsService
 
             _logger.LogInformation("SMS sent successfully to {PhoneNumber}", MaskPhoneNumber(normalizedPhone));
         }
-        catch (Exception ex)
+        catch (HttpRequestException ex)
         {
-            _logger.LogError(ex, "Failed to send SMS to {PhoneNumber}", MaskPhoneNumber(normalizedPhone));
-            throw;
+            _logger.LogError(ex, "HTTP request failed while sending SMS to {PhoneNumber}", MaskPhoneNumber(normalizedPhone));
+            throw new InvalidOperationException($"Failed to send SMS: {ex.Message}", ex);
+        }
+        catch (TaskCanceledException ex)
+        {
+            _logger.LogError(ex, "SMS request timed out for {PhoneNumber}", MaskPhoneNumber(normalizedPhone));
+            throw new InvalidOperationException("SMS request timed out", ex);
         }
     }
 
@@ -85,14 +90,14 @@ public class SmsService : ISmsService
 
     private async Task SendViaTwilioAsync(string phoneNumber, string message)
     {
-        var content = new FormUrlEncodedContent(new[]
+        using var content = new FormUrlEncodedContent(new[]
         {
             new KeyValuePair<string, string>("To", phoneNumber),
             new KeyValuePair<string, string>("From", _settings.FromNumber),
             new KeyValuePair<string, string>("Body", message)
         });
 
-        var response = await _httpClient.PostAsync(
+        using var response = await _httpClient.PostAsync(
             $"https://api.twilio.com/2010-04-01/Accounts/{_settings.AccountSid}/Messages.json",
             content);
 
@@ -101,14 +106,14 @@ public class SmsService : ISmsService
 
     private async Task SendViaMessageBirdAsync(string phoneNumber, string message)
     {
-        var content = new FormUrlEncodedContent(new[]
+        using var content = new FormUrlEncodedContent(new[]
         {
             new KeyValuePair<string, string>("recipients", phoneNumber),
             new KeyValuePair<string, string>("originator", _settings.FromNumber),
             new KeyValuePair<string, string>("body", message)
         });
 
-        var response = await _httpClient.PostAsync("https://rest.messagebird.com/messages", content);
+        using var response = await _httpClient.PostAsync("https://rest.messagebird.com/messages", content);
         response.EnsureSuccessStatusCode();
     }
 

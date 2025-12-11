@@ -32,6 +32,7 @@ public class AppointmentService : IAppointmentService
     public async Task<IEnumerable<Appointment>> GetAppointmentsByBranchIdAsync(int branchId)
     {
         return await _context.Appointments
+            .AsNoTracking()
             .Include(a => a.Patient)
             .Include(a => a.Provider)
             .Where(a => a.BranchId == branchId)
@@ -42,6 +43,7 @@ public class AppointmentService : IAppointmentService
     public async Task<IEnumerable<Appointment>> GetAppointmentsByPatientIdAsync(int patientId)
     {
         return await _context.Appointments
+            .AsNoTracking()
             .Include(a => a.Branch)
             .Include(a => a.Provider)
             .Where(a => a.PatientId == patientId)
@@ -52,6 +54,7 @@ public class AppointmentService : IAppointmentService
     public async Task<IEnumerable<Appointment>> GetAppointmentsByProviderIdAsync(int providerId)
     {
         return await _context.Appointments
+            .AsNoTracking()
             .Include(a => a.Patient)
             .Include(a => a.Branch)
             .Where(a => a.ProviderId == providerId)
@@ -65,6 +68,7 @@ public class AppointmentService : IAppointmentService
         var endOfDay = startOfDay.AddDays(1);
 
         return await _context.Appointments
+            .AsNoTracking()
             .Include(a => a.Patient)
             .Include(a => a.Provider)
             .Where(a => a.BranchId == branchId &&
@@ -76,7 +80,14 @@ public class AppointmentService : IAppointmentService
 
     public async Task<IEnumerable<Appointment>> GetAppointmentsByDateRangeAsync(int branchId, DateTime startDate, DateTime endDate)
     {
+        // Validate date range
+        if (endDate < startDate)
+        {
+            throw new ArgumentException("End date must be greater than or equal to start date", nameof(endDate));
+        }
+
         return await _context.Appointments
+            .AsNoTracking()
             .Include(a => a.Patient)
             .Include(a => a.Provider)
             .Where(a => a.BranchId == branchId &&
@@ -89,6 +100,7 @@ public class AppointmentService : IAppointmentService
     public async Task<IEnumerable<Appointment>> GetAppointmentsByStatusAsync(int branchId, AppointmentStatus status)
     {
         return await _context.Appointments
+            .AsNoTracking()
             .Include(a => a.Patient)
             .Include(a => a.Provider)
             .Where(a => a.BranchId == branchId && a.Status == status)
@@ -103,10 +115,17 @@ public class AppointmentService : IAppointmentService
 
     public async Task<IEnumerable<Appointment>> GetUpcomingAppointmentsAsync(int branchId, int days = 7)
     {
+        // Validate days parameter
+        if (days <= 0)
+        {
+            throw new ArgumentException("Days must be greater than zero", nameof(days));
+        }
+
         var today = DateTime.UtcNow.Date;
         var futureDate = today.AddDays(days);
 
         return await _context.Appointments
+            .AsNoTracking()
             .Include(a => a.Patient)
             .Include(a => a.Provider)
             .Where(a => a.BranchId == branchId &&
@@ -120,6 +139,30 @@ public class AppointmentService : IAppointmentService
 
     public async Task<Appointment> CreateAppointmentAsync(Appointment appointment)
     {
+        // Validate patient exists
+        var patientExists = await _context.Patients.AnyAsync(p => p.Id == appointment.PatientId && !p.IsDeleted);
+        if (!patientExists)
+        {
+            throw new KeyNotFoundException($"Patient with ID {appointment.PatientId} not found");
+        }
+
+        // Validate provider exists if specified
+        if (appointment.ProviderId.HasValue)
+        {
+            var providerExists = await _context.Providers.AnyAsync(p => p.Id == appointment.ProviderId.Value);
+            if (!providerExists)
+            {
+                throw new KeyNotFoundException($"Provider with ID {appointment.ProviderId.Value} not found");
+            }
+        }
+
+        // Validate branch exists
+        var branchExists = await _context.Branches.AnyAsync(b => b.Id == appointment.BranchId);
+        if (!branchExists)
+        {
+            throw new KeyNotFoundException($"Branch with ID {appointment.BranchId} not found");
+        }
+
         // Validate appointment times
         if (appointment.EndTime <= appointment.StartTime)
         {
@@ -145,7 +188,20 @@ public class AppointmentService : IAppointmentService
 
     public async Task UpdateAppointmentAsync(Appointment appointment)
     {
-        _context.Appointments.Update(appointment);
+        // Validate appointment exists
+        var existingAppointment = await _context.Appointments.FindAsync(appointment.Id);
+        if (existingAppointment == null)
+        {
+            throw new KeyNotFoundException($"Appointment with ID {appointment.Id} not found");
+        }
+
+        // Validate appointment times if they changed
+        if (appointment.EndTime <= appointment.StartTime)
+        {
+            throw new InvalidOperationException("Appointment end time must be after start time");
+        }
+
+        _context.Entry(existingAppointment).CurrentValues.SetValues(appointment);
         await _context.SaveChangesAsync();
     }
 
@@ -304,6 +360,26 @@ public class AppointmentService : IAppointmentService
         var appointment = await _context.Appointments.FindAsync(appointmentId);
         if (appointment == null)
             throw new KeyNotFoundException($"Appointment with ID {appointmentId} not found");
+
+        // Validate appointment can be rescheduled (only Scheduled or Confirmed appointments)
+        if (appointment.Status != AppointmentStatus.Scheduled && appointment.Status != AppointmentStatus.Confirmed)
+        {
+            throw new InvalidOperationException(
+                $"Cannot reschedule appointment in {appointment.Status} status. " +
+                "Only scheduled or confirmed appointments can be rescheduled.");
+        }
+
+        // Validate new times are valid
+        if (newEndTime <= newStartTime)
+        {
+            throw new InvalidOperationException("Appointment end time must be after start time");
+        }
+
+        // Validate new time is not in the past
+        if (newStartTime.Date < DateTime.UtcNow.Date)
+        {
+            throw new InvalidOperationException("Cannot reschedule appointment to a past date");
+        }
 
         // Check if new time slot is available
         if (!await IsTimeSlotAvailableAsync(appointment.BranchId, appointment.ProviderId, newStartTime, newEndTime, appointmentId))

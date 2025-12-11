@@ -1,9 +1,10 @@
 using System.ComponentModel.DataAnnotations;
 using XenonClinic.Core.Enums;
+using XenonClinic.Core.Interfaces;
 
 namespace XenonClinic.Core.Entities;
 
-public class Expense
+public class Expense : IBranchEntity
 {
     public int Id { get; set; }
 

@@ -60,7 +60,8 @@ public static class ServiceCollectionExtensions
     {
         var options = new WorkflowEngineOptions();
         configure(options);
-        builder.Services.AddSingleton(options);
+        // Use Replace to override the default TryAddSingleton registration
+        builder.Services.Replace(ServiceDescriptor.Singleton(options));
         return builder;
     }
 

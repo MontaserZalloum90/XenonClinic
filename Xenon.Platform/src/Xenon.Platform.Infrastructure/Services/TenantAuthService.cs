@@ -293,4 +293,44 @@ public class TenantAuthService : ITenantAuthService
             // In production: Enqueue a retry job or trigger an alert
         }
     }
+
+    public async Task<Result> LogoutAsync(Guid adminId)
+    {
+        var admin = await _context.TenantAdmins.FindAsync(adminId);
+        if (admin == null)
+        {
+            return "Admin not found";
+        }
+
+        admin.LastLogoutAt = DateTime.UtcNow;
+        await _context.SaveChangesAsync();
+
+        await _auditService.LogAsync("Logout", "TenantAdmin", admin.Id,
+            newValues: new { admin.Email, LogoutAt = admin.LastLogoutAt },
+            tenantId: admin.TenantId);
+
+        _logger.LogInformation("Tenant admin {Email} logged out", admin.Email);
+
+        return Result.Success();
+    }
+
+    public async Task<Result> InvalidateAllTokensAsync(Guid adminId)
+    {
+        var admin = await _context.TenantAdmins.FindAsync(adminId);
+        if (admin == null)
+        {
+            return "Admin not found";
+        }
+
+        admin.TokenInvalidatedAt = DateTime.UtcNow;
+        await _context.SaveChangesAsync();
+
+        await _auditService.LogAsync("TokensInvalidated", "TenantAdmin", admin.Id,
+            newValues: new { admin.Email, InvalidatedAt = admin.TokenInvalidatedAt },
+            tenantId: admin.TenantId);
+
+        _logger.LogInformation("All tokens invalidated for tenant admin {Email}", admin.Email);
+
+        return Result.Success();
+    }
 }

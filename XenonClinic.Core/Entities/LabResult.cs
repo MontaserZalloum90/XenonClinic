@@ -1,11 +1,20 @@
 using System.ComponentModel.DataAnnotations;
 using XenonClinic.Core.Enums;
+using XenonClinic.Core.Interfaces;
 
 namespace XenonClinic.Core.Entities;
 
-public class LabResult
+public class LabResult : IBranchEntity
 {
     public int Id { get; set; }
+
+    /// <summary>
+    /// Branch ID for multi-tenant data isolation.
+    /// Required for all transactional entities.
+    /// </summary>
+    [Required]
+    public int BranchId { get; set; }
+    public Branch? Branch { get; set; }
 
     [Required]
     public int LabOrderId { get; set; }

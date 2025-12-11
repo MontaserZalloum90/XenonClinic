@@ -116,7 +116,7 @@ public class CurrentUserContext : ICurrentUserContext
         {
             branches = await _context.Branches
                 .Include(b => b.Company)
-                .Where(b => b.IsActive && b.Company.TenantId == user.TenantId)
+                .Where(b => b.IsActive && b.Company != null && b.Company.TenantId == user.TenantId)
                 .Select(b => b.Id)
                 .ToListAsync();
         }

@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.DataProtection;
+using Microsoft.Extensions.Logging;
 using XenonClinic.Core.Interfaces;
 
 namespace XenonClinic.Infrastructure.Services;
@@ -9,11 +10,15 @@ namespace XenonClinic.Infrastructure.Services;
 public class SecretEncryptionService : ISecretEncryptionService
 {
     private readonly IDataProtector _protector;
+    private readonly ILogger<SecretEncryptionService> _logger;
     private const string Purpose = "XenonClinic.AuthSecrets.v1";
 
-    public SecretEncryptionService(IDataProtectionProvider dataProtectionProvider)
+    public SecretEncryptionService(
+        IDataProtectionProvider dataProtectionProvider,
+        ILogger<SecretEncryptionService> logger)
     {
         _protector = dataProtectionProvider.CreateProtector(Purpose);
+        _logger = logger;
     }
 
     /// <inheritdoc />
@@ -53,9 +58,16 @@ public class SecretEncryptionService : ISecretEncryptionService
         {
             return Decrypt(encryptedText);
         }
-        catch (Exception)
+        catch (System.Security.Cryptography.CryptographicException ex)
         {
-            // If decryption fails (e.g., data was not encrypted or corrupted), return null
+            // If decryption fails due to invalid/corrupted data, log and return null
+            _logger.LogWarning(ex, "Failed to decrypt text - data may not be encrypted or is corrupted");
+            return null;
+        }
+        catch (FormatException ex)
+        {
+            // If decryption fails due to invalid format, log and return null
+            _logger.LogWarning(ex, "Failed to decrypt text - invalid format");
             return null;
         }
     }

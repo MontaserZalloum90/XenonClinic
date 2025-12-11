@@ -49,10 +49,11 @@ public class ConfigurationResolverService : IConfigurationResolverService
                 DefaultSenderName = companySettings?.DefaultSenderName ?? tenantSettings?.DefaultSenderName
             };
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _logger.LogError(ex, "Error resolving email configuration for company {CompanyId}", companyId);
-            return new EmailConfiguration();
+            _logger.LogError(ex, "Database error resolving email configuration for company {CompanyId}", companyId);
+            // Re-throw database errors rather than silently returning empty config
+            throw new InvalidOperationException($"Failed to resolve email configuration for company {companyId}", ex);
         }
     }
 
@@ -87,10 +88,11 @@ public class ConfigurationResolverService : IConfigurationResolverService
                 BusinessPhoneNumberId = companySettings?.WhatsAppBusinessPhoneNumberId ?? tenantSettings?.WhatsAppBusinessPhoneNumberId
             };
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _logger.LogError(ex, "Error resolving WhatsApp configuration for company {CompanyId}", companyId);
-            return new WhatsAppConfiguration();
+            _logger.LogError(ex, "Database error resolving WhatsApp configuration for company {CompanyId}", companyId);
+            // Re-throw database errors rather than silently returning empty config
+            throw new InvalidOperationException($"Failed to resolve WhatsApp configuration for company {companyId}", ex);
         }
     }
 }

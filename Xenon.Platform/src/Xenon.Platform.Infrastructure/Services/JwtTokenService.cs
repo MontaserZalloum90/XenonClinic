@@ -11,7 +11,10 @@ public interface IJwtTokenService
 {
     string GenerateTenantToken(TenantAdmin admin, Tenant tenant);
     string GeneratePlatformAdminToken(PlatformAdmin admin);
+    string GenerateTwoFactorToken(Guid userId, string userType, string email);
     ClaimsPrincipal? ValidateToken(string token, string audience);
+    ClaimsPrincipal? ValidateTwoFactorToken(string token);
+    DateTime GetTokenExpiry(string token);
 }
 
 public class JwtTokenService : IJwtTokenService
@@ -23,6 +26,8 @@ public class JwtTokenService : IJwtTokenService
     private readonly string _adminAudience;
     private readonly int _tenantTokenExpiryHours;
     private readonly int _adminTokenExpiryHours;
+    private readonly string _twoFactorAudience;
+    private readonly int _twoFactorTokenExpiryMinutes;
 
     public JwtTokenService(IConfiguration configuration)
     {
@@ -33,6 +38,8 @@ public class JwtTokenService : IJwtTokenService
         _adminAudience = configuration["Jwt:AdminAudience"] ?? "xenon-admin";
         _tenantTokenExpiryHours = int.Parse(configuration["Jwt:TenantTokenExpiryHours"] ?? "24");
         _adminTokenExpiryHours = int.Parse(configuration["Jwt:AdminTokenExpiryHours"] ?? "8");
+        _twoFactorAudience = configuration["Jwt:TwoFactorAudience"] ?? "xenon-2fa";
+        _twoFactorTokenExpiryMinutes = int.Parse(configuration["Jwt:TwoFactorTokenExpiryMinutes"] ?? "5");
     }
 
     public string GenerateTenantToken(TenantAdmin admin, Tenant tenant)
@@ -103,10 +110,62 @@ public class JwtTokenService : IJwtTokenService
         }
     }
 
+    public string GenerateTwoFactorToken(Guid userId, string userType, string email)
+    {
+        var claims = new List<Claim>
+        {
+            new(JwtRegisteredClaimNames.Sub, userId.ToString()),
+            new(JwtRegisteredClaimNames.Email, email),
+            new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+            new(JwtRegisteredClaimNames.Iat, DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString(), ClaimValueTypes.Integer64),
+            new("user_type", userType),
+            new("purpose", "2fa-verification")
+        };
+
+        return GenerateToken(claims, _twoFactorAudience, TimeSpan.FromMinutes(_twoFactorTokenExpiryMinutes));
+    }
+
+    public ClaimsPrincipal? ValidateTwoFactorToken(string token)
+    {
+        var principal = ValidateToken(token, _twoFactorAudience);
+
+        if (principal == null)
+            return null;
+
+        // Verify it's a 2FA token
+        var purposeClaim = principal.FindFirst("purpose")?.Value;
+        if (purposeClaim != "2fa-verification")
+            return null;
+
+        return principal;
+    }
+
+    public DateTime GetTokenExpiry(string token)
+    {
+        try
+        {
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var jwtToken = tokenHandler.ReadJwtToken(token);
+            return jwtToken.ValidTo;
+        }
+        catch
+        {
+            return DateTime.MinValue;
+        }
+    }
+
     private string GenerateToken(List<Claim> claims, string audience, TimeSpan expiry)
     {
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_secretKey));
         var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+        // Add issued at claim if not present
+        if (!claims.Any(c => c.Type == JwtRegisteredClaimNames.Iat))
+        {
+            claims.Add(new Claim(JwtRegisteredClaimNames.Iat,
+                DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString(),
+                ClaimValueTypes.Integer64));
+        }
 
         var token = new JwtSecurityToken(
             issuer: _issuer,

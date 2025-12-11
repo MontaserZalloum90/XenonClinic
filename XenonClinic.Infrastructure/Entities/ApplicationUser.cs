@@ -13,6 +13,18 @@ public class ApplicationUser : IdentityUser, IApplicationUser
     public int? CompanyId { get; set; }
     public int? PrimaryBranchId { get; set; }
 
+    /// <summary>
+    /// The default branch for this user when no specific branch is selected.
+    /// Falls back to PrimaryBranchId if not set.
+    /// </summary>
+    public int? DefaultBranchId { get; set; }
+
+    /// <summary>
+    /// Whether this user is a company administrator with access to all branches
+    /// within their company. Only applies to non-super-admin users.
+    /// </summary>
+    public bool IsCompanyAdmin { get; set; } = false;
+
     public string? FirstName { get; set; }
     public string? LastName { get; set; }
     public string? DisplayName { get; set; }

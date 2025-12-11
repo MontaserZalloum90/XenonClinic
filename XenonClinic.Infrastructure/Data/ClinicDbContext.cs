@@ -401,6 +401,14 @@ public class ClinicDbContext : IdentityDbContext<Entities.ApplicationUser>
         builder.Entity<TenantListLayout>().HasQueryFilter(tll =>
             !ShouldFilterByTenant || tll.TenantId == CurrentTenantId);
 
+        // ========================================
+        // Branch-Level Query Filters (143+ entities)
+        // Apply global filters to all entities with BranchId property.
+        // This ensures automatic tenant isolation at the branch level.
+        // Super admins and company admins bypass these filters.
+        // ========================================
+        builder.ApplyBranchQueryFiltersByConvention(_tenantContextAccessor);
+
         // Tenant configuration
         builder.Entity<Tenant>()
             .HasIndex(t => t.Code)
