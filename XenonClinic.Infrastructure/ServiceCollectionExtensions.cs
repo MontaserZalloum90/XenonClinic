@@ -20,6 +20,8 @@ public static class ServiceCollectionExtensions
     {
         // User context - centralized user information access
         services.AddScoped<ICurrentUserContext, CurrentUserContext>();
+        // BUG FIX: Register ICurrentUserService as alias to ICurrentUserContext for backwards compatibility
+        services.AddScoped<ICurrentUserService>(sp => (ICurrentUserService)sp.GetRequiredService<ICurrentUserContext>());
 
         // Sequence generator - centralized sequence number generation
         services.AddScoped<ISequenceGenerator, SequenceGenerator>();

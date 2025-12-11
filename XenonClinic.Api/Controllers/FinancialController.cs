@@ -179,7 +179,8 @@ public class FinancialController : BaseApiController
             Balance = dto.InitialBalance,
             IsActive = true,
             CreatedAt = DateTime.UtcNow,
-            CreatedBy = _userContext.UserId ?? "system"
+            // BUG FIX: Use RequireUserId() to ensure audit trail integrity
+            CreatedBy = _userContext.RequireUserId()
         };
 
         var createdAccount = await _financialService.CreateAccountAsync(account);
@@ -696,7 +697,8 @@ public class FinancialController : BaseApiController
             Notes = dto.Notes,
             AttachmentPath = dto.AttachmentPath,
             CreatedAt = DateTime.UtcNow,
-            CreatedBy = _userContext.UserId ?? "system"
+            // BUG FIX: Use RequireUserId() to ensure audit trail integrity
+            CreatedBy = _userContext.RequireUserId()
         };
 
         var createdExpense = await _financialService.CreateExpenseAsync(expense);
@@ -969,7 +971,8 @@ public class FinancialController : BaseApiController
             ExpenseId = dto.ExpenseId,
             SaleId = dto.SaleId,
             CreatedAt = DateTime.UtcNow,
-            CreatedBy = _userContext.UserId ?? "system"
+            // BUG FIX: Use RequireUserId() to ensure audit trail integrity
+            CreatedBy = _userContext.RequireUserId()
         };
 
         var createdTransaction = await _financialService.CreateTransactionAsync(transaction);

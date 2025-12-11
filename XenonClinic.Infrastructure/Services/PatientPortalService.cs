@@ -5,6 +5,7 @@ using System.Text;
 using XenonClinic.Core.DTOs;
 using XenonClinic.Core.Entities;
 using XenonClinic.Core.Interfaces;
+using XenonClinic.Core.Utilities;
 using XenonClinic.Infrastructure.Data;
 
 namespace XenonClinic.Infrastructure.Services;
@@ -34,6 +35,31 @@ public class PatientPortalService : IPatientPortalService
 
         try
         {
+            // BUG FIX: Validate branch exists and is active before allowing registration
+            var branch = await _context.Branches
+                .AsNoTracking()
+                .FirstOrDefaultAsync(b => b.Id == branchId);
+
+            if (branch == null)
+            {
+                _logger.LogWarning("Registration attempted with invalid branch ID: {BranchId}", branchId);
+                return new PortalRegistrationResponseDto
+                {
+                    Success = false,
+                    Message = "Invalid branch. Please contact support."
+                };
+            }
+
+            if (!branch.IsActive)
+            {
+                _logger.LogWarning("Registration attempted for inactive branch: {BranchId}", branchId);
+                return new PortalRegistrationResponseDto
+                {
+                    Success = false,
+                    Message = "This branch is not currently accepting registrations. Please contact support."
+                };
+            }
+
             // Validate email format
             if (string.IsNullOrWhiteSpace(dto.Email) || !IsValidEmail(dto.Email))
             {
@@ -178,8 +204,8 @@ public class PatientPortalService : IPatientPortalService
 
             if (account == null || !VerifyPassword(dto.Password, account.PasswordHash))
             {
-                // Log failed attempt for security monitoring
-                _logger.LogWarning("Failed login attempt for email: {Email}", dto.Email);
+                // BUG FIX: Mask email in logs to prevent PII exposure
+                _logger.LogWarning("Failed login attempt for email: {Email}", LoggingHelpers.MaskEmail(dto.Email));
                 return new PortalLoginResponseDto
                 {
                     Success = false,

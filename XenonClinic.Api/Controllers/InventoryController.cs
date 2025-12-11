@@ -433,11 +433,12 @@ public class InventoryController : BaseApiController
                 return ApiForbidden("Access denied to this branch's inventory");
             }
 
+            // BUG FIX: Use RequireUserId() to ensure audit trail integrity
             var transaction = await _inventoryService.AddStockAsync(
                 dto.InventoryItemId,
                 dto.Quantity,
                 dto.UnitCost,
-                _currentUserService.UserId ?? "system",
+                _currentUserService.RequireUserId(),
                 dto.Notes);
 
             _logger.LogInformation("Stock added: {Quantity} units to item {ItemId} by {UserId}",
@@ -497,10 +498,11 @@ public class InventoryController : BaseApiController
                 return ApiBadRequest($"Insufficient stock. Available: {currentStock}, Requested: {dto.Quantity}");
             }
 
+            // BUG FIX: Use RequireUserId() to ensure audit trail integrity
             var transaction = await _inventoryService.RemoveStockAsync(
                 dto.InventoryItemId,
                 dto.Quantity,
-                _currentUserService.UserId ?? "system",
+                _currentUserService.RequireUserId(),
                 dto.Notes);
 
             _logger.LogInformation("Stock removed: {Quantity} units from item {ItemId} by {UserId}",
@@ -551,10 +553,11 @@ public class InventoryController : BaseApiController
                 return ApiForbidden("Access denied to this branch's inventory");
             }
 
+            // BUG FIX: Use RequireUserId() to ensure audit trail integrity
             var transaction = await _inventoryService.AdjustStockAsync(
                 dto.InventoryItemId,
                 dto.NewQuantity,
-                _currentUserService.UserId ?? "system",
+                _currentUserService.RequireUserId(),
                 $"{dto.Reason}. {dto.Notes}".Trim());
 
             _logger.LogInformation("Stock adjusted: item {ItemId} from {OldQuantity} to {NewQuantity} by {UserId}, Reason: {Reason}",

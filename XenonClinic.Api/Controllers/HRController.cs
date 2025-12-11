@@ -1146,7 +1146,8 @@ public class HRController : BaseApiController
             return ApiBadRequest(HRValidationMessages.LeaveAlreadyApproved);
         }
 
-        await _hrService.ApproveLeaveRequestAsync(id, _userContext.UserId ?? "system");
+        // BUG FIX: Use RequireUserId() to ensure audit trail integrity
+        await _hrService.ApproveLeaveRequestAsync(id, _userContext.RequireUserId());
 
         _logger.LogInformation(
             "Leave request approved: {LeaveRequestId}, By: {UserId}",
@@ -1192,7 +1193,8 @@ public class HRController : BaseApiController
             return ApiBadRequest(HRValidationMessages.LeaveAlreadyRejected);
         }
 
-        await _hrService.RejectLeaveRequestAsync(id, _userContext.UserId ?? "system", dto.RejectionReason);
+        // BUG FIX: Use RequireUserId() to ensure audit trail integrity
+        await _hrService.RejectLeaveRequestAsync(id, _userContext.RequireUserId(), dto.RejectionReason);
 
         _logger.LogInformation(
             "Leave request rejected: {LeaveRequestId}, By: {UserId}",

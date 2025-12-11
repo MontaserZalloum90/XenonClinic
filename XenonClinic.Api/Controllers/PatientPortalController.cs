@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using XenonClinic.Core.DTOs;
 using XenonClinic.Core.Interfaces;
+using XenonClinic.Core.Utilities;
 
 namespace XenonClinic.Api.Controllers;
 
@@ -133,7 +134,8 @@ public class PatientPortalController : BaseApiController
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error during patient portal registration for email: {Email}", request.Email);
+            // BUG FIX: Mask email in logs to prevent PII exposure
+            _logger.LogError(ex, "Error during patient portal registration for email: {Email}", LoggingHelpers.MaskEmail(request.Email));
             return ApiServerError("An error occurred during registration");
         }
     }
@@ -156,16 +158,19 @@ public class PatientPortalController : BaseApiController
 
             if (!result.Success)
             {
-                _logger.LogWarning("Failed login attempt for email: {Email}", request.Email);
+                // BUG FIX: Mask email in logs to prevent PII exposure
+                _logger.LogWarning("Failed login attempt for email: {Email}", LoggingHelpers.MaskEmail(request.Email));
                 return ApiUnauthorized(result.Message ?? "Invalid credentials");
             }
 
-            _logger.LogInformation("Successful login for email: {Email}", request.Email);
+            // BUG FIX: Mask email in logs to prevent PII exposure
+            _logger.LogInformation("Successful login for email: {Email}", LoggingHelpers.MaskEmail(request.Email));
             return ApiOk(result);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error during patient portal login for email: {Email}", request.Email);
+            // BUG FIX: Mask email in logs to prevent PII exposure
+            _logger.LogError(ex, "Error during patient portal login for email: {Email}", LoggingHelpers.MaskEmail(request.Email));
             return ApiServerError("An error occurred during login");
         }
     }

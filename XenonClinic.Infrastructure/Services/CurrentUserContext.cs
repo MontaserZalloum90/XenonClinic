@@ -40,6 +40,53 @@ public class CurrentUserContext : ICurrentUserContext
     public bool IsAuthenticated =>
         _httpContextAccessor.HttpContext?.User?.Identity?.IsAuthenticated ?? false;
 
+    /// <summary>
+    /// BUG FIX: Synchronous access to current user ID for use in controllers.
+    /// Uses HttpContext's claims directly to avoid async overhead.
+    /// </summary>
+    public string? UserId
+    {
+        get
+        {
+            var httpContext = _httpContextAccessor.HttpContext;
+            if (httpContext?.User == null) return null;
+            return _userManager.GetUserId(httpContext.User);
+        }
+    }
+
+    /// <summary>
+    /// BUG FIX: Requires authenticated user and returns their ID.
+    /// Throws exception if user is not authenticated to prevent "system" fallback in audit trails.
+    /// </summary>
+    public string RequireUserId()
+    {
+        var userId = UserId;
+        if (string.IsNullOrEmpty(userId))
+        {
+            throw new UnauthorizedAccessException("User context is required for this operation. " +
+                "Cannot use 'system' as a fallback for audit trails.");
+        }
+        return userId;
+    }
+
+    /// <summary>
+    /// BUG FIX: Synchronous access to current user's primary branch ID.
+    /// </summary>
+    public int? BranchId
+    {
+        get
+        {
+            var httpContext = _httpContextAccessor.HttpContext;
+            if (httpContext?.User == null) return null;
+            var branchIdClaim = httpContext.User.FindFirst("primary_branch_id")?.Value;
+            if (branchIdClaim != null && int.TryParse(branchIdClaim, out var branchId))
+            {
+                return branchId;
+            }
+            return null;
+        }
+    }
+
     public async Task<IApplicationUser?> GetCurrentUserAsync()
     {
         var httpContext = _httpContextAccessor.HttpContext;
