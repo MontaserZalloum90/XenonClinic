@@ -80,6 +80,25 @@ public static class ServiceCollectionExtensions
     }
 
     /// <summary>
+    /// Adds patient portal services for self-service patient access.
+    /// </summary>
+    public static IServiceCollection AddPatientPortalServices(this IServiceCollection services)
+    {
+        services.AddScoped<IPatientPortalService, PatientPortalService>();
+        return services;
+    }
+
+    /// <summary>
+    /// Adds clinical decision support services.
+    /// Provides evidence-based clinical recommendations, alerts, and decision support tools.
+    /// </summary>
+    public static IServiceCollection AddClinicalDecisionSupportServices(this IServiceCollection services)
+    {
+        services.AddScoped<IClinicalDecisionSupportService, ClinicalDecisionSupportService>();
+        return services;
+    }
+
+    /// <summary>
     /// Adds database services with proper configuration including retry policies and connection resilience.
     /// </summary>
     /// <param name="services">The service collection.</param>
