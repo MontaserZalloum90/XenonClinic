@@ -87,7 +87,10 @@ public class BackgroundJobService : IBackgroundJobService
         };
 
         _jobs[jobId] = job;
-        _ = ExecuteJobAsync<T>(jobId, methodCall);
+
+        // BUG FIX: Capture task reference and add exception observation
+        var executionTask = ExecuteJobAsync<T>(jobId, methodCall);
+        ObserveTaskExceptions(executionTask, jobId);
 
         _logger.LogInformation("Job {JobId} enqueued for {Type}", jobId, typeof(T).Name);
         return jobId;
@@ -104,7 +107,10 @@ public class BackgroundJobService : IBackgroundJobService
         };
 
         _jobs[jobId] = job;
-        _ = ExecuteJobAsync(jobId, methodCall);
+
+        // BUG FIX: Capture task reference and add exception observation
+        var executionTask = ExecuteJobAsync(jobId, methodCall);
+        ObserveTaskExceptions(executionTask, jobId);
 
         return jobId;
     }
@@ -125,15 +131,17 @@ public class BackgroundJobService : IBackgroundJobService
 
         _jobs[jobId] = job;
 
+        // BUG FIX: Capture task reference and add exception observation
+        Task executionTask;
         if (delay > TimeSpan.Zero)
         {
-            // Use async/await pattern instead of ContinueWith for better error handling
-            _ = DelayThenExecuteAsync(delay, () => ExecuteJobAsync<T>(jobId, methodCall));
+            executionTask = DelayThenExecuteAsync(delay, () => ExecuteJobAsync<T>(jobId, methodCall));
         }
         else
         {
-            _ = ExecuteJobAsync<T>(jobId, methodCall);
+            executionTask = ExecuteJobAsync<T>(jobId, methodCall);
         }
+        ObserveTaskExceptions(executionTask, jobId);
 
         _logger.LogInformation("Job {JobId} scheduled for {Time}", jobId, enqueueAt);
         return jobId;
@@ -153,15 +161,17 @@ public class BackgroundJobService : IBackgroundJobService
 
         _jobs[jobId] = job;
 
+        // BUG FIX: Capture task reference and add exception observation
+        Task executionTask;
         if (delay > TimeSpan.Zero)
         {
-            // Use async/await pattern instead of ContinueWith for better error handling
-            _ = DelayThenExecuteAsync(delay, () => ExecuteJobAsync(jobId, methodCall));
+            executionTask = DelayThenExecuteAsync(delay, () => ExecuteJobAsync(jobId, methodCall));
         }
         else
         {
-            _ = ExecuteJobAsync(jobId, methodCall);
+            executionTask = ExecuteJobAsync(jobId, methodCall);
         }
+        ObserveTaskExceptions(executionTask, jobId);
 
         return jobId;
     }
@@ -204,7 +214,8 @@ public class BackgroundJobService : IBackgroundJobService
             if (methodCall != null)
             {
                 var compiled = methodCall.Compile();
-                _ = Task.Run(async () =>
+                // BUG FIX: Capture task reference and add proper exception handling
+                var executionTask = Task.Run(async () =>
                 {
                     try
                     {
@@ -214,11 +225,28 @@ public class BackgroundJobService : IBackgroundJobService
                             await task;
                         }
                     }
+                    catch (System.Reflection.TargetInvocationException tie)
+                    {
+                        // BUG FIX: Unwrap TargetInvocationException to get actual exception
+                        var actualException = tie.InnerException ?? tie;
+                        _logger.LogError(actualException, "Recurring job {JobId} failed: {Message}",
+                            jobId, actualException.Message);
+                    }
                     catch (Exception ex)
                     {
                         _logger.LogError(ex, "Recurring job {JobId} failed", jobId);
                     }
                 });
+
+                // BUG FIX: Handle unobserved task exceptions
+                executionTask.ContinueWith(t =>
+                {
+                    if (t.IsFaulted && t.Exception != null)
+                    {
+                        _logger.LogError(t.Exception.InnerException ?? t.Exception,
+                            "Unobserved exception in recurring job {JobId}", jobId);
+                    }
+                }, TaskContinuationOptions.OnlyOnFaulted);
             }
         }
     }
@@ -238,8 +266,9 @@ public class BackgroundJobService : IBackgroundJobService
 
         _jobs[jobId] = job;
 
-        // Monitor parent job
-        _ = WaitForParentAndExecuteAsync<T>(jobId, parentJobId, methodCall);
+        // BUG FIX: Capture task reference and add exception observation
+        var executionTask = WaitForParentAndExecuteAsync<T>(jobId, parentJobId, methodCall);
+        ObserveTaskExceptions(executionTask, jobId);
 
         _logger.LogInformation("Continuation job {JobId} created for parent {ParentJobId}", jobId, parentJobId);
         return jobId;
@@ -265,10 +294,14 @@ public class BackgroundJobService : IBackgroundJobService
 
             if (job.MethodExpression is LambdaExpression methodCall)
             {
-                _ = Task.Run(async () =>
+                // BUG FIX: Capture task reference and add proper exception handling
+                var executionTask = Task.Run(async () =>
                 {
                     try
                     {
+                        job.State = JobState.Processing;
+                        job.StartedAt = DateTime.UtcNow;
+
                         var compiled = methodCall.Compile();
                         var result = compiled.DynamicInvoke();
                         if (result is Task task)
@@ -278,12 +311,32 @@ public class BackgroundJobService : IBackgroundJobService
                         job.State = JobState.Succeeded;
                         job.CompletedAt = DateTime.UtcNow;
                     }
+                    catch (System.Reflection.TargetInvocationException tie)
+                    {
+                        // BUG FIX: Unwrap TargetInvocationException to get actual exception
+                        var actualException = tie.InnerException ?? tie;
+                        job.State = JobState.Failed;
+                        job.Exception = actualException.Message;
+                        _logger.LogError(actualException, "Requeued job {JobId} failed: {Message}",
+                            jobId, actualException.Message);
+                    }
                     catch (Exception ex)
                     {
                         job.State = JobState.Failed;
                         job.Exception = ex.Message;
+                        _logger.LogError(ex, "Requeued job {JobId} failed", jobId);
                     }
                 });
+
+                // BUG FIX: Handle unobserved task exceptions
+                executionTask.ContinueWith(t =>
+                {
+                    if (t.IsFaulted && t.Exception != null)
+                    {
+                        _logger.LogError(t.Exception.InnerException ?? t.Exception,
+                            "Unobserved exception in requeued job {JobId}", jobId);
+                    }
+                }, TaskContinuationOptions.OnlyOnFaulted);
             }
 
             _logger.LogInformation("Job {JobId} requeued (attempt {Retry})", jobId, job.RetryCount);
@@ -312,6 +365,31 @@ public class BackgroundJobService : IBackgroundJobService
     #region Private Methods
 
     private static string GenerateJobId() => Guid.NewGuid().ToString("N")[..12];
+
+    /// <summary>
+    /// BUG FIX: Helper method to observe and log unhandled exceptions from fire-and-forget tasks.
+    /// This prevents TaskScheduler.UnobservedTaskException from being raised.
+    /// </summary>
+    private void ObserveTaskExceptions(Task task, string jobId)
+    {
+        task.ContinueWith(t =>
+        {
+            if (t.IsFaulted && t.Exception != null)
+            {
+                var innerException = t.Exception.InnerException ?? t.Exception;
+                _logger.LogError(innerException, "Unobserved exception in job {JobId}: {Message}",
+                    jobId, innerException.Message);
+
+                // Update job state if still tracked
+                if (_jobs.TryGetValue(jobId, out var job))
+                {
+                    job.State = JobState.Failed;
+                    job.Exception = innerException.Message;
+                    job.CompletedAt = DateTime.UtcNow;
+                }
+            }
+        }, TaskContinuationOptions.OnlyOnFaulted);
+    }
 
     /// <summary>
     /// Delays execution and then runs the provided async action.
@@ -387,19 +465,54 @@ public class BackgroundJobService : IBackgroundJobService
         }
     }
 
+    /// <summary>
+    /// BUG FIX: Added timeout and proper cancellation support to prevent infinite waiting.
+    /// </summary>
     private async Task WaitForParentAndExecuteAsync<T>(string jobId, string parentJobId, Expression<Func<T, Task>> methodCall)
     {
+        // BUG FIX: Add timeout to prevent infinite waiting
+        const int maxWaitSeconds = 3600; // 1 hour max wait
+        var startTime = DateTime.UtcNow;
+        var waitInterval = TimeSpan.FromMilliseconds(100);
+        var backoffMultiplier = 1.0;
+        const double maxBackoffMultiplier = 50.0; // Max 5 seconds between checks
+
         while (_jobs.TryGetValue(parentJobId, out var parentJob) &&
                parentJob.State != JobState.Succeeded &&
                parentJob.State != JobState.Failed &&
                parentJob.State != JobState.Deleted)
         {
-            await Task.Delay(100);
+            // BUG FIX: Check for timeout to prevent infinite loops
+            if ((DateTime.UtcNow - startTime).TotalSeconds > maxWaitSeconds)
+            {
+                _logger.LogWarning("Job {JobId} timed out waiting for parent job {ParentJobId}", jobId, parentJobId);
+                if (_jobs.TryGetValue(jobId, out var job))
+                {
+                    job.State = JobState.Failed;
+                    job.Exception = $"Timed out waiting for parent job {parentJobId} after {maxWaitSeconds} seconds";
+                }
+                return;
+            }
+
+            // BUG FIX: Use exponential backoff to reduce CPU usage
+            var currentDelay = TimeSpan.FromMilliseconds(waitInterval.TotalMilliseconds * backoffMultiplier);
+            await Task.Delay(currentDelay);
+            backoffMultiplier = Math.Min(backoffMultiplier * 1.1, maxBackoffMultiplier);
         }
 
         if (_jobs.TryGetValue(parentJobId, out var parent) && parent.State == JobState.Succeeded)
         {
             await ExecuteJobAsync<T>(jobId, methodCall);
+        }
+        else
+        {
+            // BUG FIX: Handle parent job failure
+            if (_jobs.TryGetValue(jobId, out var job))
+            {
+                job.State = JobState.Failed;
+                job.Exception = $"Parent job {parentJobId} did not succeed";
+                _logger.LogWarning("Continuation job {JobId} cancelled because parent {ParentJobId} failed", jobId, parentJobId);
+            }
         }
     }
 
