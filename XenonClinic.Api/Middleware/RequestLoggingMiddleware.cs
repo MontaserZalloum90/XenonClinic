@@ -164,7 +164,8 @@ public class RequestLoggingMiddleware
         if (_options.LogResponseBody && responseBody.Length > 0 && responseBody.Length < _options.MaxBodyLogLength)
         {
             responseBody.Seek(0, SeekOrigin.Begin);
-            var body = await new StreamReader(responseBody).ReadToEndAsync();
+            using var bodyReader = new StreamReader(responseBody, leaveOpen: true);
+            var body = await bodyReader.ReadToEndAsync();
             if (!string.IsNullOrEmpty(body))
             {
                 logMessage.AppendLine($"  Body: {SanitizeBody(body)}");
