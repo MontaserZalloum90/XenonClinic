@@ -65,6 +65,8 @@ const modules = [
   },
 ];
 
+import { FileText } from 'lucide-react';
+
 const platformFeatures = [
   {
     icon: Building2,
@@ -177,6 +179,35 @@ export default function FeaturesPage() {
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Documentation */}
+      <section className="section-padding bg-white">
+        <div className="container-marketing">
+          <div className="max-w-4xl mx-auto">
+            <div className="card bg-gradient-to-r from-primary-50 to-blue-50 border-primary-200">
+              <div className="flex flex-col md:flex-row items-center gap-6">
+                <div className="h-16 w-16 rounded-xl bg-primary-100 text-primary-600 flex items-center justify-center flex-shrink-0">
+                  <FileText className="h-8 w-8" />
+                </div>
+                <div className="flex-1 text-center md:text-left">
+                  <h3 className="text-xl font-semibold text-gray-900 mb-2">Module User Journeys</h3>
+                  <p className="text-gray-600">
+                    Explore detailed documentation of all user journeys across 25+ modules,
+                    including step-by-step workflows and role assignments.
+                  </p>
+                </div>
+                <Link
+                  to="/features/journeys"
+                  className="btn bg-primary-600 text-white hover:bg-primary-700"
+                >
+                  View Documentation
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Link>
+              </div>
+            </div>
           </div>
         </div>
       </section>

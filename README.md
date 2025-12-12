@@ -186,6 +186,50 @@ GitHub Actions workflows:
 - `deploy.yml` - Deploy to staging/production
 - `pr.yml` - PR checks (size, breaking changes)
 
+## Module Journeys
+
+XenonClinic provides comprehensive functionality across 17+ modules. For detailed user journeys, steps, and step owners, see the [Module Journeys Documentation](./docs/MODULE_JOURNEYS.md).
+
+### Core Modules Overview
+
+| Module | Key Features | User Journeys |
+|--------|-------------|---------------|
+| **Patient Management** | Registration, medical history, documents, insurance | 5 |
+| **Appointments** | Booking, scheduling, check-in, waitlist, recurring | 6 |
+| **Clinical Visits** | Vitals, examination, diagnosis, prescriptions, referrals | 7 |
+| **Laboratory** | Orders, specimen tracking, results, quality control | 6 |
+| **Radiology** | Imaging orders, DICOM viewer, PACS, reporting | 6 |
+| **Pharmacy** | Prescriptions, dispensing, inventory, controlled substances | 6 |
+| **Financial** | Invoicing, payments, insurance claims, A/R, expenses | 6 |
+| **Inventory** | Stock management, transfers, POs, audits | 5 |
+| **HR Management** | Employees, attendance, leave, performance, training | 5 |
+| **Payroll** | Salary, payslips, overtime, loans, deductions | 5 |
+| **Marketing** | Campaigns, leads, promotions, referrals, analytics | 6 |
+| **Workflow Engine** | Process design, task management, approvals, automation | 4 |
+| **Patient Portal** | Self-service booking, records, messaging, payments | 6 |
+| **Multi-Tenancy** | Tenant, company, branch management, subscriptions | 5 |
+| **Analytics** | Dashboards, KPIs, reports, visualizations | 5 |
+| **Security & Audit** | Access control, audit logs, compliance | 5 |
+
+### Specialty Modules
+
+| Specialty | Key Features |
+|-----------|-------------|
+| **Audiology** | Audiometry, audiograms, hearing aids, fittings |
+| **Dental** | Dental charts, treatments, periodontal, odontogram |
+| **Cardiology** | ECG, echocardiogram, stress tests, catheterization |
+| **Ophthalmology** | Visual acuity, refraction, IOP, slit lamp, fundus |
+| **Orthopedics** | MSK exam, fractures, surgery tracking |
+| **Dermatology** | Skin exams, lesion photos, mole mapping, biopsies |
+| **Oncology** | Cancer staging, chemotherapy, radiation, tumor markers |
+| **Neurology** | Neuro exam, EEG, epilepsy diary, stroke scales |
+| **Pediatrics** | Growth charts, milestones, vaccinations, dosing |
+| **OB/GYN** | Pregnancy tracking, prenatal visits, ultrasound |
+| **Physiotherapy** | Treatment plans, sessions, ROM, exercise programs |
+| **ENT** | Ear exam, nasal endoscopy, laryngoscopy |
+| **Fertility** | IVF cycles, monitoring, retrieval, embryo tracking |
+| **Dialysis** | Hemodialysis sessions, intradialytic monitoring |
+
 ## API Documentation
 
 Swagger UI available at `/swagger` when running in Development mode.
