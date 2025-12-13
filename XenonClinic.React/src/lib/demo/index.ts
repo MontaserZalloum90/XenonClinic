@@ -66,3 +66,14 @@ export {
   portalData,
   allMedicalServicesData,
 } from "./medicalServicesData";
+
+// Core Modules Demo Data
+export {
+  patientsData,
+  appointmentsData,
+  multiTenancyData,
+  usersData,
+  securityData,
+  payrollData,
+  allCoreModulesData,
+} from "./coreModulesData";
