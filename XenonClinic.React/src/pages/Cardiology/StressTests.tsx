@@ -1,33 +1,41 @@
-import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Dialog } from '@headlessui/react';
+import { useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Dialog } from "@headlessui/react";
 import {
   MagnifyingGlassIcon,
   FunnelIcon,
   PlusIcon,
   XMarkIcon,
-} from '@heroicons/react/24/outline';
-import { format } from 'date-fns';
-import type { StressTest, CreateStressTestRequest } from '../../types/cardiology';
-import { StressTestType, StressTestProtocol, StressTestResult } from '../../types/cardiology';
+} from "@heroicons/react/24/outline";
+import { format } from "date-fns";
+import type {
+  StressTest,
+  CreateStressTestRequest,
+} from "../../types/cardiology";
+import {
+  StressTestType,
+  StressTestProtocol,
+  StressTestResult,
+} from "../../types/cardiology";
 
 export const StressTests = () => {
-  const queryClient = useQueryClient();
-  const [searchTerm, setSearchTerm] = useState('');
-  const [resultFilter, setResultFilter] = useState<string>('');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [resultFilter, setResultFilter] = useState<string>("");
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedTest, setSelectedTest] = useState<StressTest | undefined>(undefined);
+  const [selectedTest, setSelectedTest] = useState<StressTest | undefined>(
+    undefined,
+  );
 
   // Mock data - Replace with actual API calls
   const { data: tests, isLoading } = useQuery<StressTest[]>({
-    queryKey: ['stress-tests'],
+    queryKey: ["stress-tests"],
     queryFn: async () => {
       // Mock implementation
       return [
         {
           id: 1,
           patientId: 1001,
-          patientName: 'John Smith',
+          patientName: "John Smith",
           testType: StressTestType.Exercise,
           protocol: StressTestProtocol.Bruce,
           date: new Date().toISOString(),
@@ -38,17 +46,17 @@ export const StressTests = () => {
           bloodPressure: { systolic: 130, diastolic: 80 },
           peakBloodPressure: { systolic: 180, diastolic: 90 },
           symptoms: [],
-          ecgChanges: 'None',
+          ecgChanges: "None",
           testResult: StressTestResult.Negative,
-          conclusion: 'Negative stress test. Good exercise capacity.',
-          performedBy: 'Dr. Johnson',
-          interpretedBy: 'Dr. Williams',
+          conclusion: "Negative stress test. Good exercise capacity.",
+          performedBy: "Dr. Johnson",
+          interpretedBy: "Dr. Williams",
           createdAt: new Date().toISOString(),
         },
         {
           id: 2,
           patientId: 1002,
-          patientName: 'Mary Williams',
+          patientName: "Mary Williams",
           testType: StressTestType.Pharmacological,
           protocol: StressTestProtocol.Dobutamine,
           date: new Date().toISOString(),
@@ -58,20 +66,21 @@ export const StressTests = () => {
           percentTargetAchieved: 104,
           bloodPressure: { systolic: 140, diastolic: 85 },
           peakBloodPressure: { systolic: 170, diastolic: 88 },
-          symptoms: ['Chest discomfort'],
-          ecgChanges: 'ST segment depression in leads V4-V6',
-          stSegmentChanges: '2mm horizontal ST depression in V4-V6',
+          symptoms: ["Chest discomfort"],
+          ecgChanges: "ST segment depression in leads V4-V6",
+          stSegmentChanges: "2mm horizontal ST depression in V4-V6",
           testResult: StressTestResult.Positive,
-          conclusion: 'Positive stress test with inducible ischemia. Recommend coronary angiography.',
-          recommendations: 'Coronary angiography, Medical optimization',
-          performedBy: 'Dr. Brown',
-          interpretedBy: 'Dr. Johnson',
+          conclusion:
+            "Positive stress test with inducible ischemia. Recommend coronary angiography.",
+          recommendations: "Coronary angiography, Medical optimization",
+          performedBy: "Dr. Brown",
+          interpretedBy: "Dr. Johnson",
           createdAt: new Date().toISOString(),
         },
         {
           id: 3,
           patientId: 1003,
-          patientName: 'Robert Davis',
+          patientName: "Robert Davis",
           testType: StressTestType.Exercise,
           protocol: StressTestProtocol.ModifiedBruce,
           date: new Date().toISOString(),
@@ -80,11 +89,12 @@ export const StressTests = () => {
           targetHeartRate: 150,
           percentTargetAchieved: 80,
           bloodPressure: { systolic: 135, diastolic: 82 },
-          symptoms: ['Dyspnea', 'Fatigue'],
+          symptoms: ["Dyspnea", "Fatigue"],
           testResult: StressTestResult.Equivocal,
-          conclusion: 'Equivocal stress test due to submaximal heart rate achievement.',
-          recommendations: 'Consider pharmacological stress test',
-          performedBy: 'Dr. Williams',
+          conclusion:
+            "Equivocal stress test due to submaximal heart rate achievement.",
+          recommendations: "Consider pharmacological stress test",
+          performedBy: "Dr. Williams",
           createdAt: new Date().toISOString(),
         },
       ];
@@ -117,14 +127,31 @@ export const StressTests = () => {
 
   const getResultBadge = (result: StressTestResult) => {
     const config: Record<string, { className: string; label: string }> = {
-      [StressTestResult.Negative]: { className: 'bg-green-100 text-green-800', label: 'Negative' },
-      [StressTestResult.Positive]: { className: 'bg-red-100 text-red-800', label: 'Positive' },
-      [StressTestResult.Equivocal]: { className: 'bg-yellow-100 text-yellow-800', label: 'Equivocal' },
-      [StressTestResult.Uninterpretable]: { className: 'bg-gray-100 text-gray-800', label: 'Uninterpretable' },
+      [StressTestResult.Negative]: {
+        className: "bg-green-100 text-green-800",
+        label: "Negative",
+      },
+      [StressTestResult.Positive]: {
+        className: "bg-red-100 text-red-800",
+        label: "Positive",
+      },
+      [StressTestResult.Equivocal]: {
+        className: "bg-yellow-100 text-yellow-800",
+        label: "Equivocal",
+      },
+      [StressTestResult.Uninterpretable]: {
+        className: "bg-gray-100 text-gray-800",
+        label: "Uninterpretable",
+      },
     };
-    const c = config[result] || { className: 'bg-gray-100 text-gray-800', label: result };
+    const c = config[result] || {
+      className: "bg-gray-100 text-gray-800",
+      label: result,
+    };
     return (
-      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${c.className}`}>
+      <span
+        className={`px-2 py-0.5 rounded-full text-xs font-medium ${c.className}`}
+      >
         {c.label}
       </span>
     );
@@ -132,23 +159,23 @@ export const StressTests = () => {
 
   const getTestTypeLabel = (type: StressTestType): string => {
     const labels: Record<string, string> = {
-      [StressTestType.Exercise]: 'Exercise',
-      [StressTestType.Pharmacological]: 'Pharmacological',
-      [StressTestType.Nuclear]: 'Nuclear',
-      [StressTestType.Echo]: 'Echo',
+      [StressTestType.Exercise]: "Exercise",
+      [StressTestType.Pharmacological]: "Pharmacological",
+      [StressTestType.Nuclear]: "Nuclear",
+      [StressTestType.Echo]: "Echo",
     };
     return labels[type] || type;
   };
 
   const getProtocolLabel = (protocol: StressTestProtocol): string => {
     const labels: Record<string, string> = {
-      [StressTestProtocol.Bruce]: 'Bruce',
-      [StressTestProtocol.ModifiedBruce]: 'Modified Bruce',
-      [StressTestProtocol.Naughton]: 'Naughton',
-      [StressTestProtocol.Balke]: 'Balke',
-      [StressTestProtocol.Dobutamine]: 'Dobutamine',
-      [StressTestProtocol.Adenosine]: 'Adenosine',
-      [StressTestProtocol.Dipyridamole]: 'Dipyridamole',
+      [StressTestProtocol.Bruce]: "Bruce",
+      [StressTestProtocol.ModifiedBruce]: "Modified Bruce",
+      [StressTestProtocol.Naughton]: "Naughton",
+      [StressTestProtocol.Balke]: "Balke",
+      [StressTestProtocol.Dobutamine]: "Dobutamine",
+      [StressTestProtocol.Adenosine]: "Adenosine",
+      [StressTestProtocol.Dipyridamole]: "Dipyridamole",
     };
     return labels[protocol] || protocol;
   };
@@ -159,7 +186,9 @@ export const StressTests = () => {
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Stress Tests</h1>
-          <p className="text-gray-600 mt-1">Manage cardiac stress test records</p>
+          <p className="text-gray-600 mt-1">
+            Manage cardiac stress test records
+          </p>
         </div>
         <button onClick={handleCreate} className="btn btn-primary">
           <PlusIcon className="h-5 w-5 mr-2" />
@@ -238,7 +267,10 @@ export const StressTests = () => {
             <tbody className="bg-white divide-y divide-gray-200">
               {isLoading ? (
                 <tr>
-                  <td colSpan={9} className="px-6 py-12 text-center text-gray-500">
+                  <td
+                    colSpan={9}
+                    className="px-6 py-12 text-center text-gray-500"
+                  >
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto"></div>
                     <p className="mt-2">Loading tests...</p>
                   </td>
@@ -252,11 +284,13 @@ export const StressTests = () => {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                      {format(new Date(test.date), 'MMM d, yyyy')}
+                      {format(new Date(test.date), "MMM d, yyyy")}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                       <div>{getTestTypeLabel(test.testType)}</div>
-                      <div className="text-xs text-gray-500">{getProtocolLabel(test.protocol)}</div>
+                      <div className="text-xs text-gray-500">
+                        {getProtocolLabel(test.protocol)}
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                       {test.duration} min
@@ -272,9 +306,11 @@ export const StressTests = () => {
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                       {test.peakBloodPressure
                         ? `${test.peakBloodPressure.systolic}/${test.peakBloodPressure.diastolic}`
-                        : '-'}
+                        : "-"}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">{getResultBadge(test.testResult)}</td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {getResultBadge(test.testResult)}
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                       {test.performedBy}
                     </td>
@@ -290,10 +326,13 @@ export const StressTests = () => {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={9} className="px-6 py-12 text-center text-gray-500">
+                  <td
+                    colSpan={9}
+                    className="px-6 py-12 text-center text-gray-500"
+                  >
                     {searchTerm
-                      ? 'No tests found matching your search.'
-                      : 'No stress tests found.'}
+                      ? "No tests found matching your search."
+                      : "No stress tests found."}
                   </td>
                 </tr>
               )}
@@ -325,43 +364,49 @@ const StressTestModal = ({ isOpen, onClose, test }: StressTestModalProps) => {
     patientId: test?.patientId || 0,
     testType: test?.testType || StressTestType.Exercise,
     protocol: test?.protocol || StressTestProtocol.Bruce,
-    date: test?.date || new Date().toISOString().split('T')[0],
+    date: test?.date || new Date().toISOString().split("T")[0],
     duration: test?.duration || 0,
     maxHeartRate: test?.maxHeartRate || 0,
     targetHeartRate: test?.targetHeartRate,
     bloodPressure: test?.bloodPressure || { systolic: 120, diastolic: 80 },
     peakBloodPressure: test?.peakBloodPressure,
     symptoms: test?.symptoms || [],
-    ecgChanges: test?.ecgChanges || '',
-    stSegmentChanges: test?.stSegmentChanges || '',
-    arrhythmias: test?.arrhythmias || '',
+    ecgChanges: test?.ecgChanges || "",
+    stSegmentChanges: test?.stSegmentChanges || "",
+    arrhythmias: test?.arrhythmias || "",
     testResult: test?.testResult || StressTestResult.Negative,
-    conclusion: test?.conclusion || '',
-    recommendations: test?.recommendations || '',
-    performedBy: test?.performedBy || '',
-    notes: test?.notes || '',
+    conclusion: test?.conclusion || "",
+    recommendations: test?.recommendations || "",
+    performedBy: test?.performedBy || "",
+    notes: test?.notes || "",
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Saving stress test:', formData);
-    queryClient.invalidateQueries({ queryKey: ['stress-tests'] });
+    console.log("Saving stress test:", formData);
+    queryClient.invalidateQueries({ queryKey: ["stress-tests"] });
     onClose();
   };
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >,
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: ['duration', 'maxHeartRate', 'targetHeartRate'].includes(name)
+      [name]: ["duration", "maxHeartRate", "targetHeartRate"].includes(name)
         ? Number(value)
         : value,
     }));
   };
 
-  const handleBPChange = (field: 'bloodPressure' | 'peakBloodPressure', type: 'systolic' | 'diastolic', value: number) => {
+  const handleBPChange = (
+    field: "bloodPressure" | "peakBloodPressure",
+    type: "systolic" | "diastolic",
+    value: number,
+  ) => {
     setFormData((prev) => ({
       ...prev,
       [field]: {
@@ -379,9 +424,12 @@ const StressTestModal = ({ isOpen, onClose, test }: StressTestModalProps) => {
           <div className="p-6">
             <div className="flex justify-between items-center mb-4">
               <Dialog.Title className="text-lg font-medium text-gray-900">
-                {test ? 'View Stress Test' : 'New Stress Test'}
+                {test ? "View Stress Test" : "New Stress Test"}
               </Dialog.Title>
-              <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+              <button
+                onClick={onClose}
+                className="text-gray-400 hover:text-gray-600"
+              >
                 <XMarkIcon className="h-6 w-6" />
               </button>
             </div>
@@ -404,11 +452,13 @@ const StressTestModal = ({ isOpen, onClose, test }: StressTestModalProps) => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Date
+                  </label>
                   <input
                     type="date"
                     name="date"
-                    value={formData.date?.split('T')[0]}
+                    value={formData.date?.split("T")[0]}
                     onChange={handleChange}
                     className="input w-full"
                     required
@@ -449,7 +499,9 @@ const StressTestModal = ({ isOpen, onClose, test }: StressTestModalProps) => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Protocol</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Protocol
+                  </label>
                   <select
                     name="protocol"
                     value={formData.protocol}
@@ -482,7 +534,9 @@ const StressTestModal = ({ isOpen, onClose, test }: StressTestModalProps) => {
 
               {/* Hemodynamics */}
               <div>
-                <h3 className="text-sm font-semibold text-gray-900 mb-3">Hemodynamics</h3>
+                <h3 className="text-sm font-semibold text-gray-900 mb-3">
+                  Hemodynamics
+                </h3>
                 <div className="grid grid-cols-3 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -505,7 +559,7 @@ const StressTestModal = ({ isOpen, onClose, test }: StressTestModalProps) => {
                     <input
                       type="number"
                       name="targetHeartRate"
-                      value={formData.targetHeartRate || ''}
+                      value={formData.targetHeartRate || ""}
                       onChange={handleChange}
                       className="input w-full"
                     />
@@ -518,9 +572,13 @@ const StressTestModal = ({ isOpen, onClose, test }: StressTestModalProps) => {
                     <div className="flex gap-2">
                       <input
                         type="number"
-                        value={formData.bloodPressure?.systolic || ''}
+                        value={formData.bloodPressure?.systolic || ""}
                         onChange={(e) =>
-                          handleBPChange('bloodPressure', 'systolic', Number(e.target.value))
+                          handleBPChange(
+                            "bloodPressure",
+                            "systolic",
+                            Number(e.target.value),
+                          )
                         }
                         placeholder="Systolic"
                         className="input w-full"
@@ -528,9 +586,13 @@ const StressTestModal = ({ isOpen, onClose, test }: StressTestModalProps) => {
                       <span className="self-center">/</span>
                       <input
                         type="number"
-                        value={formData.bloodPressure?.diastolic || ''}
+                        value={formData.bloodPressure?.diastolic || ""}
                         onChange={(e) =>
-                          handleBPChange('bloodPressure', 'diastolic', Number(e.target.value))
+                          handleBPChange(
+                            "bloodPressure",
+                            "diastolic",
+                            Number(e.target.value),
+                          )
                         }
                         placeholder="Diastolic"
                         className="input w-full"
@@ -545,9 +607,13 @@ const StressTestModal = ({ isOpen, onClose, test }: StressTestModalProps) => {
                     <div className="flex gap-2 max-w-md">
                       <input
                         type="number"
-                        value={formData.peakBloodPressure?.systolic || ''}
+                        value={formData.peakBloodPressure?.systolic || ""}
                         onChange={(e) =>
-                          handleBPChange('peakBloodPressure', 'systolic', Number(e.target.value))
+                          handleBPChange(
+                            "peakBloodPressure",
+                            "systolic",
+                            Number(e.target.value),
+                          )
                         }
                         placeholder="Systolic"
                         className="input w-full"
@@ -555,9 +621,13 @@ const StressTestModal = ({ isOpen, onClose, test }: StressTestModalProps) => {
                       <span className="self-center">/</span>
                       <input
                         type="number"
-                        value={formData.peakBloodPressure?.diastolic || ''}
+                        value={formData.peakBloodPressure?.diastolic || ""}
                         onChange={(e) =>
-                          handleBPChange('peakBloodPressure', 'diastolic', Number(e.target.value))
+                          handleBPChange(
+                            "peakBloodPressure",
+                            "diastolic",
+                            Number(e.target.value),
+                          )
                         }
                         placeholder="Diastolic"
                         className="input w-full"
@@ -658,7 +728,9 @@ const StressTestModal = ({ isOpen, onClose, test }: StressTestModalProps) => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Notes
+                  </label>
                   <textarea
                     name="notes"
                     value={formData.notes}
@@ -670,11 +742,15 @@ const StressTestModal = ({ isOpen, onClose, test }: StressTestModalProps) => {
               </div>
 
               <div className="flex justify-end gap-3 pt-4">
-                <button type="button" onClick={onClose} className="btn btn-outline">
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="btn btn-outline"
+                >
                   Cancel
                 </button>
                 <button type="submit" className="btn btn-primary">
-                  {test ? 'Update' : 'Create'} Test
+                  {test ? "Update" : "Create"} Test
                 </button>
               </div>
             </form>

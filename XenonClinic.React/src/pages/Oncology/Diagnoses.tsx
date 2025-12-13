@@ -1,21 +1,21 @@
-import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useForm } from 'react-hook-form';
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useForm } from "react-hook-form";
 import {
   MagnifyingGlassIcon,
   FunnelIcon,
   PlusIcon,
   ClipboardDocumentListIcon,
-} from '@heroicons/react/24/outline';
-import { Dialog } from '@headlessui/react';
+} from "@heroicons/react/24/outline";
+import { Dialog } from "@headlessui/react";
 import type {
   CancerDiagnosis,
   CreateCancerDiagnosisRequest,
   CancerType,
   CancerStage,
   CancerGrade,
-} from '../../types/oncology';
-import { format } from 'date-fns';
+} from "../../types/oncology";
+import { format } from "date-fns";
 
 // Mock API functions - Replace with actual API calls
 const diagnosisApi = {
@@ -28,60 +28,62 @@ const diagnosisApi = {
   update: async (id: number, data: Partial<CancerDiagnosis>) => ({
     data: { id, ...data },
   }),
-  delete: async (id: number) => ({
+  delete: async () => ({
     data: { success: true },
   }),
 };
 
 const getCancerTypeLabel = (type: CancerType): string => {
   const labels: Record<CancerType, string> = {
-    breast: 'Breast',
-    lung: 'Lung',
-    colorectal: 'Colorectal',
-    prostate: 'Prostate',
-    pancreatic: 'Pancreatic',
-    liver: 'Liver',
-    stomach: 'Stomach',
-    kidney: 'Kidney',
-    bladder: 'Bladder',
-    thyroid: 'Thyroid',
-    melanoma: 'Melanoma',
-    leukemia: 'Leukemia',
-    lymphoma: 'Lymphoma',
-    ovarian: 'Ovarian',
-    cervical: 'Cervical',
-    uterine: 'Uterine',
-    brain: 'Brain',
-    esophageal: 'Esophageal',
-    other: 'Other',
+    breast: "Breast",
+    lung: "Lung",
+    colorectal: "Colorectal",
+    prostate: "Prostate",
+    pancreatic: "Pancreatic",
+    liver: "Liver",
+    stomach: "Stomach",
+    kidney: "Kidney",
+    bladder: "Bladder",
+    thyroid: "Thyroid",
+    melanoma: "Melanoma",
+    leukemia: "Leukemia",
+    lymphoma: "Lymphoma",
+    ovarian: "Ovarian",
+    cervical: "Cervical",
+    uterine: "Uterine",
+    brain: "Brain",
+    esophageal: "Esophageal",
+    other: "Other",
   };
   return labels[type] || type;
 };
 
 const getStageLabel = (stage: CancerStage): string => {
   const labels: Record<CancerStage, string> = {
-    stage_0: 'Stage 0',
-    stage_1: 'Stage I',
-    stage_2: 'Stage II',
-    stage_3: 'Stage III',
-    stage_4: 'Stage IV',
-    unknown: 'Unknown',
+    stage_0: "Stage 0",
+    stage_1: "Stage I",
+    stage_2: "Stage II",
+    stage_3: "Stage III",
+    stage_4: "Stage IV",
+    unknown: "Unknown",
   };
   return labels[stage] || stage;
 };
 
 const getStageBadge = (stage: CancerStage) => {
   const config: Record<CancerStage, { className: string }> = {
-    stage_0: { className: 'bg-green-100 text-green-800' },
-    stage_1: { className: 'bg-blue-100 text-blue-800' },
-    stage_2: { className: 'bg-yellow-100 text-yellow-800' },
-    stage_3: { className: 'bg-orange-100 text-orange-800' },
-    stage_4: { className: 'bg-red-100 text-red-800' },
-    unknown: { className: 'bg-gray-100 text-gray-800' },
+    stage_0: { className: "bg-green-100 text-green-800" },
+    stage_1: { className: "bg-blue-100 text-blue-800" },
+    stage_2: { className: "bg-yellow-100 text-yellow-800" },
+    stage_3: { className: "bg-orange-100 text-orange-800" },
+    stage_4: { className: "bg-red-100 text-red-800" },
+    unknown: { className: "bg-gray-100 text-gray-800" },
   };
   const c = config[stage];
   return (
-    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${c.className}`}>
+    <span
+      className={`px-2 py-0.5 rounded-full text-xs font-medium ${c.className}`}
+    >
       {getStageLabel(stage)}
     </span>
   );
@@ -126,60 +128,68 @@ const DiagnosisForm = ({
     defaultValues: diagnosis
       ? {
           patientId: diagnosis.patientId,
-          diagnosisDate: format(new Date(diagnosis.diagnosisDate), 'yyyy-MM-dd'),
+          diagnosisDate: format(
+            new Date(diagnosis.diagnosisDate),
+            "yyyy-MM-dd",
+          ),
           cancerType: diagnosis.cancerType,
           stage: diagnosis.stage,
           grade: diagnosis.grade,
           primarySite: diagnosis.primarySite,
           metastasis: diagnosis.metastasis,
-          metastaticSites: diagnosis.metastaticSites?.join(', ') || '',
+          metastaticSites: diagnosis.metastaticSites?.join(", ") || "",
           histology: diagnosis.histology,
           diagnosedBy: diagnosis.diagnosedBy,
-          tnmT: diagnosis.tnmStaging?.t || '',
-          tnmN: diagnosis.tnmStaging?.n || '',
-          tnmM: diagnosis.tnmStaging?.m || '',
-          biomarkers: diagnosis.biomarkers || '',
-          notes: diagnosis.notes || '',
+          tnmT: diagnosis.tnmStaging?.t || "",
+          tnmN: diagnosis.tnmStaging?.n || "",
+          tnmM: diagnosis.tnmStaging?.m || "",
+          biomarkers: diagnosis.biomarkers || "",
+          notes: diagnosis.notes || "",
         }
       : {
           metastasis: false,
-          cancerType: 'breast',
-          stage: 'stage_1',
-          grade: 'g2',
+          cancerType: "breast",
+          stage: "stage_1",
+          grade: "g2",
         },
   });
 
-  const metastasis = watch('metastasis');
+  const metastasis = watch("metastasis");
 
   const createMutation = useMutation({
-    mutationFn: (data: CreateCancerDiagnosisRequest) => diagnosisApi.create(data),
+    mutationFn: (data: CreateCancerDiagnosisRequest) =>
+      diagnosisApi.create(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['cancer-diagnoses'] });
+      queryClient.invalidateQueries({ queryKey: ["cancer-diagnoses"] });
       onSuccess();
     },
   });
 
   const updateMutation = useMutation({
     mutationFn: (data: DiagnosisFormData) =>
-      diagnosisApi.update(diagnosis!.id, { ...data, id: diagnosis!.id } as any),
+      diagnosisApi.update(diagnosis!.id, {
+        ...data,
+        id: diagnosis!.id,
+      } as Partial<CancerDiagnosis>),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['cancer-diagnoses'] });
+      queryClient.invalidateQueries({ queryKey: ["cancer-diagnoses"] });
       onSuccess();
     },
   });
 
   const onSubmit = (data: DiagnosisFormData) => {
-    const payload: any = {
+    const payload: CreateCancerDiagnosisRequest &
+      Partial<Record<string, unknown>> = {
       ...data,
       metastaticSites: data.metastaticSites
-        ? data.metastaticSites.split(',').map((s) => s.trim())
+        ? data.metastaticSites.split(",").map((s) => s.trim())
         : undefined,
       tnmStaging:
         data.tnmT || data.tnmN || data.tnmM
           ? {
-              t: data.tnmT || '',
-              n: data.tnmN || '',
-              m: data.tnmM || '',
+              t: data.tnmT || "",
+              n: data.tnmN || "",
+              m: data.tnmM || "",
             }
           : undefined,
     };
@@ -204,7 +214,8 @@ const DiagnosisForm = ({
       {error && (
         <div className="p-3 bg-red-50 border border-red-200 rounded-md">
           <p className="text-sm text-red-600">
-            Error: {error instanceof Error ? error.message : 'An error occurred'}
+            Error:{" "}
+            {error instanceof Error ? error.message : "An error occurred"}
           </p>
         </div>
       )}
@@ -212,43 +223,65 @@ const DiagnosisForm = ({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Patient ID */}
         <div>
-          <label htmlFor="patientId" className="block text-sm font-medium text-gray-700 mb-1">
+          <label
+            htmlFor="patientId"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
             Patient ID *
           </label>
           <input
             type="number"
             id="patientId"
-            {...register('patientId', { required: 'Patient ID is required', valueAsNumber: true })}
+            {...register("patientId", {
+              required: "Patient ID is required",
+              valueAsNumber: true,
+            })}
             className="input"
             placeholder="1"
           />
           {errors.patientId && (
-            <p className="mt-1 text-sm text-red-600">{errors.patientId.message}</p>
+            <p className="mt-1 text-sm text-red-600">
+              {errors.patientId.message}
+            </p>
           )}
         </div>
 
         {/* Diagnosis Date */}
         <div>
-          <label htmlFor="diagnosisDate" className="block text-sm font-medium text-gray-700 mb-1">
+          <label
+            htmlFor="diagnosisDate"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
             Diagnosis Date *
           </label>
           <input
             type="date"
             id="diagnosisDate"
-            {...register('diagnosisDate', { required: 'Diagnosis date is required' })}
+            {...register("diagnosisDate", {
+              required: "Diagnosis date is required",
+            })}
             className="input"
           />
           {errors.diagnosisDate && (
-            <p className="mt-1 text-sm text-red-600">{errors.diagnosisDate.message}</p>
+            <p className="mt-1 text-sm text-red-600">
+              {errors.diagnosisDate.message}
+            </p>
           )}
         </div>
 
         {/* Cancer Type */}
         <div>
-          <label htmlFor="cancerType" className="block text-sm font-medium text-gray-700 mb-1">
+          <label
+            htmlFor="cancerType"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
             Cancer Type *
           </label>
-          <select id="cancerType" {...register('cancerType', { required: true })} className="input">
+          <select
+            id="cancerType"
+            {...register("cancerType", { required: true })}
+            className="input"
+          >
             <option value="breast">Breast</option>
             <option value="lung">Lung</option>
             <option value="colorectal">Colorectal</option>
@@ -273,10 +306,17 @@ const DiagnosisForm = ({
 
         {/* Stage */}
         <div>
-          <label htmlFor="stage" className="block text-sm font-medium text-gray-700 mb-1">
+          <label
+            htmlFor="stage"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
             Stage *
           </label>
-          <select id="stage" {...register('stage', { required: true })} className="input">
+          <select
+            id="stage"
+            {...register("stage", { required: true })}
+            className="input"
+          >
             <option value="stage_0">Stage 0</option>
             <option value="stage_1">Stage I</option>
             <option value="stage_2">Stage II</option>
@@ -288,10 +328,17 @@ const DiagnosisForm = ({
 
         {/* Grade */}
         <div>
-          <label htmlFor="grade" className="block text-sm font-medium text-gray-700 mb-1">
+          <label
+            htmlFor="grade"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
             Grade *
           </label>
-          <select id="grade" {...register('grade', { required: true })} className="input">
+          <select
+            id="grade"
+            {...register("grade", { required: true })}
+            className="input"
+          >
             <option value="g1">G1 - Well Differentiated</option>
             <option value="g2">G2 - Moderately Differentiated</option>
             <option value="g3">G3 - Poorly Differentiated</option>
@@ -302,52 +349,71 @@ const DiagnosisForm = ({
 
         {/* Primary Site */}
         <div>
-          <label htmlFor="primarySite" className="block text-sm font-medium text-gray-700 mb-1">
+          <label
+            htmlFor="primarySite"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
             Primary Site *
           </label>
           <input
             type="text"
             id="primarySite"
-            {...register('primarySite', { required: 'Primary site is required' })}
+            {...register("primarySite", {
+              required: "Primary site is required",
+            })}
             className="input"
             placeholder="e.g., Left breast, upper outer quadrant"
           />
           {errors.primarySite && (
-            <p className="mt-1 text-sm text-red-600">{errors.primarySite.message}</p>
+            <p className="mt-1 text-sm text-red-600">
+              {errors.primarySite.message}
+            </p>
           )}
         </div>
 
         {/* Histology */}
         <div>
-          <label htmlFor="histology" className="block text-sm font-medium text-gray-700 mb-1">
+          <label
+            htmlFor="histology"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
             Histology *
           </label>
           <input
             type="text"
             id="histology"
-            {...register('histology', { required: 'Histology is required' })}
+            {...register("histology", { required: "Histology is required" })}
             className="input"
             placeholder="e.g., Invasive ductal carcinoma"
           />
           {errors.histology && (
-            <p className="mt-1 text-sm text-red-600">{errors.histology.message}</p>
+            <p className="mt-1 text-sm text-red-600">
+              {errors.histology.message}
+            </p>
           )}
         </div>
 
         {/* Diagnosed By */}
         <div>
-          <label htmlFor="diagnosedBy" className="block text-sm font-medium text-gray-700 mb-1">
+          <label
+            htmlFor="diagnosedBy"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
             Diagnosed By *
           </label>
           <input
             type="text"
             id="diagnosedBy"
-            {...register('diagnosedBy', { required: 'Diagnosed by is required' })}
+            {...register("diagnosedBy", {
+              required: "Diagnosed by is required",
+            })}
             className="input"
             placeholder="Dr. Smith"
           />
           {errors.diagnosedBy && (
-            <p className="mt-1 text-sm text-red-600">{errors.diagnosedBy.message}</p>
+            <p className="mt-1 text-sm text-red-600">
+              {errors.diagnosedBy.message}
+            </p>
           )}
         </div>
 
@@ -356,10 +422,13 @@ const DiagnosisForm = ({
           <input
             type="checkbox"
             id="metastasis"
-            {...register('metastasis')}
+            {...register("metastasis")}
             className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
           />
-          <label htmlFor="metastasis" className="ml-2 block text-sm text-gray-700">
+          <label
+            htmlFor="metastasis"
+            className="ml-2 block text-sm text-gray-700"
+          >
             Metastasis Present
           </label>
         </div>
@@ -368,13 +437,16 @@ const DiagnosisForm = ({
       {/* Metastatic Sites - Conditional */}
       {metastasis && (
         <div>
-          <label htmlFor="metastaticSites" className="block text-sm font-medium text-gray-700 mb-1">
+          <label
+            htmlFor="metastaticSites"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
             Metastatic Sites
           </label>
           <input
             type="text"
             id="metastaticSites"
-            {...register('metastaticSites')}
+            {...register("metastaticSites")}
             className="input"
             placeholder="Comma-separated: Liver, Lungs, Bone"
           />
@@ -383,40 +455,51 @@ const DiagnosisForm = ({
 
       {/* TNM Staging */}
       <div className="border-t pt-4">
-        <h3 className="text-sm font-medium text-gray-900 mb-3">TNM Staging (Optional)</h3>
+        <h3 className="text-sm font-medium text-gray-900 mb-3">
+          TNM Staging (Optional)
+        </h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
-            <label htmlFor="tnmT" className="block text-sm font-medium text-gray-700 mb-1">
+            <label
+              htmlFor="tnmT"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
               T (Tumor)
             </label>
             <input
               type="text"
               id="tnmT"
-              {...register('tnmT')}
+              {...register("tnmT")}
               className="input"
               placeholder="e.g., T2"
             />
           </div>
           <div>
-            <label htmlFor="tnmN" className="block text-sm font-medium text-gray-700 mb-1">
+            <label
+              htmlFor="tnmN"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
               N (Nodes)
             </label>
             <input
               type="text"
               id="tnmN"
-              {...register('tnmN')}
+              {...register("tnmN")}
               className="input"
               placeholder="e.g., N1"
             />
           </div>
           <div>
-            <label htmlFor="tnmM" className="block text-sm font-medium text-gray-700 mb-1">
+            <label
+              htmlFor="tnmM"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
               M (Metastasis)
             </label>
             <input
               type="text"
               id="tnmM"
-              {...register('tnmM')}
+              {...register("tnmM")}
               className="input"
               placeholder="e.g., M0"
             />
@@ -426,12 +509,15 @@ const DiagnosisForm = ({
 
       {/* Biomarkers */}
       <div>
-        <label htmlFor="biomarkers" className="block text-sm font-medium text-gray-700 mb-1">
+        <label
+          htmlFor="biomarkers"
+          className="block text-sm font-medium text-gray-700 mb-1"
+        >
           Biomarkers
         </label>
         <textarea
           id="biomarkers"
-          {...register('biomarkers')}
+          {...register("biomarkers")}
           rows={2}
           className="input"
           placeholder="e.g., ER+, PR+, HER2-"
@@ -440,12 +526,15 @@ const DiagnosisForm = ({
 
       {/* Notes */}
       <div>
-        <label htmlFor="notes" className="block text-sm font-medium text-gray-700 mb-1">
+        <label
+          htmlFor="notes"
+          className="block text-sm font-medium text-gray-700 mb-1"
+        >
           Notes
         </label>
         <textarea
           id="notes"
-          {...register('notes')}
+          {...register("notes")}
           rows={3}
           className="input"
           placeholder="Additional clinical notes..."
@@ -454,19 +543,24 @@ const DiagnosisForm = ({
 
       {/* Actions */}
       <div className="flex items-center justify-end gap-3 pt-4 border-t">
-        <button type="button" onClick={onCancel} disabled={isPending} className="btn btn-secondary">
+        <button
+          type="button"
+          onClick={onCancel}
+          disabled={isPending}
+          className="btn btn-secondary"
+        >
           Cancel
         </button>
         <button type="submit" disabled={isPending} className="btn btn-primary">
           {isPending ? (
             <div className="flex items-center">
               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-              {isEditing ? 'Updating...' : 'Creating...'}
+              {isEditing ? "Updating..." : "Creating..."}
             </div>
           ) : isEditing ? (
-            'Update Diagnosis'
+            "Update Diagnosis"
           ) : (
-            'Create Diagnosis'
+            "Create Diagnosis"
           )}
         </button>
       </div>
@@ -476,24 +570,24 @@ const DiagnosisForm = ({
 
 export const Diagnoses = () => {
   const queryClient = useQueryClient();
-  const [searchTerm, setSearchTerm] = useState('');
-  const [stageFilter, setStageFilter] = useState<string>('');
-  const [typeFilter, setTypeFilter] = useState<string>('');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [stageFilter, setStageFilter] = useState<string>("");
+  const [typeFilter, setTypeFilter] = useState<string>("");
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedDiagnosis, setSelectedDiagnosis] = useState<CancerDiagnosis | undefined>(
-    undefined
-  );
+  const [selectedDiagnosis, setSelectedDiagnosis] = useState<
+    CancerDiagnosis | undefined
+  >(undefined);
 
   // Fetch diagnoses
   const { data: diagnosesData, isLoading } = useQuery({
-    queryKey: ['cancer-diagnoses'],
+    queryKey: ["cancer-diagnoses"],
     queryFn: () => diagnosisApi.getAll(),
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id: number) => diagnosisApi.delete(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['cancer-diagnoses'] });
+      queryClient.invalidateQueries({ queryKey: ["cancer-diagnoses"] });
     },
   });
 
@@ -513,7 +607,7 @@ export const Diagnoses = () => {
   const handleDelete = (diagnosis: CancerDiagnosis) => {
     if (
       window.confirm(
-        `Are you sure you want to delete the diagnosis for ${diagnosis.patientName}?`
+        `Are you sure you want to delete the diagnosis for ${diagnosis.patientName}?`,
       )
     ) {
       deleteMutation.mutate(diagnosis.id);
@@ -541,7 +635,9 @@ export const Diagnoses = () => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Cancer Diagnoses</h1>
-          <p className="text-gray-600 mt-1">Manage patient cancer diagnoses and staging</p>
+          <p className="text-gray-600 mt-1">
+            Manage patient cancer diagnoses and staging
+          </p>
         </div>
         <button onClick={handleCreate} className="btn btn-primary">
           <PlusIcon className="h-5 w-5 mr-2 inline" />
@@ -553,24 +649,30 @@ export const Diagnoses = () => {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="card">
           <p className="text-sm text-gray-600">Total Diagnoses</p>
-          <p className="text-2xl font-bold text-gray-900 mt-1">{diagnoses.length}</p>
+          <p className="text-2xl font-bold text-gray-900 mt-1">
+            {diagnoses.length}
+          </p>
         </div>
         <div className="card">
           <p className="text-sm text-gray-600">Stage I-II</p>
           <p className="text-2xl font-bold text-blue-600 mt-1">
-            {diagnoses.filter((d) => d.stage === 'stage_1' || d.stage === 'stage_2').length}
+            {
+              diagnoses.filter(
+                (d) => d.stage === "stage_1" || d.stage === "stage_2",
+              ).length
+            }
           </p>
         </div>
         <div className="card">
           <p className="text-sm text-gray-600">Stage III</p>
           <p className="text-2xl font-bold text-orange-600 mt-1">
-            {diagnoses.filter((d) => d.stage === 'stage_3').length}
+            {diagnoses.filter((d) => d.stage === "stage_3").length}
           </p>
         </div>
         <div className="card">
           <p className="text-sm text-gray-600">Stage IV</p>
           <p className="text-2xl font-bold text-red-600 mt-1">
-            {diagnoses.filter((d) => d.stage === 'stage_4').length}
+            {diagnoses.filter((d) => d.stage === "stage_4").length}
           </p>
         </div>
       </div>
@@ -658,7 +760,8 @@ export const Diagnoses = () => {
                   <tr key={diagnosis.id} className="hover:bg-gray-50">
                     <td className="px-4 py-3 text-sm">
                       <div className="font-medium text-gray-900">
-                        {diagnosis.patientName || `Patient #${diagnosis.patientId}`}
+                        {diagnosis.patientName ||
+                          `Patient #${diagnosis.patientId}`}
                       </div>
                       {diagnosis.metastasis && (
                         <span className="text-xs text-red-600">Metastatic</span>
@@ -667,12 +770,18 @@ export const Diagnoses = () => {
                     <td className="px-4 py-3 text-sm text-gray-600">
                       {getCancerTypeLabel(diagnosis.cancerType)}
                     </td>
-                    <td className="px-4 py-3 text-sm">{getStageBadge(diagnosis.stage)}</td>
-                    <td className="px-4 py-3 text-sm text-gray-600">{diagnosis.primarySite}</td>
-                    <td className="px-4 py-3 text-sm text-gray-600">
-                      {format(new Date(diagnosis.diagnosisDate), 'MMM d, yyyy')}
+                    <td className="px-4 py-3 text-sm">
+                      {getStageBadge(diagnosis.stage)}
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-600">{diagnosis.diagnosedBy}</td>
+                    <td className="px-4 py-3 text-sm text-gray-600">
+                      {diagnosis.primarySite}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-600">
+                      {format(new Date(diagnosis.diagnosisDate), "MMM d, yyyy")}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-600">
+                      {diagnosis.diagnosedBy}
+                    </td>
                     <td className="px-4 py-3 text-sm">
                       <div className="flex items-center gap-2">
                         <button
@@ -699,8 +808,8 @@ export const Diagnoses = () => {
             <ClipboardDocumentListIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
             <p className="text-gray-500">
               {searchTerm || stageFilter || typeFilter
-                ? 'No diagnoses found matching your filters.'
-                : 'No diagnoses found.'}
+                ? "No diagnoses found matching your filters."
+                : "No diagnoses found."}
             </p>
             <button
               onClick={handleCreate}
@@ -714,13 +823,17 @@ export const Diagnoses = () => {
       </div>
 
       {/* Modal */}
-      <Dialog open={isModalOpen} onClose={handleModalClose} className="relative z-50">
+      <Dialog
+        open={isModalOpen}
+        onClose={handleModalClose}
+        className="relative z-50"
+      >
         <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
         <div className="fixed inset-0 flex items-center justify-center p-4">
           <Dialog.Panel className="mx-auto max-w-4xl w-full bg-white rounded-lg shadow-xl max-h-[90vh] overflow-y-auto">
             <div className="p-6">
               <Dialog.Title className="text-lg font-medium text-gray-900 mb-4">
-                {selectedDiagnosis ? 'Edit Diagnosis' : 'New Cancer Diagnosis'}
+                {selectedDiagnosis ? "Edit Diagnosis" : "New Cancer Diagnosis"}
               </Dialog.Title>
               <DiagnosisForm
                 diagnosis={selectedDiagnosis}

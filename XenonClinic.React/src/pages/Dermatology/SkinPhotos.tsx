@@ -1,8 +1,8 @@
-import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Dialog } from '@headlessui/react';
-import { format } from 'date-fns';
-import type { SkinPhoto, CreateSkinPhotoRequest } from '../../types/dermatology';
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Dialog } from "@headlessui/react";
+import { format } from "date-fns";
+import type { SkinPhoto } from "../../types/dermatology";
 
 // Mock API - Replace with actual dermatology API
 const skinPhotosApi = {
@@ -12,30 +12,32 @@ const skinPhotosApi = {
   },
   create: async (data: FormData) => {
     // TODO: Implement actual API call with file upload
-    console.log('Uploading skin photo:', data);
+    console.log("Uploading skin photo:", data);
     return {
       data: {
         id: Date.now(),
-        photoUrl: '/placeholder-image.jpg',
-        createdAt: new Date().toISOString()
-      }
+        photoUrl: "/placeholder-image.jpg",
+        createdAt: new Date().toISOString(),
+      },
     };
   },
   delete: async (id: number) => {
     // TODO: Implement actual API call
-    console.log('Deleting skin photo:', id);
+    console.log("Deleting skin photo:", id);
     return { data: { success: true } };
   },
 };
 
 export const SkinPhotos = () => {
   const queryClient = useQueryClient();
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedPhoto, setSelectedPhoto] = useState<SkinPhoto | undefined>(undefined);
+  const [selectedPhoto, setSelectedPhoto] = useState<SkinPhoto | undefined>(
+    undefined,
+  );
 
   const { data: photos, isLoading } = useQuery<SkinPhoto[]>({
-    queryKey: ['skin-photos'],
+    queryKey: ["skin-photos"],
     queryFn: async () => {
       const response = await skinPhotosApi.getAll();
       return response.data;
@@ -45,7 +47,7 @@ export const SkinPhotos = () => {
   const createMutation = useMutation({
     mutationFn: (data: FormData) => skinPhotosApi.create(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['skin-photos'] });
+      queryClient.invalidateQueries({ queryKey: ["skin-photos"] });
       setIsModalOpen(false);
     },
   });
@@ -53,13 +55,13 @@ export const SkinPhotos = () => {
   const deleteMutation = useMutation({
     mutationFn: (id: number) => skinPhotosApi.delete(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['skin-photos'] });
+      queryClient.invalidateQueries({ queryKey: ["skin-photos"] });
       setSelectedPhoto(undefined);
     },
   });
 
   const handleDelete = (photo: SkinPhoto) => {
-    if (window.confirm('Are you sure you want to delete this photo?')) {
+    if (window.confirm("Are you sure you want to delete this photo?")) {
       deleteMutation.mutate(photo.id);
     }
   };
@@ -83,9 +85,11 @@ export const SkinPhotos = () => {
 
   const filteredPhotos = photos?.filter(
     (photo) =>
-      photo.patient?.fullNameEn.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      photo.patient?.fullNameEn
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase()) ||
       photo.bodyLocation.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      photo.description?.toLowerCase().includes(searchTerm.toLowerCase())
+      photo.description?.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
   return (
@@ -93,7 +97,9 @@ export const SkinPhotos = () => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Skin Photos</h1>
-          <p className="text-gray-600 mt-1">Document and manage patient skin photos</p>
+          <p className="text-gray-600 mt-1">
+            Document and manage patient skin photos
+          </p>
         </div>
         <button onClick={handleCreate} className="btn btn-primary">
           Upload Photo
@@ -153,12 +159,16 @@ export const SkinPhotos = () => {
                   <p className="font-medium text-gray-900 text-sm">
                     {photo.patient?.fullNameEn || `Patient #${photo.patientId}`}
                   </p>
-                  <p className="text-xs text-gray-600 mt-1">{photo.bodyLocation}</p>
+                  <p className="text-xs text-gray-600 mt-1">
+                    {photo.bodyLocation}
+                  </p>
                   <p className="text-xs text-gray-500 mt-1">
-                    {format(new Date(photo.photoDate), 'MMM d, yyyy')}
+                    {format(new Date(photo.photoDate), "MMM d, yyyy")}
                   </p>
                   {photo.description && (
-                    <p className="text-xs text-gray-600 mt-2 line-clamp-2">{photo.description}</p>
+                    <p className="text-xs text-gray-600 mt-2 line-clamp-2">
+                      {photo.description}
+                    </p>
                   )}
                 </div>
               </div>
@@ -166,13 +176,19 @@ export const SkinPhotos = () => {
           </div>
         ) : (
           <div className="text-center py-8 text-gray-500">
-            {searchTerm ? 'No photos found matching your search.' : 'No photos found.'}
+            {searchTerm
+              ? "No photos found matching your search."
+              : "No photos found."}
           </div>
         )}
       </div>
 
       {/* Upload Modal */}
-      <Dialog open={isModalOpen} onClose={handleModalClose} className="relative z-50">
+      <Dialog
+        open={isModalOpen}
+        onClose={handleModalClose}
+        className="relative z-50"
+      >
         <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
         <div className="fixed inset-0 flex items-center justify-center p-4">
           <Dialog.Panel className="mx-auto max-w-2xl w-full bg-white rounded-lg shadow-xl">
@@ -209,7 +225,12 @@ export const SkinPhotos = () => {
                     onClick={handleViewClose}
                     className="text-gray-400 hover:text-gray-500"
                   >
-                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg
+                      className="w-6 h-6"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
                       <path
                         strokeLinecap="round"
                         strokeLinejoin="round"
@@ -231,43 +252,70 @@ export const SkinPhotos = () => {
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="text-sm font-medium text-gray-700">Patient</label>
+                      <label className="text-sm font-medium text-gray-700">
+                        Patient
+                      </label>
                       <p className="text-sm text-gray-900 mt-1">
-                        {selectedPhoto.patient?.fullNameEn || `Patient #${selectedPhoto.patientId}`}
+                        {selectedPhoto.patient?.fullNameEn ||
+                          `Patient #${selectedPhoto.patientId}`}
                       </p>
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-gray-700">Date</label>
+                      <label className="text-sm font-medium text-gray-700">
+                        Date
+                      </label>
                       <p className="text-sm text-gray-900 mt-1">
-                        {format(new Date(selectedPhoto.photoDate), 'MMMM d, yyyy')}
+                        {format(
+                          new Date(selectedPhoto.photoDate),
+                          "MMMM d, yyyy",
+                        )}
                       </p>
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-gray-700">Body Location</label>
-                      <p className="text-sm text-gray-900 mt-1">{selectedPhoto.bodyLocation}</p>
+                      <label className="text-sm font-medium text-gray-700">
+                        Body Location
+                      </label>
+                      <p className="text-sm text-gray-900 mt-1">
+                        {selectedPhoto.bodyLocation}
+                      </p>
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-gray-700">Taken By</label>
-                      <p className="text-sm text-gray-900 mt-1">{selectedPhoto.takenBy}</p>
+                      <label className="text-sm font-medium text-gray-700">
+                        Taken By
+                      </label>
+                      <p className="text-sm text-gray-900 mt-1">
+                        {selectedPhoto.takenBy}
+                      </p>
                     </div>
                   </div>
 
                   {selectedPhoto.description && (
                     <div>
-                      <label className="text-sm font-medium text-gray-700">Description</label>
-                      <p className="text-sm text-gray-900 mt-1">{selectedPhoto.description}</p>
+                      <label className="text-sm font-medium text-gray-700">
+                        Description
+                      </label>
+                      <p className="text-sm text-gray-900 mt-1">
+                        {selectedPhoto.description}
+                      </p>
                     </div>
                   )}
 
                   {selectedPhoto.notes && (
                     <div>
-                      <label className="text-sm font-medium text-gray-700">Notes</label>
-                      <p className="text-sm text-gray-900 mt-1">{selectedPhoto.notes}</p>
+                      <label className="text-sm font-medium text-gray-700">
+                        Notes
+                      </label>
+                      <p className="text-sm text-gray-900 mt-1">
+                        {selectedPhoto.notes}
+                      </p>
                     </div>
                   )}
 
                   <div className="flex items-center justify-end gap-3 pt-4 border-t">
-                    <button onClick={handleViewClose} className="btn btn-secondary">
+                    <button
+                      onClick={handleViewClose}
+                      className="btn btn-secondary"
+                    >
                       Close
                     </button>
                     <button
@@ -294,14 +342,18 @@ interface SkinPhotoFormProps {
   isSubmitting: boolean;
 }
 
-const SkinPhotoForm = ({ onSubmit, onCancel, isSubmitting }: SkinPhotoFormProps) => {
+const SkinPhotoForm = ({
+  onSubmit,
+  onCancel,
+  isSubmitting,
+}: SkinPhotoFormProps) => {
   const [formData, setFormData] = useState({
     patientId: 0,
-    photoDate: new Date().toISOString().split('T')[0],
-    bodyLocation: '',
-    description: '',
-    notes: '',
-    takenBy: '',
+    photoDate: new Date().toISOString().split("T")[0],
+    bodyLocation: "",
+    description: "",
+    notes: "",
+    takenBy: "",
   });
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
@@ -321,18 +373,18 @@ const SkinPhotoForm = ({ onSubmit, onCancel, isSubmitting }: SkinPhotoFormProps)
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedFile) {
-      alert('Please select a photo to upload');
+      alert("Please select a photo to upload");
       return;
     }
 
     const data = new FormData();
-    data.append('photo', selectedFile);
-    data.append('patientId', formData.patientId.toString());
-    data.append('photoDate', formData.photoDate);
-    data.append('bodyLocation', formData.bodyLocation);
-    data.append('description', formData.description);
-    data.append('notes', formData.notes);
-    data.append('takenBy', formData.takenBy);
+    data.append("photo", selectedFile);
+    data.append("patientId", formData.patientId.toString());
+    data.append("photoDate", formData.photoDate);
+    data.append("bodyLocation", formData.bodyLocation);
+    data.append("description", formData.description);
+    data.append("notes", formData.notes);
+    data.append("takenBy", formData.takenBy);
 
     onSubmit(data);
   };
@@ -345,8 +397,10 @@ const SkinPhotoForm = ({ onSubmit, onCancel, isSubmitting }: SkinPhotoFormProps)
           <input
             type="number"
             required
-            value={formData.patientId || ''}
-            onChange={(e) => setFormData({ ...formData, patientId: parseInt(e.target.value) })}
+            value={formData.patientId || ""}
+            onChange={(e) =>
+              setFormData({ ...formData, patientId: parseInt(e.target.value) })
+            }
             className="input w-full"
           />
         </div>
@@ -356,7 +410,9 @@ const SkinPhotoForm = ({ onSubmit, onCancel, isSubmitting }: SkinPhotoFormProps)
             type="date"
             required
             value={formData.photoDate}
-            onChange={(e) => setFormData({ ...formData, photoDate: e.target.value })}
+            onChange={(e) =>
+              setFormData({ ...formData, photoDate: e.target.value })
+            }
             className="input w-full"
           />
         </div>
@@ -373,7 +429,11 @@ const SkinPhotoForm = ({ onSubmit, onCancel, isSubmitting }: SkinPhotoFormProps)
         />
         {preview && (
           <div className="mt-2 border border-gray-200 rounded-lg overflow-hidden">
-            <img src={preview} alt="Preview" className="w-full max-h-64 object-contain" />
+            <img
+              src={preview}
+              alt="Preview"
+              className="w-full max-h-64 object-contain"
+            />
           </div>
         )}
       </div>
@@ -385,7 +445,9 @@ const SkinPhotoForm = ({ onSubmit, onCancel, isSubmitting }: SkinPhotoFormProps)
             type="text"
             required
             value={formData.bodyLocation}
-            onChange={(e) => setFormData({ ...formData, bodyLocation: e.target.value })}
+            onChange={(e) =>
+              setFormData({ ...formData, bodyLocation: e.target.value })
+            }
             className="input w-full"
             placeholder="e.g., Left arm, Back - upper"
           />
@@ -396,7 +458,9 @@ const SkinPhotoForm = ({ onSubmit, onCancel, isSubmitting }: SkinPhotoFormProps)
             type="text"
             required
             value={formData.takenBy}
-            onChange={(e) => setFormData({ ...formData, takenBy: e.target.value })}
+            onChange={(e) =>
+              setFormData({ ...formData, takenBy: e.target.value })
+            }
             className="input w-full"
             placeholder="Provider name"
           />
@@ -407,7 +471,9 @@ const SkinPhotoForm = ({ onSubmit, onCancel, isSubmitting }: SkinPhotoFormProps)
         <label className="label">Description</label>
         <textarea
           value={formData.description}
-          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+          onChange={(e) =>
+            setFormData({ ...formData, description: e.target.value })
+          }
           className="input w-full"
           rows={2}
           placeholder="Brief description of what the photo shows"
@@ -429,8 +495,12 @@ const SkinPhotoForm = ({ onSubmit, onCancel, isSubmitting }: SkinPhotoFormProps)
         <button type="button" onClick={onCancel} className="btn btn-secondary">
           Cancel
         </button>
-        <button type="submit" disabled={isSubmitting} className="btn btn-primary">
-          {isSubmitting ? 'Uploading...' : 'Upload Photo'}
+        <button
+          type="submit"
+          disabled={isSubmitting}
+          className="btn btn-primary"
+        >
+          {isSubmitting ? "Uploading..." : "Upload Photo"}
         </button>
       </div>
     </form>

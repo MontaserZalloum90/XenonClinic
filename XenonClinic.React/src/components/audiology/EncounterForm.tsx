@@ -1,19 +1,26 @@
-import { useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { PlusIcon, TrashIcon } from '@heroicons/react/24/outline';
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { PlusIcon, TrashIcon } from "@heroicons/react/24/outline";
 import type {
   CreateEncounterRequest,
   EncounterAssessment,
   EncounterPlan,
   Diagnosis,
   CreateEncounterTaskRequest,
-} from '../../types/audiology';
-import { EncounterType, TaskPriority, HearingAidStyle } from '../../types/audiology';
+} from "../../types/audiology";
+import {
+  EncounterType,
+  TaskPriority,
+  HearingAidStyle,
+} from "../../types/audiology";
 
 interface EncounterFormProps {
   patientId: number;
   appointmentId?: number;
-  onSubmit: (data: CreateEncounterRequest, tasks: CreateEncounterTaskRequest[]) => void;
+  onSubmit: (
+    data: CreateEncounterRequest,
+    tasks: CreateEncounterTaskRequest[],
+  ) => void;
   onCancel: () => void;
   isLoading?: boolean;
 }
@@ -48,22 +55,27 @@ interface FormData {
 }
 
 const ENCOUNTER_TYPE_OPTIONS = [
-  { value: EncounterType.InitialConsultation, label: 'Initial Consultation' },
-  { value: EncounterType.FollowUp, label: 'Follow-Up' },
-  { value: EncounterType.HearingTest, label: 'Hearing Test' },
-  { value: EncounterType.HearingAidFitting, label: 'Hearing Aid Fitting' },
-  { value: EncounterType.HearingAidAdjustment, label: 'Hearing Aid Adjustment' },
-  { value: EncounterType.HearingAidRepair, label: 'Hearing Aid Repair' },
-  { value: EncounterType.Counseling, label: 'Counseling' },
-  { value: EncounterType.TinnitusEvaluation, label: 'Tinnitus Evaluation' },
-  { value: EncounterType.BalanceAssessment, label: 'Balance Assessment' },
-  { value: EncounterType.CochlearImplantMapping, label: 'CI Mapping' },
+  { value: EncounterType.InitialConsultation, label: "Initial Consultation" },
+  { value: EncounterType.FollowUp, label: "Follow-Up" },
+  { value: EncounterType.HearingTest, label: "Hearing Test" },
+  { value: EncounterType.HearingAidFitting, label: "Hearing Aid Fitting" },
+  {
+    value: EncounterType.HearingAidAdjustment,
+    label: "Hearing Aid Adjustment",
+  },
+  { value: EncounterType.HearingAidRepair, label: "Hearing Aid Repair" },
+  { value: EncounterType.Counseling, label: "Counseling" },
+  { value: EncounterType.TinnitusEvaluation, label: "Tinnitus Evaluation" },
+  { value: EncounterType.BalanceAssessment, label: "Balance Assessment" },
+  { value: EncounterType.CochlearImplantMapping, label: "CI Mapping" },
 ];
 
-const HEARING_AID_STYLE_OPTIONS = Object.entries(HearingAidStyle).map(([key, value]) => ({
-  value,
-  label: key,
-}));
+const HEARING_AID_STYLE_OPTIONS = Object.entries(HearingAidStyle).map(
+  ([key, value]) => ({
+    value,
+    label: key,
+  }),
+);
 
 export const EncounterForm = ({
   patientId,
@@ -72,22 +84,27 @@ export const EncounterForm = ({
   onCancel,
   isLoading,
 }: EncounterFormProps) => {
-  const [activeTab, setActiveTab] = useState<'complaint' | 'assessment' | 'plan' | 'tasks'>('complaint');
+  const [activeTab, setActiveTab] = useState<
+    "complaint" | "assessment" | "plan" | "tasks"
+  >("complaint");
   const [diagnoses, setDiagnoses] = useState<Diagnosis[]>([]);
   const [recommendations, setRecommendations] = useState<string[]>([]);
   const [tasks, setTasks] = useState<Partial<CreateEncounterTaskRequest>[]>([]);
-  const [newDiagnosis, setNewDiagnosis] = useState({ code: '', description: '', isPrimary: false });
-  const [newRecommendation, setNewRecommendation] = useState('');
-  const [newTask, setNewTask] = useState({ title: '', priority: TaskPriority.Normal, dueDate: '' });
+  const [newDiagnosis, setNewDiagnosis] = useState({
+    code: "",
+    description: "",
+    isPrimary: false,
+  });
+  const [newRecommendation, setNewRecommendation] = useState("");
+  const [newTask, setNewTask] = useState({
+    title: "",
+    priority: TaskPriority.Normal,
+    dueDate: "",
+  });
 
-  const {
-    register,
-    handleSubmit,
-    watch,
-    formState: { errors },
-  } = useForm<FormData>({
+  const { register, handleSubmit, watch } = useForm<FormData>({
     defaultValues: {
-      encounterDate: new Date().toISOString().split('T')[0],
+      encounterDate: new Date().toISOString().split("T")[0],
       encounterType: EncounterType.InitialConsultation,
       followUpRequired: false,
       hearingAidRecommended: false,
@@ -95,13 +112,13 @@ export const EncounterForm = ({
     },
   });
 
-  const followUpRequired = watch('followUpRequired');
-  const hearingAidRecommended = watch('hearingAidRecommended');
+  const followUpRequired = watch("followUpRequired");
+  const hearingAidRecommended = watch("hearingAidRecommended");
 
   const addDiagnosis = () => {
     if (newDiagnosis.code && newDiagnosis.description) {
       setDiagnoses([...diagnoses, { ...newDiagnosis }]);
-      setNewDiagnosis({ code: '', description: '', isPrimary: false });
+      setNewDiagnosis({ code: "", description: "", isPrimary: false });
     }
   };
 
@@ -112,7 +129,7 @@ export const EncounterForm = ({
   const addRecommendation = () => {
     if (newRecommendation.trim()) {
       setRecommendations([...recommendations, newRecommendation.trim()]);
-      setNewRecommendation('');
+      setNewRecommendation("");
     }
   };
 
@@ -123,7 +140,7 @@ export const EncounterForm = ({
   const addTask = () => {
     if (newTask.title.trim()) {
       setTasks([...tasks, { ...newTask, patientId, encounterId: 0 }]);
-      setNewTask({ title: '', priority: TaskPriority.Normal, dueDate: '' });
+      setNewTask({ title: "", priority: TaskPriority.Normal, dueDate: "" });
     }
   };
 
@@ -134,7 +151,8 @@ export const EncounterForm = ({
   const handleFormSubmit = (data: FormData) => {
     const assessment: EncounterAssessment = {
       hearingStatus: data.hearingStatus || undefined,
-      hearingChangeFromLast: data.hearingChangeFromLast as any || undefined,
+      hearingChangeFromLast: (data.hearingChangeFromLast ||
+        undefined) as EncounterAssessment["hearingChangeFromLast"],
       currentHearingAids: data.currentHearingAids || undefined,
       hearingAidPerformance: data.hearingAidPerformance || undefined,
       otoscopyRight: data.otoscopyRight || undefined,
@@ -153,7 +171,7 @@ export const EncounterForm = ({
       hearingAidRecommendation: data.hearingAidRecommended
         ? {
             recommended: true,
-            style: data.hearingAidStyle as HearingAidStyle || undefined,
+            style: (data.hearingAidStyle as HearingAidStyle) || undefined,
             technology: data.hearingAidTechnology || undefined,
             bilateral: data.hearingAidBilateral,
             rationale: data.hearingAidRationale || undefined,
@@ -185,14 +203,14 @@ export const EncounterForm = ({
       encounterId: 0, // Will be set after encounter creation
     })) as CreateEncounterTaskRequest[];
 
-    onSubmit(fullRequest as any, taskRequests);
+    onSubmit(fullRequest as CreateEncounterRequest, taskRequests);
   };
 
   const tabs = [
-    { id: 'complaint', label: 'Complaint', step: 1 },
-    { id: 'assessment', label: 'Assessment', step: 2 },
-    { id: 'plan', label: 'Plan', step: 3 },
-    { id: 'tasks', label: 'Tasks', step: 4 },
+    { id: "complaint", label: "Complaint", step: 1 },
+    { id: "assessment", label: "Assessment", step: 2 },
+    { id: "plan", label: "Plan", step: 3 },
+    { id: "tasks", label: "Tasks", step: 4 },
   ];
 
   return (
@@ -205,7 +223,7 @@ export const EncounterForm = ({
           </label>
           <input
             type="date"
-            {...register('encounterDate', { required: true })}
+            {...register("encounterDate", { required: true })}
             className="w-full px-3 py-2 border border-gray-300 rounded-md"
           />
         </div>
@@ -214,7 +232,7 @@ export const EncounterForm = ({
             Encounter Type
           </label>
           <select
-            {...register('encounterType', { required: true })}
+            {...register("encounterType", { required: true })}
             className="w-full px-3 py-2 border border-gray-300 rounded-md"
           >
             {ENCOUNTER_TYPE_OPTIONS.map((opt) => (
@@ -233,11 +251,15 @@ export const EncounterForm = ({
             <button
               key={tab.id}
               type="button"
-              onClick={() => setActiveTab(tab.id as any)}
+              onClick={() =>
+                setActiveTab(
+                  tab.id as "complaint" | "assessment" | "plan" | "tasks",
+                )
+              }
               className={`py-2 px-1 border-b-2 font-medium text-sm ${
                 activeTab === tab.id
-                  ? 'border-primary-500 text-primary-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  ? "border-primary-500 text-primary-600"
+                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
               }`}
             >
               <span className="inline-flex items-center">
@@ -254,14 +276,14 @@ export const EncounterForm = ({
       {/* Tab Content */}
       <div className="min-h-[400px]">
         {/* Complaint Tab */}
-        {activeTab === 'complaint' && (
+        {activeTab === "complaint" && (
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Chief Complaint
               </label>
               <textarea
-                {...register('chiefComplaint')}
+                {...register("chiefComplaint")}
                 rows={3}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md"
                 placeholder="Patient's main concern or reason for visit..."
@@ -272,7 +294,7 @@ export const EncounterForm = ({
                 History of Present Illness
               </label>
               <textarea
-                {...register('historyOfPresentIllness')}
+                {...register("historyOfPresentIllness")}
                 rows={5}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md"
                 placeholder="Detailed history including onset, duration, severity, associated symptoms..."
@@ -282,7 +304,7 @@ export const EncounterForm = ({
         )}
 
         {/* Assessment Tab */}
-        {activeTab === 'assessment' && (
+        {activeTab === "assessment" && (
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
@@ -290,7 +312,7 @@ export const EncounterForm = ({
                   Hearing Status
                 </label>
                 <textarea
-                  {...register('hearingStatus')}
+                  {...register("hearingStatus")}
                   rows={2}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md"
                   placeholder="Current hearing status..."
@@ -301,7 +323,7 @@ export const EncounterForm = ({
                   Change from Last Visit
                 </label>
                 <select
-                  {...register('hearingChangeFromLast')}
+                  {...register("hearingChangeFromLast")}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md"
                 >
                   <option value="">Select...</option>
@@ -319,7 +341,7 @@ export const EncounterForm = ({
                   Otoscopy - Right Ear
                 </label>
                 <textarea
-                  {...register('otoscopyRight')}
+                  {...register("otoscopyRight")}
                   rows={2}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md"
                   placeholder="Right ear findings..."
@@ -330,7 +352,7 @@ export const EncounterForm = ({
                   Otoscopy - Left Ear
                 </label>
                 <textarea
-                  {...register('otoscopyLeft')}
+                  {...register("otoscopyLeft")}
                   rows={2}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md"
                   placeholder="Left ear findings..."
@@ -343,7 +365,7 @@ export const EncounterForm = ({
                 Clinical Impression
               </label>
               <textarea
-                {...register('clinicalImpression')}
+                {...register("clinicalImpression")}
                 rows={3}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md"
                 placeholder="Summary of clinical findings..."
@@ -352,13 +374,22 @@ export const EncounterForm = ({
 
             {/* Diagnoses */}
             <div className="border rounded-lg p-4">
-              <h4 className="font-medium text-gray-900 mb-3">Diagnoses (ICD-10)</h4>
+              <h4 className="font-medium text-gray-900 mb-3">
+                Diagnoses (ICD-10)
+              </h4>
               <div className="space-y-2 mb-3">
                 {diagnoses.map((dx, index) => (
-                  <div key={index} className="flex items-center justify-between bg-gray-50 p-2 rounded">
+                  <div
+                    key={index}
+                    className="flex items-center justify-between bg-gray-50 p-2 rounded"
+                  >
                     <span>
                       <strong>{dx.code}</strong>: {dx.description}
-                      {dx.isPrimary && <span className="ml-2 text-xs text-primary-600">(Primary)</span>}
+                      {dx.isPrimary && (
+                        <span className="ml-2 text-xs text-primary-600">
+                          (Primary)
+                        </span>
+                      )}
                     </span>
                     <button
                       type="button"
@@ -374,14 +405,21 @@ export const EncounterForm = ({
                 <input
                   type="text"
                   value={newDiagnosis.code}
-                  onChange={(e) => setNewDiagnosis({ ...newDiagnosis, code: e.target.value })}
+                  onChange={(e) =>
+                    setNewDiagnosis({ ...newDiagnosis, code: e.target.value })
+                  }
                   placeholder="ICD-10 Code"
                   className="w-32 px-2 py-1 text-sm border border-gray-300 rounded"
                 />
                 <input
                   type="text"
                   value={newDiagnosis.description}
-                  onChange={(e) => setNewDiagnosis({ ...newDiagnosis, description: e.target.value })}
+                  onChange={(e) =>
+                    setNewDiagnosis({
+                      ...newDiagnosis,
+                      description: e.target.value,
+                    })
+                  }
                   placeholder="Description"
                   className="flex-1 px-2 py-1 text-sm border border-gray-300 rounded"
                 />
@@ -389,7 +427,12 @@ export const EncounterForm = ({
                   <input
                     type="checkbox"
                     checked={newDiagnosis.isPrimary}
-                    onChange={(e) => setNewDiagnosis({ ...newDiagnosis, isPrimary: e.target.checked })}
+                    onChange={(e) =>
+                      setNewDiagnosis({
+                        ...newDiagnosis,
+                        isPrimary: e.target.checked,
+                      })
+                    }
                     className="mr-1"
                   />
                   Primary
@@ -407,14 +450,14 @@ export const EncounterForm = ({
         )}
 
         {/* Plan Tab */}
-        {activeTab === 'plan' && (
+        {activeTab === "plan" && (
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Treatment Plan
               </label>
               <textarea
-                {...register('treatmentPlan')}
+                {...register("treatmentPlan")}
                 rows={3}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md"
                 placeholder="Detailed treatment plan..."
@@ -423,10 +466,15 @@ export const EncounterForm = ({
 
             {/* Recommendations */}
             <div className="border rounded-lg p-4">
-              <h4 className="font-medium text-gray-900 mb-3">Recommendations</h4>
+              <h4 className="font-medium text-gray-900 mb-3">
+                Recommendations
+              </h4>
               <ul className="space-y-1 mb-3">
                 {recommendations.map((rec, index) => (
-                  <li key={index} className="flex items-center justify-between bg-gray-50 p-2 rounded">
+                  <li
+                    key={index}
+                    className="flex items-center justify-between bg-gray-50 p-2 rounded"
+                  >
                     <span>{rec}</span>
                     <button
                       type="button"
@@ -445,7 +493,10 @@ export const EncounterForm = ({
                   onChange={(e) => setNewRecommendation(e.target.value)}
                   placeholder="Add recommendation..."
                   className="flex-1 px-2 py-1 text-sm border border-gray-300 rounded"
-                  onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addRecommendation())}
+                  onKeyPress={(e) =>
+                    e.key === "Enter" &&
+                    (e.preventDefault(), addRecommendation())
+                  }
                 />
                 <button
                   type="button"
@@ -462,11 +513,14 @@ export const EncounterForm = ({
               <div className="flex items-center mb-3">
                 <input
                   type="checkbox"
-                  {...register('hearingAidRecommended')}
+                  {...register("hearingAidRecommended")}
                   id="hearingAidRecommended"
                   className="mr-2"
                 />
-                <label htmlFor="hearingAidRecommended" className="font-medium text-gray-900">
+                <label
+                  htmlFor="hearingAidRecommended"
+                  className="font-medium text-gray-900"
+                >
                   Recommend Hearing Aids
                 </label>
               </div>
@@ -474,9 +528,11 @@ export const EncounterForm = ({
               {hearingAidRecommended && (
                 <div className="grid grid-cols-2 gap-4 mt-4">
                   <div>
-                    <label className="block text-sm text-gray-600 mb-1">Style</label>
+                    <label className="block text-sm text-gray-600 mb-1">
+                      Style
+                    </label>
                     <select
-                      {...register('hearingAidStyle')}
+                      {...register("hearingAidStyle")}
                       className="w-full px-2 py-1 text-sm border border-gray-300 rounded"
                     >
                       <option value="">Select style...</option>
@@ -488,9 +544,11 @@ export const EncounterForm = ({
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm text-gray-600 mb-1">Technology Level</label>
+                    <label className="block text-sm text-gray-600 mb-1">
+                      Technology Level
+                    </label>
                     <select
-                      {...register('hearingAidTechnology')}
+                      {...register("hearingAidTechnology")}
                       className="w-full px-2 py-1 text-sm border border-gray-300 rounded"
                     >
                       <option value="">Select...</option>
@@ -503,18 +561,23 @@ export const EncounterForm = ({
                   <div className="flex items-center">
                     <input
                       type="checkbox"
-                      {...register('hearingAidBilateral')}
+                      {...register("hearingAidBilateral")}
                       id="bilateral"
                       className="mr-2"
                     />
-                    <label htmlFor="bilateral" className="text-sm text-gray-600">
+                    <label
+                      htmlFor="bilateral"
+                      className="text-sm text-gray-600"
+                    >
                       Bilateral fitting recommended
                     </label>
                   </div>
                   <div className="col-span-2">
-                    <label className="block text-sm text-gray-600 mb-1">Rationale</label>
+                    <label className="block text-sm text-gray-600 mb-1">
+                      Rationale
+                    </label>
                     <textarea
-                      {...register('hearingAidRationale')}
+                      {...register("hearingAidRationale")}
                       rows={2}
                       className="w-full px-2 py-1 text-sm border border-gray-300 rounded"
                       placeholder="Reason for recommendation..."
@@ -529,11 +592,14 @@ export const EncounterForm = ({
               <div className="flex items-center mb-3">
                 <input
                   type="checkbox"
-                  {...register('followUpRequired')}
+                  {...register("followUpRequired")}
                   id="followUpRequired"
                   className="mr-2"
                 />
-                <label htmlFor="followUpRequired" className="font-medium text-gray-900">
+                <label
+                  htmlFor="followUpRequired"
+                  className="font-medium text-gray-900"
+                >
                   Follow-up Required
                 </label>
               </div>
@@ -541,9 +607,11 @@ export const EncounterForm = ({
               {followUpRequired && (
                 <div className="grid grid-cols-2 gap-4 mt-4">
                   <div>
-                    <label className="block text-sm text-gray-600 mb-1">Interval</label>
+                    <label className="block text-sm text-gray-600 mb-1">
+                      Interval
+                    </label>
                     <select
-                      {...register('followUpInterval')}
+                      {...register("followUpInterval")}
                       className="w-full px-2 py-1 text-sm border border-gray-300 rounded"
                     >
                       <option value="">Select...</option>
@@ -556,10 +624,12 @@ export const EncounterForm = ({
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm text-gray-600 mb-1">Reason</label>
+                    <label className="block text-sm text-gray-600 mb-1">
+                      Reason
+                    </label>
                     <input
                       type="text"
-                      {...register('followUpReason')}
+                      {...register("followUpReason")}
                       className="w-full px-2 py-1 text-sm border border-gray-300 rounded"
                       placeholder="Reason for follow-up..."
                     />
@@ -571,7 +641,7 @@ export const EncounterForm = ({
         )}
 
         {/* Tasks Tab */}
-        {activeTab === 'tasks' && (
+        {activeTab === "tasks" && (
           <div className="space-y-4">
             <p className="text-sm text-gray-600">
               Add tasks to be completed as part of this encounter's action plan.
@@ -579,19 +649,29 @@ export const EncounterForm = ({
 
             <div className="space-y-2">
               {tasks.map((task, index) => (
-                <div key={index} className="flex items-center justify-between bg-gray-50 p-3 rounded-lg">
+                <div
+                  key={index}
+                  className="flex items-center justify-between bg-gray-50 p-3 rounded-lg"
+                >
                   <div>
                     <span className="font-medium">{task.title}</span>
-                    <span className={`ml-2 text-xs px-2 py-0.5 rounded ${
-                      task.priority === TaskPriority.Urgent ? 'bg-red-100 text-red-800' :
-                      task.priority === TaskPriority.High ? 'bg-orange-100 text-orange-800' :
-                      task.priority === TaskPriority.Normal ? 'bg-blue-100 text-blue-800' :
-                      'bg-gray-100 text-gray-800'
-                    }`}>
+                    <span
+                      className={`ml-2 text-xs px-2 py-0.5 rounded ${
+                        task.priority === TaskPriority.Urgent
+                          ? "bg-red-100 text-red-800"
+                          : task.priority === TaskPriority.High
+                            ? "bg-orange-100 text-orange-800"
+                            : task.priority === TaskPriority.Normal
+                              ? "bg-blue-100 text-blue-800"
+                              : "bg-gray-100 text-gray-800"
+                      }`}
+                    >
                       {task.priority}
                     </span>
                     {task.dueDate && (
-                      <span className="ml-2 text-xs text-gray-500">Due: {task.dueDate}</span>
+                      <span className="ml-2 text-xs text-gray-500">
+                        Due: {task.dueDate}
+                      </span>
                     )}
                   </div>
                   <button
@@ -612,16 +692,25 @@ export const EncounterForm = ({
                   <input
                     type="text"
                     value={newTask.title}
-                    onChange={(e) => setNewTask({ ...newTask, title: e.target.value })}
+                    onChange={(e) =>
+                      setNewTask({ ...newTask, title: e.target.value })
+                    }
                     placeholder="Task title..."
                     className="w-full px-3 py-2 border border-gray-300 rounded-md"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs text-gray-500 mb-1">Priority</label>
+                  <label className="block text-xs text-gray-500 mb-1">
+                    Priority
+                  </label>
                   <select
                     value={newTask.priority}
-                    onChange={(e) => setNewTask({ ...newTask, priority: e.target.value as TaskPriority })}
+                    onChange={(e) =>
+                      setNewTask({
+                        ...newTask,
+                        priority: e.target.value as TaskPriority,
+                      })
+                    }
                     className="w-full px-2 py-1 text-sm border border-gray-300 rounded"
                   >
                     <option value={TaskPriority.Low}>Low</option>
@@ -631,11 +720,15 @@ export const EncounterForm = ({
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs text-gray-500 mb-1">Due Date</label>
+                  <label className="block text-xs text-gray-500 mb-1">
+                    Due Date
+                  </label>
                   <input
                     type="date"
                     value={newTask.dueDate}
-                    onChange={(e) => setNewTask({ ...newTask, dueDate: e.target.value })}
+                    onChange={(e) =>
+                      setNewTask({ ...newTask, dueDate: e.target.value })
+                    }
                     className="w-full px-2 py-1 text-sm border border-gray-300 rounded"
                   />
                 </div>
@@ -657,7 +750,7 @@ export const EncounterForm = ({
                 Notes (visible to patient)
               </label>
               <textarea
-                {...register('notes')}
+                {...register("notes")}
                 rows={2}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md"
                 placeholder="Notes that may be shared with patient..."
@@ -669,7 +762,7 @@ export const EncounterForm = ({
                 Internal Notes (staff only)
               </label>
               <textarea
-                {...register('internalNotes')}
+                {...register("internalNotes")}
                 rows={2}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md"
                 placeholder="Internal notes not shown to patient..."
@@ -682,24 +775,38 @@ export const EncounterForm = ({
       {/* Form Actions */}
       <div className="flex justify-between items-center pt-4 border-t">
         <div className="flex space-x-2">
-          {activeTab !== 'complaint' && (
+          {activeTab !== "complaint" && (
             <button
               type="button"
               onClick={() => {
                 const currentIndex = tabs.findIndex((t) => t.id === activeTab);
-                if (currentIndex > 0) setActiveTab(tabs[currentIndex - 1].id as any);
+                if (currentIndex > 0)
+                  setActiveTab(
+                    tabs[currentIndex - 1].id as
+                      | "complaint"
+                      | "assessment"
+                      | "plan"
+                      | "tasks",
+                  );
               }}
               className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
             >
               Previous
             </button>
           )}
-          {activeTab !== 'tasks' && (
+          {activeTab !== "tasks" && (
             <button
               type="button"
               onClick={() => {
                 const currentIndex = tabs.findIndex((t) => t.id === activeTab);
-                if (currentIndex < tabs.length - 1) setActiveTab(tabs[currentIndex + 1].id as any);
+                if (currentIndex < tabs.length - 1)
+                  setActiveTab(
+                    tabs[currentIndex + 1].id as
+                      | "complaint"
+                      | "assessment"
+                      | "plan"
+                      | "tasks",
+                  );
               }}
               className="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-md hover:bg-primary-700"
             >
@@ -721,7 +828,7 @@ export const EncounterForm = ({
             disabled={isLoading}
             className="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700 disabled:opacity-50"
           >
-            {isLoading ? 'Saving...' : 'Complete Encounter'}
+            {isLoading ? "Saving..." : "Complete Encounter"}
           </button>
         </div>
       </div>

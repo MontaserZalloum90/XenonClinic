@@ -1,41 +1,43 @@
-import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   MagnifyingGlassIcon,
   PlusIcon,
   DocumentChartBarIcon,
-} from '@heroicons/react/24/outline';
-import { Dialog } from '@headlessui/react';
-import type { DentalChart, ToothCondition } from '../../types/dental';
-import { DentalChartForm } from '../../components/DentalChartForm';
-import { format } from 'date-fns';
+} from "@heroicons/react/24/outline";
+import { Dialog } from "@headlessui/react";
+import type { DentalChart, ToothCondition } from "../../types/dental";
+import { DentalChartForm } from "../../components/DentalChartForm";
+import { format } from "date-fns";
 
 // Mock API functions - Replace with actual API calls
 const dentalChartApi = {
   getAll: async () => ({
     data: [] as DentalChart[],
   }),
-  delete: async (id: number) => ({
+  delete: async () => ({
     data: { success: true },
   }),
 };
 
 export const DentalCharts = () => {
   const queryClient = useQueryClient();
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedChart, setSelectedChart] = useState<DentalChart | undefined>(undefined);
+  const [selectedChart, setSelectedChart] = useState<DentalChart | undefined>(
+    undefined,
+  );
 
   // Fetch dental charts
   const { data: chartsData, isLoading } = useQuery({
-    queryKey: ['dental-charts'],
+    queryKey: ["dental-charts"],
     queryFn: () => dentalChartApi.getAll(),
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id: number) => dentalChartApi.delete(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['dental-charts'] });
+      queryClient.invalidateQueries({ queryKey: ["dental-charts"] });
     },
   });
 
@@ -51,7 +53,11 @@ export const DentalCharts = () => {
   });
 
   const handleDelete = (chart: DentalChart) => {
-    if (window.confirm(`Are you sure you want to delete the chart for ${chart.patientName}?`)) {
+    if (
+      window.confirm(
+        `Are you sure you want to delete the chart for ${chart.patientName}?`,
+      )
+    ) {
       deleteMutation.mutate(chart.id);
     }
   };
@@ -73,7 +79,7 @@ export const DentalCharts = () => {
 
   const getToothConditionSummary = (teeth: ToothCondition[]) => {
     const total = teeth.length;
-    const healthy = teeth.filter((t) => t.condition === 'healthy').length;
+    const healthy = teeth.filter((t) => t.condition === "healthy").length;
     const problematic = total - healthy;
     return { total, healthy, problematic };
   };
@@ -84,7 +90,9 @@ export const DentalCharts = () => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Dental Charts</h1>
-          <p className="text-gray-600 mt-1">Manage patient dental charts and tooth conditions</p>
+          <p className="text-gray-600 mt-1">
+            Manage patient dental charts and tooth conditions
+          </p>
         </div>
         <button onClick={handleCreate} className="btn btn-primary">
           <PlusIcon className="h-5 w-5 mr-2 inline" />
@@ -96,7 +104,9 @@ export const DentalCharts = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="card">
           <p className="text-sm text-gray-600">Total Charts</p>
-          <p className="text-2xl font-bold text-gray-900 mt-1">{charts.length}</p>
+          <p className="text-2xl font-bold text-gray-900 mt-1">
+            {charts.length}
+          </p>
         </div>
         <div className="card">
           <p className="text-sm text-gray-600">Charts This Month</p>
@@ -105,7 +115,8 @@ export const DentalCharts = () => {
               charts.filter(
                 (c) =>
                   new Date(c.chartDate).getMonth() === new Date().getMonth() &&
-                  new Date(c.chartDate).getFullYear() === new Date().getFullYear()
+                  new Date(c.chartDate).getFullYear() ===
+                    new Date().getFullYear(),
               ).length
             }
           </p>
@@ -179,12 +190,16 @@ export const DentalCharts = () => {
                         <div className="font-medium text-gray-900">
                           {chart.patientName || `Patient #${chart.patientId}`}
                         </div>
-                        <div className="text-gray-500">ID: {chart.patientId}</div>
+                        <div className="text-gray-500">
+                          ID: {chart.patientId}
+                        </div>
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-600">
-                        {format(new Date(chart.chartDate), 'MMM d, yyyy')}
+                        {format(new Date(chart.chartDate), "MMM d, yyyy")}
                       </td>
-                      <td className="px-4 py-3 text-sm text-gray-600">{summary.total} teeth</td>
+                      <td className="px-4 py-3 text-sm text-gray-600">
+                        {summary.total} teeth
+                      </td>
                       <td className="px-4 py-3 text-sm">
                         <div className="flex items-center gap-2">
                           <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
@@ -197,7 +212,9 @@ export const DentalCharts = () => {
                           )}
                         </div>
                       </td>
-                      <td className="px-4 py-3 text-sm text-gray-600">{chart.createdBy}</td>
+                      <td className="px-4 py-3 text-sm text-gray-600">
+                        {chart.createdBy}
+                      </td>
                       <td className="px-4 py-3 text-sm">
                         <div className="flex items-center gap-2">
                           <button
@@ -224,7 +241,9 @@ export const DentalCharts = () => {
           <div className="text-center py-12">
             <DocumentChartBarIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
             <p className="text-gray-500">
-              {searchTerm ? 'No charts found matching your search.' : 'No dental charts found.'}
+              {searchTerm
+                ? "No charts found matching your search."
+                : "No dental charts found."}
             </p>
             <button
               onClick={handleCreate}
@@ -240,10 +259,14 @@ export const DentalCharts = () => {
       {/* Visual Tooth Diagram Placeholder */}
       {selectedChart && (
         <div className="card">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Tooth Diagram</h3>
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">
+            Tooth Diagram
+          </h3>
           <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
             <DocumentChartBarIcon className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-500">Visual tooth diagram will be displayed here</p>
+            <p className="text-gray-500">
+              Visual tooth diagram will be displayed here
+            </p>
             <p className="text-sm text-gray-400 mt-2">
               Interactive dental chart showing all 32 teeth with conditions
             </p>
@@ -252,13 +275,17 @@ export const DentalCharts = () => {
       )}
 
       {/* Modal */}
-      <Dialog open={isModalOpen} onClose={handleModalClose} className="relative z-50">
+      <Dialog
+        open={isModalOpen}
+        onClose={handleModalClose}
+        className="relative z-50"
+      >
         <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
         <div className="fixed inset-0 flex items-center justify-center p-4">
           <Dialog.Panel className="mx-auto max-w-4xl w-full bg-white rounded-lg shadow-xl max-h-[90vh] overflow-y-auto">
             <div className="p-6">
               <Dialog.Title className="text-lg font-medium text-gray-900 mb-4">
-                {selectedChart ? 'View/Edit Dental Chart' : 'New Dental Chart'}
+                {selectedChart ? "View/Edit Dental Chart" : "New Dental Chart"}
               </Dialog.Title>
               <DentalChartForm
                 chart={selectedChart}

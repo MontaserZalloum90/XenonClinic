@@ -1,85 +1,95 @@
-import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Dialog } from '@headlessui/react';
+import { useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Dialog } from "@headlessui/react";
 import {
   MagnifyingGlassIcon,
   FunnelIcon,
   PlusIcon,
   XMarkIcon,
   ExclamationTriangleIcon,
-} from '@heroicons/react/24/outline';
-import { format } from 'date-fns';
-import type { CardiacCatheterization, CreateCathRequest } from '../../types/cardiology';
-import { CathProcedureType, AccessSite } from '../../types/cardiology';
+} from "@heroicons/react/24/outline";
+import { format } from "date-fns";
+import type {
+  CardiacCatheterization,
+  CreateCathRequest,
+} from "../../types/cardiology";
+import { CathProcedureType, AccessSite } from "../../types/cardiology";
 
 export const CathLab = () => {
-  const queryClient = useQueryClient();
-  const [searchTerm, setSearchTerm] = useState('');
-  const [procedureFilter, setProcedureFilter] = useState<string>('');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [procedureFilter, setProcedureFilter] = useState<string>("");
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedCath, setSelectedCath] = useState<CardiacCatheterization | undefined>(undefined);
+  const [selectedCath, setSelectedCath] = useState<
+    CardiacCatheterization | undefined
+  >(undefined);
 
   // Mock data - Replace with actual API calls
   const { data: procedures, isLoading } = useQuery<CardiacCatheterization[]>({
-    queryKey: ['cath-procedures'],
+    queryKey: ["cath-procedures"],
     queryFn: async () => {
       // Mock implementation
       return [
         {
           id: 1,
           patientId: 1001,
-          patientName: 'John Smith',
+          patientName: "John Smith",
           procedure: CathProcedureType.Diagnostic,
           date: new Date().toISOString(),
           accessSite: AccessSite.Radial,
-          coronaryFindings: 'Normal coronary arteries',
-          findings: 'No significant stenosis in LAD, LCx, or RCA. LMCA patent.',
+          coronaryFindings: "Normal coronary arteries",
+          findings: "No significant stenosis in LAD, LCx, or RCA. LMCA patent.",
           interventions: [],
           complications: [],
           contrast: 150,
           fluoroscopyTime: 8,
-          conclusions: 'Normal diagnostic coronary angiography',
-          performedBy: 'Dr. Johnson',
-          assistedBy: 'Dr. Williams',
+          conclusions: "Normal diagnostic coronary angiography",
+          performedBy: "Dr. Johnson",
+          assistedBy: "Dr. Williams",
           createdAt: new Date().toISOString(),
         },
         {
           id: 2,
           patientId: 1002,
-          patientName: 'Mary Williams',
+          patientName: "Mary Williams",
           procedure: CathProcedureType.PCI,
           date: new Date().toISOString(),
           accessSite: AccessSite.Femoral,
-          coronaryFindings: '90% stenosis in proximal LAD',
-          findings: 'Severe stenosis in proximal LAD. LCx and RCA with mild disease.',
-          interventions: ['Drug-eluting stent placement in LAD'],
+          coronaryFindings: "90% stenosis in proximal LAD",
+          findings:
+            "Severe stenosis in proximal LAD. LCx and RCA with mild disease.",
+          interventions: ["Drug-eluting stent placement in LAD"],
           stentsPlaced: 1,
           complications: [],
           contrast: 220,
           fluoroscopyTime: 25,
-          conclusions: 'Successful PCI to LAD with drug-eluting stent. TIMI 3 flow achieved.',
-          recommendations: 'Dual antiplatelet therapy for 12 months',
-          performedBy: 'Dr. Brown',
-          assistedBy: 'Dr. Johnson',
+          conclusions:
+            "Successful PCI to LAD with drug-eluting stent. TIMI 3 flow achieved.",
+          recommendations: "Dual antiplatelet therapy for 12 months",
+          performedBy: "Dr. Brown",
+          assistedBy: "Dr. Johnson",
           createdAt: new Date().toISOString(),
         },
         {
           id: 3,
           patientId: 1003,
-          patientName: 'Robert Davis',
+          patientName: "Robert Davis",
           procedure: CathProcedureType.Stent,
           date: new Date().toISOString(),
           accessSite: AccessSite.Radial,
-          coronaryFindings: 'In-stent restenosis in RCA',
-          findings: 'Severe in-stent restenosis in mid RCA.',
-          interventions: ['Balloon angioplasty', 'Drug-eluting stent placement'],
+          coronaryFindings: "In-stent restenosis in RCA",
+          findings: "Severe in-stent restenosis in mid RCA.",
+          interventions: [
+            "Balloon angioplasty",
+            "Drug-eluting stent placement",
+          ],
           stentsPlaced: 1,
-          complications: ['Minor bleeding at access site'],
+          complications: ["Minor bleeding at access site"],
           contrast: 180,
           fluoroscopyTime: 18,
-          conclusions: 'Successful treatment of in-stent restenosis with additional stent.',
-          recommendations: 'Continue dual antiplatelet therapy',
-          performedBy: 'Dr. Williams',
+          conclusions:
+            "Successful treatment of in-stent restenosis with additional stent.",
+          recommendations: "Continue dual antiplatelet therapy",
+          performedBy: "Dr. Williams",
           createdAt: new Date().toISOString(),
         },
       ];
@@ -91,7 +101,8 @@ export const CathLab = () => {
       !searchTerm ||
       proc.patientName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       proc.findings.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesProcedure = !procedureFilter || proc.procedure === procedureFilter;
+    const matchesProcedure =
+      !procedureFilter || proc.procedure === procedureFilter;
     return matchesSearch && matchesProcedure;
   });
 
@@ -113,24 +124,38 @@ export const CathLab = () => {
   const getProcedureBadge = (procedure: CathProcedureType) => {
     const config: Record<string, { className: string; label: string }> = {
       [CathProcedureType.Diagnostic]: {
-        className: 'bg-blue-100 text-blue-800',
-        label: 'Diagnostic',
+        className: "bg-blue-100 text-blue-800",
+        label: "Diagnostic",
       },
-      [CathProcedureType.PCI]: { className: 'bg-green-100 text-green-800', label: 'PCI' },
+      [CathProcedureType.PCI]: {
+        className: "bg-green-100 text-green-800",
+        label: "PCI",
+      },
       [CathProcedureType.Angioplasty]: {
-        className: 'bg-purple-100 text-purple-800',
-        label: 'Angioplasty',
+        className: "bg-purple-100 text-purple-800",
+        label: "Angioplasty",
       },
-      [CathProcedureType.Stent]: { className: 'bg-yellow-100 text-yellow-800', label: 'Stent' },
+      [CathProcedureType.Stent]: {
+        className: "bg-yellow-100 text-yellow-800",
+        label: "Stent",
+      },
       [CathProcedureType.Ablation]: {
-        className: 'bg-red-100 text-red-800',
-        label: 'Ablation',
+        className: "bg-red-100 text-red-800",
+        label: "Ablation",
       },
-      [CathProcedureType.Biopsy]: { className: 'bg-gray-100 text-gray-800', label: 'Biopsy' },
+      [CathProcedureType.Biopsy]: {
+        className: "bg-gray-100 text-gray-800",
+        label: "Biopsy",
+      },
     };
-    const c = config[procedure] || { className: 'bg-gray-100 text-gray-800', label: procedure };
+    const c = config[procedure] || {
+      className: "bg-gray-100 text-gray-800",
+      label: procedure,
+    };
     return (
-      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${c.className}`}>
+      <span
+        className={`px-2 py-0.5 rounded-full text-xs font-medium ${c.className}`}
+      >
         {c.label}
       </span>
     );
@@ -138,9 +163,9 @@ export const CathLab = () => {
 
   const getAccessSiteLabel = (site: AccessSite): string => {
     const labels: Record<string, string> = {
-      [AccessSite.Radial]: 'Radial',
-      [AccessSite.Femoral]: 'Femoral',
-      [AccessSite.Brachial]: 'Brachial',
+      [AccessSite.Radial]: "Radial",
+      [AccessSite.Femoral]: "Femoral",
+      [AccessSite.Brachial]: "Brachial",
     };
     return labels[site] || site;
   };
@@ -150,8 +175,12 @@ export const CathLab = () => {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Catheterization Lab</h1>
-          <p className="text-gray-600 mt-1">Manage cardiac catheterization procedures</p>
+          <h1 className="text-2xl font-bold text-gray-900">
+            Catheterization Lab
+          </h1>
+          <p className="text-gray-600 mt-1">
+            Manage cardiac catheterization procedures
+          </p>
         </div>
         <button onClick={handleCreate} className="btn btn-primary">
           <PlusIcon className="h-5 w-5 mr-2" />
@@ -230,7 +259,10 @@ export const CathLab = () => {
             <tbody className="bg-white divide-y divide-gray-200">
               {isLoading ? (
                 <tr>
-                  <td colSpan={9} className="px-6 py-12 text-center text-gray-500">
+                  <td
+                    colSpan={9}
+                    className="px-6 py-12 text-center text-gray-500"
+                  >
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto"></div>
                     <p className="mt-2">Loading procedures...</p>
                   </td>
@@ -244,13 +276,15 @@ export const CathLab = () => {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                      {format(new Date(proc.date), 'MMM d, yyyy')}
+                      {format(new Date(proc.date), "MMM d, yyyy")}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       {getProcedureBadge(proc.procedure)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                      {proc.accessSite ? getAccessSiteLabel(proc.accessSite) : '-'}
+                      {proc.accessSite
+                        ? getAccessSiteLabel(proc.accessSite)
+                        : "-"}
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-600 max-w-xs truncate">
                       {proc.coronaryFindings}
@@ -298,10 +332,13 @@ export const CathLab = () => {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={9} className="px-6 py-12 text-center text-gray-500">
+                  <td
+                    colSpan={9}
+                    className="px-6 py-12 text-center text-gray-500"
+                  >
                     {searchTerm
-                      ? 'No procedures found matching your search.'
-                      : 'No catheterization procedures found.'}
+                      ? "No procedures found matching your search."
+                      : "No catheterization procedures found."}
                   </td>
                 </tr>
               )}
@@ -311,7 +348,11 @@ export const CathLab = () => {
       </div>
 
       {/* Modal */}
-      <CathLabModal isOpen={isModalOpen} onClose={handleModalClose} cath={selectedCath} />
+      <CathLabModal
+        isOpen={isModalOpen}
+        onClose={handleModalClose}
+        cath={selectedCath}
+      />
     </div>
   );
 };
@@ -328,39 +369,41 @@ const CathLabModal = ({ isOpen, onClose, cath }: CathLabModalProps) => {
   const [formData, setFormData] = useState<Partial<CreateCathRequest>>({
     patientId: cath?.patientId || 0,
     procedure: cath?.procedure || CathProcedureType.Diagnostic,
-    date: cath?.date || new Date().toISOString().split('T')[0],
+    date: cath?.date || new Date().toISOString().split("T")[0],
     accessSite: cath?.accessSite || AccessSite.Radial,
-    coronaryFindings: cath?.coronaryFindings || '',
-    findings: cath?.findings || '',
+    coronaryFindings: cath?.coronaryFindings || "",
+    findings: cath?.findings || "",
     interventions: cath?.interventions || [],
     stentsPlaced: cath?.stentsPlaced || 0,
     complications: cath?.complications || [],
     contrast: cath?.contrast,
     fluoroscopyTime: cath?.fluoroscopyTime,
-    conclusions: cath?.conclusions || '',
-    recommendations: cath?.recommendations || '',
-    performedBy: cath?.performedBy || '',
-    assistedBy: cath?.assistedBy || '',
-    notes: cath?.notes || '',
+    conclusions: cath?.conclusions || "",
+    recommendations: cath?.recommendations || "",
+    performedBy: cath?.performedBy || "",
+    assistedBy: cath?.assistedBy || "",
+    notes: cath?.notes || "",
   });
 
-  const [interventionInput, setInterventionInput] = useState('');
-  const [complicationInput, setComplicationInput] = useState('');
+  const [interventionInput, setInterventionInput] = useState("");
+  const [complicationInput, setComplicationInput] = useState("");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Saving cath procedure:', formData);
-    queryClient.invalidateQueries({ queryKey: ['cath-procedures'] });
+    console.log("Saving cath procedure:", formData);
+    queryClient.invalidateQueries({ queryKey: ["cath-procedures"] });
     onClose();
   };
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >,
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: ['stentsPlaced', 'contrast', 'fluoroscopyTime'].includes(name)
+      [name]: ["stentsPlaced", "contrast", "fluoroscopyTime"].includes(name)
         ? Number(value)
         : value,
     }));
@@ -370,9 +413,12 @@ const CathLabModal = ({ isOpen, onClose, cath }: CathLabModalProps) => {
     if (interventionInput.trim()) {
       setFormData((prev) => ({
         ...prev,
-        interventions: [...(prev.interventions || []), interventionInput.trim()],
+        interventions: [
+          ...(prev.interventions || []),
+          interventionInput.trim(),
+        ],
       }));
-      setInterventionInput('');
+      setInterventionInput("");
     }
   };
 
@@ -387,9 +433,12 @@ const CathLabModal = ({ isOpen, onClose, cath }: CathLabModalProps) => {
     if (complicationInput.trim()) {
       setFormData((prev) => ({
         ...prev,
-        complications: [...(prev.complications || []), complicationInput.trim()],
+        complications: [
+          ...(prev.complications || []),
+          complicationInput.trim(),
+        ],
       }));
-      setComplicationInput('');
+      setComplicationInput("");
     }
   };
 
@@ -408,9 +457,14 @@ const CathLabModal = ({ isOpen, onClose, cath }: CathLabModalProps) => {
           <div className="p-6">
             <div className="flex justify-between items-center mb-4">
               <Dialog.Title className="text-lg font-medium text-gray-900">
-                {cath ? 'View Catheterization Procedure' : 'New Catheterization Procedure'}
+                {cath
+                  ? "View Catheterization Procedure"
+                  : "New Catheterization Procedure"}
               </Dialog.Title>
-              <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+              <button
+                onClick={onClose}
+                className="text-gray-400 hover:text-gray-600"
+              >
                 <XMarkIcon className="h-6 w-6" />
               </button>
             </div>
@@ -433,11 +487,13 @@ const CathLabModal = ({ isOpen, onClose, cath }: CathLabModalProps) => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Date
+                  </label>
                   <input
                     type="date"
                     name="date"
-                    value={formData.date?.split('T')[0]}
+                    value={formData.date?.split("T")[0]}
                     onChange={handleChange}
                     className="input w-full"
                     required
@@ -533,7 +589,7 @@ const CathLabModal = ({ isOpen, onClose, cath }: CathLabModalProps) => {
                   <input
                     type="number"
                     name="contrast"
-                    value={formData.contrast || ''}
+                    value={formData.contrast || ""}
                     onChange={handleChange}
                     className="input w-full"
                   />
@@ -546,7 +602,7 @@ const CathLabModal = ({ isOpen, onClose, cath }: CathLabModalProps) => {
                   <input
                     type="number"
                     name="fluoroscopyTime"
-                    value={formData.fluoroscopyTime || ''}
+                    value={formData.fluoroscopyTime || ""}
                     onChange={handleChange}
                     className="input w-full"
                   />
@@ -596,7 +652,10 @@ const CathLabModal = ({ isOpen, onClose, cath }: CathLabModalProps) => {
                     type="text"
                     value={interventionInput}
                     onChange={(e) => setInterventionInput(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addIntervention())}
+                    onKeyPress={(e) =>
+                      e.key === "Enter" &&
+                      (e.preventDefault(), addIntervention())
+                    }
                     className="input flex-1"
                     placeholder="Add intervention..."
                   />
@@ -608,25 +667,28 @@ const CathLabModal = ({ isOpen, onClose, cath }: CathLabModalProps) => {
                     Add
                   </button>
                 </div>
-                {formData.interventions && formData.interventions.length > 0 && (
-                  <div className="space-y-1">
-                    {formData.interventions.map((intervention, index) => (
-                      <div
-                        key={index}
-                        className="flex items-center justify-between bg-gray-50 px-3 py-2 rounded"
-                      >
-                        <span className="text-sm text-gray-700">{intervention}</span>
-                        <button
-                          type="button"
-                          onClick={() => removeIntervention(index)}
-                          className="text-red-600 hover:text-red-800"
+                {formData.interventions &&
+                  formData.interventions.length > 0 && (
+                    <div className="space-y-1">
+                      {formData.interventions.map((intervention, index) => (
+                        <div
+                          key={index}
+                          className="flex items-center justify-between bg-gray-50 px-3 py-2 rounded"
                         >
-                          <XMarkIcon className="h-4 w-4" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                          <span className="text-sm text-gray-700">
+                            {intervention}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => removeIntervention(index)}
+                            className="text-red-600 hover:text-red-800"
+                          >
+                            <XMarkIcon className="h-4 w-4" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
               </div>
 
               {/* Complications */}
@@ -639,7 +701,10 @@ const CathLabModal = ({ isOpen, onClose, cath }: CathLabModalProps) => {
                     type="text"
                     value={complicationInput}
                     onChange={(e) => setComplicationInput(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addComplication())}
+                    onKeyPress={(e) =>
+                      e.key === "Enter" &&
+                      (e.preventDefault(), addComplication())
+                    }
                     className="input flex-1"
                     placeholder="Add complication..."
                   />
@@ -651,25 +716,28 @@ const CathLabModal = ({ isOpen, onClose, cath }: CathLabModalProps) => {
                     Add
                   </button>
                 </div>
-                {formData.complications && formData.complications.length > 0 && (
-                  <div className="space-y-1">
-                    {formData.complications.map((complication, index) => (
-                      <div
-                        key={index}
-                        className="flex items-center justify-between bg-red-50 px-3 py-2 rounded"
-                      >
-                        <span className="text-sm text-red-700">{complication}</span>
-                        <button
-                          type="button"
-                          onClick={() => removeComplication(index)}
-                          className="text-red-600 hover:text-red-800"
+                {formData.complications &&
+                  formData.complications.length > 0 && (
+                    <div className="space-y-1">
+                      {formData.complications.map((complication, index) => (
+                        <div
+                          key={index}
+                          className="flex items-center justify-between bg-red-50 px-3 py-2 rounded"
                         >
-                          <XMarkIcon className="h-4 w-4" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                          <span className="text-sm text-red-700">
+                            {complication}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => removeComplication(index)}
+                            className="text-red-600 hover:text-red-800"
+                          >
+                            <XMarkIcon className="h-4 w-4" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
               </div>
 
               {/* Conclusions & Recommendations */}
@@ -702,7 +770,9 @@ const CathLabModal = ({ isOpen, onClose, cath }: CathLabModalProps) => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Notes
+                  </label>
                   <textarea
                     name="notes"
                     value={formData.notes}
@@ -714,11 +784,15 @@ const CathLabModal = ({ isOpen, onClose, cath }: CathLabModalProps) => {
               </div>
 
               <div className="flex justify-end gap-3 pt-4">
-                <button type="button" onClick={onClose} className="btn btn-outline">
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="btn btn-outline"
+                >
                   Cancel
                 </button>
                 <button type="submit" className="btn btn-primary">
-                  {cath ? 'Update' : 'Create'} Procedure
+                  {cath ? "Update" : "Create"} Procedure
                 </button>
               </div>
             </form>

@@ -1,20 +1,20 @@
-import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useForm } from 'react-hook-form';
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useForm } from "react-hook-form";
 import {
   MagnifyingGlassIcon,
   FunnelIcon,
   PlusIcon,
   ClipboardDocumentListIcon,
-} from '@heroicons/react/24/outline';
-import { Dialog } from '@headlessui/react';
+} from "@heroicons/react/24/outline";
+import { Dialog } from "@headlessui/react";
 import type {
   DentalTreatment,
   CreateDentalTreatmentRequest,
   DentalTreatmentStatus,
   TreatmentType,
-} from '../../types/dental';
-import { format } from 'date-fns';
+} from "../../types/dental";
+import { format } from "date-fns";
 
 // Mock API functions - Replace with actual API calls
 const dentalTreatmentApi = {
@@ -27,30 +27,30 @@ const dentalTreatmentApi = {
   update: async (id: number, data: Partial<DentalTreatment>) => ({
     data: { id, ...data },
   }),
-  delete: async (id: number) => ({
+  delete: async () => ({
     data: { success: true },
   }),
 };
 
 const getTreatmentTypeLabel = (type: TreatmentType): string => {
   const labels: Record<TreatmentType, string> = {
-    cleaning: 'Cleaning',
-    filling: 'Filling',
-    extraction: 'Extraction',
-    root_canal: 'Root Canal',
-    crown: 'Crown',
-    bridge: 'Bridge',
-    implant: 'Implant',
-    veneer: 'Veneer',
-    whitening: 'Whitening',
-    orthodontics: 'Orthodontics',
-    denture: 'Denture',
-    scaling: 'Scaling',
-    polishing: 'Polishing',
-    xray: 'X-Ray',
-    consultation: 'Consultation',
-    emergency: 'Emergency',
-    other: 'Other',
+    cleaning: "Cleaning",
+    filling: "Filling",
+    extraction: "Extraction",
+    root_canal: "Root Canal",
+    crown: "Crown",
+    bridge: "Bridge",
+    implant: "Implant",
+    veneer: "Veneer",
+    whitening: "Whitening",
+    orthodontics: "Orthodontics",
+    denture: "Denture",
+    scaling: "Scaling",
+    polishing: "Polishing",
+    xray: "X-Ray",
+    consultation: "Consultation",
+    emergency: "Emergency",
+    other: "Other",
   };
   return labels[type] || type;
 };
@@ -60,14 +60,19 @@ const getStatusBadge = (status: DentalTreatmentStatus) => {
     DentalTreatmentStatus,
     { className: string; label: string }
   > = {
-    planned: { className: 'bg-blue-100 text-blue-800', label: 'Planned' },
-    in_progress: { className: 'bg-yellow-100 text-yellow-800', label: 'In Progress' },
-    completed: { className: 'bg-green-100 text-green-800', label: 'Completed' },
-    cancelled: { className: 'bg-red-100 text-red-800', label: 'Cancelled' },
+    planned: { className: "bg-blue-100 text-blue-800", label: "Planned" },
+    in_progress: {
+      className: "bg-yellow-100 text-yellow-800",
+      label: "In Progress",
+    },
+    completed: { className: "bg-green-100 text-green-800", label: "Completed" },
+    cancelled: { className: "bg-red-100 text-red-800", label: "Cancelled" },
   };
   const c = config[status];
   return (
-    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${c.className}`}>
+    <span
+      className={`px-2 py-0.5 rounded-full text-xs font-medium ${c.className}`}
+    >
       {c.label}
     </span>
   );
@@ -109,30 +114,31 @@ const TreatmentForm = ({
           patientId: treatment.patientId,
           toothNumber: treatment.toothNumber,
           treatmentType: treatment.treatmentType,
-          description: treatment.description || '',
+          description: treatment.description || "",
           status: treatment.status,
-          performedBy: treatment.performedBy || '',
+          performedBy: treatment.performedBy || "",
           performedDate: treatment.performedDate
-            ? format(new Date(treatment.performedDate), 'yyyy-MM-dd')
-            : '',
+            ? format(new Date(treatment.performedDate), "yyyy-MM-dd")
+            : "",
           scheduledDate: treatment.scheduledDate
-            ? format(new Date(treatment.scheduledDate), 'yyyy-MM-dd')
-            : '',
+            ? format(new Date(treatment.scheduledDate), "yyyy-MM-dd")
+            : "",
           cost: treatment.cost,
           isPaid: treatment.isPaid || false,
-          notes: treatment.notes || '',
+          notes: treatment.notes || "",
         }
       : {
-          status: 'planned',
-          treatmentType: 'consultation',
+          status: "planned",
+          treatmentType: "consultation",
           isPaid: false,
         },
   });
 
   const createMutation = useMutation({
-    mutationFn: (data: CreateDentalTreatmentRequest) => dentalTreatmentApi.create(data),
+    mutationFn: (data: CreateDentalTreatmentRequest) =>
+      dentalTreatmentApi.create(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['dental-treatments'] });
+      queryClient.invalidateQueries({ queryKey: ["dental-treatments"] });
       onSuccess();
     },
   });
@@ -141,7 +147,7 @@ const TreatmentForm = ({
     mutationFn: (data: TreatmentFormData) =>
       dentalTreatmentApi.update(treatment!.id, { ...data, id: treatment!.id }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['dental-treatments'] });
+      queryClient.invalidateQueries({ queryKey: ["dental-treatments"] });
       onSuccess();
     },
   });
@@ -162,7 +168,8 @@ const TreatmentForm = ({
       {error && (
         <div className="p-3 bg-red-50 border border-red-200 rounded-md">
           <p className="text-sm text-red-600">
-            Error: {error instanceof Error ? error.message : 'An error occurred'}
+            Error:{" "}
+            {error instanceof Error ? error.message : "An error occurred"}
           </p>
         </div>
       )}
@@ -170,30 +177,45 @@ const TreatmentForm = ({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Patient ID */}
         <div>
-          <label htmlFor="patientId" className="block text-sm font-medium text-gray-700 mb-1">
+          <label
+            htmlFor="patientId"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
             Patient ID *
           </label>
           <input
             type="number"
             id="patientId"
-            {...register('patientId', { required: 'Patient ID is required', valueAsNumber: true })}
+            {...register("patientId", {
+              required: "Patient ID is required",
+              valueAsNumber: true,
+            })}
             className="input"
             placeholder="1"
           />
           {errors.patientId && (
-            <p className="mt-1 text-sm text-red-600">{errors.patientId.message}</p>
+            <p className="mt-1 text-sm text-red-600">
+              {errors.patientId.message}
+            </p>
           )}
         </div>
 
         {/* Tooth Number */}
         <div>
-          <label htmlFor="toothNumber" className="block text-sm font-medium text-gray-700 mb-1">
+          <label
+            htmlFor="toothNumber"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
             Tooth Number (1-32)
           </label>
           <input
             type="number"
             id="toothNumber"
-            {...register('toothNumber', { valueAsNumber: true, min: 1, max: 32 })}
+            {...register("toothNumber", {
+              valueAsNumber: true,
+              min: 1,
+              max: 32,
+            })}
             className="input"
             placeholder="Optional"
           />
@@ -201,10 +223,17 @@ const TreatmentForm = ({
 
         {/* Treatment Type */}
         <div>
-          <label htmlFor="treatmentType" className="block text-sm font-medium text-gray-700 mb-1">
+          <label
+            htmlFor="treatmentType"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
             Treatment Type *
           </label>
-          <select id="treatmentType" {...register('treatmentType', { required: true })} className="input">
+          <select
+            id="treatmentType"
+            {...register("treatmentType", { required: true })}
+            className="input"
+          >
             <option value="consultation">Consultation</option>
             <option value="cleaning">Cleaning</option>
             <option value="filling">Filling</option>
@@ -227,10 +256,17 @@ const TreatmentForm = ({
 
         {/* Status */}
         <div>
-          <label htmlFor="status" className="block text-sm font-medium text-gray-700 mb-1">
+          <label
+            htmlFor="status"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
             Status *
           </label>
-          <select id="status" {...register('status', { required: true })} className="input">
+          <select
+            id="status"
+            {...register("status", { required: true })}
+            className="input"
+          >
             <option value="planned">Planned</option>
             <option value="in_progress">In Progress</option>
             <option value="completed">Completed</option>
@@ -240,13 +276,16 @@ const TreatmentForm = ({
 
         {/* Performed By */}
         <div>
-          <label htmlFor="performedBy" className="block text-sm font-medium text-gray-700 mb-1">
+          <label
+            htmlFor="performedBy"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
             Performed By
           </label>
           <input
             type="text"
             id="performedBy"
-            {...register('performedBy')}
+            {...register("performedBy")}
             className="input"
             placeholder="Dr. Smith"
           />
@@ -254,14 +293,17 @@ const TreatmentForm = ({
 
         {/* Cost */}
         <div>
-          <label htmlFor="cost" className="block text-sm font-medium text-gray-700 mb-1">
+          <label
+            htmlFor="cost"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
             Cost (AED)
           </label>
           <input
             type="number"
             step="0.01"
             id="cost"
-            {...register('cost', { valueAsNumber: true })}
+            {...register("cost", { valueAsNumber: true })}
             className="input"
             placeholder="0.00"
           />
@@ -269,18 +311,34 @@ const TreatmentForm = ({
 
         {/* Scheduled Date */}
         <div>
-          <label htmlFor="scheduledDate" className="block text-sm font-medium text-gray-700 mb-1">
+          <label
+            htmlFor="scheduledDate"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
             Scheduled Date
           </label>
-          <input type="date" id="scheduledDate" {...register('scheduledDate')} className="input" />
+          <input
+            type="date"
+            id="scheduledDate"
+            {...register("scheduledDate")}
+            className="input"
+          />
         </div>
 
         {/* Performed Date */}
         <div>
-          <label htmlFor="performedDate" className="block text-sm font-medium text-gray-700 mb-1">
+          <label
+            htmlFor="performedDate"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
             Performed Date
           </label>
-          <input type="date" id="performedDate" {...register('performedDate')} className="input" />
+          <input
+            type="date"
+            id="performedDate"
+            {...register("performedDate")}
+            className="input"
+          />
         </div>
 
         {/* Is Paid */}
@@ -288,7 +346,7 @@ const TreatmentForm = ({
           <input
             type="checkbox"
             id="isPaid"
-            {...register('isPaid')}
+            {...register("isPaid")}
             className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
           />
           <label htmlFor="isPaid" className="ml-2 block text-sm text-gray-700">
@@ -299,12 +357,15 @@ const TreatmentForm = ({
 
       {/* Description */}
       <div>
-        <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
+        <label
+          htmlFor="description"
+          className="block text-sm font-medium text-gray-700 mb-1"
+        >
           Description
         </label>
         <textarea
           id="description"
-          {...register('description')}
+          {...register("description")}
           rows={2}
           className="input"
           placeholder="Treatment details..."
@@ -313,12 +374,15 @@ const TreatmentForm = ({
 
       {/* Notes */}
       <div>
-        <label htmlFor="notes" className="block text-sm font-medium text-gray-700 mb-1">
+        <label
+          htmlFor="notes"
+          className="block text-sm font-medium text-gray-700 mb-1"
+        >
           Notes
         </label>
         <textarea
           id="notes"
-          {...register('notes')}
+          {...register("notes")}
           rows={3}
           className="input"
           placeholder="Additional notes..."
@@ -327,19 +391,24 @@ const TreatmentForm = ({
 
       {/* Actions */}
       <div className="flex items-center justify-end gap-3 pt-4 border-t">
-        <button type="button" onClick={onCancel} disabled={isPending} className="btn btn-secondary">
+        <button
+          type="button"
+          onClick={onCancel}
+          disabled={isPending}
+          className="btn btn-secondary"
+        >
           Cancel
         </button>
         <button type="submit" disabled={isPending} className="btn btn-primary">
           {isPending ? (
             <div className="flex items-center">
               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-              {isEditing ? 'Updating...' : 'Creating...'}
+              {isEditing ? "Updating..." : "Creating..."}
             </div>
           ) : isEditing ? (
-            'Update Treatment'
+            "Update Treatment"
           ) : (
-            'Create Treatment'
+            "Create Treatment"
           )}
         </button>
       </div>
@@ -349,24 +418,24 @@ const TreatmentForm = ({
 
 export const DentalTreatments = () => {
   const queryClient = useQueryClient();
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('');
-  const [typeFilter, setTypeFilter] = useState<string>('');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("");
+  const [typeFilter, setTypeFilter] = useState<string>("");
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedTreatment, setSelectedTreatment] = useState<DentalTreatment | undefined>(
-    undefined
-  );
+  const [selectedTreatment, setSelectedTreatment] = useState<
+    DentalTreatment | undefined
+  >(undefined);
 
   // Fetch treatments
   const { data: treatmentsData, isLoading } = useQuery({
-    queryKey: ['dental-treatments'],
+    queryKey: ["dental-treatments"],
     queryFn: () => dentalTreatmentApi.getAll(),
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id: number) => dentalTreatmentApi.delete(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['dental-treatments'] });
+      queryClient.invalidateQueries({ queryKey: ["dental-treatments"] });
     },
   });
 
@@ -386,7 +455,7 @@ export const DentalTreatments = () => {
   const handleDelete = (treatment: DentalTreatment) => {
     if (
       window.confirm(
-        `Are you sure you want to delete the treatment for ${treatment.patientName}?`
+        `Are you sure you want to delete the treatment for ${treatment.patientName}?`,
       )
     ) {
       deleteMutation.mutate(treatment.id);
@@ -413,8 +482,12 @@ export const DentalTreatments = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Dental Treatments</h1>
-          <p className="text-gray-600 mt-1">Manage patient treatments and procedures</p>
+          <h1 className="text-2xl font-bold text-gray-900">
+            Dental Treatments
+          </h1>
+          <p className="text-gray-600 mt-1">
+            Manage patient treatments and procedures
+          </p>
         </div>
         <button onClick={handleCreate} className="btn btn-primary">
           <PlusIcon className="h-5 w-5 mr-2 inline" />
@@ -426,24 +499,26 @@ export const DentalTreatments = () => {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="card">
           <p className="text-sm text-gray-600">Total Treatments</p>
-          <p className="text-2xl font-bold text-gray-900 mt-1">{treatments.length}</p>
+          <p className="text-2xl font-bold text-gray-900 mt-1">
+            {treatments.length}
+          </p>
         </div>
         <div className="card">
           <p className="text-sm text-gray-600">Pending</p>
           <p className="text-2xl font-bold text-blue-600 mt-1">
-            {treatments.filter((t) => t.status === 'planned').length}
+            {treatments.filter((t) => t.status === "planned").length}
           </p>
         </div>
         <div className="card">
           <p className="text-sm text-gray-600">In Progress</p>
           <p className="text-2xl font-bold text-yellow-600 mt-1">
-            {treatments.filter((t) => t.status === 'in_progress').length}
+            {treatments.filter((t) => t.status === "in_progress").length}
           </p>
         </div>
         <div className="card">
           <p className="text-sm text-gray-600">Completed</p>
           <p className="text-2xl font-bold text-green-600 mt-1">
-            {treatments.filter((t) => t.status === 'completed').length}
+            {treatments.filter((t) => t.status === "completed").length}
           </p>
         </div>
       </div>
@@ -535,31 +610,44 @@ export const DentalTreatments = () => {
                   <tr key={treatment.id} className="hover:bg-gray-50">
                     <td className="px-4 py-3 text-sm">
                       <div className="font-medium text-gray-900">
-                        {treatment.patientName || `Patient #${treatment.patientId}`}
+                        {treatment.patientName ||
+                          `Patient #${treatment.patientId}`}
                       </div>
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-600">
-                      {treatment.toothNumber || '-'}
+                      {treatment.toothNumber || "-"}
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-600">
                       {getTreatmentTypeLabel(treatment.treatmentType)}
                     </td>
-                    <td className="px-4 py-3 text-sm">{getStatusBadge(treatment.status)}</td>
-                    <td className="px-4 py-3 text-sm text-gray-600">
-                      {treatment.performedDate
-                        ? format(new Date(treatment.performedDate), 'MMM d, yyyy')
-                        : treatment.scheduledDate
-                        ? format(new Date(treatment.scheduledDate), 'MMM d, yyyy')
-                        : '-'}
+                    <td className="px-4 py-3 text-sm">
+                      {getStatusBadge(treatment.status)}
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-600">
-                      {treatment.cost ? `AED ${treatment.cost.toFixed(2)}` : '-'}
+                      {treatment.performedDate
+                        ? format(
+                            new Date(treatment.performedDate),
+                            "MMM d, yyyy",
+                          )
+                        : treatment.scheduledDate
+                          ? format(
+                              new Date(treatment.scheduledDate),
+                              "MMM d, yyyy",
+                            )
+                          : "-"}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-600">
+                      {treatment.cost
+                        ? `AED ${treatment.cost.toFixed(2)}`
+                        : "-"}
                       {treatment.isPaid && (
-                        <span className="ml-2 text-xs text-green-600">Paid</span>
+                        <span className="ml-2 text-xs text-green-600">
+                          Paid
+                        </span>
                       )}
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-600">
-                      {treatment.performedBy || '-'}
+                      {treatment.performedBy || "-"}
                     </td>
                     <td className="px-4 py-3 text-sm">
                       <div className="flex items-center gap-2">
@@ -587,8 +675,8 @@ export const DentalTreatments = () => {
             <ClipboardDocumentListIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
             <p className="text-gray-500">
               {searchTerm || statusFilter || typeFilter
-                ? 'No treatments found matching your filters.'
-                : 'No treatments found.'}
+                ? "No treatments found matching your filters."
+                : "No treatments found."}
             </p>
             <button
               onClick={handleCreate}
@@ -602,13 +690,17 @@ export const DentalTreatments = () => {
       </div>
 
       {/* Modal */}
-      <Dialog open={isModalOpen} onClose={handleModalClose} className="relative z-50">
+      <Dialog
+        open={isModalOpen}
+        onClose={handleModalClose}
+        className="relative z-50"
+      >
         <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
         <div className="fixed inset-0 flex items-center justify-center p-4">
           <Dialog.Panel className="mx-auto max-w-3xl w-full bg-white rounded-lg shadow-xl max-h-[90vh] overflow-y-auto">
             <div className="p-6">
               <Dialog.Title className="text-lg font-medium text-gray-900 mb-4">
-                {selectedTreatment ? 'Edit Treatment' : 'New Treatment'}
+                {selectedTreatment ? "Edit Treatment" : "New Treatment"}
               </Dialog.Title>
               <TreatmentForm
                 treatment={selectedTreatment}

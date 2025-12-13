@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   MegaphoneIcon,
   UserGroupIcon,
@@ -10,43 +10,75 @@ import {
   FunnelIcon,
   ArrowTrendingUpIcon,
   ArrowTrendingDownIcon,
-} from '@heroicons/react/24/outline';
-import { campaignApi, leadApi, marketingStatsApi } from '../../lib/api';
-import { Modal } from '../../components/ui/Modal';
-import { CampaignForm } from '../../components/marketing/CampaignForm';
-import { LeadForm } from '../../components/marketing/LeadForm';
-import type { Campaign, Lead, MarketingStatistics } from '../../types/marketing';
-import { CampaignStatus, CampaignType, LeadStatus, LeadSource } from '../../types/marketing';
-import { format } from 'date-fns';
+} from "@heroicons/react/24/outline";
+import { campaignApi, leadApi, marketingStatsApi } from "../../lib/api";
+import { Modal } from "../../components/ui/Modal";
+import { CampaignForm } from "../../components/marketing/CampaignForm";
+import { LeadForm } from "../../components/marketing/LeadForm";
+import type {
+  Campaign,
+  Lead,
+  MarketingStatistics,
+} from "../../types/marketing";
+import {
+  CampaignStatus,
+  CampaignType,
+  LeadStatus,
+  LeadSource,
+} from "../../types/marketing";
+import { format } from "date-fns";
 
 const getCampaignTypeLabel = (type: CampaignType): string => {
   const labels: Record<string, string> = {
-    [CampaignType.Email]: 'Email',
-    [CampaignType.Social]: 'Social Media',
-    [CampaignType.SMS]: 'SMS',
-    [CampaignType.Event]: 'Event',
-    [CampaignType.Referral]: 'Referral',
-    [CampaignType.Recall]: 'Patient Recall',
-    [CampaignType.Seasonal]: 'Seasonal',
-    [CampaignType.Digital]: 'Digital Ads',
-    [CampaignType.Print]: 'Print',
-    [CampaignType.Other]: 'Other',
+    [CampaignType.Email]: "Email",
+    [CampaignType.Social]: "Social Media",
+    [CampaignType.SMS]: "SMS",
+    [CampaignType.Event]: "Event",
+    [CampaignType.Referral]: "Referral",
+    [CampaignType.Recall]: "Patient Recall",
+    [CampaignType.Seasonal]: "Seasonal",
+    [CampaignType.Digital]: "Digital Ads",
+    [CampaignType.Print]: "Print",
+    [CampaignType.Other]: "Other",
   };
   return labels[type] || type;
 };
 
 const getCampaignStatusBadge = (status: CampaignStatus) => {
   const config: Record<string, { className: string; label: string }> = {
-    [CampaignStatus.Draft]: { className: 'bg-gray-100 text-gray-800', label: 'Draft' },
-    [CampaignStatus.Scheduled]: { className: 'bg-blue-100 text-blue-800', label: 'Scheduled' },
-    [CampaignStatus.Active]: { className: 'bg-green-100 text-green-800', label: 'Active' },
-    [CampaignStatus.Paused]: { className: 'bg-yellow-100 text-yellow-800', label: 'Paused' },
-    [CampaignStatus.Completed]: { className: 'bg-purple-100 text-purple-800', label: 'Completed' },
-    [CampaignStatus.Cancelled]: { className: 'bg-red-100 text-red-800', label: 'Cancelled' },
+    [CampaignStatus.Draft]: {
+      className: "bg-gray-100 text-gray-800",
+      label: "Draft",
+    },
+    [CampaignStatus.Scheduled]: {
+      className: "bg-blue-100 text-blue-800",
+      label: "Scheduled",
+    },
+    [CampaignStatus.Active]: {
+      className: "bg-green-100 text-green-800",
+      label: "Active",
+    },
+    [CampaignStatus.Paused]: {
+      className: "bg-yellow-100 text-yellow-800",
+      label: "Paused",
+    },
+    [CampaignStatus.Completed]: {
+      className: "bg-purple-100 text-purple-800",
+      label: "Completed",
+    },
+    [CampaignStatus.Cancelled]: {
+      className: "bg-red-100 text-red-800",
+      label: "Cancelled",
+    },
   };
-  const c = config[status] || { className: 'bg-gray-100 text-gray-800', label: status };
+  const c = config[status] || {
+    className: "bg-gray-100 text-gray-800",
+    label: status,
+  };
   return (
-    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${c.className}`}>
+    <span
+      className={`px-2 py-0.5 rounded-full text-xs font-medium ${c.className}`}
+    >
       {c.label}
     </span>
   );
@@ -54,17 +86,37 @@ const getCampaignStatusBadge = (status: CampaignStatus) => {
 
 const getLeadStatusBadge = (status: LeadStatus) => {
   const config: Record<string, { className: string; label: string }> = {
-    [LeadStatus.New]: { className: 'bg-blue-100 text-blue-800', label: 'New' },
-    [LeadStatus.Contacted]: { className: 'bg-purple-100 text-purple-800', label: 'Contacted' },
-    [LeadStatus.Qualified]: { className: 'bg-green-100 text-green-800', label: 'Qualified' },
-    [LeadStatus.Negotiating]: { className: 'bg-yellow-100 text-yellow-800', label: 'Negotiating' },
-    [LeadStatus.Converted]: { className: 'bg-emerald-100 text-emerald-800', label: 'Converted' },
-    [LeadStatus.Lost]: { className: 'bg-red-100 text-red-800', label: 'Lost' },
-    [LeadStatus.Archived]: { className: 'bg-gray-100 text-gray-800', label: 'Archived' },
+    [LeadStatus.New]: { className: "bg-blue-100 text-blue-800", label: "New" },
+    [LeadStatus.Contacted]: {
+      className: "bg-purple-100 text-purple-800",
+      label: "Contacted",
+    },
+    [LeadStatus.Qualified]: {
+      className: "bg-green-100 text-green-800",
+      label: "Qualified",
+    },
+    [LeadStatus.Negotiating]: {
+      className: "bg-yellow-100 text-yellow-800",
+      label: "Negotiating",
+    },
+    [LeadStatus.Converted]: {
+      className: "bg-emerald-100 text-emerald-800",
+      label: "Converted",
+    },
+    [LeadStatus.Lost]: { className: "bg-red-100 text-red-800", label: "Lost" },
+    [LeadStatus.Archived]: {
+      className: "bg-gray-100 text-gray-800",
+      label: "Archived",
+    },
   };
-  const c = config[status] || { className: 'bg-gray-100 text-gray-800', label: status };
+  const c = config[status] || {
+    className: "bg-gray-100 text-gray-800",
+    label: status,
+  };
   return (
-    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${c.className}`}>
+    <span
+      className={`px-2 py-0.5 rounded-full text-xs font-medium ${c.className}`}
+    >
       {c.label}
     </span>
   );
@@ -72,46 +124,46 @@ const getLeadStatusBadge = (status: LeadStatus) => {
 
 const getLeadSourceLabel = (source: LeadSource): string => {
   const labels: Record<string, string> = {
-    [LeadSource.Website]: 'Website',
-    [LeadSource.Referral]: 'Referral',
-    [LeadSource.SocialMedia]: 'Social Media',
-    [LeadSource.Advertising]: 'Advertising',
-    [LeadSource.Event]: 'Event',
-    [LeadSource.WalkIn]: 'Walk-in',
-    [LeadSource.Phone]: 'Phone',
-    [LeadSource.Email]: 'Email',
-    [LeadSource.Partner]: 'Partner',
-    [LeadSource.Campaign]: 'Campaign',
-    [LeadSource.Other]: 'Other',
+    [LeadSource.Website]: "Website",
+    [LeadSource.Referral]: "Referral",
+    [LeadSource.SocialMedia]: "Social Media",
+    [LeadSource.Advertising]: "Advertising",
+    [LeadSource.Event]: "Event",
+    [LeadSource.WalkIn]: "Walk-in",
+    [LeadSource.Phone]: "Phone",
+    [LeadSource.Email]: "Email",
+    [LeadSource.Partner]: "Partner",
+    [LeadSource.Campaign]: "Campaign",
+    [LeadSource.Other]: "Other",
   };
   return labels[source] || source;
 };
 
-type TabType = 'campaigns' | 'leads';
+type TabType = "campaigns" | "leads";
 
 export const MarketingList = () => {
-  const [activeTab, setActiveTab] = useState<TabType>('campaigns');
+  const [activeTab, setActiveTab] = useState<TabType>("campaigns");
   const [showNewCampaign, setShowNewCampaign] = useState(false);
   const [showNewLead, setShowNewLead] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('');
-  const [typeFilter, setTypeFilter] = useState<string>('');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("");
+  const [typeFilter, setTypeFilter] = useState<string>("");
 
   // Fetch campaigns
   const { data: campaignsData, isLoading: campaignsLoading } = useQuery({
-    queryKey: ['campaigns'],
+    queryKey: ["campaigns"],
     queryFn: () => campaignApi.getAll(),
   });
 
   // Fetch leads
   const { data: leadsData, isLoading: leadsLoading } = useQuery({
-    queryKey: ['leads'],
+    queryKey: ["leads"],
     queryFn: () => leadApi.getAll(),
   });
 
   // Fetch statistics
   const { data: statsData } = useQuery({
-    queryKey: ['marketing-stats'],
+    queryKey: ["marketing-stats"],
     queryFn: () => marketingStatsApi.getDashboard(),
   });
 
@@ -159,13 +211,13 @@ export const MarketingList = () => {
     return matchesSearch && matchesStatus;
   });
 
-  const handleNewCampaign = (data: any) => {
-    console.log('Creating campaign:', data);
+  const handleNewCampaign = (data: unknown) => {
+    console.log("Creating campaign:", data);
     setShowNewCampaign(false);
   };
 
-  const handleNewLead = (data: any) => {
-    console.log('Creating lead:', data);
+  const handleNewLead = (data: unknown) => {
+    console.log("Creating lead:", data);
     setShowNewLead(false);
   };
 
@@ -175,7 +227,9 @@ export const MarketingList = () => {
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Marketing</h1>
-          <p className="text-gray-600">Manage campaigns, leads, and marketing activities</p>
+          <p className="text-gray-600">
+            Manage campaigns, leads, and marketing activities
+          </p>
         </div>
         <div className="flex gap-2">
           <button
@@ -204,7 +258,9 @@ export const MarketingList = () => {
             </div>
             <div className="ml-4">
               <p className="text-sm text-gray-500">Active Campaigns</p>
-              <p className="text-2xl font-bold text-gray-900">{stats.activeCampaigns}</p>
+              <p className="text-2xl font-bold text-gray-900">
+                {stats.activeCampaigns}
+              </p>
             </div>
           </div>
         </div>
@@ -216,7 +272,9 @@ export const MarketingList = () => {
             </div>
             <div className="ml-4">
               <p className="text-sm text-gray-500">New Leads This Month</p>
-              <p className="text-2xl font-bold text-gray-900">{stats.newLeadsThisMonth}</p>
+              <p className="text-2xl font-bold text-gray-900">
+                {stats.newLeadsThisMonth}
+              </p>
             </div>
           </div>
         </div>
@@ -228,7 +286,9 @@ export const MarketingList = () => {
             </div>
             <div className="ml-4">
               <p className="text-sm text-gray-500">Qualified Leads</p>
-              <p className="text-2xl font-bold text-gray-900">{stats.qualifiedLeads}</p>
+              <p className="text-2xl font-bold text-gray-900">
+                {stats.qualifiedLeads}
+              </p>
             </div>
           </div>
         </div>
@@ -259,14 +319,14 @@ export const MarketingList = () => {
           <nav className="flex -mb-px">
             <button
               onClick={() => {
-                setActiveTab('campaigns');
-                setStatusFilter('');
-                setTypeFilter('');
+                setActiveTab("campaigns");
+                setStatusFilter("");
+                setTypeFilter("");
               }}
               className={`px-6 py-3 text-sm font-medium border-b-2 ${
-                activeTab === 'campaigns'
-                  ? 'border-primary-500 text-primary-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                activeTab === "campaigns"
+                  ? "border-primary-500 text-primary-600"
+                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
               }`}
             >
               <MegaphoneIcon className="h-5 w-5 inline-block mr-2" />
@@ -274,14 +334,14 @@ export const MarketingList = () => {
             </button>
             <button
               onClick={() => {
-                setActiveTab('leads');
-                setStatusFilter('');
-                setTypeFilter('');
+                setActiveTab("leads");
+                setStatusFilter("");
+                setTypeFilter("");
               }}
               className={`px-6 py-3 text-sm font-medium border-b-2 ${
-                activeTab === 'leads'
-                  ? 'border-primary-500 text-primary-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                activeTab === "leads"
+                  ? "border-primary-500 text-primary-600"
+                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
               }`}
             >
               <UserGroupIcon className="h-5 w-5 inline-block mr-2" />
@@ -298,7 +358,11 @@ export const MarketingList = () => {
                 <MagnifyingGlassIcon className="h-5 w-5 text-gray-400 absolute left-3 top-2.5" />
                 <input
                   type="text"
-                  placeholder={activeTab === 'campaigns' ? 'Search campaigns...' : 'Search leads...'}
+                  placeholder={
+                    activeTab === "campaigns"
+                      ? "Search campaigns..."
+                      : "Search leads..."
+                  }
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500"
@@ -313,32 +377,32 @@ export const MarketingList = () => {
                 className="px-3 py-2 border border-gray-300 rounded-md"
               >
                 <option value="">All Status</option>
-                {activeTab === 'campaigns' ? (
+                {activeTab === "campaigns" ? (
                   <>
-                    {Object.entries(CampaignStatus).map(([key, value]) => (
+                    {Object.entries(CampaignStatus).map(([, value]) => (
                       <option key={value} value={value}>
-                        {key}
+                        {value}
                       </option>
                     ))}
                   </>
                 ) : (
                   <>
-                    {Object.entries(LeadStatus).map(([key, value]) => (
+                    {Object.entries(LeadStatus).map(([, value]) => (
                       <option key={value} value={value}>
-                        {key}
+                        {value}
                       </option>
                     ))}
                   </>
                 )}
               </select>
-              {activeTab === 'campaigns' && (
+              {activeTab === "campaigns" && (
                 <select
                   value={typeFilter}
                   onChange={(e) => setTypeFilter(e.target.value)}
                   className="px-3 py-2 border border-gray-300 rounded-md"
                 >
                   <option value="">All Types</option>
-                  {Object.entries(CampaignType).map(([key, value]) => (
+                  {Object.entries(CampaignType).map(([, value]) => (
                     <option key={value} value={value}>
                       {getCampaignTypeLabel(value)}
                     </option>
@@ -350,7 +414,7 @@ export const MarketingList = () => {
         </div>
 
         {/* Campaigns Table */}
-        {activeTab === 'campaigns' && (
+        {activeTab === "campaigns" && (
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
@@ -384,13 +448,19 @@ export const MarketingList = () => {
               <tbody className="bg-white divide-y divide-gray-200">
                 {campaignsLoading ? (
                   <tr>
-                    <td colSpan={8} className="px-6 py-12 text-center text-gray-500">
+                    <td
+                      colSpan={8}
+                      className="px-6 py-12 text-center text-gray-500"
+                    >
                       Loading campaigns...
                     </td>
                   </tr>
                 ) : filteredCampaigns.length === 0 ? (
                   <tr>
-                    <td colSpan={8} className="px-6 py-12 text-center text-gray-500">
+                    <td
+                      colSpan={8}
+                      className="px-6 py-12 text-center text-gray-500"
+                    >
                       No campaigns found
                     </td>
                   </tr>
@@ -398,17 +468,24 @@ export const MarketingList = () => {
                   filteredCampaigns.map((campaign) => (
                     <tr key={campaign.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="font-medium text-gray-900">{campaign.name}</div>
-                        <div className="text-sm text-gray-500">{campaign.campaignCode}</div>
+                        <div className="font-medium text-gray-900">
+                          {campaign.name}
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          {campaign.campaignCode}
+                        </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         {getCampaignTypeLabel(campaign.type)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        <div>{format(new Date(campaign.startDate), 'MMM d, yyyy')}</div>
+                        <div>
+                          {format(new Date(campaign.startDate), "MMM d, yyyy")}
+                        </div>
                         {campaign.endDate && (
                           <div className="text-gray-500">
-                            to {format(new Date(campaign.endDate), 'MMM d, yyyy')}
+                            to{" "}
+                            {format(new Date(campaign.endDate), "MMM d, yyyy")}
                           </div>
                         )}
                       </td>
@@ -418,22 +495,27 @@ export const MarketingList = () => {
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         {campaign.leadsGenerated}
                         {campaign.targetLeads && (
-                          <span className="text-gray-500">/{campaign.targetLeads}</span>
+                          <span className="text-gray-500">
+                            /{campaign.targetLeads}
+                          </span>
                         )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         {campaign.conversions}
-                        {campaign.conversionRate !== undefined && campaign.conversionRate > 0 && (
-                          <span className="text-green-600 ml-1">
-                            ({campaign.conversionRate.toFixed(1)}%)
-                          </span>
-                        )}
+                        {campaign.conversionRate !== undefined &&
+                          campaign.conversionRate > 0 && (
+                            <span className="text-green-600 ml-1">
+                              ({campaign.conversionRate.toFixed(1)}%)
+                            </span>
+                          )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
                         {campaign.roi !== undefined && campaign.roi !== null ? (
                           <span
                             className={`flex items-center ${
-                              campaign.roi >= 0 ? 'text-green-600' : 'text-red-600'
+                              campaign.roi >= 0
+                                ? "text-green-600"
+                                : "text-red-600"
                             }`}
                           >
                             {campaign.roi >= 0 ? (
@@ -451,7 +533,9 @@ export const MarketingList = () => {
                         <button className="text-primary-600 hover:text-primary-900 mr-3">
                           View
                         </button>
-                        <button className="text-gray-600 hover:text-gray-900">Edit</button>
+                        <button className="text-gray-600 hover:text-gray-900">
+                          Edit
+                        </button>
                       </td>
                     </tr>
                   ))
@@ -462,7 +546,7 @@ export const MarketingList = () => {
         )}
 
         {/* Leads Table */}
-        {activeTab === 'leads' && (
+        {activeTab === "leads" && (
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
@@ -496,13 +580,19 @@ export const MarketingList = () => {
               <tbody className="bg-white divide-y divide-gray-200">
                 {leadsLoading ? (
                   <tr>
-                    <td colSpan={8} className="px-6 py-12 text-center text-gray-500">
+                    <td
+                      colSpan={8}
+                      className="px-6 py-12 text-center text-gray-500"
+                    >
                       Loading leads...
                     </td>
                   </tr>
                 ) : filteredLeads.length === 0 ? (
                   <tr>
-                    <td colSpan={8} className="px-6 py-12 text-center text-gray-500">
+                    <td
+                      colSpan={8}
+                      className="px-6 py-12 text-center text-gray-500"
+                    >
                       No leads found
                     </td>
                   </tr>
@@ -513,11 +603,17 @@ export const MarketingList = () => {
                         <div className="font-medium text-gray-900">
                           {lead.firstName} {lead.lastName}
                         </div>
-                        <div className="text-sm text-gray-500">{lead.leadCode}</div>
+                        <div className="text-sm text-gray-500">
+                          {lead.leadCode}
+                        </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">{lead.email || '-'}</div>
-                        <div className="text-sm text-gray-500">{lead.phoneNumber || '-'}</div>
+                        <div className="text-sm text-gray-900">
+                          {lead.email || "-"}
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          {lead.phoneNumber || "-"}
+                        </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         {getLeadSourceLabel(lead.source)}
@@ -526,15 +622,16 @@ export const MarketingList = () => {
                         {getLeadStatusBadge(lead.status)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
-                        {lead.leadScore !== undefined && lead.leadScore !== null ? (
+                        {lead.leadScore !== undefined &&
+                        lead.leadScore !== null ? (
                           <div className="flex items-center">
                             <div
                               className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-medium ${
                                 lead.leadScore >= 80
-                                  ? 'bg-green-500'
+                                  ? "bg-green-500"
                                   : lead.leadScore >= 50
-                                  ? 'bg-yellow-500'
-                                  : 'bg-gray-400'
+                                    ? "bg-yellow-500"
+                                    : "bg-gray-400"
                               }`}
                             >
                               {lead.leadScore}
@@ -549,11 +646,14 @@ export const MarketingList = () => {
                           <div
                             className={
                               new Date(lead.nextFollowUpDate) < new Date()
-                                ? 'text-red-600'
-                                : 'text-gray-900'
+                                ? "text-red-600"
+                                : "text-gray-900"
                             }
                           >
-                            {format(new Date(lead.nextFollowUpDate), 'MMM d, yyyy')}
+                            {format(
+                              new Date(lead.nextFollowUpDate),
+                              "MMM d, yyyy",
+                            )}
                           </div>
                         ) : (
                           <span className="text-gray-400">Not scheduled</span>
@@ -568,7 +668,9 @@ export const MarketingList = () => {
                         <button className="text-primary-600 hover:text-primary-900 mr-3">
                           View
                         </button>
-                        <button className="text-green-600 hover:text-green-900">Convert</button>
+                        <button className="text-green-600 hover:text-green-900">
+                          Convert
+                        </button>
                       </td>
                     </tr>
                   ))

@@ -1,79 +1,83 @@
-import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Dialog } from '@headlessui/react';
+import { useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Dialog } from "@headlessui/react";
 import {
   MagnifyingGlassIcon,
   FunnelIcon,
   PlusIcon,
   XMarkIcon,
-} from '@heroicons/react/24/outline';
-import { format } from 'date-fns';
-import type { NeurologicalExam, CreateNeurologicalExamRequest } from '../../types/neurology';
-import { ExamStatus, MentalStatus } from '../../types/neurology';
+} from "@heroicons/react/24/outline";
+import { format } from "date-fns";
+import type {
+  NeurologicalExam,
+  CreateNeurologicalExamRequest,
+} from "../../types/neurology";
+import { ExamStatus, MentalStatus } from "../../types/neurology";
 
 export const NeurologicalExams = () => {
-  const queryClient = useQueryClient();
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("");
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedExam, setSelectedExam] = useState<NeurologicalExam | undefined>(undefined);
+  const [selectedExam, setSelectedExam] = useState<
+    NeurologicalExam | undefined
+  >(undefined);
 
   // Mock data - Replace with actual API calls
   const { data: exams, isLoading } = useQuery<NeurologicalExam[]>({
-    queryKey: ['neurological-exams'],
+    queryKey: ["neurological-exams"],
     queryFn: async () => {
       // Mock implementation
       return [
         {
           id: 1,
           patientId: 2001,
-          patientName: 'Sarah Johnson',
+          patientName: "Sarah Johnson",
           examDate: new Date().toISOString(),
           mentalStatus: MentalStatus.Alert,
-          cranialNerves: 'II-XII intact',
-          motorFunction: '5/5 strength all extremities',
-          sensory: 'Intact to light touch and pinprick',
-          reflexes: '2+ symmetric throughout',
-          coordination: 'Finger-to-nose intact, no dysmetria',
-          gait: 'Normal, tandem gait intact',
-          diagnosis: 'Migraine without aura',
-          performedBy: 'Dr. Martinez',
+          cranialNerves: "II-XII intact",
+          motorFunction: "5/5 strength all extremities",
+          sensory: "Intact to light touch and pinprick",
+          reflexes: "2+ symmetric throughout",
+          coordination: "Finger-to-nose intact, no dysmetria",
+          gait: "Normal, tandem gait intact",
+          diagnosis: "Migraine without aura",
+          performedBy: "Dr. Martinez",
           status: ExamStatus.Completed,
           createdAt: new Date().toISOString(),
         },
         {
           id: 2,
           patientId: 2002,
-          patientName: 'Michael Brown',
+          patientName: "Michael Brown",
           examDate: new Date().toISOString(),
           mentalStatus: MentalStatus.Alert,
-          cranialNerves: 'CN VII weakness on right side',
-          motorFunction: '4/5 right upper and lower extremity',
-          sensory: 'Decreased on right side',
-          reflexes: '3+ on right, 2+ on left',
-          coordination: 'Impaired on right side',
-          gait: 'Hemiplegic gait',
-          diagnosis: 'Post-stroke residual deficit',
-          performedBy: 'Dr. Chen',
+          cranialNerves: "CN VII weakness on right side",
+          motorFunction: "4/5 right upper and lower extremity",
+          sensory: "Decreased on right side",
+          reflexes: "3+ on right, 2+ on left",
+          coordination: "Impaired on right side",
+          gait: "Hemiplegic gait",
+          diagnosis: "Post-stroke residual deficit",
+          performedBy: "Dr. Chen",
           status: ExamStatus.Reviewed,
           createdAt: new Date().toISOString(),
         },
         {
           id: 3,
           patientId: 2003,
-          patientName: 'Emily Davis',
+          patientName: "Emily Davis",
           examDate: new Date().toISOString(),
           mentalStatus: MentalStatus.Confused,
-          cranialNerves: 'Difficult to assess',
-          motorFunction: '3/5 bilateral lower extremities',
-          sensory: 'Intact',
-          reflexes: '1+ throughout',
-          coordination: 'Unable to assess',
-          gait: 'Unable to assess',
-          diagnosis: 'Encephalopathy, etiology unclear',
-          performedBy: 'Dr. Williams',
+          cranialNerves: "Difficult to assess",
+          motorFunction: "3/5 bilateral lower extremities",
+          sensory: "Intact",
+          reflexes: "1+ throughout",
+          coordination: "Unable to assess",
+          gait: "Unable to assess",
+          diagnosis: "Encephalopathy, etiology unclear",
+          performedBy: "Dr. Williams",
           status: ExamStatus.Pending,
-          notes: 'Patient confused, requires further workup',
+          notes: "Patient confused, requires further workup",
           createdAt: new Date().toISOString(),
         },
       ];
@@ -106,14 +110,31 @@ export const NeurologicalExams = () => {
 
   const getStatusBadge = (status: ExamStatus) => {
     const config: Record<string, { className: string; label: string }> = {
-      [ExamStatus.Pending]: { className: 'bg-yellow-100 text-yellow-800', label: 'Pending' },
-      [ExamStatus.InProgress]: { className: 'bg-blue-100 text-blue-800', label: 'In Progress' },
-      [ExamStatus.Completed]: { className: 'bg-green-100 text-green-800', label: 'Completed' },
-      [ExamStatus.Reviewed]: { className: 'bg-purple-100 text-purple-800', label: 'Reviewed' },
+      [ExamStatus.Pending]: {
+        className: "bg-yellow-100 text-yellow-800",
+        label: "Pending",
+      },
+      [ExamStatus.InProgress]: {
+        className: "bg-blue-100 text-blue-800",
+        label: "In Progress",
+      },
+      [ExamStatus.Completed]: {
+        className: "bg-green-100 text-green-800",
+        label: "Completed",
+      },
+      [ExamStatus.Reviewed]: {
+        className: "bg-purple-100 text-purple-800",
+        label: "Reviewed",
+      },
     };
-    const c = config[status] || { className: 'bg-gray-100 text-gray-800', label: status };
+    const c = config[status] || {
+      className: "bg-gray-100 text-gray-800",
+      label: status,
+    };
     return (
-      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${c.className}`}>
+      <span
+        className={`px-2 py-0.5 rounded-full text-xs font-medium ${c.className}`}
+      >
         {c.label}
       </span>
     );
@@ -121,12 +142,12 @@ export const NeurologicalExams = () => {
 
   const getMentalStatusLabel = (status: MentalStatus): string => {
     const labels: Record<string, string> = {
-      [MentalStatus.Alert]: 'Alert',
-      [MentalStatus.Confused]: 'Confused',
-      [MentalStatus.Drowsy]: 'Drowsy',
-      [MentalStatus.Lethargic]: 'Lethargic',
-      [MentalStatus.Stuporous]: 'Stuporous',
-      [MentalStatus.Comatose]: 'Comatose',
+      [MentalStatus.Alert]: "Alert",
+      [MentalStatus.Confused]: "Confused",
+      [MentalStatus.Drowsy]: "Drowsy",
+      [MentalStatus.Lethargic]: "Lethargic",
+      [MentalStatus.Stuporous]: "Stuporous",
+      [MentalStatus.Comatose]: "Comatose",
     };
     return labels[status] || status;
   };
@@ -136,8 +157,12 @@ export const NeurologicalExams = () => {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Neurological Examinations</h1>
-          <p className="text-gray-600 mt-1">Comprehensive neurological assessment records</p>
+          <h1 className="text-2xl font-bold text-gray-900">
+            Neurological Examinations
+          </h1>
+          <p className="text-gray-600 mt-1">
+            Comprehensive neurological assessment records
+          </p>
         </div>
         <button onClick={handleCreate} className="btn btn-primary">
           <PlusIcon className="h-5 w-5 mr-2" />
@@ -210,7 +235,10 @@ export const NeurologicalExams = () => {
             <tbody className="bg-white divide-y divide-gray-200">
               {isLoading ? (
                 <tr>
-                  <td colSpan={7} className="px-6 py-12 text-center text-gray-500">
+                  <td
+                    colSpan={7}
+                    className="px-6 py-12 text-center text-gray-500"
+                  >
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto"></div>
                     <p className="mt-2">Loading exams...</p>
                   </td>
@@ -224,13 +252,13 @@ export const NeurologicalExams = () => {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                      {format(new Date(exam.examDate), 'MMM d, yyyy')}
+                      {format(new Date(exam.examDate), "MMM d, yyyy")}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                       {getMentalStatusLabel(exam.mentalStatus)}
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-600 max-w-xs truncate">
-                      {exam.diagnosis || 'No diagnosis'}
+                      {exam.diagnosis || "No diagnosis"}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       {getStatusBadge(exam.status || ExamStatus.Pending)}
@@ -246,15 +274,22 @@ export const NeurologicalExams = () => {
                         View
                       </button>
                       {exam.status === ExamStatus.Pending && (
-                        <button className="text-green-600 hover:text-green-900">Review</button>
+                        <button className="text-green-600 hover:text-green-900">
+                          Review
+                        </button>
                       )}
                     </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan={7} className="px-6 py-12 text-center text-gray-500">
-                    {searchTerm ? 'No exams found matching your search.' : 'No neurological exams found.'}
+                  <td
+                    colSpan={7}
+                    className="px-6 py-12 text-center text-gray-500"
+                  >
+                    {searchTerm
+                      ? "No exams found matching your search."
+                      : "No neurological exams found."}
                   </td>
                 </tr>
               )}
@@ -280,38 +315,46 @@ interface NeurologicalExamModalProps {
   exam?: NeurologicalExam;
 }
 
-const NeurologicalExamModal = ({ isOpen, onClose, exam }: NeurologicalExamModalProps) => {
+const NeurologicalExamModal = ({
+  isOpen,
+  onClose,
+  exam,
+}: NeurologicalExamModalProps) => {
   const queryClient = useQueryClient();
-  const [formData, setFormData] = useState<Partial<CreateNeurologicalExamRequest>>({
+  const [formData, setFormData] = useState<
+    Partial<CreateNeurologicalExamRequest>
+  >({
     patientId: exam?.patientId || 0,
-    examDate: exam?.examDate || new Date().toISOString().split('T')[0],
+    examDate: exam?.examDate || new Date().toISOString().split("T")[0],
     mentalStatus: exam?.mentalStatus || MentalStatus.Alert,
-    cranialNerves: exam?.cranialNerves || '',
-    motorFunction: exam?.motorFunction || '',
-    sensory: exam?.sensory || '',
-    reflexes: exam?.reflexes || '',
-    coordination: exam?.coordination || '',
-    gait: exam?.gait || '',
-    diagnosis: exam?.diagnosis || '',
-    performedBy: exam?.performedBy || '',
-    notes: exam?.notes || '',
+    cranialNerves: exam?.cranialNerves || "",
+    motorFunction: exam?.motorFunction || "",
+    sensory: exam?.sensory || "",
+    reflexes: exam?.reflexes || "",
+    coordination: exam?.coordination || "",
+    gait: exam?.gait || "",
+    diagnosis: exam?.diagnosis || "",
+    performedBy: exam?.performedBy || "",
+    notes: exam?.notes || "",
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     // In production, call API to save
-    console.log('Saving neurological exam:', formData);
-    queryClient.invalidateQueries({ queryKey: ['neurological-exams'] });
+    console.log("Saving neurological exam:", formData);
+    queryClient.invalidateQueries({ queryKey: ["neurological-exams"] });
     onClose();
   };
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >,
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: name === 'patientId' ? Number(value) : value,
+      [name]: name === "patientId" ? Number(value) : value,
     }));
   };
 
@@ -323,9 +366,12 @@ const NeurologicalExamModal = ({ isOpen, onClose, exam }: NeurologicalExamModalP
           <div className="p-6">
             <div className="flex justify-between items-center mb-4">
               <Dialog.Title className="text-lg font-medium text-gray-900">
-                {exam ? 'View Neurological Exam' : 'New Neurological Exam'}
+                {exam ? "View Neurological Exam" : "New Neurological Exam"}
               </Dialog.Title>
-              <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+              <button
+                onClick={onClose}
+                className="text-gray-400 hover:text-gray-600"
+              >
                 <XMarkIcon className="h-6 w-6" />
               </button>
             </div>
@@ -353,7 +399,7 @@ const NeurologicalExamModal = ({ isOpen, onClose, exam }: NeurologicalExamModalP
                   <input
                     type="date"
                     name="examDate"
-                    value={formData.examDate?.split('T')[0]}
+                    value={formData.examDate?.split("T")[0]}
                     onChange={handleChange}
                     className="input w-full"
                     required
@@ -497,7 +543,9 @@ const NeurologicalExamModal = ({ isOpen, onClose, exam }: NeurologicalExamModalP
                 </div>
 
                 <div className="col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Notes
+                  </label>
                   <textarea
                     name="notes"
                     value={formData.notes}
@@ -509,11 +557,15 @@ const NeurologicalExamModal = ({ isOpen, onClose, exam }: NeurologicalExamModalP
               </div>
 
               <div className="flex justify-end gap-3 pt-4">
-                <button type="button" onClick={onClose} className="btn btn-outline">
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="btn btn-outline"
+                >
                   Cancel
                 </button>
                 <button type="submit" className="btn btn-primary">
-                  {exam ? 'Update' : 'Create'} Exam
+                  {exam ? "Update" : "Create"} Exam
                 </button>
               </div>
             </form>

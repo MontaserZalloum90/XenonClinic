@@ -1,37 +1,43 @@
-import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Dialog } from '@headlessui/react';
-import { format } from 'date-fns';
-import { workflowDefinitionsApi } from '../../lib/api';
-import type { WorkflowDefinition, WorkflowStep, WorkflowStatistics } from '../../types/workflow';
-import { WorkflowStepType } from '../../types/workflow';
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Dialog } from "@headlessui/react";
+import { format } from "date-fns";
+import { workflowDefinitionsApi } from "../../lib/api";
+import type {
+  WorkflowDefinition,
+  WorkflowStatistics,
+} from "../../types/workflow";
+import { WorkflowStepType } from "../../types/workflow";
 
 export const WorkflowDefinitions = () => {
   const queryClient = useQueryClient();
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("");
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isViewStepsModalOpen, setIsViewStepsModalOpen] = useState(false);
-  const [selectedDefinition, setSelectedDefinition] = useState<WorkflowDefinition | null>(null);
-  const [newWorkflowName, setNewWorkflowName] = useState('');
-  const [newWorkflowDescription, setNewWorkflowDescription] = useState('');
-  const [newWorkflowCategory, setNewWorkflowCategory] = useState('');
+  const [selectedDefinition, setSelectedDefinition] =
+    useState<WorkflowDefinition | null>(null);
+  const [newWorkflowName, setNewWorkflowName] = useState("");
+  const [newWorkflowDescription, setNewWorkflowDescription] = useState("");
+  const [newWorkflowCategory, setNewWorkflowCategory] = useState("");
 
-  const { data: definitionsData, isLoading } = useQuery<{ data: WorkflowDefinition[] }>({
-    queryKey: ['workflow-definitions'],
+  const { data: definitionsData, isLoading } = useQuery<{
+    data: WorkflowDefinition[];
+  }>({
+    queryKey: ["workflow-definitions"],
     queryFn: workflowDefinitionsApi.getAll,
   });
 
   const { data: statsData } = useQuery<{ data: WorkflowStatistics }>({
-    queryKey: ['workflow-statistics'],
+    queryKey: ["workflow-statistics"],
     queryFn: workflowDefinitionsApi.getStatistics,
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id: number) => workflowDefinitionsApi.delete(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['workflow-definitions'] });
-      queryClient.invalidateQueries({ queryKey: ['workflow-statistics'] });
+      queryClient.invalidateQueries({ queryKey: ["workflow-definitions"] });
+      queryClient.invalidateQueries({ queryKey: ["workflow-statistics"] });
     },
   });
 
@@ -39,20 +45,21 @@ export const WorkflowDefinitions = () => {
     mutationFn: ({ id, isActive }: { id: number; isActive: boolean }) =>
       workflowDefinitionsApi.toggleActive(id, isActive),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['workflow-definitions'] });
-      queryClient.invalidateQueries({ queryKey: ['workflow-statistics'] });
+      queryClient.invalidateQueries({ queryKey: ["workflow-definitions"] });
+      queryClient.invalidateQueries({ queryKey: ["workflow-statistics"] });
     },
   });
 
   const createMutation = useMutation({
-    mutationFn: (data: any) => workflowDefinitionsApi.create(data),
+    mutationFn: (data: Partial<WorkflowDefinition>) =>
+      workflowDefinitionsApi.create(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['workflow-definitions'] });
-      queryClient.invalidateQueries({ queryKey: ['workflow-statistics'] });
+      queryClient.invalidateQueries({ queryKey: ["workflow-definitions"] });
+      queryClient.invalidateQueries({ queryKey: ["workflow-statistics"] });
       setIsCreateModalOpen(false);
-      setNewWorkflowName('');
-      setNewWorkflowDescription('');
-      setNewWorkflowCategory('');
+      setNewWorkflowName("");
+      setNewWorkflowDescription("");
+      setNewWorkflowCategory("");
     },
   });
 
@@ -66,15 +73,15 @@ export const WorkflowDefinitions = () => {
       def.description?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus =
       !statusFilter ||
-      (statusFilter === 'active' && def.isActive) ||
-      (statusFilter === 'inactive' && !def.isActive);
+      (statusFilter === "active" && def.isActive) ||
+      (statusFilter === "inactive" && !def.isActive);
     return matchesSearch && matchesStatus;
   });
 
   const handleDelete = (definition: WorkflowDefinition) => {
     if (
       window.confirm(
-        `Are you sure you want to delete workflow "${definition.name}"? This action cannot be undone.`
+        `Are you sure you want to delete workflow "${definition.name}"? This action cannot be undone.`,
       )
     ) {
       deleteMutation.mutate(definition.id);
@@ -82,9 +89,16 @@ export const WorkflowDefinitions = () => {
   };
 
   const handleToggleActive = (definition: WorkflowDefinition) => {
-    const action = definition.isActive ? 'deactivate' : 'activate';
-    if (window.confirm(`Are you sure you want to ${action} workflow "${definition.name}"?`)) {
-      toggleActiveMutation.mutate({ id: definition.id, isActive: !definition.isActive });
+    const action = definition.isActive ? "deactivate" : "activate";
+    if (
+      window.confirm(
+        `Are you sure you want to ${action} workflow "${definition.name}"?`,
+      )
+    ) {
+      toggleActiveMutation.mutate({
+        id: definition.id,
+        isActive: !definition.isActive,
+      });
     }
   };
 
@@ -109,24 +123,32 @@ export const WorkflowDefinitions = () => {
 
   const getStepTypeLabel = (type: WorkflowStepType): string => {
     const labels = {
-      [WorkflowStepType.Manual]: 'Manual',
-      [WorkflowStepType.Automatic]: 'Automatic',
-      [WorkflowStepType.Approval]: 'Approval',
-      [WorkflowStepType.Notification]: 'Notification',
+      [WorkflowStepType.Manual]: "Manual",
+      [WorkflowStepType.Automatic]: "Automatic",
+      [WorkflowStepType.Approval]: "Approval",
+      [WorkflowStepType.Notification]: "Notification",
     };
-    return labels[type] || 'Unknown';
+    return labels[type] || "Unknown";
   };
 
   const getStepTypeBadge = (type: WorkflowStepType) => {
     const config: Record<number, { className: string }> = {
-      [WorkflowStepType.Manual]: { className: 'bg-blue-100 text-blue-800' },
-      [WorkflowStepType.Automatic]: { className: 'bg-green-100 text-green-800' },
-      [WorkflowStepType.Approval]: { className: 'bg-purple-100 text-purple-800' },
-      [WorkflowStepType.Notification]: { className: 'bg-yellow-100 text-yellow-800' },
+      [WorkflowStepType.Manual]: { className: "bg-blue-100 text-blue-800" },
+      [WorkflowStepType.Automatic]: {
+        className: "bg-green-100 text-green-800",
+      },
+      [WorkflowStepType.Approval]: {
+        className: "bg-purple-100 text-purple-800",
+      },
+      [WorkflowStepType.Notification]: {
+        className: "bg-yellow-100 text-yellow-800",
+      },
     };
-    const c = config[type] || { className: 'bg-gray-100 text-gray-800' };
+    const c = config[type] || { className: "bg-gray-100 text-gray-800" };
     return (
-      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${c.className}`}>
+      <span
+        className={`px-2 py-0.5 rounded-full text-xs font-medium ${c.className}`}
+      >
         {getStepTypeLabel(type)}
       </span>
     );
@@ -136,10 +158,17 @@ export const WorkflowDefinitions = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Workflow Definitions</h1>
-          <p className="text-gray-600 mt-1">Manage workflow definitions and templates</p>
+          <h1 className="text-2xl font-bold text-gray-900">
+            Workflow Definitions
+          </h1>
+          <p className="text-gray-600 mt-1">
+            Manage workflow definitions and templates
+          </p>
         </div>
-        <button onClick={() => setIsCreateModalOpen(true)} className="btn btn-primary">
+        <button
+          onClick={() => setIsCreateModalOpen(true)}
+          className="btn btn-primary"
+        >
           Create Workflow
         </button>
       </div>
@@ -147,20 +176,28 @@ export const WorkflowDefinitions = () => {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="card">
           <p className="text-sm text-gray-600">Total Workflows</p>
-          <p className="text-2xl font-bold text-gray-900 mt-1">{stats?.totalDefinitions || 0}</p>
+          <p className="text-2xl font-bold text-gray-900 mt-1">
+            {stats?.totalDefinitions || 0}
+          </p>
         </div>
         <div className="card">
           <p className="text-sm text-gray-600">Active Workflows</p>
-          <p className="text-2xl font-bold text-green-600 mt-1">{stats?.activeDefinitions || 0}</p>
+          <p className="text-2xl font-bold text-green-600 mt-1">
+            {stats?.activeDefinitions || 0}
+          </p>
         </div>
         <div className="card">
           <p className="text-sm text-gray-600">Total Instances</p>
-          <p className="text-2xl font-bold text-blue-600 mt-1">{stats?.totalInstances || 0}</p>
+          <p className="text-2xl font-bold text-blue-600 mt-1">
+            {stats?.totalInstances || 0}
+          </p>
         </div>
         <div className="card">
           <p className="text-sm text-gray-600">Completion Rate</p>
           <p className="text-2xl font-bold text-purple-600 mt-1">
-            {stats?.completionRate ? `${stats.completionRate.toFixed(1)}%` : '0%'}
+            {stats?.completionRate
+              ? `${stats.completionRate.toFixed(1)}%`
+              : "0%"}
           </p>
         </div>
       </div>
@@ -224,13 +261,17 @@ export const WorkflowDefinitions = () => {
                 {filteredDefinitions.map((definition) => (
                   <tr key={definition.id} className="hover:bg-gray-50">
                     <td className="px-4 py-3">
-                      <div className="text-sm font-medium text-gray-900">{definition.name}</div>
+                      <div className="text-sm font-medium text-gray-900">
+                        {definition.name}
+                      </div>
                       {definition.category && (
-                        <div className="text-xs text-gray-500">{definition.category}</div>
+                        <div className="text-xs text-gray-500">
+                          {definition.category}
+                        </div>
                       )}
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-600 max-w-xs truncate">
-                      {definition.description || '-'}
+                      {definition.description || "-"}
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-900">
                       <button
@@ -246,17 +287,19 @@ export const WorkflowDefinitions = () => {
                           onClick={() => handleToggleActive(definition)}
                           className={`px-2 py-1 rounded-full text-xs font-medium ${
                             definition.isActive
-                              ? 'bg-green-100 text-green-800'
-                              : 'bg-gray-100 text-gray-800'
+                              ? "bg-green-100 text-green-800"
+                              : "bg-gray-100 text-gray-800"
                           }`}
                         >
-                          {definition.isActive ? 'Active' : 'Inactive'}
+                          {definition.isActive ? "Active" : "Inactive"}
                         </button>
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-600">v{definition.version}</td>
                     <td className="px-4 py-3 text-sm text-gray-600">
-                      {format(new Date(definition.updatedAt), 'MMM d, yyyy')}
+                      v{definition.version}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-600">
+                      {format(new Date(definition.updatedAt), "MMM d, yyyy")}
                     </td>
                     <td className="px-4 py-3 text-sm">
                       <div className="flex items-center gap-2">
@@ -270,7 +313,7 @@ export const WorkflowDefinitions = () => {
                           onClick={() => handleToggleActive(definition)}
                           className="text-blue-600 hover:text-blue-800"
                         >
-                          {definition.isActive ? 'Deactivate' : 'Activate'}
+                          {definition.isActive ? "Deactivate" : "Activate"}
                         </button>
                         <button
                           onClick={() => handleDelete(definition)}
@@ -288,14 +331,18 @@ export const WorkflowDefinitions = () => {
         ) : (
           <div className="text-center py-8 text-gray-500">
             {searchTerm || statusFilter
-              ? 'No workflows found matching your filters.'
-              : 'No workflows found. Create your first workflow to get started.'}
+              ? "No workflows found matching your filters."
+              : "No workflows found. Create your first workflow to get started."}
           </div>
         )}
       </div>
 
       {/* Create Workflow Modal */}
-      <Dialog open={isCreateModalOpen} onClose={() => setIsCreateModalOpen(false)} className="relative z-50">
+      <Dialog
+        open={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        className="relative z-50"
+      >
         <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
         <div className="fixed inset-0 flex items-center justify-center p-4">
           <Dialog.Panel className="mx-auto max-w-lg w-full bg-white rounded-lg shadow-xl">
@@ -354,7 +401,7 @@ export const WorkflowDefinitions = () => {
                   disabled={!newWorkflowName.trim() || createMutation.isPending}
                   className="btn btn-primary disabled:opacity-50"
                 >
-                  {createMutation.isPending ? 'Creating...' : 'Create Workflow'}
+                  {createMutation.isPending ? "Creating..." : "Create Workflow"}
                 </button>
               </div>
             </div>
@@ -390,7 +437,9 @@ export const WorkflowDefinitions = () => {
                               <span className="flex items-center justify-center w-6 h-6 rounded-full bg-primary-100 text-primary-600 text-sm font-medium">
                                 {index + 1}
                               </span>
-                              <h4 className="font-medium text-gray-900">{step.name}</h4>
+                              <h4 className="font-medium text-gray-900">
+                                {step.name}
+                              </h4>
                             </div>
                             {step.description && (
                               <p className="text-sm text-gray-600 mt-2 ml-8">
@@ -408,7 +457,7 @@ export const WorkflowDefinitions = () => {
                             {step.actions && step.actions.length > 0 && (
                               <div className="mt-2 ml-8">
                                 <p className="text-xs text-gray-500">
-                                  Actions: {step.actions.join(', ')}
+                                  Actions: {step.actions.join(", ")}
                                 </p>
                               </div>
                             )}

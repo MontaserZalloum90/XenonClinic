@@ -1,5 +1,4 @@
-import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery } from "@tanstack/react-query";
 import {
   BeakerIcon,
   ClipboardDocumentCheckIcon,
@@ -9,14 +8,14 @@ import {
   DocumentTextIcon,
   ExclamationTriangleIcon,
   HeartIcon,
-} from '@heroicons/react/24/outline';
-import { format } from 'date-fns';
-import type { NeurologyStatistics } from '../../types/neurology';
+} from "@heroicons/react/24/outline";
+import { format } from "date-fns";
+import type { NeurologyStatistics } from "../../types/neurology";
 
 export const NeurologyDashboard = () => {
   // Mock data - In production, replace with actual API calls
   const { data: stats } = useQuery<NeurologyStatistics>({
-    queryKey: ['neurology-stats'],
+    queryKey: ["neurology-stats"],
     queryFn: async () => {
       // Mock implementation
       return {
@@ -38,34 +37,43 @@ export const NeurologyDashboard = () => {
     },
   });
 
-  const { data: recentExams } = useQuery<any[]>({
-    queryKey: ['recent-neuro-exams'],
+  const { data: recentExams } = useQuery<
+    Array<{
+      id: number;
+      patientName: string;
+      examType: string;
+      date: string;
+      status: string;
+      performedBy: string;
+    }>
+  >({
+    queryKey: ["recent-neuro-exams"],
     queryFn: async () => {
       // Mock implementation
       return [
         {
           id: 1,
-          patientName: 'Sarah Johnson',
-          examType: 'Neurological Exam',
+          patientName: "Sarah Johnson",
+          examType: "Neurological Exam",
           date: new Date().toISOString(),
-          status: 'Completed',
-          performedBy: 'Dr. Martinez',
+          status: "Completed",
+          performedBy: "Dr. Martinez",
         },
         {
           id: 2,
-          patientName: 'Michael Brown',
-          examType: 'EEG',
+          patientName: "Michael Brown",
+          examType: "EEG",
           date: new Date().toISOString(),
-          status: 'In Progress',
-          performedBy: 'Dr. Chen',
+          status: "In Progress",
+          performedBy: "Dr. Chen",
         },
         {
           id: 3,
-          patientName: 'Emily Davis',
-          examType: 'Stroke Assessment',
+          patientName: "Emily Davis",
+          examType: "Stroke Assessment",
           date: new Date().toISOString(),
-          status: 'Pending Review',
-          performedBy: 'Dr. Williams',
+          status: "Pending Review",
+          performedBy: "Dr. Williams",
         },
       ];
     },
@@ -81,13 +89,13 @@ export const NeurologyDashboard = () => {
 
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
-      Completed: 'text-green-600 bg-green-100',
-      'In Progress': 'text-yellow-600 bg-yellow-100',
-      Scheduled: 'text-blue-600 bg-blue-100',
-      'Pending Review': 'text-orange-600 bg-orange-100',
-      Cancelled: 'text-red-600 bg-red-100',
+      Completed: "text-green-600 bg-green-100",
+      "In Progress": "text-yellow-600 bg-yellow-100",
+      Scheduled: "text-blue-600 bg-blue-100",
+      "Pending Review": "text-orange-600 bg-orange-100",
+      Cancelled: "text-red-600 bg-red-100",
     };
-    return colors[status] || 'text-gray-600 bg-gray-100';
+    return colors[status] || "text-gray-600 bg-gray-100";
   };
 
   return (
@@ -95,8 +103,12 @@ export const NeurologyDashboard = () => {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Neurology Dashboard</h1>
-          <p className="text-gray-600 mt-1">Neurological examinations and assessments overview</p>
+          <h1 className="text-2xl font-bold text-gray-900">
+            Neurology Dashboard
+          </h1>
+          <p className="text-gray-600 mt-1">
+            Neurological examinations and assessments overview
+          </p>
         </div>
         <div className="flex gap-2">
           <button className="btn btn-outline">
@@ -119,7 +131,9 @@ export const NeurologyDashboard = () => {
             </div>
             <div className="ml-4">
               <p className="text-sm text-gray-500">Total Patients</p>
-              <p className="text-2xl font-bold text-gray-900">{statistics.totalPatients}</p>
+              <p className="text-2xl font-bold text-gray-900">
+                {statistics.totalPatients}
+              </p>
               {statistics.newPatientsThisMonth && (
                 <p className="text-xs text-green-600 mt-1">
                   +{statistics.newPatientsThisMonth} this month
@@ -136,9 +150,13 @@ export const NeurologyDashboard = () => {
             </div>
             <div className="ml-4">
               <p className="text-sm text-gray-500">Exams Today</p>
-              <p className="text-2xl font-bold text-gray-900">{statistics.examsToday}</p>
+              <p className="text-2xl font-bold text-gray-900">
+                {statistics.examsToday}
+              </p>
               {statistics.examsThisWeek && (
-                <p className="text-xs text-gray-600 mt-1">{statistics.examsThisWeek} this week</p>
+                <p className="text-xs text-gray-600 mt-1">
+                  {statistics.examsThisWeek} this week
+                </p>
               )}
             </div>
           </div>
@@ -151,9 +169,13 @@ export const NeurologyDashboard = () => {
             </div>
             <div className="ml-4">
               <p className="text-sm text-gray-500">EEGs This Week</p>
-              <p className="text-2xl font-bold text-gray-900">{statistics.eegsThisWeek}</p>
+              <p className="text-2xl font-bold text-gray-900">
+                {statistics.eegsThisWeek}
+              </p>
               {statistics.eegsThisMonth && (
-                <p className="text-xs text-gray-600 mt-1">{statistics.eegsThisMonth} this month</p>
+                <p className="text-xs text-gray-600 mt-1">
+                  {statistics.eegsThisMonth} this month
+                </p>
               )}
             </div>
           </div>
@@ -166,7 +188,9 @@ export const NeurologyDashboard = () => {
             </div>
             <div className="ml-4">
               <p className="text-sm text-gray-500">Pending Reviews</p>
-              <p className="text-2xl font-bold text-gray-900">{statistics.pendingReviews}</p>
+              <p className="text-2xl font-bold text-gray-900">
+                {statistics.pendingReviews}
+              </p>
               {statistics.pendingReviews > 0 && (
                 <p className="text-xs text-red-600 mt-1">Requires attention</p>
               )}
@@ -181,7 +205,9 @@ export const NeurologyDashboard = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-500">Seizures Logged</p>
-              <p className="text-xl font-bold text-gray-900">{statistics.seizuresThisMonth || 0}</p>
+              <p className="text-xl font-bold text-gray-900">
+                {statistics.seizuresThisMonth || 0}
+              </p>
               <p className="text-xs text-gray-600 mt-1">This month</p>
             </div>
             <BoltIcon className="h-8 w-8 text-orange-400" />
@@ -192,7 +218,9 @@ export const NeurologyDashboard = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-500">Epilepsy Patients</p>
-              <p className="text-xl font-bold text-gray-900">{statistics.epilepsyPatients || 0}</p>
+              <p className="text-xl font-bold text-gray-900">
+                {statistics.epilepsyPatients || 0}
+              </p>
               <p className="text-xs text-gray-600 mt-1">Active monitoring</p>
             </div>
             <BeakerIcon className="h-8 w-8 text-purple-400" />
@@ -216,7 +244,9 @@ export const NeurologyDashboard = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-500">Abnormal EEGs</p>
-              <p className="text-xl font-bold text-gray-900">{statistics.abnormalEEGs || 0}</p>
+              <p className="text-xl font-bold text-gray-900">
+                {statistics.abnormalEEGs || 0}
+              </p>
               <p className="text-xs text-gray-600 mt-1">Requiring follow-up</p>
             </div>
             <ExclamationTriangleIcon className="h-8 w-8 text-yellow-400" />
@@ -226,14 +256,18 @@ export const NeurologyDashboard = () => {
 
       {/* Quick Actions */}
       <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">
+          Quick Actions
+        </h2>
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
           <a
             href="/neurology/exams"
             className="flex flex-col items-center justify-center p-4 border-2 border-gray-200 rounded-lg hover:border-primary-500 hover:bg-primary-50 transition-colors"
           >
             <ClipboardDocumentCheckIcon className="h-8 w-8 text-primary-600 mb-2" />
-            <span className="text-sm font-medium text-gray-900">Neuro Exams</span>
+            <span className="text-sm font-medium text-gray-900">
+              Neuro Exams
+            </span>
           </a>
 
           <a
@@ -241,7 +275,9 @@ export const NeurologyDashboard = () => {
             className="flex flex-col items-center justify-center p-4 border-2 border-gray-200 rounded-lg hover:border-primary-500 hover:bg-primary-50 transition-colors"
           >
             <ChartBarIcon className="h-8 w-8 text-primary-600 mb-2" />
-            <span className="text-sm font-medium text-gray-900">EEG Records</span>
+            <span className="text-sm font-medium text-gray-900">
+              EEG Records
+            </span>
           </a>
 
           <a
@@ -249,7 +285,9 @@ export const NeurologyDashboard = () => {
             className="flex flex-col items-center justify-center p-4 border-2 border-gray-200 rounded-lg hover:border-primary-500 hover:bg-primary-50 transition-colors"
           >
             <BoltIcon className="h-8 w-8 text-primary-600 mb-2" />
-            <span className="text-sm font-medium text-gray-900">Epilepsy Diary</span>
+            <span className="text-sm font-medium text-gray-900">
+              Epilepsy Diary
+            </span>
           </a>
 
           <a
@@ -257,7 +295,9 @@ export const NeurologyDashboard = () => {
             className="flex flex-col items-center justify-center p-4 border-2 border-gray-200 rounded-lg hover:border-primary-500 hover:bg-primary-50 transition-colors"
           >
             <HeartIcon className="h-8 w-8 text-primary-600 mb-2" />
-            <span className="text-sm font-medium text-gray-900">Stroke Assessment</span>
+            <span className="text-sm font-medium text-gray-900">
+              Stroke Assessment
+            </span>
           </a>
 
           <a
@@ -273,7 +313,9 @@ export const NeurologyDashboard = () => {
       {/* Recent Examinations */}
       <div className="bg-white rounded-lg shadow overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900">Recent Examinations</h2>
+          <h2 className="text-lg font-semibold text-gray-900">
+            Recent Examinations
+          </h2>
         </div>
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
@@ -304,13 +346,15 @@ export const NeurologyDashboard = () => {
                 recentExams.map((exam) => (
                   <tr key={exam.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="font-medium text-gray-900">{exam.patientName}</div>
+                      <div className="font-medium text-gray-900">
+                        {exam.patientName}
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                       {exam.examType}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                      {format(new Date(exam.date), 'MMM d, yyyy h:mm a')}
+                      {format(new Date(exam.date), "MMM d, yyyy h:mm a")}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                       {exam.performedBy}
@@ -318,7 +362,7 @@ export const NeurologyDashboard = () => {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span
                         className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
-                          exam.status
+                          exam.status,
                         )}`}
                       >
                         {exam.status}
@@ -328,15 +372,20 @@ export const NeurologyDashboard = () => {
                       <button className="text-primary-600 hover:text-primary-900 mr-3">
                         View
                       </button>
-                      {exam.status === 'Pending Review' && (
-                        <button className="text-green-600 hover:text-green-900">Review</button>
+                      {exam.status === "Pending Review" && (
+                        <button className="text-green-600 hover:text-green-900">
+                          Review
+                        </button>
                       )}
                     </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
+                  <td
+                    colSpan={6}
+                    className="px-6 py-12 text-center text-gray-500"
+                  >
                     No recent examinations found
                   </td>
                 </tr>

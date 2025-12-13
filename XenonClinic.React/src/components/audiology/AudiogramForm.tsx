@@ -1,6 +1,10 @@
-import { useForm } from 'react-hook-form';
-import type { CreateAudiogramRequest, AudiogramDataPoint, TympanogramResult } from '../../types/audiology';
-import { AUDIOGRAM_FREQUENCIES, EarSide } from '../../types/audiology';
+import { useForm } from "react-hook-form";
+import type {
+  CreateAudiogramRequest,
+  AudiogramDataPoint,
+  TympanogramResult,
+} from "../../types/audiology";
+import { AUDIOGRAM_FREQUENCIES } from "../../types/audiology";
 
 interface AudiogramFormProps {
   patientId: number;
@@ -55,10 +59,10 @@ const ThresholdInput = ({
   label,
   register,
   name,
-  error,
+  error: _error,
 }: {
   label: string;
-  register: any;
+  register: ReturnType<typeof useForm<FormData>>["register"];
   name: string;
   error?: string;
 }) => (
@@ -71,7 +75,7 @@ const ThresholdInput = ({
       max="120"
       step="5"
       className={`w-full px-2 py-1 text-sm border rounded focus:ring-1 focus:ring-primary-500 ${
-        error ? 'border-red-500' : 'border-gray-300'
+        _error ? "border-red-500" : "border-gray-300"
       }`}
       placeholder="dB"
     />
@@ -86,16 +90,12 @@ export const AudiogramForm = ({
   onCancel,
   isLoading,
 }: AudiogramFormProps) => {
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<FormData>({
+  const { register, handleSubmit } = useForm<FormData>({
     defaultValues: {
-      testDate: initialData?.testDate || new Date().toISOString().split('T')[0],
-      interpretation: initialData?.interpretation || '',
-      recommendations: initialData?.recommendations || '',
-      notes: initialData?.notes || '',
+      testDate: initialData?.testDate || new Date().toISOString().split("T")[0],
+      interpretation: initialData?.interpretation || "",
+      recommendations: initialData?.recommendations || "",
+      notes: initialData?.notes || "",
     },
   });
 
@@ -106,12 +106,13 @@ export const AudiogramForm = ({
 
   const buildDataPoints = (
     values: FormData,
-    ear: 'right' | 'left',
-    type: 'Air' | 'Bone'
+    ear: "right" | "left",
+    type: "Air" | "Bone",
   ): AudiogramDataPoint[] => {
-    const frequencies = type === 'Air'
-      ? AUDIOGRAM_FREQUENCIES
-      : [500, 1000, 2000, 4000] as const;
+    const frequencies =
+      type === "Air"
+        ? AUDIOGRAM_FREQUENCIES
+        : ([500, 1000, 2000, 4000] as const);
 
     return frequencies
       .map((freq) => {
@@ -132,10 +133,10 @@ export const AudiogramForm = ({
       patientId,
       encounterId,
       testDate: data.testDate,
-      rightEarAir: buildDataPoints(data, 'right', 'Air'),
-      leftEarAir: buildDataPoints(data, 'left', 'Air'),
-      rightEarBone: buildDataPoints(data, 'right', 'Bone'),
-      leftEarBone: buildDataPoints(data, 'left', 'Bone'),
+      rightEarAir: buildDataPoints(data, "right", "Air"),
+      leftEarAir: buildDataPoints(data, "left", "Air"),
+      rightEarBone: buildDataPoints(data, "right", "Bone"),
+      leftEarBone: buildDataPoints(data, "left", "Bone"),
       rightSRT: parseThreshold(data.rightSRT),
       leftSRT: parseThreshold(data.leftSRT),
       rightWRS: parseThreshold(data.rightWRS),
@@ -163,7 +164,7 @@ export const AudiogramForm = ({
         </label>
         <input
           type="date"
-          {...register('testDate', { required: 'Test date is required' })}
+          {...register("testDate", { required: "Test date is required" })}
           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500"
         />
       </div>
@@ -182,12 +183,36 @@ export const AudiogramForm = ({
               Right Ear
             </h4>
             <div className="grid grid-cols-6 gap-2">
-              <ThresholdInput label="250" register={register} name="rightAir250" />
-              <ThresholdInput label="500" register={register} name="rightAir500" />
-              <ThresholdInput label="1K" register={register} name="rightAir1000" />
-              <ThresholdInput label="2K" register={register} name="rightAir2000" />
-              <ThresholdInput label="4K" register={register} name="rightAir4000" />
-              <ThresholdInput label="8K" register={register} name="rightAir8000" />
+              <ThresholdInput
+                label="250"
+                register={register}
+                name="rightAir250"
+              />
+              <ThresholdInput
+                label="500"
+                register={register}
+                name="rightAir500"
+              />
+              <ThresholdInput
+                label="1K"
+                register={register}
+                name="rightAir1000"
+              />
+              <ThresholdInput
+                label="2K"
+                register={register}
+                name="rightAir2000"
+              />
+              <ThresholdInput
+                label="4K"
+                register={register}
+                name="rightAir4000"
+              />
+              <ThresholdInput
+                label="8K"
+                register={register}
+                name="rightAir8000"
+              />
             </div>
           </div>
 
@@ -198,12 +223,36 @@ export const AudiogramForm = ({
               Left Ear
             </h4>
             <div className="grid grid-cols-6 gap-2">
-              <ThresholdInput label="250" register={register} name="leftAir250" />
-              <ThresholdInput label="500" register={register} name="leftAir500" />
-              <ThresholdInput label="1K" register={register} name="leftAir1000" />
-              <ThresholdInput label="2K" register={register} name="leftAir2000" />
-              <ThresholdInput label="4K" register={register} name="leftAir4000" />
-              <ThresholdInput label="8K" register={register} name="leftAir8000" />
+              <ThresholdInput
+                label="250"
+                register={register}
+                name="leftAir250"
+              />
+              <ThresholdInput
+                label="500"
+                register={register}
+                name="leftAir500"
+              />
+              <ThresholdInput
+                label="1K"
+                register={register}
+                name="leftAir1000"
+              />
+              <ThresholdInput
+                label="2K"
+                register={register}
+                name="leftAir2000"
+              />
+              <ThresholdInput
+                label="4K"
+                register={register}
+                name="leftAir4000"
+              />
+              <ThresholdInput
+                label="8K"
+                register={register}
+                name="leftAir8000"
+              />
             </div>
           </div>
         </div>
@@ -218,23 +267,59 @@ export const AudiogramForm = ({
         <div className="grid grid-cols-2 gap-6">
           {/* Right Ear Bone */}
           <div>
-            <h4 className="text-sm font-medium text-red-600 mb-3">Right Ear {'<'}</h4>
+            <h4 className="text-sm font-medium text-red-600 mb-3">
+              Right Ear {"<"}
+            </h4>
             <div className="grid grid-cols-4 gap-2">
-              <ThresholdInput label="500" register={register} name="rightBone500" />
-              <ThresholdInput label="1K" register={register} name="rightBone1000" />
-              <ThresholdInput label="2K" register={register} name="rightBone2000" />
-              <ThresholdInput label="4K" register={register} name="rightBone4000" />
+              <ThresholdInput
+                label="500"
+                register={register}
+                name="rightBone500"
+              />
+              <ThresholdInput
+                label="1K"
+                register={register}
+                name="rightBone1000"
+              />
+              <ThresholdInput
+                label="2K"
+                register={register}
+                name="rightBone2000"
+              />
+              <ThresholdInput
+                label="4K"
+                register={register}
+                name="rightBone4000"
+              />
             </div>
           </div>
 
           {/* Left Ear Bone */}
           <div>
-            <h4 className="text-sm font-medium text-blue-600 mb-3">Left Ear {'>'}</h4>
+            <h4 className="text-sm font-medium text-blue-600 mb-3">
+              Left Ear {">"}
+            </h4>
             <div className="grid grid-cols-4 gap-2">
-              <ThresholdInput label="500" register={register} name="leftBone500" />
-              <ThresholdInput label="1K" register={register} name="leftBone1000" />
-              <ThresholdInput label="2K" register={register} name="leftBone2000" />
-              <ThresholdInput label="4K" register={register} name="leftBone4000" />
+              <ThresholdInput
+                label="500"
+                register={register}
+                name="leftBone500"
+              />
+              <ThresholdInput
+                label="1K"
+                register={register}
+                name="leftBone1000"
+              />
+              <ThresholdInput
+                label="2K"
+                register={register}
+                name="leftBone2000"
+              />
+              <ThresholdInput
+                label="4K"
+                register={register}
+                name="leftBone4000"
+              />
             </div>
           </div>
         </div>
@@ -242,26 +327,32 @@ export const AudiogramForm = ({
 
       {/* Speech Audiometry */}
       <div className="border rounded-lg p-4">
-        <h3 className="text-lg font-medium text-gray-900 mb-4">Speech Audiometry</h3>
+        <h3 className="text-lg font-medium text-gray-900 mb-4">
+          Speech Audiometry
+        </h3>
 
         <div className="grid grid-cols-2 gap-6">
           <div>
             <h4 className="text-sm font-medium text-red-600 mb-3">Right Ear</h4>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs text-gray-500 mb-1">SRT (dB)</label>
+                <label className="block text-xs text-gray-500 mb-1">
+                  SRT (dB)
+                </label>
                 <input
                   type="number"
-                  {...register('rightSRT')}
+                  {...register("rightSRT")}
                   className="w-full px-2 py-1 text-sm border border-gray-300 rounded"
                   placeholder="SRT"
                 />
               </div>
               <div>
-                <label className="block text-xs text-gray-500 mb-1">WRS (%)</label>
+                <label className="block text-xs text-gray-500 mb-1">
+                  WRS (%)
+                </label>
                 <input
                   type="number"
-                  {...register('rightWRS')}
+                  {...register("rightWRS")}
                   min="0"
                   max="100"
                   className="w-full px-2 py-1 text-sm border border-gray-300 rounded"
@@ -275,19 +366,23 @@ export const AudiogramForm = ({
             <h4 className="text-sm font-medium text-blue-600 mb-3">Left Ear</h4>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs text-gray-500 mb-1">SRT (dB)</label>
+                <label className="block text-xs text-gray-500 mb-1">
+                  SRT (dB)
+                </label>
                 <input
                   type="number"
-                  {...register('leftSRT')}
+                  {...register("leftSRT")}
                   className="w-full px-2 py-1 text-sm border border-gray-300 rounded"
                   placeholder="SRT"
                 />
               </div>
               <div>
-                <label className="block text-xs text-gray-500 mb-1">WRS (%)</label>
+                <label className="block text-xs text-gray-500 mb-1">
+                  WRS (%)
+                </label>
                 <input
                   type="number"
-                  {...register('leftWRS')}
+                  {...register("leftWRS")}
                   min="0"
                   max="100"
                   className="w-full px-2 py-1 text-sm border border-gray-300 rounded"
@@ -305,9 +400,11 @@ export const AudiogramForm = ({
 
         <div className="grid grid-cols-2 gap-6">
           <div>
-            <label className="block text-sm text-gray-600 mb-1">Right Ear Type</label>
+            <label className="block text-sm text-gray-600 mb-1">
+              Right Ear Type
+            </label>
             <select
-              {...register('rightTympType')}
+              {...register("rightTympType")}
               className="w-full px-3 py-2 border border-gray-300 rounded-md"
             >
               <option value="">Select type...</option>
@@ -320,9 +417,11 @@ export const AudiogramForm = ({
           </div>
 
           <div>
-            <label className="block text-sm text-gray-600 mb-1">Left Ear Type</label>
+            <label className="block text-sm text-gray-600 mb-1">
+              Left Ear Type
+            </label>
             <select
-              {...register('leftTympType')}
+              {...register("leftTympType")}
               className="w-full px-3 py-2 border border-gray-300 rounded-md"
             >
               <option value="">Select type...</option>
@@ -343,7 +442,7 @@ export const AudiogramForm = ({
             Interpretation
           </label>
           <textarea
-            {...register('interpretation')}
+            {...register("interpretation")}
             rows={3}
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500"
             placeholder="Clinical interpretation of results..."
@@ -355,7 +454,7 @@ export const AudiogramForm = ({
             Recommendations
           </label>
           <textarea
-            {...register('recommendations')}
+            {...register("recommendations")}
             rows={3}
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500"
             placeholder="Recommended next steps..."
@@ -367,7 +466,7 @@ export const AudiogramForm = ({
             Additional Notes
           </label>
           <textarea
-            {...register('notes')}
+            {...register("notes")}
             rows={2}
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500"
             placeholder="Any additional notes..."
@@ -389,7 +488,7 @@ export const AudiogramForm = ({
           disabled={isLoading}
           className="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-md hover:bg-primary-700 disabled:opacity-50"
         >
-          {isLoading ? 'Saving...' : 'Save Audiogram'}
+          {isLoading ? "Saving..." : "Save Audiogram"}
         </button>
       </div>
     </form>

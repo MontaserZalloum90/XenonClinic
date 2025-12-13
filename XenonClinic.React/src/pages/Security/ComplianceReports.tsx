@@ -1,6 +1,6 @@
-import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Dialog } from '@headlessui/react';
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Dialog } from "@headlessui/react";
 import {
   ClipboardDocumentCheckIcon,
   PlusIcon,
@@ -11,60 +11,78 @@ import {
   XCircleIcon,
   ExclamationTriangleIcon,
   MinusCircleIcon,
-} from '@heroicons/react/24/outline';
-import { api } from '../../lib/api';
-import type { ComplianceReport, ComplianceFinding } from '../../types/security';
+} from "@heroicons/react/24/outline";
+import { api } from "../../lib/api";
+import type { ComplianceReport, ComplianceFinding } from "../../types/security";
 
-const reportTypeColors: Record<ComplianceReport['reportType'], string> = {
-  HIPAA: 'bg-blue-100 text-blue-800',
-  GDPR: 'bg-purple-100 text-purple-800',
-  SOC2: 'bg-green-100 text-green-800',
-  ISO27001: 'bg-orange-100 text-orange-800',
-  Custom: 'bg-gray-100 text-gray-800',
+const reportTypeColors: Record<ComplianceReport["reportType"], string> = {
+  HIPAA: "bg-blue-100 text-blue-800",
+  GDPR: "bg-purple-100 text-purple-800",
+  SOC2: "bg-green-100 text-green-800",
+  ISO27001: "bg-orange-100 text-orange-800",
+  Custom: "bg-gray-100 text-gray-800",
 };
 
 const statusConfig = {
-  draft: { label: 'Draft', color: 'bg-gray-100 text-gray-800' },
-  pending: { label: 'Pending Review', color: 'bg-yellow-100 text-yellow-800' },
-  approved: { label: 'Approved', color: 'bg-green-100 text-green-800' },
-  published: { label: 'Published', color: 'bg-blue-100 text-blue-800' },
+  draft: { label: "Draft", color: "bg-gray-100 text-gray-800" },
+  pending: { label: "Pending Review", color: "bg-yellow-100 text-yellow-800" },
+  approved: { label: "Approved", color: "bg-green-100 text-green-800" },
+  published: { label: "Published", color: "bg-blue-100 text-blue-800" },
 };
 
 const findingStatusConfig = {
-  compliant: { label: 'Compliant', color: 'text-green-600', icon: CheckCircleIcon },
-  'non-compliant': { label: 'Non-Compliant', color: 'text-red-600', icon: XCircleIcon },
-  partial: { label: 'Partial', color: 'text-yellow-600', icon: ExclamationTriangleIcon },
-  'not-applicable': { label: 'N/A', color: 'text-gray-400', icon: MinusCircleIcon },
+  compliant: {
+    label: "Compliant",
+    color: "text-green-600",
+    icon: CheckCircleIcon,
+  },
+  "non-compliant": {
+    label: "Non-Compliant",
+    color: "text-red-600",
+    icon: XCircleIcon,
+  },
+  partial: {
+    label: "Partial",
+    color: "text-yellow-600",
+    icon: ExclamationTriangleIcon,
+  },
+  "not-applicable": {
+    label: "N/A",
+    color: "text-gray-400",
+    icon: MinusCircleIcon,
+  },
 };
 
 export function ComplianceReports() {
-  const [selectedReport, setSelectedReport] = useState<ComplianceReport | null>(null);
+  const [selectedReport, setSelectedReport] = useState<ComplianceReport | null>(
+    null,
+  );
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const queryClient = useQueryClient();
 
   const { data: reports = [], isLoading } = useQuery({
-    queryKey: ['compliance-reports'],
-    queryFn: () => api.get<ComplianceReport[]>('/api/security/compliance-reports'),
+    queryKey: ["compliance-reports"],
+    queryFn: () =>
+      api.get<ComplianceReport[]>("/api/security/compliance-reports"),
   });
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
     });
   };
 
   const getScoreColor = (score: number) => {
-    if (score >= 90) return 'text-green-600';
-    if (score >= 70) return 'text-yellow-600';
-    return 'text-red-600';
+    if (score >= 90) return "text-green-600";
+    if (score >= 70) return "text-yellow-600";
+    return "text-red-600";
   };
 
   const getScoreBgColor = (score: number) => {
-    if (score >= 90) return 'bg-green-500';
-    if (score >= 70) return 'bg-yellow-500';
-    return 'bg-red-500';
+    if (score >= 90) return "bg-green-500";
+    if (score >= 70) return "bg-yellow-500";
+    return "bg-red-500";
   };
 
   return (
@@ -72,7 +90,9 @@ export function ComplianceReports() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Compliance Reports</h1>
+          <h1 className="text-2xl font-bold text-gray-900">
+            Compliance Reports
+          </h1>
           <p className="mt-1 text-sm text-gray-500">
             Generate and manage regulatory compliance reports
           </p>
@@ -88,18 +108,22 @@ export function ComplianceReports() {
 
       {/* Compliance Overview Cards */}
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-        {['HIPAA', 'GDPR', 'SOC2', 'ISO27001'].map((type) => {
+        {["HIPAA", "GDPR", "SOC2", "ISO27001"].map((type) => {
           const typeReports = reports.filter((r) => r.reportType === type);
           const latestReport = typeReports[0];
 
           return (
             <div key={type} className="rounded-lg bg-white p-6 shadow">
               <div className="flex items-center justify-between">
-                <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${reportTypeColors[type as ComplianceReport['reportType']]}`}>
+                <span
+                  className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${reportTypeColors[type as ComplianceReport["reportType"]]}`}
+                >
                   {type}
                 </span>
                 {latestReport && (
-                  <span className={`text-2xl font-bold ${getScoreColor(latestReport.complianceScore)}`}>
+                  <span
+                    className={`text-2xl font-bold ${getScoreColor(latestReport.complianceScore)}`}
+                  >
                     {latestReport.complianceScore}%
                   </span>
                 )}
@@ -175,11 +199,15 @@ export function ComplianceReports() {
                     <td className="px-6 py-4">
                       <div className="flex items-center">
                         <DocumentTextIcon className="h-5 w-5 text-gray-400 mr-3" />
-                        <div className="font-medium text-gray-900">{report.reportName}</div>
+                        <div className="font-medium text-gray-900">
+                          {report.reportName}
+                        </div>
                       </div>
                     </td>
                     <td className="whitespace-nowrap px-6 py-4">
-                      <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${reportTypeColors[report.reportType]}`}>
+                      <span
+                        className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${reportTypeColors[report.reportType]}`}
+                      >
                         {report.reportType}
                       </span>
                     </td>
@@ -188,7 +216,9 @@ export function ComplianceReports() {
                     </td>
                     <td className="whitespace-nowrap px-6 py-4">
                       <div className="flex items-center">
-                        <span className={`text-lg font-semibold ${getScoreColor(report.complianceScore)}`}>
+                        <span
+                          className={`text-lg font-semibold ${getScoreColor(report.complianceScore)}`}
+                        >
                           {report.complianceScore}%
                         </span>
                         <div className="ml-2 w-16 h-2 bg-gray-200 rounded-full">
@@ -200,13 +230,17 @@ export function ComplianceReports() {
                       </div>
                     </td>
                     <td className="whitespace-nowrap px-6 py-4">
-                      <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${status.color}`}>
+                      <span
+                        className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${status.color}`}
+                      >
                         {status.label}
                       </span>
                     </td>
                     <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
                       <div>{formatDate(report.generatedAt)}</div>
-                      <div className="text-xs text-gray-400">by {report.generatedBy}</div>
+                      <div className="text-xs text-gray-400">
+                        by {report.generatedBy}
+                      </div>
                     </td>
                     <td className="whitespace-nowrap px-6 py-4 text-right text-sm">
                       <button
@@ -251,17 +285,26 @@ function ReportDetailModal({
 }) {
   if (!report) return null;
 
-  const groupedFindings = report.findings.reduce((acc, finding) => {
-    if (!acc[finding.category]) {
-      acc[finding.category] = [];
-    }
-    acc[finding.category].push(finding);
-    return acc;
-  }, {} as Record<string, ComplianceFinding[]>);
+  const groupedFindings = report.findings.reduce(
+    (acc, finding) => {
+      if (!acc[finding.category]) {
+        acc[finding.category] = [];
+      }
+      acc[finding.category].push(finding);
+      return acc;
+    },
+    {} as Record<string, ComplianceFinding[]>,
+  );
 
-  const compliantCount = report.findings.filter((f) => f.status === 'compliant').length;
-  const nonCompliantCount = report.findings.filter((f) => f.status === 'non-compliant').length;
-  const partialCount = report.findings.filter((f) => f.status === 'partial').length;
+  const compliantCount = report.findings.filter(
+    (f) => f.status === "compliant",
+  ).length;
+  const nonCompliantCount = report.findings.filter(
+    (f) => f.status === "non-compliant",
+  ).length;
+  const partialCount = report.findings.filter(
+    (f) => f.status === "partial",
+  ).length;
 
   return (
     <Dialog open={!!report} onClose={onClose} className="relative z-50">
@@ -273,10 +316,14 @@ function ReportDetailModal({
             <div className="flex items-start justify-between">
               <div>
                 <div className="flex items-center gap-2">
-                  <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${reportTypeColors[report.reportType]}`}>
+                  <span
+                    className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${reportTypeColors[report.reportType]}`}
+                  >
                     {report.reportType}
                   </span>
-                  <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${statusConfig[report.status].color}`}>
+                  <span
+                    className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${statusConfig[report.status].color}`}
+                  >
                     {statusConfig[report.status].label}
                   </span>
                 </div>
@@ -286,7 +333,9 @@ function ReportDetailModal({
                 <p className="text-sm text-gray-500">Period: {report.period}</p>
               </div>
               <div className="text-right">
-                <div className={`text-4xl font-bold ${report.complianceScore >= 90 ? 'text-green-600' : report.complianceScore >= 70 ? 'text-yellow-600' : 'text-red-600'}`}>
+                <div
+                  className={`text-4xl font-bold ${report.complianceScore >= 90 ? "text-green-600" : report.complianceScore >= 70 ? "text-yellow-600" : "text-red-600"}`}
+                >
                   {report.complianceScore}%
                 </div>
                 <p className="text-sm text-gray-500">Compliance Score</p>
@@ -298,19 +347,27 @@ function ReportDetailModal({
             {/* Summary Stats */}
             <div className="grid grid-cols-4 gap-4 mb-6">
               <div className="bg-gray-50 rounded-lg p-4 text-center">
-                <div className="text-2xl font-bold text-gray-900">{report.findings.length}</div>
+                <div className="text-2xl font-bold text-gray-900">
+                  {report.findings.length}
+                </div>
                 <div className="text-sm text-gray-500">Total Requirements</div>
               </div>
               <div className="bg-green-50 rounded-lg p-4 text-center">
-                <div className="text-2xl font-bold text-green-600">{compliantCount}</div>
+                <div className="text-2xl font-bold text-green-600">
+                  {compliantCount}
+                </div>
                 <div className="text-sm text-green-700">Compliant</div>
               </div>
               <div className="bg-yellow-50 rounded-lg p-4 text-center">
-                <div className="text-2xl font-bold text-yellow-600">{partialCount}</div>
+                <div className="text-2xl font-bold text-yellow-600">
+                  {partialCount}
+                </div>
                 <div className="text-sm text-yellow-700">Partial</div>
               </div>
               <div className="bg-red-50 rounded-lg p-4 text-center">
-                <div className="text-2xl font-bold text-red-600">{nonCompliantCount}</div>
+                <div className="text-2xl font-bold text-red-600">
+                  {nonCompliantCount}
+                </div>
                 <div className="text-sm text-red-700">Non-Compliant</div>
               </div>
             </div>
@@ -332,32 +389,50 @@ function ReportDetailModal({
                           <div className="flex items-start justify-between">
                             <div className="flex-1">
                               <div className="flex items-center gap-2">
-                                <StatusIcon className={`h-5 w-5 ${statusInfo.color}`} />
-                                <span className="font-medium text-gray-900">{finding.requirement}</span>
-                                <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
-                                  finding.priority === 'critical' ? 'bg-red-100 text-red-800' :
-                                  finding.priority === 'high' ? 'bg-orange-100 text-orange-800' :
-                                  finding.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
-                                  'bg-gray-100 text-gray-800'
-                                }`}>
+                                <StatusIcon
+                                  className={`h-5 w-5 ${statusInfo.color}`}
+                                />
+                                <span className="font-medium text-gray-900">
+                                  {finding.requirement}
+                                </span>
+                                <span
+                                  className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
+                                    finding.priority === "critical"
+                                      ? "bg-red-100 text-red-800"
+                                      : finding.priority === "high"
+                                        ? "bg-orange-100 text-orange-800"
+                                        : finding.priority === "medium"
+                                          ? "bg-yellow-100 text-yellow-800"
+                                          : "bg-gray-100 text-gray-800"
+                                  }`}
+                                >
                                   {finding.priority}
                                 </span>
                               </div>
                               {finding.evidence && (
-                                <p className="mt-1 text-sm text-gray-600 ml-7">{finding.evidence}</p>
+                                <p className="mt-1 text-sm text-gray-600 ml-7">
+                                  {finding.evidence}
+                                </p>
                               )}
-                              {finding.remediation && finding.status !== 'compliant' && (
-                                <div className="mt-2 ml-7 bg-blue-50 rounded p-2">
-                                  <p className="text-sm text-blue-800">
-                                    <span className="font-medium">Remediation:</span> {finding.remediation}
-                                  </p>
-                                  {finding.dueDate && (
-                                    <p className="text-xs text-blue-600 mt-1">
-                                      Due: {new Date(finding.dueDate).toLocaleDateString()}
+                              {finding.remediation &&
+                                finding.status !== "compliant" && (
+                                  <div className="mt-2 ml-7 bg-blue-50 rounded p-2">
+                                    <p className="text-sm text-blue-800">
+                                      <span className="font-medium">
+                                        Remediation:
+                                      </span>{" "}
+                                      {finding.remediation}
                                     </p>
-                                  )}
-                                </div>
-                              )}
+                                    {finding.dueDate && (
+                                      <p className="text-xs text-blue-600 mt-1">
+                                        Due:{" "}
+                                        {new Date(
+                                          finding.dueDate,
+                                        ).toLocaleDateString()}
+                                      </p>
+                                    )}
+                                  </div>
+                                )}
                             </div>
                           </div>
                         </div>
@@ -371,7 +446,8 @@ function ReportDetailModal({
 
           <div className="border-t border-gray-200 px-6 py-4 flex justify-between">
             <div className="text-sm text-gray-500">
-              Generated by {report.generatedBy} on {new Date(report.generatedAt).toLocaleString()}
+              Generated by {report.generatedBy} on{" "}
+              {new Date(report.generatedAt).toLocaleString()}
               {report.approvedBy && (
                 <span className="ml-4">• Approved by {report.approvedBy}</span>
               )}
@@ -398,16 +474,16 @@ function CreateReportModal({
 }) {
   const queryClient = useQueryClient();
   const [formData, setFormData] = useState({
-    reportName: '',
-    reportType: 'HIPAA' as ComplianceReport['reportType'],
-    period: '',
+    reportName: "",
+    reportType: "HIPAA" as ComplianceReport["reportType"],
+    period: "",
   });
 
   const mutation = useMutation({
     mutationFn: (data: typeof formData) =>
-      api.post('/api/security/compliance-reports/generate', data),
+      api.post("/api/security/compliance-reports/generate", data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['compliance-reports'] });
+      queryClient.invalidateQueries({ queryKey: ["compliance-reports"] });
       onClose();
     },
   });
@@ -428,22 +504,34 @@ function CreateReportModal({
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700">Report Name</label>
+              <label className="block text-sm font-medium text-gray-700">
+                Report Name
+              </label>
               <input
                 type="text"
                 required
                 value={formData.reportName}
-                onChange={(e) => setFormData({ ...formData, reportName: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, reportName: e.target.value })
+                }
                 placeholder="Q4 2024 HIPAA Assessment"
                 className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700">Compliance Framework</label>
+              <label className="block text-sm font-medium text-gray-700">
+                Compliance Framework
+              </label>
               <select
                 value={formData.reportType}
-                onChange={(e) => setFormData({ ...formData, reportType: e.target.value as ComplianceReport['reportType'] })}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    reportType: e.target
+                      .value as ComplianceReport["reportType"],
+                  })
+                }
                 className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
               >
                 <option value="HIPAA">HIPAA</option>
@@ -455,12 +543,16 @@ function CreateReportModal({
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700">Assessment Period</label>
+              <label className="block text-sm font-medium text-gray-700">
+                Assessment Period
+              </label>
               <input
                 type="text"
                 required
                 value={formData.period}
-                onChange={(e) => setFormData({ ...formData, period: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, period: e.target.value })
+                }
                 placeholder="Q4 2024"
                 className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
               />
@@ -479,7 +571,7 @@ function CreateReportModal({
                 disabled={mutation.isPending}
                 className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
               >
-                {mutation.isPending ? 'Generating...' : 'Generate Report'}
+                {mutation.isPending ? "Generating..." : "Generate Report"}
               </button>
             </div>
           </form>

@@ -1,14 +1,17 @@
-import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useForm } from 'react-hook-form';
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useForm } from "react-hook-form";
 import {
   MagnifyingGlassIcon,
   PlusIcon,
   BeakerIcon,
-} from '@heroicons/react/24/outline';
-import { Dialog } from '@headlessui/react';
-import type { PeriodontalExam, CreatePeriodontalExamRequest } from '../../types/dental';
-import { format } from 'date-fns';
+} from "@heroicons/react/24/outline";
+import { Dialog } from "@headlessui/react";
+import type {
+  PeriodontalExam,
+  CreatePeriodontalExamRequest,
+} from "../../types/dental";
+import { format } from "date-fns";
 
 // Mock API functions - Replace with actual API calls
 const periodontalExamApi = {
@@ -21,7 +24,7 @@ const periodontalExamApi = {
   update: async (id: number, data: Partial<PeriodontalExam>) => ({
     data: { id, ...data },
   }),
-  delete: async (id: number) => ({
+  delete: async () => ({
     data: { success: true },
   }),
 };
@@ -56,15 +59,15 @@ const PeriodontalExamForm = ({
     defaultValues: exam
       ? {
           patientId: exam.patientId,
-          examDate: format(new Date(exam.examDate), 'yyyy-MM-dd'),
+          examDate: format(new Date(exam.examDate), "yyyy-MM-dd"),
           plaqueScore: exam.plaqueScore,
           gingivalIndex: exam.gingivalIndex,
-          notes: exam.notes || '',
-          diagnosis: exam.diagnosis || '',
-          treatmentPlan: exam.treatmentPlan || '',
+          notes: exam.notes || "",
+          diagnosis: exam.diagnosis || "",
+          treatmentPlan: exam.treatmentPlan || "",
         }
       : {
-          examDate: format(new Date(), 'yyyy-MM-dd'),
+          examDate: format(new Date(), "yyyy-MM-dd"),
         },
   });
 
@@ -76,7 +79,7 @@ const PeriodontalExamForm = ({
         bleedingPoints: [],
       }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['periodontal-exams'] });
+      queryClient.invalidateQueries({ queryKey: ["periodontal-exams"] });
       onSuccess();
     },
   });
@@ -85,7 +88,7 @@ const PeriodontalExamForm = ({
     mutationFn: (data: ExamFormData) =>
       periodontalExamApi.update(exam!.id, { ...data, id: exam!.id }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['periodontal-exams'] });
+      queryClient.invalidateQueries({ queryKey: ["periodontal-exams"] });
       onSuccess();
     },
   });
@@ -106,7 +109,8 @@ const PeriodontalExamForm = ({
       {error && (
         <div className="p-3 bg-red-50 border border-red-200 rounded-md">
           <p className="text-sm text-red-600">
-            Error: {error instanceof Error ? error.message : 'An error occurred'}
+            Error:{" "}
+            {error instanceof Error ? error.message : "An error occurred"}
           </p>
         </div>
       )}
@@ -114,47 +118,67 @@ const PeriodontalExamForm = ({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Patient ID */}
         <div>
-          <label htmlFor="patientId" className="block text-sm font-medium text-gray-700 mb-1">
+          <label
+            htmlFor="patientId"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
             Patient ID *
           </label>
           <input
             type="number"
             id="patientId"
-            {...register('patientId', { required: 'Patient ID is required', valueAsNumber: true })}
+            {...register("patientId", {
+              required: "Patient ID is required",
+              valueAsNumber: true,
+            })}
             className="input"
             placeholder="1"
           />
           {errors.patientId && (
-            <p className="mt-1 text-sm text-red-600">{errors.patientId.message}</p>
+            <p className="mt-1 text-sm text-red-600">
+              {errors.patientId.message}
+            </p>
           )}
         </div>
 
         {/* Exam Date */}
         <div>
-          <label htmlFor="examDate" className="block text-sm font-medium text-gray-700 mb-1">
+          <label
+            htmlFor="examDate"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
             Exam Date *
           </label>
           <input
             type="date"
             id="examDate"
-            {...register('examDate', { required: 'Exam date is required' })}
+            {...register("examDate", { required: "Exam date is required" })}
             className="input"
           />
           {errors.examDate && (
-            <p className="mt-1 text-sm text-red-600">{errors.examDate.message}</p>
+            <p className="mt-1 text-sm text-red-600">
+              {errors.examDate.message}
+            </p>
           )}
         </div>
 
         {/* Plaque Score */}
         <div>
-          <label htmlFor="plaqueScore" className="block text-sm font-medium text-gray-700 mb-1">
+          <label
+            htmlFor="plaqueScore"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
             Plaque Score (%)
           </label>
           <input
             type="number"
             step="0.1"
             id="plaqueScore"
-            {...register('plaqueScore', { valueAsNumber: true, min: 0, max: 100 })}
+            {...register("plaqueScore", {
+              valueAsNumber: true,
+              min: 0,
+              max: 100,
+            })}
             className="input"
             placeholder="0-100"
           />
@@ -162,14 +186,21 @@ const PeriodontalExamForm = ({
 
         {/* Gingival Index */}
         <div>
-          <label htmlFor="gingivalIndex" className="block text-sm font-medium text-gray-700 mb-1">
+          <label
+            htmlFor="gingivalIndex"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
             Gingival Index (0-3)
           </label>
           <input
             type="number"
             step="0.1"
             id="gingivalIndex"
-            {...register('gingivalIndex', { valueAsNumber: true, min: 0, max: 3 })}
+            {...register("gingivalIndex", {
+              valueAsNumber: true,
+              min: 0,
+              max: 3,
+            })}
             className="input"
             placeholder="0-3 scale"
           />
@@ -178,12 +209,15 @@ const PeriodontalExamForm = ({
 
       {/* Diagnosis */}
       <div>
-        <label htmlFor="diagnosis" className="block text-sm font-medium text-gray-700 mb-1">
+        <label
+          htmlFor="diagnosis"
+          className="block text-sm font-medium text-gray-700 mb-1"
+        >
           Diagnosis
         </label>
         <textarea
           id="diagnosis"
-          {...register('diagnosis')}
+          {...register("diagnosis")}
           rows={2}
           className="input"
           placeholder="Clinical diagnosis..."
@@ -192,12 +226,15 @@ const PeriodontalExamForm = ({
 
       {/* Treatment Plan */}
       <div>
-        <label htmlFor="treatmentPlan" className="block text-sm font-medium text-gray-700 mb-1">
+        <label
+          htmlFor="treatmentPlan"
+          className="block text-sm font-medium text-gray-700 mb-1"
+        >
           Treatment Plan
         </label>
         <textarea
           id="treatmentPlan"
-          {...register('treatmentPlan')}
+          {...register("treatmentPlan")}
           rows={3}
           className="input"
           placeholder="Recommended treatment plan..."
@@ -206,12 +243,15 @@ const PeriodontalExamForm = ({
 
       {/* Notes */}
       <div>
-        <label htmlFor="notes" className="block text-sm font-medium text-gray-700 mb-1">
+        <label
+          htmlFor="notes"
+          className="block text-sm font-medium text-gray-700 mb-1"
+        >
           Clinical Notes
         </label>
         <textarea
           id="notes"
-          {...register('notes')}
+          {...register("notes")}
           rows={3}
           className="input"
           placeholder="Additional clinical notes..."
@@ -221,7 +261,9 @@ const PeriodontalExamForm = ({
       {/* Pocket Depths Placeholder */}
       <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
         <BeakerIcon className="h-12 w-12 text-gray-400 mx-auto mb-2" />
-        <p className="text-sm text-gray-500">Pocket Depths Measurement Interface</p>
+        <p className="text-sm text-gray-500">
+          Pocket Depths Measurement Interface
+        </p>
         <p className="text-xs text-gray-400 mt-1">
           Interactive charting for recording probing depths and bleeding points
         </p>
@@ -229,19 +271,24 @@ const PeriodontalExamForm = ({
 
       {/* Actions */}
       <div className="flex items-center justify-end gap-3 pt-4 border-t">
-        <button type="button" onClick={onCancel} disabled={isPending} className="btn btn-secondary">
+        <button
+          type="button"
+          onClick={onCancel}
+          disabled={isPending}
+          className="btn btn-secondary"
+        >
           Cancel
         </button>
         <button type="submit" disabled={isPending} className="btn btn-primary">
           {isPending ? (
             <div className="flex items-center">
               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-              {isEditing ? 'Updating...' : 'Creating...'}
+              {isEditing ? "Updating..." : "Creating..."}
             </div>
           ) : isEditing ? (
-            'Update Exam'
+            "Update Exam"
           ) : (
-            'Create Exam'
+            "Create Exam"
           )}
         </button>
       </div>
@@ -251,20 +298,22 @@ const PeriodontalExamForm = ({
 
 export const PeriodontalExams = () => {
   const queryClient = useQueryClient();
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedExam, setSelectedExam] = useState<PeriodontalExam | undefined>(undefined);
+  const [selectedExam, setSelectedExam] = useState<PeriodontalExam | undefined>(
+    undefined,
+  );
 
   // Fetch exams
   const { data: examsData, isLoading } = useQuery({
-    queryKey: ['periodontal-exams'],
+    queryKey: ["periodontal-exams"],
     queryFn: () => periodontalExamApi.getAll(),
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id: number) => periodontalExamApi.delete(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['periodontal-exams'] });
+      queryClient.invalidateQueries({ queryKey: ["periodontal-exams"] });
     },
   });
 
@@ -282,7 +331,7 @@ export const PeriodontalExams = () => {
   const handleDelete = (exam: PeriodontalExam) => {
     if (
       window.confirm(
-        `Are you sure you want to delete the periodontal exam for ${exam.patientName}?`
+        `Are you sure you want to delete the periodontal exam for ${exam.patientName}?`,
       )
     ) {
       deleteMutation.mutate(exam.id);
@@ -305,10 +354,12 @@ export const PeriodontalExams = () => {
   };
 
   const getGingivalStatus = (index?: number) => {
-    if (!index) return { label: 'N/A', className: 'bg-gray-100 text-gray-800' };
-    if (index <= 1) return { label: 'Mild', className: 'bg-green-100 text-green-800' };
-    if (index <= 2) return { label: 'Moderate', className: 'bg-yellow-100 text-yellow-800' };
-    return { label: 'Severe', className: 'bg-red-100 text-red-800' };
+    if (!index) return { label: "N/A", className: "bg-gray-100 text-gray-800" };
+    if (index <= 1)
+      return { label: "Mild", className: "bg-green-100 text-green-800" };
+    if (index <= 2)
+      return { label: "Moderate", className: "bg-yellow-100 text-yellow-800" };
+    return { label: "Severe", className: "bg-red-100 text-red-800" };
   };
 
   return (
@@ -316,8 +367,12 @@ export const PeriodontalExams = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Periodontal Exams</h1>
-          <p className="text-gray-600 mt-1">Manage periodontal examinations and assessments</p>
+          <h1 className="text-2xl font-bold text-gray-900">
+            Periodontal Exams
+          </h1>
+          <p className="text-gray-600 mt-1">
+            Manage periodontal examinations and assessments
+          </p>
         </div>
         <button onClick={handleCreate} className="btn btn-primary">
           <PlusIcon className="h-5 w-5 mr-2 inline" />
@@ -329,7 +384,9 @@ export const PeriodontalExams = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="card">
           <p className="text-sm text-gray-600">Total Exams</p>
-          <p className="text-2xl font-bold text-gray-900 mt-1">{exams.length}</p>
+          <p className="text-2xl font-bold text-gray-900 mt-1">
+            {exams.length}
+          </p>
         </div>
         <div className="card">
           <p className="text-sm text-gray-600">Exams This Month</p>
@@ -338,7 +395,8 @@ export const PeriodontalExams = () => {
               exams.filter(
                 (e) =>
                   new Date(e.examDate).getMonth() === new Date().getMonth() &&
-                  new Date(e.examDate).getFullYear() === new Date().getFullYear()
+                  new Date(e.examDate).getFullYear() ===
+                    new Date().getFullYear(),
               ).length
             }
           </p>
@@ -348,9 +406,10 @@ export const PeriodontalExams = () => {
           <p className="text-2xl font-bold text-green-600 mt-1">
             {exams.length > 0
               ? (
-                  exams.reduce((sum, e) => sum + (e.gingivalIndex || 0), 0) / exams.length
+                  exams.reduce((sum, e) => sum + (e.gingivalIndex || 0), 0) /
+                  exams.length
                 ).toFixed(1)
-              : '0.0'}
+              : "0.0"}
           </p>
         </div>
       </div>
@@ -413,16 +472,22 @@ export const PeriodontalExams = () => {
                         <div className="font-medium text-gray-900">
                           {exam.patientName || `Patient #${exam.patientId}`}
                         </div>
-                        <div className="text-gray-500">ID: {exam.patientId}</div>
+                        <div className="text-gray-500">
+                          ID: {exam.patientId}
+                        </div>
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-600">
-                        {format(new Date(exam.examDate), 'MMM d, yyyy')}
+                        {format(new Date(exam.examDate), "MMM d, yyyy")}
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-600">
-                        {exam.plaqueScore !== undefined ? `${exam.plaqueScore}%` : '-'}
+                        {exam.plaqueScore !== undefined
+                          ? `${exam.plaqueScore}%`
+                          : "-"}
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-600">
-                        {exam.gingivalIndex !== undefined ? exam.gingivalIndex.toFixed(1) : '-'}
+                        {exam.gingivalIndex !== undefined
+                          ? exam.gingivalIndex.toFixed(1)
+                          : "-"}
                       </td>
                       <td className="px-4 py-3 text-sm">
                         <span
@@ -431,7 +496,9 @@ export const PeriodontalExams = () => {
                           {status.label}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-sm text-gray-600">{exam.examinedBy}</td>
+                      <td className="px-4 py-3 text-sm text-gray-600">
+                        {exam.examinedBy}
+                      </td>
                       <td className="px-4 py-3 text-sm">
                         <div className="flex items-center gap-2">
                           <button
@@ -458,7 +525,9 @@ export const PeriodontalExams = () => {
           <div className="text-center py-12">
             <BeakerIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
             <p className="text-gray-500">
-              {searchTerm ? 'No exams found matching your search.' : 'No periodontal exams found.'}
+              {searchTerm
+                ? "No exams found matching your search."
+                : "No periodontal exams found."}
             </p>
             <button
               onClick={handleCreate}
@@ -472,13 +541,19 @@ export const PeriodontalExams = () => {
       </div>
 
       {/* Modal */}
-      <Dialog open={isModalOpen} onClose={handleModalClose} className="relative z-50">
+      <Dialog
+        open={isModalOpen}
+        onClose={handleModalClose}
+        className="relative z-50"
+      >
         <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
         <div className="fixed inset-0 flex items-center justify-center p-4">
           <Dialog.Panel className="mx-auto max-w-3xl w-full bg-white rounded-lg shadow-xl max-h-[90vh] overflow-y-auto">
             <div className="p-6">
               <Dialog.Title className="text-lg font-medium text-gray-900 mb-4">
-                {selectedExam ? 'View/Edit Periodontal Exam' : 'New Periodontal Exam'}
+                {selectedExam
+                  ? "View/Edit Periodontal Exam"
+                  : "New Periodontal Exam"}
               </Dialog.Title>
               <PeriodontalExamForm
                 exam={selectedExam}

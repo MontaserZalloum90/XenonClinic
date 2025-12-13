@@ -1,6 +1,6 @@
-import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Dialog } from '@headlessui/react';
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Dialog } from "@headlessui/react";
 import {
   DocumentTextIcon,
   PlusIcon,
@@ -9,9 +9,8 @@ import {
   PencilIcon,
   PrinterIcon,
   ExclamationTriangleIcon,
-  CheckCircleIcon,
-} from '@heroicons/react/24/outline';
-import { api } from '../../lib/api';
+} from "@heroicons/react/24/outline";
+import { api } from "../../lib/api";
 
 interface Prescription {
   id: number;
@@ -20,7 +19,7 @@ interface Prescription {
   patientName: string;
   patientMRN: string;
   medications: PrescriptionMedication[];
-  status: 'draft' | 'pending' | 'dispensed' | 'cancelled' | 'expired';
+  status: "draft" | "pending" | "dispensed" | "cancelled" | "expired";
   prescribedBy: string;
   prescribedAt: string;
   pharmacyNotes?: string;
@@ -47,37 +46,33 @@ interface PrescriptionMedication {
   isControlled: boolean;
 }
 
-interface DrugInteraction {
-  drug1: string;
-  drug2: string;
-  severity: 'minor' | 'moderate' | 'major' | 'contraindicated';
-  description: string;
-}
-
 const statusConfig = {
-  draft: { label: 'Draft', color: 'bg-gray-100 text-gray-800' },
-  pending: { label: 'Pending', color: 'bg-yellow-100 text-yellow-800' },
-  dispensed: { label: 'Dispensed', color: 'bg-green-100 text-green-800' },
-  cancelled: { label: 'Cancelled', color: 'bg-red-100 text-red-800' },
-  expired: { label: 'Expired', color: 'bg-orange-100 text-orange-800' },
+  draft: { label: "Draft", color: "bg-gray-100 text-gray-800" },
+  pending: { label: "Pending", color: "bg-yellow-100 text-yellow-800" },
+  dispensed: { label: "Dispensed", color: "bg-green-100 text-green-800" },
+  cancelled: { label: "Cancelled", color: "bg-red-100 text-red-800" },
+  expired: { label: "Expired", color: "bg-orange-100 text-orange-800" },
 };
 
 export function PrescriptionEntry() {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedPrescription, setSelectedPrescription] = useState<Prescription | null>(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<Prescription['status'] | 'all'>('all');
+  const [selectedPrescription, setSelectedPrescription] =
+    useState<Prescription | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<
+    Prescription["status"] | "all"
+  >("all");
   const queryClient = useQueryClient();
 
   const { data: prescriptions = [], isLoading } = useQuery({
-    queryKey: ['prescriptions'],
-    queryFn: () => api.get<Prescription[]>('/api/clinical/prescriptions'),
+    queryKey: ["prescriptions"],
+    queryFn: () => api.get<Prescription[]>("/api/clinical/prescriptions"),
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id: number) => api.delete(`/api/clinical/prescriptions/${id}`),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['prescriptions'] });
+      queryClient.invalidateQueries({ queryKey: ["prescriptions"] });
     },
   });
 
@@ -85,16 +80,18 @@ export function PrescriptionEntry() {
     const matchesSearch =
       rx.patientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       rx.patientMRN.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      rx.medications.some((m) => m.medicationName.toLowerCase().includes(searchTerm.toLowerCase()));
-    const matchesStatus = statusFilter === 'all' || rx.status === statusFilter;
+      rx.medications.some((m) =>
+        m.medicationName.toLowerCase().includes(searchTerm.toLowerCase()),
+      );
+    const matchesStatus = statusFilter === "all" || rx.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
+    return new Date(dateString).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
     });
   };
 
@@ -104,7 +101,7 @@ export function PrescriptionEntry() {
   };
 
   const handleDelete = (prescription: Prescription) => {
-    if (confirm('Delete this prescription?')) {
+    if (confirm("Delete this prescription?")) {
       deleteMutation.mutate(prescription.id);
     }
   };
@@ -134,18 +131,20 @@ export function PrescriptionEntry() {
       {/* Stats */}
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-5">
         <div className="rounded-lg bg-white p-4 shadow">
-          <div className="text-2xl font-bold text-gray-900">{prescriptions.length}</div>
+          <div className="text-2xl font-bold text-gray-900">
+            {prescriptions.length}
+          </div>
           <div className="text-sm text-gray-500">Total</div>
         </div>
         <div className="rounded-lg bg-white p-4 shadow">
           <div className="text-2xl font-bold text-yellow-600">
-            {prescriptions.filter((p) => p.status === 'pending').length}
+            {prescriptions.filter((p) => p.status === "pending").length}
           </div>
           <div className="text-sm text-gray-500">Pending</div>
         </div>
         <div className="rounded-lg bg-white p-4 shadow">
           <div className="text-2xl font-bold text-green-600">
-            {prescriptions.filter((p) => p.status === 'dispensed').length}
+            {prescriptions.filter((p) => p.status === "dispensed").length}
           </div>
           <div className="text-sm text-gray-500">Dispensed</div>
         </div>
@@ -176,17 +175,17 @@ export function PrescriptionEntry() {
           />
         </div>
         <div className="flex gap-2 flex-wrap">
-          {(['all', 'pending', 'dispensed', 'draft'] as const).map((status) => (
+          {(["all", "pending", "dispensed", "draft"] as const).map((status) => (
             <button
               key={status}
               onClick={() => setStatusFilter(status)}
               className={`rounded-md px-3 py-1.5 text-sm font-medium ${
                 statusFilter === status
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  ? "bg-blue-600 text-white"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
               }`}
             >
-              {status === 'all' ? 'All' : statusConfig[status].label}
+              {status === "all" ? "All" : statusConfig[status].label}
             </button>
           ))}
         </div>
@@ -209,10 +208,10 @@ export function PrescriptionEntry() {
               key={rx.id}
               className={`rounded-lg bg-white shadow ${
                 rx.hasAllergies
-                  ? 'ring-2 ring-red-500'
+                  ? "ring-2 ring-red-500"
                   : rx.hasInteractions
-                  ? 'ring-2 ring-yellow-500'
-                  : ''
+                    ? "ring-2 ring-yellow-500"
+                    : ""
               }`}
             >
               <div className="p-4 sm:p-6">
@@ -223,8 +222,12 @@ export function PrescriptionEntry() {
                       <DocumentTextIcon className="h-5 w-5 text-blue-600" />
                     </div>
                     <div>
-                      <h3 className="font-semibold text-gray-900">{rx.patientName}</h3>
-                      <p className="text-sm text-gray-500">MRN: {rx.patientMRN}</p>
+                      <h3 className="font-semibold text-gray-900">
+                        {rx.patientName}
+                      </h3>
+                      <p className="text-sm text-gray-500">
+                        MRN: {rx.patientMRN}
+                      </p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
@@ -240,7 +243,9 @@ export function PrescriptionEntry() {
                         Drug Interaction
                       </span>
                     )}
-                    <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${statusConfig[rx.status].color}`}>
+                    <span
+                      className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${statusConfig[rx.status].color}`}
+                    >
                       {statusConfig[rx.status].label}
                     </span>
                   </div>
@@ -255,15 +260,21 @@ export function PrescriptionEntry() {
                     >
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
-                          <span className="font-medium text-gray-900">{med.medicationName}</span>
-                          <span className="text-sm text-gray-500">{med.strength}</span>
+                          <span className="font-medium text-gray-900">
+                            {med.medicationName}
+                          </span>
+                          <span className="text-sm text-gray-500">
+                            {med.strength}
+                          </span>
                           {med.isControlled && (
                             <span className="inline-flex items-center rounded bg-red-100 px-1.5 py-0.5 text-xs font-medium text-red-800">
                               Controlled
                             </span>
                           )}
                         </div>
-                        <p className="text-sm text-gray-600">{med.genericName}</p>
+                        <p className="text-sm text-gray-600">
+                          {med.genericName}
+                        </p>
                         <div className="mt-1 text-sm text-gray-500">
                           <span>{med.dosage}</span>
                           <span className="mx-2">•</span>
@@ -281,7 +292,9 @@ export function PrescriptionEntry() {
                       </div>
                       <div className="text-right text-sm">
                         <div className="text-gray-900">Qty: {med.quantity}</div>
-                        <div className="text-gray-500">Refills: {med.refills}</div>
+                        <div className="text-gray-500">
+                          Refills: {med.refills}
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -290,9 +303,14 @@ export function PrescriptionEntry() {
                 {/* Footer */}
                 <div className="mt-4 pt-4 border-t flex items-center justify-between">
                   <div className="text-sm text-gray-500">
-                    <span>Prescribed by {rx.prescribedBy} on {formatDate(rx.prescribedAt)}</span>
+                    <span>
+                      Prescribed by {rx.prescribedBy} on{" "}
+                      {formatDate(rx.prescribedAt)}
+                    </span>
                     {rx.dispensedAt && (
-                      <span className="ml-4">• Dispensed on {formatDate(rx.dispensedAt)}</span>
+                      <span className="ml-4">
+                        • Dispensed on {formatDate(rx.dispensedAt)}
+                      </span>
                     )}
                   </div>
                   <div className="flex items-center gap-2">
@@ -307,7 +325,7 @@ export function PrescriptionEntry() {
                       <PencilIcon className="h-4 w-4 mr-1" />
                       Edit
                     </button>
-                    {rx.status === 'draft' && (
+                    {rx.status === "draft" && (
                       <button
                         onClick={() => handleDelete(rx)}
                         className="inline-flex items-center rounded-md border border-red-300 bg-white px-3 py-1.5 text-sm text-red-700 hover:bg-red-50"
@@ -344,23 +362,26 @@ function PrescriptionModal({
   prescription: Prescription | null;
 }) {
   const queryClient = useQueryClient();
-  const [medications, setMedications] = useState<Partial<PrescriptionMedication>[]>(
-    prescription?.medications || [{}]
-  );
+  const [medications, setMedications] = useState<
+    Partial<PrescriptionMedication>[]
+  >(prescription?.medications || [{}]);
   const [formData, setFormData] = useState({
     patientId: prescription?.patientId || 0,
-    patientName: prescription?.patientName || '',
-    patientMRN: prescription?.patientMRN || '',
-    pharmacyNotes: prescription?.pharmacyNotes || '',
+    patientName: prescription?.patientName || "",
+    patientMRN: prescription?.patientMRN || "",
+    pharmacyNotes: prescription?.pharmacyNotes || "",
   });
 
   const mutation = useMutation({
-    mutationFn: (data: { formData: typeof formData; medications: typeof medications }) =>
+    mutationFn: (data: {
+      formData: typeof formData;
+      medications: typeof medications;
+    }) =>
       prescription
         ? api.put(`/api/clinical/prescriptions/${prescription.id}`, data)
-        : api.post('/api/clinical/prescriptions', data),
+        : api.post("/api/clinical/prescriptions", data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['prescriptions'] });
+      queryClient.invalidateQueries({ queryKey: ["prescriptions"] });
       onClose();
     },
   });
@@ -378,7 +399,11 @@ function PrescriptionModal({
     setMedications(medications.filter((_, i) => i !== index));
   };
 
-  const updateMedication = (index: number, field: string, value: string | number | boolean) => {
+  const updateMedication = (
+    index: number,
+    field: string,
+    value: string | number | boolean,
+  ) => {
     const updated = [...medications];
     updated[index] = { ...updated[index], [field]: value };
     setMedications(updated);
@@ -390,29 +415,37 @@ function PrescriptionModal({
       <div className="fixed inset-0 flex items-center justify-center p-4">
         <Dialog.Panel className="mx-auto max-w-3xl w-full rounded-lg bg-white p-6 shadow-xl max-h-[90vh] overflow-y-auto">
           <Dialog.Title className="text-lg font-semibold text-gray-900 mb-4">
-            {prescription ? 'Edit Prescription' : 'New Prescription'}
+            {prescription ? "Edit Prescription" : "New Prescription"}
           </Dialog.Title>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Patient Info */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700">Patient Name</label>
+                <label className="block text-sm font-medium text-gray-700">
+                  Patient Name
+                </label>
                 <input
                   type="text"
                   required
                   value={formData.patientName}
-                  onChange={(e) => setFormData({ ...formData, patientName: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, patientName: e.target.value })
+                  }
                   className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">MRN</label>
+                <label className="block text-sm font-medium text-gray-700">
+                  MRN
+                </label>
                 <input
                   type="text"
                   required
                   value={formData.patientMRN}
-                  onChange={(e) => setFormData({ ...formData, patientMRN: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, patientMRN: e.target.value })
+                  }
                   className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none"
                 />
               </div>
@@ -421,7 +454,9 @@ function PrescriptionModal({
             {/* Medications */}
             <div className="border-t pt-4">
               <div className="flex items-center justify-between mb-3">
-                <h4 className="text-sm font-medium text-gray-700">Medications</h4>
+                <h4 className="text-sm font-medium text-gray-700">
+                  Medications
+                </h4>
                 <button
                   type="button"
                   onClick={addMedication}
@@ -436,7 +471,9 @@ function PrescriptionModal({
                 {medications.map((med, index) => (
                   <div key={index} className="p-4 bg-gray-50 rounded-lg">
                     <div className="flex justify-between items-start mb-3">
-                      <span className="text-sm font-medium text-gray-700">Medication #{index + 1}</span>
+                      <span className="text-sm font-medium text-gray-700">
+                        Medication #{index + 1}
+                      </span>
                       {medications.length > 1 && (
                         <button
                           type="button"
@@ -453,8 +490,14 @@ function PrescriptionModal({
                           type="text"
                           placeholder="Medication Name"
                           required
-                          value={med.medicationName || ''}
-                          onChange={(e) => updateMedication(index, 'medicationName', e.target.value)}
+                          value={med.medicationName || ""}
+                          onChange={(e) =>
+                            updateMedication(
+                              index,
+                              "medicationName",
+                              e.target.value,
+                            )
+                          }
                           className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
                         />
                       </div>
@@ -463,8 +506,10 @@ function PrescriptionModal({
                           type="text"
                           placeholder="Strength (e.g., 500mg)"
                           required
-                          value={med.strength || ''}
-                          onChange={(e) => updateMedication(index, 'strength', e.target.value)}
+                          value={med.strength || ""}
+                          onChange={(e) =>
+                            updateMedication(index, "strength", e.target.value)
+                          }
                           className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
                         />
                       </div>
@@ -473,22 +518,30 @@ function PrescriptionModal({
                           type="text"
                           placeholder="Dosage (e.g., 1 tablet)"
                           required
-                          value={med.dosage || ''}
-                          onChange={(e) => updateMedication(index, 'dosage', e.target.value)}
+                          value={med.dosage || ""}
+                          onChange={(e) =>
+                            updateMedication(index, "dosage", e.target.value)
+                          }
                           className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
                         />
                       </div>
                       <div>
                         <select
-                          value={med.frequency || ''}
-                          onChange={(e) => updateMedication(index, 'frequency', e.target.value)}
+                          value={med.frequency || ""}
+                          onChange={(e) =>
+                            updateMedication(index, "frequency", e.target.value)
+                          }
                           className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
                         >
                           <option value="">Select Frequency</option>
                           <option value="Once daily">Once daily</option>
                           <option value="Twice daily">Twice daily</option>
-                          <option value="Three times daily">Three times daily</option>
-                          <option value="Four times daily">Four times daily</option>
+                          <option value="Three times daily">
+                            Three times daily
+                          </option>
+                          <option value="Four times daily">
+                            Four times daily
+                          </option>
                           <option value="Every 4 hours">Every 4 hours</option>
                           <option value="Every 6 hours">Every 6 hours</option>
                           <option value="Every 8 hours">Every 8 hours</option>
@@ -498,8 +551,10 @@ function PrescriptionModal({
                       </div>
                       <div>
                         <select
-                          value={med.route || ''}
-                          onChange={(e) => updateMedication(index, 'route', e.target.value)}
+                          value={med.route || ""}
+                          onChange={(e) =>
+                            updateMedication(index, "route", e.target.value)
+                          }
                           className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
                         >
                           <option value="">Select Route</option>
@@ -520,8 +575,10 @@ function PrescriptionModal({
                           type="text"
                           placeholder="Duration (e.g., 7 days)"
                           required
-                          value={med.duration || ''}
-                          onChange={(e) => updateMedication(index, 'duration', e.target.value)}
+                          value={med.duration || ""}
+                          onChange={(e) =>
+                            updateMedication(index, "duration", e.target.value)
+                          }
                           className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
                         />
                       </div>
@@ -531,8 +588,14 @@ function PrescriptionModal({
                           placeholder="Quantity"
                           required
                           min="1"
-                          value={med.quantity || ''}
-                          onChange={(e) => updateMedication(index, 'quantity', Number(e.target.value))}
+                          value={med.quantity || ""}
+                          onChange={(e) =>
+                            updateMedication(
+                              index,
+                              "quantity",
+                              Number(e.target.value),
+                            )
+                          }
                           className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
                         />
                       </div>
@@ -542,7 +605,13 @@ function PrescriptionModal({
                           placeholder="Refills"
                           min="0"
                           value={med.refills || 0}
-                          onChange={(e) => updateMedication(index, 'refills', Number(e.target.value))}
+                          onChange={(e) =>
+                            updateMedication(
+                              index,
+                              "refills",
+                              Number(e.target.value),
+                            )
+                          }
                           className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
                         />
                       </div>
@@ -550,8 +619,14 @@ function PrescriptionModal({
                         <input
                           type="text"
                           placeholder="Special Instructions (optional)"
-                          value={med.instructions || ''}
-                          onChange={(e) => updateMedication(index, 'instructions', e.target.value)}
+                          value={med.instructions || ""}
+                          onChange={(e) =>
+                            updateMedication(
+                              index,
+                              "instructions",
+                              e.target.value,
+                            )
+                          }
                           className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
                         />
                       </div>
@@ -563,11 +638,15 @@ function PrescriptionModal({
 
             {/* Pharmacy Notes */}
             <div>
-              <label className="block text-sm font-medium text-gray-700">Pharmacy Notes</label>
+              <label className="block text-sm font-medium text-gray-700">
+                Pharmacy Notes
+              </label>
               <textarea
                 rows={2}
                 value={formData.pharmacyNotes}
-                onChange={(e) => setFormData({ ...formData, pharmacyNotes: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, pharmacyNotes: e.target.value })
+                }
                 className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none"
                 placeholder="Special instructions for pharmacy..."
               />
@@ -586,7 +665,11 @@ function PrescriptionModal({
                 disabled={mutation.isPending}
                 className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
               >
-                {mutation.isPending ? 'Saving...' : prescription ? 'Update' : 'Create Prescription'}
+                {mutation.isPending
+                  ? "Saving..."
+                  : prescription
+                    ? "Update"
+                    : "Create Prescription"}
               </button>
             </div>
           </form>

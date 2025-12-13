@@ -28,16 +28,16 @@ export interface ValidationResult {
 export const validateEmiratesId = (value: string): ValidationResult => {
   const errors: string[] = [];
 
-  if (!value || typeof value !== 'string') {
-    return { isValid: false, errors: ['Emirates ID is required'] };
+  if (!value || typeof value !== "string") {
+    return { isValid: false, errors: ["Emirates ID is required"] };
   }
 
   // Remove any whitespace and normalize dashes
-  let sanitized = value.trim().replace(/\s+/g, '').replace(/[-–—]/g, '-');
+  const sanitized = value.trim().replace(/\s+/g, "").replace(/[-–—]/g, "-");
 
   // Check format
   if (!EMIRATES_ID_REGEX.test(sanitized)) {
-    errors.push('Emirates ID must be in format: 784-YYYY-NNNNNNN-N');
+    errors.push("Emirates ID must be in format: 784-YYYY-NNNNNNN-N");
   }
 
   // Extract year and validate it's reasonable (1900-current year)
@@ -80,14 +80,17 @@ export const DEFAULT_PATIENT_RULES: PatientValidationRules = {
 /**
  * Sanitizes text input by removing potentially dangerous characters
  */
-export const sanitizeText = (value: string, options?: {
-  allowUnicode?: boolean;
-  maxLength?: number;
-  trim?: boolean;
-}): string => {
-  if (!value || typeof value !== 'string') return '';
+export const sanitizeText = (
+  value: string,
+  options?: {
+    allowUnicode?: boolean;
+    maxLength?: number;
+    trim?: boolean;
+  },
+): string => {
+  if (!value || typeof value !== "string") return "";
 
-  const { allowUnicode = true, maxLength = 1000, trim = true } = options || {};
+  const { maxLength = 1000, trim = true } = options || {};
 
   let sanitized = value;
 
@@ -97,22 +100,23 @@ export const sanitizeText = (value: string, options?: {
   }
 
   // Remove null bytes
-  sanitized = sanitized.replace(/\0/g, '');
+  sanitized = sanitized.replace(/\0/g, "");
 
   // Remove control characters (except newlines and tabs if needed)
-  sanitized = sanitized.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
+  // eslint-disable-next-line no-control-regex
+  sanitized = sanitized.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "");
 
   // Remove potential SQL injection patterns BEFORE escaping
   // This prevents dangerous SQL constructs while preserving legitimate characters
-  sanitized = sanitized.replace(/(--|\/\*|\*\/|\|\|)/g, '');
+  sanitized = sanitized.replace(/(--|\/\*|\*\/|\|\|)/g, "");
 
   // Escape HTML entities to prevent XSS
   sanitized = sanitized
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#x27;');
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#x27;");
 
   // Truncate to max length
   if (sanitized.length > maxLength) {
@@ -127,13 +131,16 @@ export const sanitizeText = (value: string, options?: {
  */
 export const validateNameEn = (
   value: string,
-  rules = DEFAULT_PATIENT_RULES.fullNameEn
+  rules = DEFAULT_PATIENT_RULES.fullNameEn,
 ): ValidationResult => {
   const errors: string[] = [];
-  const sanitized = sanitizeText(value, { allowUnicode: false, maxLength: rules.maxLength });
+  const sanitized = sanitizeText(value, {
+    allowUnicode: false,
+    maxLength: rules.maxLength,
+  });
 
   if (rules.required && !sanitized) {
-    errors.push('Name is required');
+    errors.push("Name is required");
   }
 
   if (sanitized && sanitized.length < rules.minLength) {
@@ -141,8 +148,13 @@ export const validateNameEn = (
   }
 
   // Check for valid characters (letters, spaces, hyphens, apostrophes)
-  if (sanitized && !/^[a-zA-Z\s\-']+$/.test(sanitized.replace(/&[^;]+;/g, ''))) {
-    errors.push('Name can only contain letters, spaces, hyphens, and apostrophes');
+  if (
+    sanitized &&
+    !/^[a-zA-Z\s\-']+$/.test(sanitized.replace(/&[^;]+;/g, ""))
+  ) {
+    errors.push(
+      "Name can only contain letters, spaces, hyphens, and apostrophes",
+    );
   }
 
   return { isValid: errors.length === 0, errors, sanitizedValue: sanitized };
@@ -153,13 +165,16 @@ export const validateNameEn = (
  */
 export const validateNameAr = (
   value: string,
-  rules = DEFAULT_PATIENT_RULES.fullNameAr
+  rules = DEFAULT_PATIENT_RULES.fullNameAr,
 ): ValidationResult => {
   const errors: string[] = [];
-  const sanitized = sanitizeText(value, { allowUnicode: true, maxLength: rules.maxLength });
+  const sanitized = sanitizeText(value, {
+    allowUnicode: true,
+    maxLength: rules.maxLength,
+  });
 
   if (rules.required && !sanitized) {
-    errors.push('Arabic name is required');
+    errors.push("Arabic name is required");
   }
 
   if (sanitized && sanitized.length < rules.minLength) {
@@ -167,8 +182,13 @@ export const validateNameAr = (
   }
 
   // Check for valid Arabic characters
-  if (sanitized && !/^[\u0600-\u06FF\s\-]+$/.test(sanitized.replace(/&[^;]+;/g, ''))) {
-    errors.push('Arabic name can only contain Arabic characters, spaces, and hyphens');
+  if (
+    sanitized &&
+    !/^[\u0600-\u06FF\s-]+$/.test(sanitized.replace(/&[^;]+;/g, ""))
+  ) {
+    errors.push(
+      "Arabic name can only contain Arabic characters, spaces, and hyphens",
+    );
   }
 
   return { isValid: errors.length === 0, errors, sanitizedValue: sanitized };
@@ -179,30 +199,32 @@ export const validateNameAr = (
  */
 export const validateDateOfBirth = (
   value: string | Date,
-  rules = DEFAULT_PATIENT_RULES.dateOfBirth
+  rules = DEFAULT_PATIENT_RULES.dateOfBirth,
 ): ValidationResult => {
   const errors: string[] = [];
 
   if (rules.required && !value) {
-    return { isValid: false, errors: ['Date of birth is required'] };
+    return { isValid: false, errors: ["Date of birth is required"] };
   }
 
   if (!value) {
     return { isValid: true, errors: [] };
   }
 
-  const date = typeof value === 'string' ? new Date(value) : value;
+  const date = typeof value === "string" ? new Date(value) : value;
 
   if (isNaN(date.getTime())) {
-    errors.push('Invalid date format');
+    errors.push("Invalid date format");
     return { isValid: false, errors };
   }
 
   const today = new Date();
-  const age = Math.floor((today.getTime() - date.getTime()) / (365.25 * 24 * 60 * 60 * 1000));
+  const age = Math.floor(
+    (today.getTime() - date.getTime()) / (365.25 * 24 * 60 * 60 * 1000),
+  );
 
   if (date > today) {
-    errors.push('Date of birth cannot be in the future');
+    errors.push("Date of birth cannot be in the future");
   }
 
   if (age < rules.minAge) {
@@ -216,7 +238,7 @@ export const validateDateOfBirth = (
   return {
     isValid: errors.length === 0,
     errors,
-    sanitizedValue: date.toISOString().split('T')[0],
+    sanitizedValue: date.toISOString().split("T")[0],
   };
 };
 
@@ -225,31 +247,31 @@ export const validateDateOfBirth = (
  */
 export const validatePhoneNumber = (
   value: string,
-  rules = DEFAULT_PATIENT_RULES.phoneNumber
+  rules = DEFAULT_PATIENT_RULES.phoneNumber,
 ): ValidationResult => {
   const errors: string[] = [];
 
   if (!value) {
     if (rules.required) {
-      errors.push('Phone number is required');
+      errors.push("Phone number is required");
     }
     return { isValid: !rules.required, errors };
   }
 
   // Sanitize: keep only digits, +, spaces, and hyphens
-  const sanitized = value.replace(/[^\d+\s-]/g, '').trim();
+  const sanitized = value.replace(/[^\d+\s-]/g, "").trim();
 
   if (!rules.pattern.test(sanitized)) {
-    errors.push('Invalid phone number format');
+    errors.push("Invalid phone number format");
   }
 
   // Check for reasonable length
-  const digitsOnly = sanitized.replace(/\D/g, '');
+  const digitsOnly = sanitized.replace(/\D/g, "");
   if (digitsOnly.length < 7) {
-    errors.push('Phone number must have at least 7 digits');
+    errors.push("Phone number must have at least 7 digits");
   }
   if (digitsOnly.length > 15) {
-    errors.push('Phone number cannot exceed 15 digits');
+    errors.push("Phone number cannot exceed 15 digits");
   }
 
   return { isValid: errors.length === 0, errors, sanitizedValue: sanitized };
@@ -260,13 +282,13 @@ export const validatePhoneNumber = (
  */
 export const validateEmail = (
   value: string,
-  rules = DEFAULT_PATIENT_RULES.email
+  rules = DEFAULT_PATIENT_RULES.email,
 ): ValidationResult => {
   const errors: string[] = [];
 
   if (!value) {
     if (rules.required) {
-      errors.push('Email is required');
+      errors.push("Email is required");
     }
     return { isValid: !rules.required, errors };
   }
@@ -274,11 +296,11 @@ export const validateEmail = (
   const sanitized = value.trim().toLowerCase();
 
   if (!rules.pattern.test(sanitized)) {
-    errors.push('Invalid email address format');
+    errors.push("Invalid email address format");
   }
 
   if (sanitized.length > 254) {
-    errors.push('Email address is too long');
+    errors.push("Email address is too long");
   }
 
   return { isValid: errors.length === 0, errors, sanitizedValue: sanitized };
@@ -288,19 +310,19 @@ export const validateEmail = (
  * Validates gender field
  */
 export const validateGender = (value: string): ValidationResult => {
-  const validValues = ['M', 'F', 'male', 'female', 'Male', 'Female'];
+  const validValues = ["M", "F", "male", "female", "Male", "Female"];
   const sanitized = value?.trim();
 
   if (!sanitized) {
-    return { isValid: false, errors: ['Gender is required'] };
+    return { isValid: false, errors: ["Gender is required"] };
   }
 
   if (!validValues.includes(sanitized)) {
-    return { isValid: false, errors: ['Gender must be M or F'] };
+    return { isValid: false, errors: ["Gender must be M or F"] };
   }
 
   // Normalize to M/F
-  const normalized = sanitized.toLowerCase().startsWith('m') ? 'M' : 'F';
+  const normalized = sanitized.toLowerCase().startsWith("m") ? "M" : "F";
 
   return { isValid: true, errors: [], sanitizedValue: normalized };
 };
@@ -331,20 +353,20 @@ export interface PatientValidationResult {
  */
 export const validatePatientData = (
   data: Partial<PatientData>,
-  rules = DEFAULT_PATIENT_RULES
+  rules = DEFAULT_PATIENT_RULES,
 ): PatientValidationResult => {
   const errors: Record<string, string[]> = {};
   const sanitizedData: Partial<PatientData> = {};
 
   // Emirates ID
-  const emiratesIdResult = validateEmiratesId(data.emiratesId || '');
+  const emiratesIdResult = validateEmiratesId(data.emiratesId || "");
   if (!emiratesIdResult.isValid) {
     errors.emiratesId = emiratesIdResult.errors;
   }
   sanitizedData.emiratesId = emiratesIdResult.sanitizedValue;
 
   // Full Name (English)
-  const nameEnResult = validateNameEn(data.fullNameEn || '', rules.fullNameEn);
+  const nameEnResult = validateNameEn(data.fullNameEn || "", rules.fullNameEn);
   if (!nameEnResult.isValid) {
     errors.fullNameEn = nameEnResult.errors;
   }
@@ -360,14 +382,17 @@ export const validatePatientData = (
   }
 
   // Date of Birth
-  const dobResult = validateDateOfBirth(data.dateOfBirth || '', rules.dateOfBirth);
+  const dobResult = validateDateOfBirth(
+    data.dateOfBirth || "",
+    rules.dateOfBirth,
+  );
   if (!dobResult.isValid) {
     errors.dateOfBirth = dobResult.errors;
   }
   sanitizedData.dateOfBirth = dobResult.sanitizedValue;
 
   // Gender
-  const genderResult = validateGender(data.gender || '');
+  const genderResult = validateGender(data.gender || "");
   if (!genderResult.isValid) {
     errors.gender = genderResult.errors;
   }
@@ -375,7 +400,10 @@ export const validatePatientData = (
 
   // Phone Number
   if (data.phoneNumber) {
-    const phoneResult = validatePhoneNumber(data.phoneNumber, rules.phoneNumber);
+    const phoneResult = validatePhoneNumber(
+      data.phoneNumber,
+      rules.phoneNumber,
+    );
     if (!phoneResult.isValid) {
       errors.phoneNumber = phoneResult.errors;
     }
@@ -415,7 +443,7 @@ export const validateICD10Code = (code: string): ValidationResult => {
   const sanitized = code?.trim().toUpperCase();
 
   if (!sanitized) {
-    return { isValid: false, errors: ['ICD-10 code is required'] };
+    return { isValid: false, errors: ["ICD-10 code is required"] };
   }
 
   // ICD-10 format: Letter followed by 2 digits, optionally followed by decimal and more digits
@@ -423,7 +451,7 @@ export const validateICD10Code = (code: string): ValidationResult => {
   const icd10Regex = /^[A-Z]\d{2}(\.\d{1,4})?$/;
 
   if (!icd10Regex.test(sanitized)) {
-    errors.push('Invalid ICD-10 code format (e.g., H90.3)');
+    errors.push("Invalid ICD-10 code format (e.g., H90.3)");
   }
 
   return { isValid: errors.length === 0, errors, sanitizedValue: sanitized };
@@ -435,21 +463,25 @@ export const validateICD10Code = (code: string): ValidationResult => {
 export const validateHearingThreshold = (value: number): ValidationResult => {
   const errors: string[] = [];
 
-  if (typeof value !== 'number' || isNaN(value)) {
-    errors.push('Threshold must be a number');
+  if (typeof value !== "number" || isNaN(value)) {
+    errors.push("Threshold must be a number");
     return { isValid: false, errors };
   }
 
   if (value < -10 || value > 120) {
-    errors.push('Threshold must be between -10 and 120 dB');
+    errors.push("Threshold must be between -10 and 120 dB");
   }
 
   // Thresholds are typically in 5 dB steps
   if (value % 5 !== 0) {
-    errors.push('Threshold should be in 5 dB increments');
+    errors.push("Threshold should be in 5 dB increments");
   }
 
-  return { isValid: errors.length === 0, errors, sanitizedValue: String(value) };
+  return {
+    isValid: errors.length === 0,
+    errors,
+    sanitizedValue: String(value),
+  };
 };
 
 /**
@@ -457,18 +489,21 @@ export const validateHearingThreshold = (value: number): ValidationResult => {
  */
 export const validateSerialNumber = (value: string): ValidationResult => {
   const errors: string[] = [];
-  const sanitized = value?.trim().toUpperCase().replace(/[^A-Z0-9-]/g, '');
+  const sanitized = value
+    ?.trim()
+    .toUpperCase()
+    .replace(/[^A-Z0-9-]/g, "");
 
   if (!sanitized) {
-    return { isValid: false, errors: ['Serial number is required'] };
+    return { isValid: false, errors: ["Serial number is required"] };
   }
 
   if (sanitized.length < 5) {
-    errors.push('Serial number must be at least 5 characters');
+    errors.push("Serial number must be at least 5 characters");
   }
 
   if (sanitized.length > 30) {
-    errors.push('Serial number cannot exceed 30 characters');
+    errors.push("Serial number cannot exceed 30 characters");
   }
 
   return { isValid: errors.length === 0, errors, sanitizedValue: sanitized };

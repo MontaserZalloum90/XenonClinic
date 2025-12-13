@@ -1,5 +1,4 @@
-import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery } from "@tanstack/react-query";
 import {
   HeartIcon,
   ClipboardDocumentCheckIcon,
@@ -9,14 +8,14 @@ import {
   DocumentTextIcon,
   ArrowTrendingUpIcon,
   ExclamationTriangleIcon,
-} from '@heroicons/react/24/outline';
-import { format } from 'date-fns';
-import type { CardiologyStatistics, ECGRecord } from '../../types/cardiology';
+} from "@heroicons/react/24/outline";
+import { format } from "date-fns";
+import type { CardiologyStatistics } from "../../types/cardiology";
 
 export const CardiologyDashboard = () => {
   // Mock data - In production, replace with actual API calls
   const { data: stats } = useQuery<CardiologyStatistics>({
-    queryKey: ['cardiology-stats'],
+    queryKey: ["cardiology-stats"],
     queryFn: async () => {
       // Mock implementation
       return {
@@ -39,34 +38,43 @@ export const CardiologyDashboard = () => {
     },
   });
 
-  const { data: recentProcedures } = useQuery<any[]>({
-    queryKey: ['recent-procedures'],
+  const { data: recentProcedures } = useQuery<
+    Array<{
+      id: number;
+      patientName: string;
+      procedureType: string;
+      date: string;
+      status: string;
+      performedBy: string;
+    }>
+  >({
+    queryKey: ["recent-procedures"],
     queryFn: async () => {
       // Mock implementation
       return [
         {
           id: 1,
-          patientName: 'John Smith',
-          procedureType: 'ECG',
+          patientName: "John Smith",
+          procedureType: "ECG",
           date: new Date().toISOString(),
-          status: 'Completed',
-          performedBy: 'Dr. Johnson',
+          status: "Completed",
+          performedBy: "Dr. Johnson",
         },
         {
           id: 2,
-          patientName: 'Mary Johnson',
-          procedureType: 'Echo',
+          patientName: "Mary Johnson",
+          procedureType: "Echo",
           date: new Date().toISOString(),
-          status: 'In Progress',
-          performedBy: 'Dr. Williams',
+          status: "In Progress",
+          performedBy: "Dr. Williams",
         },
         {
           id: 3,
-          patientName: 'Robert Davis',
-          procedureType: 'Stress Test',
+          patientName: "Robert Davis",
+          procedureType: "Stress Test",
           date: new Date().toISOString(),
-          status: 'Scheduled',
-          performedBy: 'Dr. Brown',
+          status: "Scheduled",
+          performedBy: "Dr. Brown",
         },
       ];
     },
@@ -81,13 +89,13 @@ export const CardiologyDashboard = () => {
 
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
-      Completed: 'text-green-600 bg-green-100',
-      'In Progress': 'text-yellow-600 bg-yellow-100',
-      Scheduled: 'text-blue-600 bg-blue-100',
-      Pending: 'text-orange-600 bg-orange-100',
-      Cancelled: 'text-red-600 bg-red-100',
+      Completed: "text-green-600 bg-green-100",
+      "In Progress": "text-yellow-600 bg-yellow-100",
+      Scheduled: "text-blue-600 bg-blue-100",
+      Pending: "text-orange-600 bg-orange-100",
+      Cancelled: "text-red-600 bg-red-100",
     };
-    return colors[status] || 'text-gray-600 bg-gray-100';
+    return colors[status] || "text-gray-600 bg-gray-100";
   };
 
   return (
@@ -95,8 +103,12 @@ export const CardiologyDashboard = () => {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Cardiology Dashboard</h1>
-          <p className="text-gray-600 mt-1">Cardiac examinations and procedures overview</p>
+          <h1 className="text-2xl font-bold text-gray-900">
+            Cardiology Dashboard
+          </h1>
+          <p className="text-gray-600 mt-1">
+            Cardiac examinations and procedures overview
+          </p>
         </div>
         <div className="flex gap-2">
           <button className="btn btn-outline">
@@ -119,7 +131,9 @@ export const CardiologyDashboard = () => {
             </div>
             <div className="ml-4">
               <p className="text-sm text-gray-500">Total Patients</p>
-              <p className="text-2xl font-bold text-gray-900">{statistics.totalPatients}</p>
+              <p className="text-2xl font-bold text-gray-900">
+                {statistics.totalPatients}
+              </p>
               {statistics.newPatientsThisMonth && (
                 <p className="text-xs text-green-600 mt-1">
                   +{statistics.newPatientsThisMonth} this month
@@ -136,9 +150,13 @@ export const CardiologyDashboard = () => {
             </div>
             <div className="ml-4">
               <p className="text-sm text-gray-500">ECGs Today</p>
-              <p className="text-2xl font-bold text-gray-900">{statistics.ecgsToday}</p>
+              <p className="text-2xl font-bold text-gray-900">
+                {statistics.ecgsToday}
+              </p>
               {statistics.ecgsThisWeek && (
-                <p className="text-xs text-gray-600 mt-1">{statistics.ecgsThisWeek} this week</p>
+                <p className="text-xs text-gray-600 mt-1">
+                  {statistics.ecgsThisWeek} this week
+                </p>
               )}
             </div>
           </div>
@@ -151,9 +169,13 @@ export const CardiologyDashboard = () => {
             </div>
             <div className="ml-4">
               <p className="text-sm text-gray-500">Echos This Week</p>
-              <p className="text-2xl font-bold text-gray-900">{statistics.echosThisWeek}</p>
+              <p className="text-2xl font-bold text-gray-900">
+                {statistics.echosThisWeek}
+              </p>
               {statistics.echosThisMonth && (
-                <p className="text-xs text-gray-600 mt-1">{statistics.echosThisMonth} this month</p>
+                <p className="text-xs text-gray-600 mt-1">
+                  {statistics.echosThisMonth} this month
+                </p>
               )}
             </div>
           </div>
@@ -166,7 +188,9 @@ export const CardiologyDashboard = () => {
             </div>
             <div className="ml-4">
               <p className="text-sm text-gray-500">Pending Results</p>
-              <p className="text-2xl font-bold text-gray-900">{statistics.pendingResults}</p>
+              <p className="text-2xl font-bold text-gray-900">
+                {statistics.pendingResults}
+              </p>
               {statistics.pendingReviews && statistics.pendingReviews > 0 && (
                 <p className="text-xs text-red-600 mt-1">
                   {statistics.pendingReviews} need review
@@ -183,7 +207,9 @@ export const CardiologyDashboard = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-500">Stress Tests</p>
-              <p className="text-xl font-bold text-gray-900">{statistics.stressTestsThisMonth || 0}</p>
+              <p className="text-xl font-bold text-gray-900">
+                {statistics.stressTestsThisMonth || 0}
+              </p>
               <p className="text-xs text-gray-600 mt-1">This month</p>
             </div>
             <ArrowTrendingUpIcon className="h-8 w-8 text-blue-400" />
@@ -194,7 +220,9 @@ export const CardiologyDashboard = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-500">Catheterizations</p>
-              <p className="text-xl font-bold text-gray-900">{statistics.cathsThisMonth || 0}</p>
+              <p className="text-xl font-bold text-gray-900">
+                {statistics.cathsThisMonth || 0}
+              </p>
               <p className="text-xs text-gray-600 mt-1">This month</p>
             </div>
             <HeartIcon className="h-8 w-8 text-red-400" />
@@ -205,7 +233,9 @@ export const CardiologyDashboard = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-500">Abnormal ECGs</p>
-              <p className="text-xl font-bold text-gray-900">{statistics.abnormalECGs || 0}</p>
+              <p className="text-xl font-bold text-gray-900">
+                {statistics.abnormalECGs || 0}
+              </p>
               <p className="text-xs text-gray-600 mt-1">Requiring follow-up</p>
             </div>
             <ExclamationTriangleIcon className="h-8 w-8 text-orange-400" />
@@ -216,8 +246,10 @@ export const CardiologyDashboard = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-500">Reduced EF Cases</p>
-              <p className="text-xl font-bold text-gray-900">{statistics.reducedEF || 0}</p>
-              <p className="text-xs text-gray-600 mt-1">EF {'<'} 50%</p>
+              <p className="text-xl font-bold text-gray-900">
+                {statistics.reducedEF || 0}
+              </p>
+              <p className="text-xs text-gray-600 mt-1">EF {"<"} 50%</p>
             </div>
             <ChartBarIcon className="h-8 w-8 text-purple-400" />
           </div>
@@ -226,14 +258,18 @@ export const CardiologyDashboard = () => {
 
       {/* Quick Actions */}
       <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">
+          Quick Actions
+        </h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <a
             href="/cardiology/ecg"
             className="flex flex-col items-center justify-center p-4 border-2 border-gray-200 rounded-lg hover:border-primary-500 hover:bg-primary-50 transition-colors"
           >
             <ChartBarIcon className="h-8 w-8 text-primary-600 mb-2" />
-            <span className="text-sm font-medium text-gray-900">ECG Records</span>
+            <span className="text-sm font-medium text-gray-900">
+              ECG Records
+            </span>
           </a>
 
           <a
@@ -241,7 +277,9 @@ export const CardiologyDashboard = () => {
             className="flex flex-col items-center justify-center p-4 border-2 border-gray-200 rounded-lg hover:border-primary-500 hover:bg-primary-50 transition-colors"
           >
             <BeakerIcon className="h-8 w-8 text-primary-600 mb-2" />
-            <span className="text-sm font-medium text-gray-900">Echocardiograms</span>
+            <span className="text-sm font-medium text-gray-900">
+              Echocardiograms
+            </span>
           </a>
 
           <a
@@ -249,7 +287,9 @@ export const CardiologyDashboard = () => {
             className="flex flex-col items-center justify-center p-4 border-2 border-gray-200 rounded-lg hover:border-primary-500 hover:bg-primary-50 transition-colors"
           >
             <ArrowTrendingUpIcon className="h-8 w-8 text-primary-600 mb-2" />
-            <span className="text-sm font-medium text-gray-900">Stress Tests</span>
+            <span className="text-sm font-medium text-gray-900">
+              Stress Tests
+            </span>
           </a>
 
           <a
@@ -265,7 +305,9 @@ export const CardiologyDashboard = () => {
             className="flex flex-col items-center justify-center p-4 border-2 border-gray-200 rounded-lg hover:border-primary-500 hover:bg-primary-50 transition-colors"
           >
             <ExclamationTriangleIcon className="h-8 w-8 text-primary-600 mb-2" />
-            <span className="text-sm font-medium text-gray-900">Risk Calculator</span>
+            <span className="text-sm font-medium text-gray-900">
+              Risk Calculator
+            </span>
           </a>
         </div>
       </div>
@@ -273,7 +315,9 @@ export const CardiologyDashboard = () => {
       {/* Recent Procedures */}
       <div className="bg-white rounded-lg shadow overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900">Recent Procedures</h2>
+          <h2 className="text-lg font-semibold text-gray-900">
+            Recent Procedures
+          </h2>
         </div>
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
@@ -304,13 +348,15 @@ export const CardiologyDashboard = () => {
                 recentProcedures.map((procedure) => (
                   <tr key={procedure.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="font-medium text-gray-900">{procedure.patientName}</div>
+                      <div className="font-medium text-gray-900">
+                        {procedure.patientName}
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                       {procedure.procedureType}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                      {format(new Date(procedure.date), 'MMM d, yyyy h:mm a')}
+                      {format(new Date(procedure.date), "MMM d, yyyy h:mm a")}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                       {procedure.performedBy}
@@ -318,7 +364,7 @@ export const CardiologyDashboard = () => {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span
                         className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
-                          procedure.status
+                          procedure.status,
                         )}`}
                       >
                         {procedure.status}
@@ -328,15 +374,20 @@ export const CardiologyDashboard = () => {
                       <button className="text-primary-600 hover:text-primary-900 mr-3">
                         View
                       </button>
-                      {procedure.status === 'Pending' && (
-                        <button className="text-green-600 hover:text-green-900">Review</button>
+                      {procedure.status === "Pending" && (
+                        <button className="text-green-600 hover:text-green-900">
+                          Review
+                        </button>
                       )}
                     </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
+                  <td
+                    colSpan={6}
+                    className="px-6 py-12 text-center text-gray-500"
+                  >
                     No recent procedures found
                   </td>
                 </tr>

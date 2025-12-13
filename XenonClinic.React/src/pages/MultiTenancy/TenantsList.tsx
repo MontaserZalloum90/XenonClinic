@@ -1,6 +1,6 @@
-import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Dialog } from '@headlessui/react';
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Dialog } from "@headlessui/react";
 import {
   BuildingOffice2Icon,
   PlusIcon,
@@ -11,40 +11,63 @@ import {
   XCircleIcon,
   ClockIcon,
   ExclamationTriangleIcon,
-} from '@heroicons/react/24/outline';
-import { api } from '../../lib/api';
-import type { Tenant, TenantStatus, SubscriptionPlan } from '../../types/multi-tenancy';
+} from "@heroicons/react/24/outline";
+import { api } from "../../lib/api";
+import type { Tenant, TenantStatus } from "../../types/multi-tenancy";
 
-const statusConfig: Record<number, { label: string; color: string; icon: React.ComponentType<{ className?: string }> }> = {
-  0: { label: 'Active', color: 'bg-green-100 text-green-800', icon: CheckCircleIcon },
-  1: { label: 'Suspended', color: 'bg-red-100 text-red-800', icon: XCircleIcon },
-  2: { label: 'Pending Activation', color: 'bg-yellow-100 text-yellow-800', icon: ClockIcon },
-  3: { label: 'Cancelled', color: 'bg-gray-100 text-gray-800', icon: ExclamationTriangleIcon },
+const statusConfig: Record<
+  number,
+  {
+    label: string;
+    color: string;
+    icon: React.ComponentType<{ className?: string }>;
+  }
+> = {
+  0: {
+    label: "Active",
+    color: "bg-green-100 text-green-800",
+    icon: CheckCircleIcon,
+  },
+  1: {
+    label: "Suspended",
+    color: "bg-red-100 text-red-800",
+    icon: XCircleIcon,
+  },
+  2: {
+    label: "Pending Activation",
+    color: "bg-yellow-100 text-yellow-800",
+    icon: ClockIcon,
+  },
+  3: {
+    label: "Cancelled",
+    color: "bg-gray-100 text-gray-800",
+    icon: ExclamationTriangleIcon,
+  },
 };
 
 const planConfig: Record<number, { label: string; color: string }> = {
-  0: { label: 'Trial', color: 'bg-purple-100 text-purple-800' },
-  1: { label: 'Basic', color: 'bg-blue-100 text-blue-800' },
-  2: { label: 'Professional', color: 'bg-indigo-100 text-indigo-800' },
-  3: { label: 'Enterprise', color: 'bg-amber-100 text-amber-800' },
+  0: { label: "Trial", color: "bg-purple-100 text-purple-800" },
+  1: { label: "Basic", color: "bg-blue-100 text-blue-800" },
+  2: { label: "Professional", color: "bg-indigo-100 text-indigo-800" },
+  3: { label: "Enterprise", color: "bg-amber-100 text-amber-800" },
 };
 
 export function TenantsList() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedTenant, setSelectedTenant] = useState<Tenant | null>(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<TenantStatus | 'all'>('all');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<TenantStatus | "all">("all");
   const queryClient = useQueryClient();
 
   const { data: tenants = [], isLoading } = useQuery({
-    queryKey: ['tenants'],
-    queryFn: () => api.get<Tenant[]>('/api/multi-tenancy/tenants'),
+    queryKey: ["tenants"],
+    queryFn: () => api.get<Tenant[]>("/api/multi-tenancy/tenants"),
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id: number) => api.delete(`/api/multi-tenancy/tenants/${id}`),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['tenants'] });
+      queryClient.invalidateQueries({ queryKey: ["tenants"] });
     },
   });
 
@@ -53,7 +76,8 @@ export function TenantsList() {
       tenant.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       tenant.subdomain.toLowerCase().includes(searchTerm.toLowerCase()) ||
       tenant.contactEmail.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || tenant.status === statusFilter;
+    const matchesStatus =
+      statusFilter === "all" || tenant.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
@@ -69,10 +93,10 @@ export function TenantsList() {
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
     });
   };
 
@@ -112,7 +136,9 @@ export function TenantsList() {
             </div>
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-500">Total Tenants</p>
-              <p className="text-2xl font-semibold text-gray-900">{tenants.length}</p>
+              <p className="text-2xl font-semibold text-gray-900">
+                {tenants.length}
+              </p>
             </div>
           </div>
         </div>
@@ -172,7 +198,9 @@ export function TenantsList() {
         <div className="flex gap-2">
           <select
             value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value as TenantStatus | 'all')}
+            onChange={(e) =>
+              setStatusFilter(e.target.value as TenantStatus | "all")
+            }
             className="rounded-md border border-gray-300 py-2 px-3 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
           >
             <option value="all">All Status</option>
@@ -226,26 +254,39 @@ export function TenantsList() {
               {filteredTenants.map((tenant) => {
                 const status = statusConfig[tenant.status];
                 const plan = planConfig[tenant.plan];
-                const storage = formatStorage(tenant.usedStorageGB, tenant.storageQuotaGB);
+                const storage = formatStorage(
+                  tenant.usedStorageGB,
+                  tenant.storageQuotaGB,
+                );
                 const StatusIcon = status.icon;
 
                 return (
                   <tr key={tenant.id} className="hover:bg-gray-50">
                     <td className="whitespace-nowrap px-6 py-4">
                       <div>
-                        <div className="font-medium text-gray-900">{tenant.name}</div>
-                        <div className="text-sm text-gray-500">{tenant.subdomain}.xenonclinic.com</div>
-                        <div className="text-xs text-gray-400">{tenant.contactEmail}</div>
+                        <div className="font-medium text-gray-900">
+                          {tenant.name}
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          {tenant.subdomain}.xenonclinic.com
+                        </div>
+                        <div className="text-xs text-gray-400">
+                          {tenant.contactEmail}
+                        </div>
                       </div>
                     </td>
                     <td className="whitespace-nowrap px-6 py-4">
-                      <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${status.color}`}>
+                      <span
+                        className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${status.color}`}
+                      >
                         <StatusIcon className="mr-1 h-3.5 w-3.5" />
                         {status.label}
                       </span>
                     </td>
                     <td className="whitespace-nowrap px-6 py-4">
-                      <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${plan.color}`}>
+                      <span
+                        className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${plan.color}`}
+                      >
                         {plan.label}
                       </span>
                     </td>
@@ -262,16 +303,24 @@ export function TenantsList() {
                         <div className="h-2 rounded-full bg-gray-200">
                           <div
                             className={`h-2 rounded-full ${
-                              storage.percentage > 90 ? 'bg-red-500' : storage.percentage > 70 ? 'bg-yellow-500' : 'bg-green-500'
+                              storage.percentage > 90
+                                ? "bg-red-500"
+                                : storage.percentage > 70
+                                  ? "bg-yellow-500"
+                                  : "bg-green-500"
                             }`}
-                            style={{ width: `${Math.min(storage.percentage, 100)}%` }}
+                            style={{
+                              width: `${Math.min(storage.percentage, 100)}%`,
+                            }}
                           />
                         </div>
                       </div>
                     </td>
                     <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
                       <div>{formatDate(tenant.subscriptionStart)}</div>
-                      <div className="text-xs">to {formatDate(tenant.subscriptionEnd)}</div>
+                      <div className="text-xs">
+                        to {formatDate(tenant.subscriptionEnd)}
+                      </div>
                     </td>
                     <td className="whitespace-nowrap px-6 py-4 text-right text-sm">
                       <button
@@ -316,10 +365,10 @@ function TenantModal({
 }) {
   const queryClient = useQueryClient();
   const [formData, setFormData] = useState({
-    name: tenant?.name || '',
-    subdomain: tenant?.subdomain || '',
-    contactEmail: tenant?.contactEmail || '',
-    contactPhone: tenant?.contactPhone || '',
+    name: tenant?.name || "",
+    subdomain: tenant?.subdomain || "",
+    contactEmail: tenant?.contactEmail || "",
+    contactPhone: tenant?.contactPhone || "",
     status: tenant?.status || 0,
     plan: tenant?.plan || 0,
     maxUsers: tenant?.maxUsers || 10,
@@ -331,9 +380,9 @@ function TenantModal({
     mutationFn: (data: typeof formData) =>
       tenant
         ? api.put(`/api/multi-tenancy/tenants/${tenant.id}`, data)
-        : api.post('/api/multi-tenancy/tenants', data),
+        : api.post("/api/multi-tenancy/tenants", data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['tenants'] });
+      queryClient.invalidateQueries({ queryKey: ["tenants"] });
       onClose();
     },
   });
@@ -349,7 +398,7 @@ function TenantModal({
       <div className="fixed inset-0 flex items-center justify-center p-4">
         <Dialog.Panel className="mx-auto max-w-lg w-full rounded-lg bg-white p-6 shadow-xl">
           <Dialog.Title className="text-lg font-semibold text-gray-900 mb-4">
-            {tenant ? 'Edit Tenant' : 'Add New Tenant'}
+            {tenant ? "Edit Tenant" : "Add New Tenant"}
           </Dialog.Title>
 
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -362,7 +411,9 @@ function TenantModal({
                   type="text"
                   required
                   value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, name: e.target.value })
+                  }
                   className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                 />
               </div>
@@ -376,7 +427,14 @@ function TenantModal({
                     type="text"
                     required
                     value={formData.subdomain}
-                    onChange={(e) => setFormData({ ...formData, subdomain: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '') })}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        subdomain: e.target.value
+                          .toLowerCase()
+                          .replace(/[^a-z0-9-]/g, ""),
+                      })
+                    }
                     className="block w-full rounded-l-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                   />
                   <span className="inline-flex items-center rounded-r-md border border-l-0 border-gray-300 bg-gray-50 px-3 text-sm text-gray-500">
@@ -386,10 +444,14 @@ function TenantModal({
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700">Status</label>
+                <label className="block text-sm font-medium text-gray-700">
+                  Status
+                </label>
                 <select
                   value={formData.status}
-                  onChange={(e) => setFormData({ ...formData, status: Number(e.target.value) })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, status: Number(e.target.value) })
+                  }
                   className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                 >
                   <option value={0}>Active</option>
@@ -407,7 +469,9 @@ function TenantModal({
                   type="email"
                   required
                   value={formData.contactEmail}
-                  onChange={(e) => setFormData({ ...formData, contactEmail: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, contactEmail: e.target.value })
+                  }
                   className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                 />
               </div>
@@ -419,16 +483,22 @@ function TenantModal({
                 <input
                   type="tel"
                   value={formData.contactPhone}
-                  onChange={(e) => setFormData({ ...formData, contactPhone: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, contactPhone: e.target.value })
+                  }
                   className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700">Plan</label>
+                <label className="block text-sm font-medium text-gray-700">
+                  Plan
+                </label>
                 <select
                   value={formData.plan}
-                  onChange={(e) => setFormData({ ...formData, plan: Number(e.target.value) })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, plan: Number(e.target.value) })
+                  }
                   className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                 >
                   <option value={0}>Trial</option>
@@ -447,7 +517,12 @@ function TenantModal({
                   min="1"
                   required
                   value={formData.maxUsers}
-                  onChange={(e) => setFormData({ ...formData, maxUsers: Number(e.target.value) })}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      maxUsers: Number(e.target.value),
+                    })
+                  }
                   className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                 />
               </div>
@@ -461,7 +536,12 @@ function TenantModal({
                   min="1"
                   required
                   value={formData.maxCompanies}
-                  onChange={(e) => setFormData({ ...formData, maxCompanies: Number(e.target.value) })}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      maxCompanies: Number(e.target.value),
+                    })
+                  }
                   className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                 />
               </div>
@@ -475,7 +555,12 @@ function TenantModal({
                   min="1"
                   required
                   value={formData.storageQuotaGB}
-                  onChange={(e) => setFormData({ ...formData, storageQuotaGB: Number(e.target.value) })}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      storageQuotaGB: Number(e.target.value),
+                    })
+                  }
                   className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                 />
               </div>
@@ -494,7 +579,11 @@ function TenantModal({
                 disabled={mutation.isPending}
                 className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
               >
-                {mutation.isPending ? 'Saving...' : tenant ? 'Update' : 'Create'}
+                {mutation.isPending
+                  ? "Saving..."
+                  : tenant
+                    ? "Update"
+                    : "Create"}
               </button>
             </div>
           </form>

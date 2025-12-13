@@ -4,7 +4,7 @@
  * Provides idempotent operations safe to run multiple times
  */
 
-import { ClinicType, DemoDataset, getDatasetByType, availableDatasets } from './demoData';
+import { ClinicType, getDatasetByType, availableDatasets } from "./demoData";
 
 // ============================================
 // TYPES
@@ -29,18 +29,19 @@ export interface DemoStatus {
 export interface LoadDemoResult {
   success: boolean;
   message: string;
-  stats?: DemoStatus['stats'];
+  stats?: DemoStatus["stats"];
   error?: string;
 }
 
-const DEMO_STATUS_KEY = 'xenon_demo_status';
-const DEMO_DATA_PREFIX = 'xenon_demo_';
+const DEMO_STATUS_KEY = "xenon_demo_status";
+const DEMO_DATA_PREFIX = "xenon_demo_";
 
 // ============================================
 // STORAGE HELPERS
 // ============================================
 
-const getStorageKey = (entity: string): string => `${DEMO_DATA_PREFIX}${entity}`;
+const getStorageKey = (entity: string): string =>
+  `${DEMO_DATA_PREFIX}${entity}`;
 
 const saveToStorage = <T>(entity: string, data: T[]): void => {
   try {
@@ -138,7 +139,7 @@ class DemoService {
    */
   async loadDemoData(
     clinicType: ClinicType,
-    options: { force?: boolean } = {}
+    options: { force?: boolean } = {},
   ): Promise<LoadDemoResult> {
     const { force = false } = options;
 
@@ -163,24 +164,24 @@ class DemoService {
       const dataset = getDatasetByType(clinicType);
 
       // Load each entity type
-      saveToStorage('patients', dataset.patients);
-      saveToStorage('appointments', dataset.appointments);
-      saveToStorage('employees', dataset.employees);
-      saveToStorage('inventory', dataset.inventory);
+      saveToStorage("patients", dataset.patients);
+      saveToStorage("appointments", dataset.appointments);
+      saveToStorage("employees", dataset.employees);
+      saveToStorage("inventory", dataset.inventory);
 
       // Load audiology-specific data if available
       if (dataset.encounters) {
-        saveToStorage('encounters', dataset.encounters);
+        saveToStorage("encounters", dataset.encounters);
       }
       if (dataset.audiograms) {
-        saveToStorage('audiograms', dataset.audiograms);
+        saveToStorage("audiograms", dataset.audiograms);
       }
       if (dataset.hearingAids) {
-        saveToStorage('hearingAids', dataset.hearingAids);
+        saveToStorage("hearingAids", dataset.hearingAids);
       }
 
       // Calculate stats
-      const stats: DemoStatus['stats'] = {
+      const stats: DemoStatus["stats"] = {
         patients: dataset.patients.length,
         appointments: dataset.appointments.length,
         encounters: dataset.encounters?.length || 0,
@@ -206,10 +207,11 @@ class DemoService {
         stats,
       };
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error";
       return {
         success: false,
-        message: 'Failed to load demo data',
+        message: "Failed to load demo data",
         error: errorMessage,
       };
     }
@@ -222,7 +224,7 @@ class DemoService {
   async resetDemoData(clinicType?: ClinicType): Promise<LoadDemoResult> {
     try {
       const currentStatus = this.getStatus();
-      const typeToLoad = clinicType || currentStatus.clinicType || 'audiology';
+      const typeToLoad = clinicType || currentStatus.clinicType || "audiology";
 
       // Clear existing data
       await this.clearDemoData();
@@ -230,10 +232,11 @@ class DemoService {
       // Reload fresh data
       return this.loadDemoData(typeToLoad as ClinicType, { force: true });
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error";
       return {
         success: false,
-        message: 'Failed to reset demo data',
+        message: "Failed to reset demo data",
         error: errorMessage,
       };
     }
@@ -246,13 +249,13 @@ class DemoService {
     try {
       // Clear all entity types
       const entities = [
-        'patients',
-        'appointments',
-        'encounters',
-        'audiograms',
-        'hearingAids',
-        'employees',
-        'inventory',
+        "patients",
+        "appointments",
+        "encounters",
+        "audiograms",
+        "hearingAids",
+        "employees",
+        "inventory",
       ];
 
       for (const entity of entities) {
@@ -264,13 +267,14 @@ class DemoService {
 
       return {
         success: true,
-        message: 'Demo data cleared successfully',
+        message: "Demo data cleared successfully",
       };
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error";
       return {
         success: false,
-        message: 'Failed to clear demo data',
+        message: "Failed to clear demo data",
         error: errorMessage,
       };
     }
@@ -286,7 +290,10 @@ class DemoService {
   /**
    * Add a record to demo data (for mutations during demo)
    */
-  addRecord<T extends { id: number }>(entity: string, record: Omit<T, 'id'>): T {
+  addRecord<T extends { id: number }>(
+    entity: string,
+    record: Omit<T, "id">,
+  ): T {
     const existing = loadFromStorage<T>(entity);
     const maxId = existing.reduce((max, item) => Math.max(max, item.id), 0);
     const newRecord = { ...record, id: maxId + 1 } as T;
@@ -297,7 +304,11 @@ class DemoService {
   /**
    * Update a record in demo data
    */
-  updateRecord<T extends { id: number }>(entity: string, id: number, updates: Partial<T>): T | null {
+  updateRecord<T extends { id: number }>(
+    entity: string,
+    id: number,
+    updates: Partial<T>,
+  ): T | null {
     const existing = loadFromStorage<T>(entity);
     const index = existing.findIndex((item) => item.id === id);
     if (index === -1) return null;
@@ -326,13 +337,13 @@ class DemoService {
   exportData(): string {
     const status = this.getStatus();
     const entities = [
-      'patients',
-      'appointments',
-      'encounters',
-      'audiograms',
-      'hearingAids',
-      'employees',
-      'inventory',
+      "patients",
+      "appointments",
+      "encounters",
+      "audiograms",
+      "hearingAids",
+      "employees",
+      "inventory",
     ];
 
     const exportObj: Record<string, unknown> = {
@@ -342,7 +353,8 @@ class DemoService {
     };
 
     for (const entity of entities) {
-      (exportObj.data as Record<string, unknown>)[entity] = loadFromStorage(entity);
+      (exportObj.data as Record<string, unknown>)[entity] =
+        loadFromStorage(entity);
     }
 
     return JSON.stringify(exportObj, null, 2);
@@ -358,8 +370,8 @@ class DemoService {
       if (!imported.data || !imported.status) {
         return {
           success: false,
-          message: 'Invalid import format',
-          error: 'Missing required data or status fields',
+          message: "Invalid import format",
+          error: "Missing required data or status fields",
         };
       }
 
@@ -379,14 +391,15 @@ class DemoService {
 
       return {
         success: true,
-        message: 'Demo data imported successfully',
+        message: "Demo data imported successfully",
         stats: imported.status.stats,
       };
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Invalid JSON';
+      const errorMessage =
+        error instanceof Error ? error.message : "Invalid JSON";
       return {
         success: false,
-        message: 'Failed to import demo data',
+        message: "Failed to import demo data",
         error: errorMessage,
       };
     }

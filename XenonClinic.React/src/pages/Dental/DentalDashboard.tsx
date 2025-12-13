@@ -1,5 +1,4 @@
-import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery } from "@tanstack/react-query";
 import {
   UserGroupIcon,
   ClipboardDocumentListIcon,
@@ -8,9 +7,9 @@ import {
   DocumentChartBarIcon,
   BeakerIcon,
   PlusIcon,
-} from '@heroicons/react/24/outline';
-import type { DentalStatistics, DentalTreatment } from '../../types/dental';
-import { format } from 'date-fns';
+} from "@heroicons/react/24/outline";
+import type { DentalStatistics, DentalTreatment } from "../../types/dental";
+import { format } from "date-fns";
 
 // Mock API functions - Replace with actual API calls
 const dentalApi = {
@@ -47,17 +46,15 @@ const dentalApi = {
 };
 
 export const DentalDashboard = () => {
-  const [dateRange, setDateRange] = useState('week');
-
   // Fetch statistics
   const { data: statsData, isLoading: statsLoading } = useQuery({
-    queryKey: ['dental-stats'],
+    queryKey: ["dental-stats"],
     queryFn: () => dentalApi.getStatistics(),
   });
 
   // Fetch recent treatments
   const { data: treatmentsData, isLoading: treatmentsLoading } = useQuery({
-    queryKey: ['recent-treatments'],
+    queryKey: ["recent-treatments"],
     queryFn: () => dentalApi.getRecentTreatments(),
   });
 
@@ -100,7 +97,9 @@ export const DentalDashboard = () => {
                 </div>
                 <div className="ml-4">
                   <p className="text-sm text-gray-500">Total Patients</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats?.totalPatients || 0}</p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {stats?.totalPatients || 0}
+                  </p>
                   <p className="text-xs text-gray-500 mt-1">
                     +{stats?.newPatientsThisMonth || 0} this month
                   </p>
@@ -115,7 +114,9 @@ export const DentalDashboard = () => {
                 </div>
                 <div className="ml-4">
                   <p className="text-sm text-gray-500">Treatments Today</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats?.treatmentsToday || 0}</p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {stats?.treatmentsToday || 0}
+                  </p>
                   <p className="text-xs text-gray-500 mt-1">
                     {stats?.treatmentsThisWeek || 0} this week
                   </p>
@@ -130,7 +131,9 @@ export const DentalDashboard = () => {
                 </div>
                 <div className="ml-4">
                   <p className="text-sm text-gray-500">Pending Treatments</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats?.pendingTreatments || 0}</p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {stats?.pendingTreatments || 0}
+                  </p>
                   <p className="text-xs text-gray-500 mt-1">
                     {stats?.completedTreatments || 0} completed
                   </p>
@@ -149,7 +152,8 @@ export const DentalDashboard = () => {
                     AED {stats?.monthlyRevenue?.toLocaleString() || 0}
                   </p>
                   <p className="text-xs text-red-500 mt-1">
-                    AED {stats?.outstandingPayments?.toLocaleString() || 0} outstanding
+                    AED {stats?.outstandingPayments?.toLocaleString() || 0}{" "}
+                    outstanding
                   </p>
                 </div>
               </div>
@@ -161,8 +165,12 @@ export const DentalDashboard = () => {
             <div className="bg-white rounded-lg shadow p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-500">Dental Charts This Month</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats?.chartsThisMonth || 0}</p>
+                  <p className="text-sm text-gray-500">
+                    Dental Charts This Month
+                  </p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {stats?.chartsThisMonth || 0}
+                  </p>
                 </div>
                 <DocumentChartBarIcon className="h-8 w-8 text-blue-500" />
               </div>
@@ -172,7 +180,9 @@ export const DentalDashboard = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-500">Periodontal Exams</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats?.periodontalExamsThisMonth || 0}</p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {stats?.periodontalExamsThisMonth || 0}
+                  </p>
                 </div>
                 <BeakerIcon className="h-8 w-8 text-green-500" />
               </div>
@@ -182,7 +192,9 @@ export const DentalDashboard = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-500">Treatments This Month</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats?.treatmentsThisMonth || 0}</p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {stats?.treatmentsThisMonth || 0}
+                  </p>
                 </div>
                 <ClipboardDocumentListIcon className="h-8 w-8 text-purple-500" />
               </div>
@@ -194,7 +206,9 @@ export const DentalDashboard = () => {
       {/* Recent Treatments Table */}
       <div className="bg-white rounded-lg shadow">
         <div className="px-6 py-4 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900">Recent Treatments</h2>
+          <h2 className="text-lg font-semibold text-gray-900">
+            Recent Treatments
+          </h2>
         </div>
         <div className="overflow-x-auto">
           {treatmentsLoading ? (
@@ -234,43 +248,51 @@ export const DentalDashboard = () => {
                   <tr key={treatment.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="font-medium text-gray-900">
-                        {treatment.patientName || `Patient #${treatment.patientId}`}
+                        {treatment.patientName ||
+                          `Patient #${treatment.patientId}`}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {treatment.treatmentType}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {treatment.toothNumber || '-'}
+                      {treatment.toothNumber || "-"}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {treatment.performedDate
-                        ? format(new Date(treatment.performedDate), 'MMM d, yyyy')
-                        : '-'}
+                        ? format(
+                            new Date(treatment.performedDate),
+                            "MMM d, yyyy",
+                          )
+                        : "-"}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span
                         className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                          treatment.status === 'completed'
-                            ? 'bg-green-100 text-green-800'
-                            : treatment.status === 'in_progress'
-                            ? 'bg-yellow-100 text-yellow-800'
-                            : treatment.status === 'planned'
-                            ? 'bg-blue-100 text-blue-800'
-                            : 'bg-gray-100 text-gray-800'
+                          treatment.status === "completed"
+                            ? "bg-green-100 text-green-800"
+                            : treatment.status === "in_progress"
+                              ? "bg-yellow-100 text-yellow-800"
+                              : treatment.status === "planned"
+                                ? "bg-blue-100 text-blue-800"
+                                : "bg-gray-100 text-gray-800"
                         }`}
                       >
                         {treatment.status}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {treatment.cost ? `AED ${treatment.cost.toFixed(2)}` : '-'}
+                      {treatment.cost
+                        ? `AED ${treatment.cost.toFixed(2)}`
+                        : "-"}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <button className="text-primary-600 hover:text-primary-900 mr-3">
                         View
                       </button>
-                      <button className="text-green-600 hover:text-green-900">Edit</button>
+                      <button className="text-green-600 hover:text-green-900">
+                        Edit
+                      </button>
                     </td>
                   </tr>
                 ))}
@@ -286,19 +308,27 @@ export const DentalDashboard = () => {
 
       {/* Quick Actions */}
       <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">
+          Quick Actions
+        </h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <button className="p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-primary-500 hover:bg-primary-50 transition-colors">
             <DocumentChartBarIcon className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-            <p className="text-sm font-medium text-gray-700">Create Dental Chart</p>
+            <p className="text-sm font-medium text-gray-700">
+              Create Dental Chart
+            </p>
           </button>
           <button className="p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-primary-500 hover:bg-primary-50 transition-colors">
             <ClipboardDocumentListIcon className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-            <p className="text-sm font-medium text-gray-700">Schedule Treatment</p>
+            <p className="text-sm font-medium text-gray-700">
+              Schedule Treatment
+            </p>
           </button>
           <button className="p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-primary-500 hover:bg-primary-50 transition-colors">
             <BeakerIcon className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-            <p className="text-sm font-medium text-gray-700">Periodontal Exam</p>
+            <p className="text-sm font-medium text-gray-700">
+              Periodontal Exam
+            </p>
           </button>
         </div>
       </div>

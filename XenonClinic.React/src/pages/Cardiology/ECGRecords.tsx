@@ -1,39 +1,40 @@
-import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Dialog } from '@headlessui/react';
+import { useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Dialog } from "@headlessui/react";
 import {
   MagnifyingGlassIcon,
   FunnelIcon,
   PlusIcon,
   XMarkIcon,
-} from '@heroicons/react/24/outline';
-import { format } from 'date-fns';
-import type { ECGRecord, CreateECGRequest } from '../../types/cardiology';
-import { ECGStatus, HeartRhythm } from '../../types/cardiology';
+} from "@heroicons/react/24/outline";
+import { format } from "date-fns";
+import type { ECGRecord, CreateECGRequest } from "../../types/cardiology";
+import { ECGStatus, HeartRhythm } from "../../types/cardiology";
 
 export const ECGRecords = () => {
-  const queryClient = useQueryClient();
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("");
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedRecord, setSelectedRecord] = useState<ECGRecord | undefined>(undefined);
+  const [selectedRecord, setSelectedRecord] = useState<ECGRecord | undefined>(
+    undefined,
+  );
 
   // Mock data - Replace with actual API calls
   const { data: records, isLoading } = useQuery<ECGRecord[]>({
-    queryKey: ['ecg-records'],
+    queryKey: ["ecg-records"],
     queryFn: async () => {
       // Mock implementation
       return [
         {
           id: 1,
           patientId: 1001,
-          patientName: 'John Smith',
+          patientName: "John Smith",
           recordDate: new Date().toISOString(),
           heartRate: 72,
           rhythm: HeartRhythm.Sinus,
-          interpretation: 'Normal sinus rhythm',
+          interpretation: "Normal sinus rhythm",
           abnormalities: [],
-          performedBy: 'Dr. Johnson',
+          performedBy: "Dr. Johnson",
           status: ECGStatus.Completed,
           prInterval: 160,
           qrsDuration: 90,
@@ -44,27 +45,27 @@ export const ECGRecords = () => {
         {
           id: 2,
           patientId: 1002,
-          patientName: 'Mary Williams',
+          patientName: "Mary Williams",
           recordDate: new Date().toISOString(),
           heartRate: 105,
           rhythm: HeartRhythm.AFib,
-          interpretation: 'Atrial fibrillation with rapid ventricular response',
-          abnormalities: ['Irregular rhythm', 'Absent P waves'],
-          performedBy: 'Dr. Brown',
+          interpretation: "Atrial fibrillation with rapid ventricular response",
+          abnormalities: ["Irregular rhythm", "Absent P waves"],
+          performedBy: "Dr. Brown",
           status: ECGStatus.Reviewed,
-          reviewedBy: 'Dr. Johnson',
+          reviewedBy: "Dr. Johnson",
           createdAt: new Date().toISOString(),
         },
         {
           id: 3,
           patientId: 1003,
-          patientName: 'Robert Davis',
+          patientName: "Robert Davis",
           recordDate: new Date().toISOString(),
           heartRate: 58,
           rhythm: HeartRhythm.Bradycardia,
-          interpretation: 'Sinus bradycardia',
-          abnormalities: ['Low heart rate'],
-          performedBy: 'Dr. Williams',
+          interpretation: "Sinus bradycardia",
+          abnormalities: ["Low heart rate"],
+          performedBy: "Dr. Williams",
           status: ECGStatus.Pending,
           prInterval: 170,
           qrsDuration: 85,
@@ -100,14 +101,31 @@ export const ECGRecords = () => {
 
   const getStatusBadge = (status: ECGStatus) => {
     const config: Record<string, { className: string; label: string }> = {
-      [ECGStatus.Pending]: { className: 'bg-yellow-100 text-yellow-800', label: 'Pending' },
-      [ECGStatus.InProgress]: { className: 'bg-blue-100 text-blue-800', label: 'In Progress' },
-      [ECGStatus.Completed]: { className: 'bg-green-100 text-green-800', label: 'Completed' },
-      [ECGStatus.Reviewed]: { className: 'bg-purple-100 text-purple-800', label: 'Reviewed' },
+      [ECGStatus.Pending]: {
+        className: "bg-yellow-100 text-yellow-800",
+        label: "Pending",
+      },
+      [ECGStatus.InProgress]: {
+        className: "bg-blue-100 text-blue-800",
+        label: "In Progress",
+      },
+      [ECGStatus.Completed]: {
+        className: "bg-green-100 text-green-800",
+        label: "Completed",
+      },
+      [ECGStatus.Reviewed]: {
+        className: "bg-purple-100 text-purple-800",
+        label: "Reviewed",
+      },
     };
-    const c = config[status] || { className: 'bg-gray-100 text-gray-800', label: status };
+    const c = config[status] || {
+      className: "bg-gray-100 text-gray-800",
+      label: status,
+    };
     return (
-      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${c.className}`}>
+      <span
+        className={`px-2 py-0.5 rounded-full text-xs font-medium ${c.className}`}
+      >
         {c.label}
       </span>
     );
@@ -115,16 +133,16 @@ export const ECGRecords = () => {
 
   const getRhythmLabel = (rhythm: HeartRhythm): string => {
     const labels: Record<string, string> = {
-      [HeartRhythm.Normal]: 'Normal',
-      [HeartRhythm.Sinus]: 'Sinus Rhythm',
-      [HeartRhythm.AFib]: 'Atrial Fibrillation',
-      [HeartRhythm.AFlutter]: 'Atrial Flutter',
-      [HeartRhythm.SVT]: 'SVT',
-      [HeartRhythm.VTach]: 'V-Tach',
-      [HeartRhythm.VFib]: 'V-Fib',
-      [HeartRhythm.Bradycardia]: 'Bradycardia',
-      [HeartRhythm.Tachycardia]: 'Tachycardia',
-      [HeartRhythm.Other]: 'Other',
+      [HeartRhythm.Normal]: "Normal",
+      [HeartRhythm.Sinus]: "Sinus Rhythm",
+      [HeartRhythm.AFib]: "Atrial Fibrillation",
+      [HeartRhythm.AFlutter]: "Atrial Flutter",
+      [HeartRhythm.SVT]: "SVT",
+      [HeartRhythm.VTach]: "V-Tach",
+      [HeartRhythm.VFib]: "V-Fib",
+      [HeartRhythm.Bradycardia]: "Bradycardia",
+      [HeartRhythm.Tachycardia]: "Tachycardia",
+      [HeartRhythm.Other]: "Other",
     };
     return labels[rhythm] || rhythm;
   };
@@ -135,7 +153,9 @@ export const ECGRecords = () => {
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">ECG Records</h1>
-          <p className="text-gray-600 mt-1">Manage electrocardiogram records and interpretations</p>
+          <p className="text-gray-600 mt-1">
+            Manage electrocardiogram records and interpretations
+          </p>
         </div>
         <button onClick={handleCreate} className="btn btn-primary">
           <PlusIcon className="h-5 w-5 mr-2" />
@@ -211,7 +231,10 @@ export const ECGRecords = () => {
             <tbody className="bg-white divide-y divide-gray-200">
               {isLoading ? (
                 <tr>
-                  <td colSpan={8} className="px-6 py-12 text-center text-gray-500">
+                  <td
+                    colSpan={8}
+                    className="px-6 py-12 text-center text-gray-500"
+                  >
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto"></div>
                     <p className="mt-2">Loading records...</p>
                   </td>
@@ -225,7 +248,7 @@ export const ECGRecords = () => {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                      {format(new Date(record.recordDate), 'MMM d, yyyy')}
+                      {format(new Date(record.recordDate), "MMM d, yyyy")}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {record.heartRate} bpm
@@ -236,7 +259,9 @@ export const ECGRecords = () => {
                     <td className="px-6 py-4 text-sm text-gray-600 max-w-xs truncate">
                       {record.interpretation}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">{getStatusBadge(record.status)}</td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {getStatusBadge(record.status)}
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                       {record.performedBy}
                     </td>
@@ -248,15 +273,22 @@ export const ECGRecords = () => {
                         View
                       </button>
                       {record.status === ECGStatus.Pending && (
-                        <button className="text-green-600 hover:text-green-900">Review</button>
+                        <button className="text-green-600 hover:text-green-900">
+                          Review
+                        </button>
                       )}
                     </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan={8} className="px-6 py-12 text-center text-gray-500">
-                    {searchTerm ? 'No records found matching your search.' : 'No ECG records found.'}
+                  <td
+                    colSpan={8}
+                    className="px-6 py-12 text-center text-gray-500"
+                  >
+                    {searchTerm
+                      ? "No records found matching your search."
+                      : "No ECG records found."}
                   </td>
                 </tr>
               )}
@@ -286,12 +318,12 @@ const ECGRecordModal = ({ isOpen, onClose, record }: ECGRecordModalProps) => {
   const queryClient = useQueryClient();
   const [formData, setFormData] = useState<Partial<CreateECGRequest>>({
     patientId: record?.patientId || 0,
-    recordDate: record?.recordDate || new Date().toISOString().split('T')[0],
+    recordDate: record?.recordDate || new Date().toISOString().split("T")[0],
     heartRate: record?.heartRate || 70,
     rhythm: record?.rhythm || HeartRhythm.Sinus,
-    interpretation: record?.interpretation || '',
+    interpretation: record?.interpretation || "",
     abnormalities: record?.abnormalities || [],
-    performedBy: record?.performedBy || '',
+    performedBy: record?.performedBy || "",
     prInterval: record?.prInterval,
     qrsDuration: record?.qrsDuration,
     qtInterval: record?.qtInterval,
@@ -304,18 +336,23 @@ const ECGRecordModal = ({ isOpen, onClose, record }: ECGRecordModalProps) => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     // In production, call API to save
-    console.log('Saving ECG record:', formData);
-    queryClient.invalidateQueries({ queryKey: ['ecg-records'] });
+    console.log("Saving ECG record:", formData);
+    queryClient.invalidateQueries({ queryKey: ["ecg-records"] });
     onClose();
   };
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >,
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: name === 'heartRate' || name.includes('Interval') ? Number(value) : value,
+      [name]:
+        name === "heartRate" || name.includes("Interval")
+          ? Number(value)
+          : value,
     }));
   };
 
@@ -327,9 +364,12 @@ const ECGRecordModal = ({ isOpen, onClose, record }: ECGRecordModalProps) => {
           <div className="p-6">
             <div className="flex justify-between items-center mb-4">
               <Dialog.Title className="text-lg font-medium text-gray-900">
-                {record ? 'View ECG Record' : 'New ECG Record'}
+                {record ? "View ECG Record" : "New ECG Record"}
               </Dialog.Title>
-              <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+              <button
+                onClick={onClose}
+                className="text-gray-400 hover:text-gray-600"
+              >
                 <XMarkIcon className="h-6 w-6" />
               </button>
             </div>
@@ -357,7 +397,7 @@ const ECGRecordModal = ({ isOpen, onClose, record }: ECGRecordModalProps) => {
                   <input
                     type="date"
                     name="recordDate"
-                    value={formData.recordDate?.split('T')[0]}
+                    value={formData.recordDate?.split("T")[0]}
                     onChange={handleChange}
                     className="input w-full"
                     required
@@ -379,7 +419,9 @@ const ECGRecordModal = ({ isOpen, onClose, record }: ECGRecordModalProps) => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Rhythm</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Rhythm
+                  </label>
                   <select
                     name="rhythm"
                     value={formData.rhythm}
@@ -402,7 +444,7 @@ const ECGRecordModal = ({ isOpen, onClose, record }: ECGRecordModalProps) => {
                   <input
                     type="number"
                     name="prInterval"
-                    value={formData.prInterval || ''}
+                    value={formData.prInterval || ""}
                     onChange={handleChange}
                     className="input w-full"
                   />
@@ -415,7 +457,7 @@ const ECGRecordModal = ({ isOpen, onClose, record }: ECGRecordModalProps) => {
                   <input
                     type="number"
                     name="qrsDuration"
-                    value={formData.qrsDuration || ''}
+                    value={formData.qrsDuration || ""}
                     onChange={handleChange}
                     className="input w-full"
                   />
@@ -428,7 +470,7 @@ const ECGRecordModal = ({ isOpen, onClose, record }: ECGRecordModalProps) => {
                   <input
                     type="number"
                     name="qtInterval"
-                    value={formData.qtInterval || ''}
+                    value={formData.qtInterval || ""}
                     onChange={handleChange}
                     className="input w-full"
                   />
@@ -441,7 +483,7 @@ const ECGRecordModal = ({ isOpen, onClose, record }: ECGRecordModalProps) => {
                   <input
                     type="number"
                     name="qtcInterval"
-                    value={formData.qtcInterval || ''}
+                    value={formData.qtcInterval || ""}
                     onChange={handleChange}
                     className="input w-full"
                   />
@@ -482,7 +524,7 @@ const ECGRecordModal = ({ isOpen, onClose, record }: ECGRecordModalProps) => {
                   <input
                     type="text"
                     name="stChanges"
-                    value={formData.stChanges || ''}
+                    value={formData.stChanges || ""}
                     onChange={handleChange}
                     className="input w-full"
                     placeholder="e.g., ST elevation in leads II, III, aVF"
@@ -496,7 +538,7 @@ const ECGRecordModal = ({ isOpen, onClose, record }: ECGRecordModalProps) => {
                   <input
                     type="text"
                     name="tWaveChanges"
-                    value={formData.tWaveChanges || ''}
+                    value={formData.tWaveChanges || ""}
                     onChange={handleChange}
                     className="input w-full"
                     placeholder="e.g., T wave inversion in V1-V3"
@@ -504,10 +546,12 @@ const ECGRecordModal = ({ isOpen, onClose, record }: ECGRecordModalProps) => {
                 </div>
 
                 <div className="col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Notes
+                  </label>
                   <textarea
                     name="notes"
-                    value={formData.notes || ''}
+                    value={formData.notes || ""}
                     onChange={handleChange}
                     rows={2}
                     className="input w-full"
@@ -516,11 +560,15 @@ const ECGRecordModal = ({ isOpen, onClose, record }: ECGRecordModalProps) => {
               </div>
 
               <div className="flex justify-end gap-3 pt-4">
-                <button type="button" onClick={onClose} className="btn btn-outline">
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="btn btn-outline"
+                >
                   Cancel
                 </button>
                 <button type="submit" className="btn btn-primary">
-                  {record ? 'Update' : 'Create'} Record
+                  {record ? "Update" : "Create"} Record
                 </button>
               </div>
             </form>

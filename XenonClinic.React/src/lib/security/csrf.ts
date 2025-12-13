@@ -7,9 +7,9 @@
 // CONFIGURATION
 // ============================================
 
-const CSRF_TOKEN_KEY = 'xenon_csrf_token';
-const CSRF_HEADER_NAME = 'X-CSRF-Token';
-const CSRF_COOKIE_NAME = 'XSRF-TOKEN';
+const CSRF_TOKEN_KEY = "xenon_csrf_token";
+const CSRF_HEADER_NAME = "X-CSRF-Token";
+const CSRF_COOKIE_NAME = "XSRF-TOKEN";
 const TOKEN_EXPIRY_MS = 60 * 60 * 1000; // 1 hour
 
 // ============================================
@@ -22,17 +22,9 @@ const TOKEN_EXPIRY_MS = 60 * 60 * 1000; // 1 hour
 export const generateCsrfToken = (): string => {
   const array = new Uint8Array(32);
   crypto.getRandomValues(array);
-  return Array.from(array, (byte) => byte.toString(16).padStart(2, '0')).join('');
-};
-
-/**
- * Generate token with timestamp for expiry checking
- */
-const generateTimedToken = (): { token: string; timestamp: number } => {
-  return {
-    token: generateCsrfToken(),
-    timestamp: Date.now(),
-  };
+  return Array.from(array, (byte) => byte.toString(16).padStart(2, "0")).join(
+    "",
+  );
 };
 
 // ============================================
@@ -122,9 +114,7 @@ export const getCsrfHeader = (): Record<string, string> => {
 /**
  * Enhance fetch options with CSRF token
  */
-export const withCsrfProtection = (
-  options: RequestInit = {}
-): RequestInit => {
+export const withCsrfProtection = (options: RequestInit = {}): RequestInit => {
   const headers = new Headers(options.headers);
   headers.set(CSRF_HEADER_NAME, getOrCreateCsrfToken());
 
@@ -170,7 +160,7 @@ export const createAxiosCsrfInterceptor = () => {
  */
 export const getCsrfFormField = (): { name: string; value: string } => {
   return {
-    name: '_csrf',
+    name: "_csrf",
     value: getOrCreateCsrfToken(),
   };
 };
@@ -218,7 +208,9 @@ export const setCsrfCookie = (token?: string): void => {
  * Get CSRF token from cookie
  */
 export const getCsrfCookie = (): string | null => {
-  const match = document.cookie.match(new RegExp(`${CSRF_COOKIE_NAME}=([^;]+)`));
+  const match = document.cookie.match(
+    new RegExp(`${CSRF_COOKIE_NAME}=([^;]+)`),
+  );
   return match ? match[1] : null;
 };
 
@@ -269,9 +261,9 @@ export const useCsrfToken = () => {
  */
 export const secureFetch = async (
   url: string,
-  options: RequestInit = {}
+  options: RequestInit = {},
 ): Promise<Response> => {
-  const method = options.method || 'GET';
+  const method = options.method || "GET";
 
   // Add CSRF token for non-safe methods
   if (requiresCsrfProtection(method)) {
@@ -279,7 +271,7 @@ export const secureFetch = async (
   }
 
   // Add credentials for cookie handling
-  options.credentials = options.credentials || 'same-origin';
+  options.credentials = options.credentials || "same-origin";
 
   return fetch(url, options);
 };
@@ -294,7 +286,7 @@ export const secureFetch = async (
  */
 export const validateOrigin = (
   requestOrigin: string | null,
-  allowedOrigins: string[]
+  allowedOrigins: string[],
 ): boolean => {
   if (!requestOrigin) return false;
 
@@ -303,9 +295,11 @@ export const validateOrigin = (
     if (allowed === requestOrigin) return true;
 
     // Wildcard subdomain matching
-    if (allowed.startsWith('*.')) {
+    if (allowed.startsWith("*.")) {
       const domain = allowed.slice(2);
-      return requestOrigin.endsWith(domain) || requestOrigin === `https://${domain}`;
+      return (
+        requestOrigin.endsWith(domain) || requestOrigin === `https://${domain}`
+      );
     }
 
     return false;
