@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import { useNavigation, useT, useTenant } from "../../contexts/TenantContext";
 import type { NavItem } from "../../types/tenant";
@@ -46,6 +46,15 @@ export const DynamicNavigation: React.FC<DynamicNavigationProps> = ({
 };
 
 // ============================================
+// Icon Renderer Helper
+// ============================================
+
+const renderIcon = (iconName: string, className: string) => {
+  const Icon = getIcon(iconName);
+  return Icon ? <Icon className={className} /> : null;
+};
+
+// ============================================
 // NavItem Component
 // ============================================
 
@@ -76,7 +85,6 @@ const NavItemComponent: React.FC<NavItemComponentProps> = ({
       ));
 
   const label = t(item.label, item.label);
-  const Icon = useMemo(() => getIcon(item.icon), [item.icon]);
 
   const handleClick = (e: React.MouseEvent) => {
     if (hasChildren) {
@@ -106,7 +114,7 @@ const NavItemComponent: React.FC<NavItemComponentProps> = ({
         title={label}
         onClick={() => onItemClick?.(item)}
       >
-        {Icon && <Icon className="h-5 w-5" />}
+        {renderIcon(item.icon, "h-5 w-5")}
       </NavLink>
     );
   }
@@ -120,9 +128,7 @@ const NavItemComponent: React.FC<NavItemComponentProps> = ({
             className={`${baseClasses} ${activeClasses} w-full justify-between`}
           >
             <div className="flex items-center">
-              {Icon && (
-                <Icon className={`h-5 w-5 ${collapsed ? "" : "mr-3"}`} />
-              )}
+              {renderIcon(item.icon, `h-5 w-5 ${collapsed ? "" : "mr-3"}`)}
               {!collapsed && <span>{label}</span>}
             </div>
             {!collapsed && (
@@ -156,7 +162,7 @@ const NavItemComponent: React.FC<NavItemComponentProps> = ({
           `}
           onClick={() => onItemClick?.(item)}
         >
-          {Icon && <Icon className={`h-5 w-5 ${collapsed ? "" : "mr-3"}`} />}
+          {renderIcon(item.icon, `h-5 w-5 ${collapsed ? "" : "mr-3"}`)}
           {!collapsed && (
             <>
               <span className="flex-1">{label}</span>

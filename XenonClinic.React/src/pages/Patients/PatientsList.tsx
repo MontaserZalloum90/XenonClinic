@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
 import { patientsApi } from "../../lib/api";
 import type { Patient } from "../../types/patient";
 import { Modal } from "../../components/ui/Modal";
@@ -33,7 +33,6 @@ export const PatientsList = () => {
   );
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [showExportMenu, setShowExportMenu] = useState(false);
-  const previousSearchTerm = useRef<string>("");
   const queryClient = useQueryClient();
   const { showToast } = useToast();
   const { dialogState, showConfirm, hideConfirm, handleConfirm } =
@@ -261,14 +260,6 @@ export const PatientsList = () => {
       patient.email?.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
-  // Clear selection when filter changes
-  useEffect(() => {
-    if (previousSearchTerm.current !== searchTerm) {
-      previousSearchTerm.current = searchTerm;
-      setSelectedIds(new Set());
-    }
-  }, [searchTerm]);
-
   if (error) {
     return (
       <div className="p-4 bg-red-50 border border-red-200 rounded-md animate-fade-in">
@@ -419,7 +410,13 @@ export const PatientsList = () => {
             id="patient-search"
             type="text"
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e) => {
+              setSearchTerm(e.target.value);
+              // Clear selection when search term changes
+              if (selectedIds.size > 0) {
+                setSelectedIds(new Set());
+              }
+            }}
             className="input w-full md:w-96 ltr:pl-10 rtl:pr-10"
             placeholder={t(
               "page.patients.searchPlaceholder",

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 
 export interface RecentItem {
   id: string;
@@ -12,16 +12,12 @@ const STORAGE_KEY = "xenon_recent_items";
 const MAX_ITEMS = 10;
 
 export const useRecentItems = (itemType?: string) => {
-  const [recentItems, setRecentItems] = useState<RecentItem[]>(() => {
-    // Load recent items from localStorage on initial mount
+  // Load all items once from localStorage on initial mount
+  const [allItems, setAllItems] = useState<RecentItem[]>(() => {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {
       try {
-        const items: RecentItem[] = JSON.parse(stored);
-        const filtered = itemType
-          ? items.filter((item) => item.type === itemType)
-          : items;
-        return filtered;
+        return JSON.parse(stored);
       } catch (error) {
         console.error("Failed to load recent items:", error);
       }
@@ -29,93 +25,70 @@ export const useRecentItems = (itemType?: string) => {
     return [];
   });
 
-  // Re-filter items when itemType changes
-  useEffect(() => {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      try {
-        const items: RecentItem[] = JSON.parse(stored);
-        const filtered = itemType
-          ? items.filter((item) => item.type === itemType)
-          : items;
-        setRecentItems(filtered);
-      } catch (error) {
-        console.error("Failed to load recent items:", error);
-      }
-    }
-  }, [itemType]);
+  // Filter items based on itemType using useMemo
+  const recentItems = useMemo(() => {
+    const filtered = itemType
+      ? allItems.filter((item) => item.type === itemType)
+      : allItems;
+    return filtered.slice(0, MAX_ITEMS);
+  }, [allItems, itemType]);
 
   // Add a new recent item
   const addRecentItem = useCallback(
     (id: string, type: string, label: string, metadata?: unknown) => {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      let allItems: RecentItem[] = stored ? JSON.parse(stored) : [];
+      setAllItems((prevItems) => {
+        // Remove existing item with same id and type
+        let updatedItems = prevItems.filter(
+          (item) => !(item.id === id && item.type === type),
+        );
 
-      // Remove existing item with same id and type
-      allItems = allItems.filter(
-        (item) => !(item.id === id && item.type === type),
-      );
+        // Add new item at the beginning
+        const newItem: RecentItem = {
+          id,
+          type,
+          label,
+          timestamp: Date.now(),
+          metadata,
+        };
+        updatedItems = [newItem, ...updatedItems];
 
-      // Add new item at the beginning
-      const newItem: RecentItem = {
-        id,
-        type,
-        label,
-        timestamp: Date.now(),
-        metadata,
-      };
-      allItems.unshift(newItem);
+        // Keep only the most recent items
+        updatedItems = updatedItems.slice(0, MAX_ITEMS * 5); // Store more items globally
 
-      // Keep only the most recent items
-      allItems = allItems.slice(0, MAX_ITEMS * 5); // Store more items globally
+        // Save to localStorage
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedItems));
 
-      // Save to localStorage
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(allItems));
-
-      // Update state with filtered items
-      const filtered = itemType
-        ? allItems.filter((item) => item.type === itemType)
-        : allItems;
-      setRecentItems(filtered.slice(0, MAX_ITEMS));
+        return updatedItems;
+      });
     },
-    [itemType],
+    [],
   );
 
   // Clear recent items
   const clearRecentItems = useCallback(() => {
     if (itemType) {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        const allItems: RecentItem[] = JSON.parse(stored);
-        const filtered = allItems.filter((item) => item.type !== itemType);
+      setAllItems((prevItems) => {
+        const filtered = prevItems.filter((item) => item.type !== itemType);
         localStorage.setItem(STORAGE_KEY, JSON.stringify(filtered));
-      }
+        return filtered;
+      });
     } else {
       localStorage.removeItem(STORAGE_KEY);
+      setAllItems([]);
     }
-    setRecentItems([]);
   }, [itemType]);
 
   // Remove a specific recent item
-  const removeRecentItem = useCallback(
-    (id: string) => {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        let allItems: RecentItem[] = JSON.parse(stored);
-        allItems = allItems.filter((item) => item.id !== id);
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(allItems));
-
-        const filtered = itemType
-          ? allItems.filter((item) => item.type === itemType)
-          : allItems;
-        setRecentItems(filtered.slice(0, MAX_ITEMS));
-      }
-    },
-    [itemType],
-  );
+  const removeRecentItem = useCallback((id: string) => {
+    setAllItems((prevItems) => {
+      const updatedItems = prevItems.filter((item) => item.id !== id);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedItems));
+      return updatedItems;
+    });
+  }, []);
 
   return {
-    recentItems: recentItems.slice(0, MAX_ITEMS),
+    recentItems,
     addRecentItem,
     clearRecentItems,
     removeRecentItem,
