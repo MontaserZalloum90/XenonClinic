@@ -1,0 +1,1 @@
+export { PhysiotherapyDashboard } from './PhysiotherapyDashboard';
