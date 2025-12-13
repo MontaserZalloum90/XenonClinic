@@ -10,6 +10,13 @@ import {
   inventoryApi,
   pharmacyApi,
   radiologyApi,
+  orthopedicExamsApi,
+  fracturesApi,
+  surgeriesApi,
+  dentalTreatmentApi,
+  dentalChartApi,
+  oncologyDiagnosisApi,
+  payrollApi,
 } from "./api";
 
 // Mock localStorage
@@ -216,6 +223,86 @@ describe("API Module", () => {
       expect(radiologyApi.updateStatus).toBeDefined();
       expect(radiologyApi.getStatistics).toBeDefined();
     });
+  });
+});
+
+describe("Orthopedics APIs", () => {
+  describe("Orthopedic Exams API", () => {
+    it("has all required CRUD endpoints", () => {
+      expect(orthopedicExamsApi.getAll).toBeDefined();
+      expect(orthopedicExamsApi.getById).toBeDefined();
+      expect(orthopedicExamsApi.create).toBeDefined();
+      expect(orthopedicExamsApi.update).toBeDefined();
+      expect(orthopedicExamsApi.delete).toBeDefined();
+    });
+  });
+
+  describe("Fractures API", () => {
+    it("has all required CRUD endpoints", () => {
+      expect(fracturesApi.getAll).toBeDefined();
+      expect(fracturesApi.getById).toBeDefined();
+      expect(fracturesApi.create).toBeDefined();
+      expect(fracturesApi.update).toBeDefined();
+      expect(fracturesApi.delete).toBeDefined();
+    });
+  });
+
+  describe("Surgeries API", () => {
+    it("has all required CRUD endpoints", () => {
+      expect(surgeriesApi.getAll).toBeDefined();
+      expect(surgeriesApi.getById).toBeDefined();
+      expect(surgeriesApi.create).toBeDefined();
+      expect(surgeriesApi.update).toBeDefined();
+      expect(surgeriesApi.delete).toBeDefined();
+    });
+  });
+});
+
+describe("Dental APIs", () => {
+  describe("Dental Treatment API", () => {
+    it("has all required CRUD endpoints", () => {
+      expect(dentalTreatmentApi.getAll).toBeDefined();
+      expect(dentalTreatmentApi.getById).toBeDefined();
+      expect(dentalTreatmentApi.create).toBeDefined();
+      expect(dentalTreatmentApi.update).toBeDefined();
+      expect(dentalTreatmentApi.delete).toBeDefined();
+    });
+  });
+
+  describe("Dental Chart API", () => {
+    it("has all required CRUD endpoints", () => {
+      expect(dentalChartApi.getAll).toBeDefined();
+      expect(dentalChartApi.getById).toBeDefined();
+      expect(dentalChartApi.create).toBeDefined();
+      expect(dentalChartApi.update).toBeDefined();
+      expect(dentalChartApi.delete).toBeDefined();
+    });
+  });
+});
+
+describe("Oncology APIs", () => {
+  describe("Oncology Diagnosis API", () => {
+    it("has all required CRUD endpoints", () => {
+      expect(oncologyDiagnosisApi.getAll).toBeDefined();
+      expect(oncologyDiagnosisApi.getById).toBeDefined();
+      expect(oncologyDiagnosisApi.create).toBeDefined();
+      expect(oncologyDiagnosisApi.update).toBeDefined();
+      expect(oncologyDiagnosisApi.delete).toBeDefined();
+    });
+  });
+});
+
+describe("Payroll API", () => {
+  it("has all required CRUD endpoints", () => {
+    expect(payrollApi.getAll).toBeDefined();
+    expect(payrollApi.getById).toBeDefined();
+    expect(payrollApi.create).toBeDefined();
+    expect(payrollApi.update).toBeDefined();
+    expect(payrollApi.delete).toBeDefined();
+  });
+
+  it("has payroll-specific endpoints", () => {
+    expect(payrollApi.getByEmployee).toBeDefined();
   });
 });
 
