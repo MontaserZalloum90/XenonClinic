@@ -10,6 +10,7 @@ import {
   DocumentArrowUpIcon,
   ReceiptPercentIcon,
 } from "@heroicons/react/24/outline";
+import { Dialog } from "@headlessui/react";
 import { api } from "../../lib/api";
 
 interface Expense {
@@ -121,6 +122,7 @@ export function ExpenseManagement() {
       .split("T")[0],
     end: new Date().toISOString().split("T")[0],
   });
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const queryClient = useQueryClient();
 
   const { data: expenses = [], isLoading } = useQuery({
@@ -146,6 +148,25 @@ export function ExpenseManagement() {
   const markPaidMutation = useMutation({
     mutationFn: (id: number) => api.post(`/api/financial/expenses/${id}/pay`),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["expenses"] }),
+  });
+
+  const createExpenseMutation = useMutation({
+    mutationFn: (data: {
+      category: string;
+      description: string;
+      amount: number;
+      expenseDate: string;
+      vendorName?: string;
+      dueDate?: string;
+      paymentMethod?: string;
+      taxDeductible: boolean;
+      costCenter?: string;
+      notes?: string;
+    }) => api.post("/api/financial/expenses", data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["expenses"] });
+      setIsModalOpen(false);
+    },
   });
 
   const filteredExpenses = expenses.filter((expense) => {
@@ -473,6 +494,199 @@ export function ExpenseManagement() {
           </table>
         )}
       </div>
+
+      {/* Record Expense Modal */}
+      <Dialog
+        open={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        className="relative z-50"
+      >
+        <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
+        <div className="fixed inset-0 flex items-center justify-center p-4">
+          <Dialog.Panel className="mx-auto max-w-lg w-full rounded-lg bg-white shadow-xl max-h-[90vh] overflow-y-auto">
+            <div className="border-b px-6 py-4">
+              <Dialog.Title className="text-lg font-semibold text-gray-900">
+                Record New Expense
+              </Dialog.Title>
+            </div>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                const formData = new FormData(e.currentTarget);
+                createExpenseMutation.mutate({
+                  category: formData.get("category") as string,
+                  description: formData.get("description") as string,
+                  amount: parseFloat(formData.get("amount") as string),
+                  expenseDate: formData.get("expenseDate") as string,
+                  vendorName:
+                    (formData.get("vendorName") as string) || undefined,
+                  dueDate: (formData.get("dueDate") as string) || undefined,
+                  paymentMethod:
+                    (formData.get("paymentMethod") as string) || undefined,
+                  taxDeductible: formData.get("taxDeductible") === "on",
+                  costCenter:
+                    (formData.get("costCenter") as string) || undefined,
+                  notes: (formData.get("notes") as string) || undefined,
+                });
+              }}
+              className="p-6 space-y-4"
+            >
+              <div className="grid grid-cols-2 gap-4">
+                <div className="col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Description *
+                  </label>
+                  <input
+                    type="text"
+                    name="description"
+                    required
+                    placeholder="e.g., Office supplies purchase"
+                    className="w-full rounded-md border border-gray-300 py-2 px-3 focus:border-blue-500 focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Category *
+                  </label>
+                  <select
+                    name="category"
+                    required
+                    className="w-full rounded-md border border-gray-300 py-2 px-3 focus:border-blue-500 focus:outline-none"
+                  >
+                    {Object.entries(categoryConfig).map(([key, value]) => (
+                      <option key={key} value={key}>
+                        {value.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Amount *
+                  </label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
+                      $
+                    </span>
+                    <input
+                      type="number"
+                      name="amount"
+                      required
+                      min="0.01"
+                      step="0.01"
+                      className="w-full rounded-md border border-gray-300 py-2 pl-8 pr-3 focus:border-blue-500 focus:outline-none"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Expense Date *
+                  </label>
+                  <input
+                    type="date"
+                    name="expenseDate"
+                    required
+                    defaultValue={new Date().toISOString().split("T")[0]}
+                    className="w-full rounded-md border border-gray-300 py-2 px-3 focus:border-blue-500 focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Due Date
+                  </label>
+                  <input
+                    type="date"
+                    name="dueDate"
+                    className="w-full rounded-md border border-gray-300 py-2 px-3 focus:border-blue-500 focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Vendor Name
+                  </label>
+                  <input
+                    type="text"
+                    name="vendorName"
+                    placeholder="Vendor or supplier"
+                    className="w-full rounded-md border border-gray-300 py-2 px-3 focus:border-blue-500 focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Payment Method
+                  </label>
+                  <select
+                    name="paymentMethod"
+                    className="w-full rounded-md border border-gray-300 py-2 px-3 focus:border-blue-500 focus:outline-none"
+                  >
+                    <option value="">Select method</option>
+                    <option value="cash">Cash</option>
+                    <option value="check">Check</option>
+                    <option value="bank-transfer">Bank Transfer</option>
+                    <option value="credit-card">Credit Card</option>
+                    <option value="corporate-card">Corporate Card</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Cost Center
+                  </label>
+                  <input
+                    type="text"
+                    name="costCenter"
+                    placeholder="e.g., Operations, Marketing"
+                    className="w-full rounded-md border border-gray-300 py-2 px-3 focus:border-blue-500 focus:outline-none"
+                  />
+                </div>
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    name="taxDeductible"
+                    id="taxDeductible"
+                    className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  />
+                  <label
+                    htmlFor="taxDeductible"
+                    className="ml-2 text-sm text-gray-700"
+                  >
+                    Tax Deductible
+                  </label>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Notes
+                </label>
+                <textarea
+                  name="notes"
+                  rows={2}
+                  className="w-full rounded-md border border-gray-300 py-2 px-3 focus:border-blue-500 focus:outline-none"
+                />
+              </div>
+
+              <div className="flex justify-end gap-3 pt-4 border-t">
+                <button
+                  type="button"
+                  onClick={() => setIsModalOpen(false)}
+                  className="rounded-md bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={createExpenseMutation.isPending}
+                  className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+                >
+                  {createExpenseMutation.isPending
+                    ? "Recording..."
+                    : "Record Expense"}
+                </button>
+              </div>
+            </form>
+          </Dialog.Panel>
+        </div>
+      </Dialog>
     </div>
   );
 }

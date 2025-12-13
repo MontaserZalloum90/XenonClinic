@@ -98,6 +98,7 @@ export function InventoryAudits() {
   const [selectedAudit, setSelectedAudit] = useState<InventoryAudit | null>(
     null,
   );
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const queryClient = useQueryClient();
 
   const { data: audits = [], isLoading } = useQuery({
@@ -146,6 +147,20 @@ export function InventoryAudits() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["inventory-audits"] });
       setSelectedAudit(null);
+    },
+  });
+
+  const scheduleAuditMutation = useMutation({
+    mutationFn: (data: {
+      auditType: string;
+      scheduledDate: string;
+      location?: string;
+      category?: string;
+      notes?: string;
+    }) => api.post("/api/inventory/audits", data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["inventory-audits"] });
+      setIsModalOpen(false);
     },
   });
 
@@ -616,6 +631,121 @@ export function InventoryAudits() {
           </div>
         </Dialog>
       )}
+
+      {/* Schedule Audit Modal */}
+      <Dialog
+        open={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        className="relative z-50"
+      >
+        <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
+        <div className="fixed inset-0 flex items-center justify-center p-4">
+          <Dialog.Panel className="mx-auto max-w-md w-full rounded-lg bg-white shadow-xl">
+            <div className="border-b px-6 py-4">
+              <Dialog.Title className="text-lg font-semibold text-gray-900">
+                Schedule New Audit
+              </Dialog.Title>
+            </div>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                const formData = new FormData(e.currentTarget);
+                scheduleAuditMutation.mutate({
+                  auditType: formData.get("auditType") as string,
+                  scheduledDate: formData.get("scheduledDate") as string,
+                  location: (formData.get("location") as string) || undefined,
+                  category: (formData.get("category") as string) || undefined,
+                  notes: (formData.get("notes") as string) || undefined,
+                });
+              }}
+              className="p-6 space-y-4"
+            >
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Audit Type *
+                </label>
+                <select
+                  name="auditType"
+                  required
+                  className="w-full rounded-md border border-gray-300 py-2 px-3 focus:border-blue-500 focus:outline-none"
+                >
+                  <option value="full">Full Audit</option>
+                  <option value="cycle">Cycle Count</option>
+                  <option value="spot">Spot Check</option>
+                  <option value="annual">Annual Audit</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Scheduled Date *
+                </label>
+                <input
+                  type="date"
+                  name="scheduledDate"
+                  required
+                  className="w-full rounded-md border border-gray-300 py-2 px-3 focus:border-blue-500 focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Location (Optional)
+                </label>
+                <input
+                  type="text"
+                  name="location"
+                  placeholder="e.g., Warehouse A, Pharmacy"
+                  className="w-full rounded-md border border-gray-300 py-2 px-3 focus:border-blue-500 focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Category (Optional)
+                </label>
+                <input
+                  type="text"
+                  name="category"
+                  placeholder="e.g., Medical Supplies, Equipment"
+                  className="w-full rounded-md border border-gray-300 py-2 px-3 focus:border-blue-500 focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Notes
+                </label>
+                <textarea
+                  name="notes"
+                  rows={2}
+                  placeholder="Additional instructions or notes"
+                  className="w-full rounded-md border border-gray-300 py-2 px-3 focus:border-blue-500 focus:outline-none"
+                />
+              </div>
+
+              <div className="flex justify-end gap-3 pt-4 border-t">
+                <button
+                  type="button"
+                  onClick={() => setIsModalOpen(false)}
+                  className="rounded-md bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={scheduleAuditMutation.isPending}
+                  className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+                >
+                  {scheduleAuditMutation.isPending
+                    ? "Scheduling..."
+                    : "Schedule Audit"}
+                </button>
+              </div>
+            </form>
+          </Dialog.Panel>
+        </div>
+      </Dialog>
     </div>
   );
 }
