@@ -12,9 +12,24 @@ const STORAGE_KEY = "xenon_recent_items";
 const MAX_ITEMS = 10;
 
 export const useRecentItems = (itemType?: string) => {
-  const [recentItems, setRecentItems] = useState<RecentItem[]>([]);
+  const [recentItems, setRecentItems] = useState<RecentItem[]>(() => {
+    // Load recent items from localStorage on initial mount
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored) {
+      try {
+        const items: RecentItem[] = JSON.parse(stored);
+        const filtered = itemType
+          ? items.filter((item) => item.type === itemType)
+          : items;
+        return filtered;
+      } catch (error) {
+        console.error("Failed to load recent items:", error);
+      }
+    }
+    return [];
+  });
 
-  // Load recent items from localStorage
+  // Re-filter items when itemType changes
   useEffect(() => {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {

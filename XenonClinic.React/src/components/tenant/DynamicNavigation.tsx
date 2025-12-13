@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
-import { NavLink, useLocation } from 'react-router-dom';
-import { useNavigation, useT, useTenant } from '../../contexts/TenantContext';
-import type { NavItem } from '../../types/tenant';
-import * as LucideIcons from 'lucide-react';
+import React, { useState, useMemo } from "react";
+import { NavLink, useLocation } from "react-router-dom";
+import { useNavigation, useT, useTenant } from "../../contexts/TenantContext";
+import type { NavItem } from "../../types/tenant";
+import * as LucideIcons from "lucide-react";
 
 /**
  * DynamicNavigation - Renders navigation from tenant context
@@ -20,7 +20,7 @@ interface DynamicNavigationProps {
 
 export const DynamicNavigation: React.FC<DynamicNavigationProps> = ({
   collapsed = false,
-  className = '',
+  className = "",
   onItemClick,
 }) => {
   const navigation = useNavigation();
@@ -32,7 +32,7 @@ export const DynamicNavigation: React.FC<DynamicNavigationProps> = ({
 
   return (
     <nav className={`space-y-1 ${className}`}>
-      {navigation.map(item => (
+      {navigation.map((item) => (
         <NavItemComponent
           key={item.id}
           item={item}
@@ -68,11 +68,15 @@ const NavItemComponent: React.FC<NavItemComponentProps> = ({
   const [isExpanded, setIsExpanded] = useState(false);
 
   const hasChildren = item.children && item.children.length > 0;
-  const isActive = location.pathname === item.route ||
-    (hasChildren && item.children?.some(child => location.pathname.startsWith(child.route)));
+  const isActive =
+    location.pathname === item.route ||
+    (hasChildren &&
+      item.children?.some((child) =>
+        location.pathname.startsWith(child.route),
+      ));
 
   const label = t(item.label, item.label);
-  const Icon = getIcon(item.icon);
+  const Icon = useMemo(() => getIcon(item.icon), [item.icon]);
 
   const handleClick = (e: React.MouseEvent) => {
     if (hasChildren) {
@@ -88,10 +92,10 @@ const NavItemComponent: React.FC<NavItemComponentProps> = ({
   `;
 
   const activeClasses = isActive
-    ? 'bg-primary-100 text-primary-700 dark:bg-primary-900/50 dark:text-primary-300'
-    : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800';
+    ? "bg-primary-100 text-primary-700 dark:bg-primary-900/50 dark:text-primary-300"
+    : "text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800";
 
-  const depthPadding = depth > 0 ? `pl-${4 + depth * 4}` : '';
+  const depthPadding = depth > 0 ? `pl-${4 + depth * 4}` : "";
 
   // If collapsed and has no children, just show icon
   if (collapsed && !hasChildren) {
@@ -116,19 +120,21 @@ const NavItemComponent: React.FC<NavItemComponentProps> = ({
             className={`${baseClasses} ${activeClasses} w-full justify-between`}
           >
             <div className="flex items-center">
-              {Icon && <Icon className={`h-5 w-5 ${collapsed ? '' : 'mr-3'}`} />}
+              {Icon && (
+                <Icon className={`h-5 w-5 ${collapsed ? "" : "mr-3"}`} />
+              )}
               {!collapsed && <span>{label}</span>}
             </div>
             {!collapsed && (
               <LucideIcons.ChevronDown
-                className={`h-4 w-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+                className={`h-4 w-4 transition-transform ${isExpanded ? "rotate-180" : ""}`}
               />
             )}
           </button>
 
           {!collapsed && isExpanded && (
             <div className="mt-1 space-y-1">
-              {item.children?.map(child => (
+              {item.children?.map((child) => (
                 <NavItemComponent
                   key={child.id}
                   item={child}
@@ -146,11 +152,11 @@ const NavItemComponent: React.FC<NavItemComponentProps> = ({
           to={item.route}
           className={({ isActive: linkActive }) => `
             ${baseClasses}
-            ${linkActive ? 'bg-primary-100 text-primary-700 dark:bg-primary-900/50 dark:text-primary-300' : activeClasses}
+            ${linkActive ? "bg-primary-100 text-primary-700 dark:bg-primary-900/50 dark:text-primary-300" : activeClasses}
           `}
           onClick={() => onItemClick?.(item)}
         >
-          {Icon && <Icon className={`h-5 w-5 ${collapsed ? '' : 'mr-3'}`} />}
+          {Icon && <Icon className={`h-5 w-5 ${collapsed ? "" : "mr-3"}`} />}
           {!collapsed && (
             <>
               <span className="flex-1">{label}</span>
@@ -168,24 +174,22 @@ const NavItemComponent: React.FC<NavItemComponentProps> = ({
 // ============================================
 
 interface NavBadgeProps {
-  badge: NonNullable<NavItem['badge']>;
+  badge: NonNullable<NavItem["badge"]>;
 }
 
 const NavBadge: React.FC<NavBadgeProps> = ({ badge }) => {
   // In a real app, you'd fetch the count from an API or context
   const count = 0; // Placeholder
 
-  if (badge.type === 'dot') {
-    return (
-      <span className="ml-2 h-2 w-2 rounded-full bg-red-500" />
-    );
+  if (badge.type === "dot") {
+    return <span className="ml-2 h-2 w-2 rounded-full bg-red-500" />;
   }
 
   if (count === 0) return null;
 
   return (
     <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-primary-100 text-primary-800">
-      {count > 99 ? '99+' : count}
+      {count > 99 ? "99+" : count}
     </span>
   );
 };
@@ -258,13 +262,15 @@ interface DynamicSidebarProps {
 export const DynamicSidebar: React.FC<DynamicSidebarProps> = ({
   collapsed = false,
   onCollapsedChange,
-  className = '',
+  className = "",
 }) => {
   const { context, isLoading } = useTenant();
 
   if (isLoading) {
     return (
-      <div className={`flex flex-col h-full bg-white dark:bg-gray-900 ${className}`}>
+      <div
+        className={`flex flex-col h-full bg-white dark:bg-gray-900 ${className}`}
+      >
         <div className="flex items-center justify-center h-16 border-b">
           <div className="animate-pulse h-8 w-32 bg-gray-200 rounded" />
         </div>
@@ -278,17 +284,21 @@ export const DynamicSidebar: React.FC<DynamicSidebarProps> = ({
   }
 
   return (
-    <div className={`flex flex-col h-full bg-white dark:bg-gray-900 border-r ${className}`}>
+    <div
+      className={`flex flex-col h-full bg-white dark:bg-gray-900 border-r ${className}`}
+    >
       {/* Logo/Brand */}
       <div className="flex items-center h-16 px-4 border-b">
         {context?.logoUrl ? (
           <img
             src={context.logoUrl}
             alt={context.companyName}
-            className={`h-8 ${collapsed ? 'w-8' : 'w-auto max-w-[150px]'}`}
+            className={`h-8 ${collapsed ? "w-8" : "w-auto max-w-[150px]"}`}
           />
         ) : (
-          <span className={`font-bold text-primary-600 ${collapsed ? 'text-lg' : 'text-xl'}`}>
+          <span
+            className={`font-bold text-primary-600 ${collapsed ? "text-lg" : "text-xl"}`}
+          >
             {collapsed ? context?.companyName?.charAt(0) : context?.companyName}
           </span>
         )}
