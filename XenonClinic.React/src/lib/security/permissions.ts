@@ -7,98 +7,99 @@
 // PERMISSION DEFINITIONS
 // ============================================
 
-export enum Permission {
+export const Permission = {
   // Patient Management
-  PATIENTS_VIEW = 'patients:view',
-  PATIENTS_CREATE = 'patients:create',
-  PATIENTS_UPDATE = 'patients:update',
-  PATIENTS_DELETE = 'patients:delete',
-  PATIENTS_EXPORT = 'patients:export',
+  PATIENTS_VIEW: "patients:view",
+  PATIENTS_CREATE: "patients:create",
+  PATIENTS_UPDATE: "patients:update",
+  PATIENTS_DELETE: "patients:delete",
+  PATIENTS_EXPORT: "patients:export",
 
   // Appointment Management
-  APPOINTMENTS_VIEW = 'appointments:view',
-  APPOINTMENTS_CREATE = 'appointments:create',
-  APPOINTMENTS_UPDATE = 'appointments:update',
-  APPOINTMENTS_DELETE = 'appointments:delete',
-  APPOINTMENTS_RESCHEDULE = 'appointments:reschedule',
+  APPOINTMENTS_VIEW: "appointments:view",
+  APPOINTMENTS_CREATE: "appointments:create",
+  APPOINTMENTS_UPDATE: "appointments:update",
+  APPOINTMENTS_DELETE: "appointments:delete",
+  APPOINTMENTS_RESCHEDULE: "appointments:reschedule",
 
   // Audiology
-  AUDIOGRAMS_VIEW = 'audiograms:view',
-  AUDIOGRAMS_CREATE = 'audiograms:create',
-  AUDIOGRAMS_UPDATE = 'audiograms:update',
-  AUDIOGRAMS_DELETE = 'audiograms:delete',
+  AUDIOGRAMS_VIEW: "audiograms:view",
+  AUDIOGRAMS_CREATE: "audiograms:create",
+  AUDIOGRAMS_UPDATE: "audiograms:update",
+  AUDIOGRAMS_DELETE: "audiograms:delete",
 
-  HEARING_AIDS_VIEW = 'hearing_aids:view',
-  HEARING_AIDS_CREATE = 'hearing_aids:create',
-  HEARING_AIDS_UPDATE = 'hearing_aids:update',
-  HEARING_AIDS_DELETE = 'hearing_aids:delete',
-  HEARING_AIDS_FIT = 'hearing_aids:fit',
-  HEARING_AIDS_ADJUST = 'hearing_aids:adjust',
+  HEARING_AIDS_VIEW: "hearing_aids:view",
+  HEARING_AIDS_CREATE: "hearing_aids:create",
+  HEARING_AIDS_UPDATE: "hearing_aids:update",
+  HEARING_AIDS_DELETE: "hearing_aids:delete",
+  HEARING_AIDS_FIT: "hearing_aids:fit",
+  HEARING_AIDS_ADJUST: "hearing_aids:adjust",
 
-  ENCOUNTERS_VIEW = 'encounters:view',
-  ENCOUNTERS_CREATE = 'encounters:create',
-  ENCOUNTERS_UPDATE = 'encounters:update',
-  ENCOUNTERS_COMPLETE = 'encounters:complete',
-  ENCOUNTERS_DELETE = 'encounters:delete',
+  ENCOUNTERS_VIEW: "encounters:view",
+  ENCOUNTERS_CREATE: "encounters:create",
+  ENCOUNTERS_UPDATE: "encounters:update",
+  ENCOUNTERS_COMPLETE: "encounters:complete",
+  ENCOUNTERS_DELETE: "encounters:delete",
 
   // Consent Management
-  CONSENTS_VIEW = 'consents:view',
-  CONSENTS_CREATE = 'consents:create',
-  CONSENTS_SIGN = 'consents:sign',
-  CONSENTS_REVOKE = 'consents:revoke',
+  CONSENTS_VIEW: "consents:view",
+  CONSENTS_CREATE: "consents:create",
+  CONSENTS_SIGN: "consents:sign",
+  CONSENTS_REVOKE: "consents:revoke",
 
   // Laboratory
-  LAB_VIEW = 'lab:view',
-  LAB_CREATE = 'lab:create',
-  LAB_UPDATE = 'lab:update',
-  LAB_APPROVE = 'lab:approve',
-  LAB_DELETE = 'lab:delete',
+  LAB_VIEW: "lab:view",
+  LAB_CREATE: "lab:create",
+  LAB_UPDATE: "lab:update",
+  LAB_APPROVE: "lab:approve",
+  LAB_DELETE: "lab:delete",
 
   // Pharmacy
-  PHARMACY_VIEW = 'pharmacy:view',
-  PHARMACY_DISPENSE = 'pharmacy:dispense',
-  PHARMACY_MANAGE = 'pharmacy:manage',
+  PHARMACY_VIEW: "pharmacy:view",
+  PHARMACY_DISPENSE: "pharmacy:dispense",
+  PHARMACY_MANAGE: "pharmacy:manage",
 
   // Radiology
-  RADIOLOGY_VIEW = 'radiology:view',
-  RADIOLOGY_CREATE = 'radiology:create',
-  RADIOLOGY_REPORT = 'radiology:report',
-  RADIOLOGY_DELETE = 'radiology:delete',
+  RADIOLOGY_VIEW: "radiology:view",
+  RADIOLOGY_CREATE: "radiology:create",
+  RADIOLOGY_REPORT: "radiology:report",
+  RADIOLOGY_DELETE: "radiology:delete",
 
   // Financial
-  FINANCIAL_VIEW = 'financial:view',
-  FINANCIAL_CREATE = 'financial:create',
-  FINANCIAL_UPDATE = 'financial:update',
-  FINANCIAL_APPROVE = 'financial:approve',
-  FINANCIAL_REPORTS = 'financial:reports',
+  FINANCIAL_VIEW: "financial:view",
+  FINANCIAL_CREATE: "financial:create",
+  FINANCIAL_UPDATE: "financial:update",
+  FINANCIAL_APPROVE: "financial:approve",
+  FINANCIAL_REPORTS: "financial:reports",
 
   // Inventory
-  INVENTORY_VIEW = 'inventory:view',
-  INVENTORY_CREATE = 'inventory:create',
-  INVENTORY_UPDATE = 'inventory:update',
-  INVENTORY_DELETE = 'inventory:delete',
-  INVENTORY_ORDER = 'inventory:order',
+  INVENTORY_VIEW: "inventory:view",
+  INVENTORY_CREATE: "inventory:create",
+  INVENTORY_UPDATE: "inventory:update",
+  INVENTORY_DELETE: "inventory:delete",
+  INVENTORY_ORDER: "inventory:order",
 
   // HR
-  HR_VIEW = 'hr:view',
-  HR_CREATE = 'hr:create',
-  HR_UPDATE = 'hr:update',
-  HR_DELETE = 'hr:delete',
-  HR_PAYROLL = 'hr:payroll',
+  HR_VIEW: "hr:view",
+  HR_CREATE: "hr:create",
+  HR_UPDATE: "hr:update",
+  HR_DELETE: "hr:delete",
+  HR_PAYROLL: "hr:payroll",
 
   // Administration
-  ADMIN_USERS = 'admin:users',
-  ADMIN_ROLES = 'admin:roles',
-  ADMIN_SETTINGS = 'admin:settings',
-  ADMIN_AUDIT_LOGS = 'admin:audit_logs',
-  ADMIN_SYSTEM = 'admin:system',
+  ADMIN_USERS: "admin:users",
+  ADMIN_ROLES: "admin:roles",
+  ADMIN_SETTINGS: "admin:settings",
+  ADMIN_AUDIT_LOGS: "admin:audit_logs",
+  ADMIN_SYSTEM: "admin:system",
 
   // Attachments & Documents
-  ATTACHMENTS_VIEW = 'attachments:view',
-  ATTACHMENTS_UPLOAD = 'attachments:upload',
-  ATTACHMENTS_DOWNLOAD = 'attachments:download',
-  ATTACHMENTS_DELETE = 'attachments:delete',
-}
+  ATTACHMENTS_VIEW: "attachments:view",
+  ATTACHMENTS_UPLOAD: "attachments:upload",
+  ATTACHMENTS_DOWNLOAD: "attachments:download",
+  ATTACHMENTS_DELETE: "attachments:delete",
+} as const;
+export type Permission = (typeof Permission)[keyof typeof Permission];
 
 // ============================================
 // ROLE DEFINITIONS WITH PERMISSIONS
@@ -369,7 +370,10 @@ export const getUserPermissions = (user: User | null): Permission[] => {
 /**
  * Check if user has a specific permission
  */
-export const hasPermission = (user: User | null, permission: Permission): boolean => {
+export const hasPermission = (
+  user: User | null,
+  permission: Permission,
+): boolean => {
   const permissions = getUserPermissions(user);
   return permissions.includes(permission);
 };
@@ -377,7 +381,10 @@ export const hasPermission = (user: User | null, permission: Permission): boolea
 /**
  * Check if user has any of the specified permissions
  */
-export const hasAnyPermission = (user: User | null, permissions: Permission[]): boolean => {
+export const hasAnyPermission = (
+  user: User | null,
+  permissions: Permission[],
+): boolean => {
   const userPermissions = getUserPermissions(user);
   return permissions.some((p) => userPermissions.includes(p));
 };
@@ -385,7 +392,10 @@ export const hasAnyPermission = (user: User | null, permissions: Permission[]): 
 /**
  * Check if user has all of the specified permissions
  */
-export const hasAllPermissions = (user: User | null, permissions: Permission[]): boolean => {
+export const hasAllPermissions = (
+  user: User | null,
+  permissions: Permission[],
+): boolean => {
   const userPermissions = getUserPermissions(user);
   return permissions.every((p) => userPermissions.includes(p));
 };
@@ -396,7 +406,7 @@ export const hasAllPermissions = (user: User | null, permissions: Permission[]):
 export const canAccess = (
   user: User | null,
   resource: string,
-  action: 'view' | 'create' | 'update' | 'delete'
+  action: "view" | "create" | "update" | "delete",
 ): boolean => {
   const permissionKey = `${resource}:${action}` as Permission;
   return hasPermission(user, permissionKey);
@@ -407,21 +417,21 @@ export const canAccess = (
 // ============================================
 
 export const PermissionGroups = {
-  'Patient Management': [
+  "Patient Management": [
     Permission.PATIENTS_VIEW,
     Permission.PATIENTS_CREATE,
     Permission.PATIENTS_UPDATE,
     Permission.PATIENTS_DELETE,
     Permission.PATIENTS_EXPORT,
   ],
-  'Appointments': [
+  Appointments: [
     Permission.APPOINTMENTS_VIEW,
     Permission.APPOINTMENTS_CREATE,
     Permission.APPOINTMENTS_UPDATE,
     Permission.APPOINTMENTS_DELETE,
     Permission.APPOINTMENTS_RESCHEDULE,
   ],
-  'Audiology': [
+  Audiology: [
     Permission.AUDIOGRAMS_VIEW,
     Permission.AUDIOGRAMS_CREATE,
     Permission.AUDIOGRAMS_UPDATE,
@@ -438,7 +448,7 @@ export const PermissionGroups = {
     Permission.ENCOUNTERS_COMPLETE,
     Permission.ENCOUNTERS_DELETE,
   ],
-  'Consent & Documents': [
+  "Consent & Documents": [
     Permission.CONSENTS_VIEW,
     Permission.CONSENTS_CREATE,
     Permission.CONSENTS_SIGN,
@@ -448,46 +458,46 @@ export const PermissionGroups = {
     Permission.ATTACHMENTS_DOWNLOAD,
     Permission.ATTACHMENTS_DELETE,
   ],
-  'Laboratory': [
+  Laboratory: [
     Permission.LAB_VIEW,
     Permission.LAB_CREATE,
     Permission.LAB_UPDATE,
     Permission.LAB_APPROVE,
     Permission.LAB_DELETE,
   ],
-  'Pharmacy': [
+  Pharmacy: [
     Permission.PHARMACY_VIEW,
     Permission.PHARMACY_DISPENSE,
     Permission.PHARMACY_MANAGE,
   ],
-  'Radiology': [
+  Radiology: [
     Permission.RADIOLOGY_VIEW,
     Permission.RADIOLOGY_CREATE,
     Permission.RADIOLOGY_REPORT,
     Permission.RADIOLOGY_DELETE,
   ],
-  'Financial': [
+  Financial: [
     Permission.FINANCIAL_VIEW,
     Permission.FINANCIAL_CREATE,
     Permission.FINANCIAL_UPDATE,
     Permission.FINANCIAL_APPROVE,
     Permission.FINANCIAL_REPORTS,
   ],
-  'Inventory': [
+  Inventory: [
     Permission.INVENTORY_VIEW,
     Permission.INVENTORY_CREATE,
     Permission.INVENTORY_UPDATE,
     Permission.INVENTORY_DELETE,
     Permission.INVENTORY_ORDER,
   ],
-  'Human Resources': [
+  "Human Resources": [
     Permission.HR_VIEW,
     Permission.HR_CREATE,
     Permission.HR_UPDATE,
     Permission.HR_DELETE,
     Permission.HR_PAYROLL,
   ],
-  'Administration': [
+  Administration: [
     Permission.ADMIN_USERS,
     Permission.ADMIN_ROLES,
     Permission.ADMIN_SETTINGS,
@@ -501,84 +511,84 @@ export const PermissionGroups = {
  */
 export const getPermissionLabel = (permission: Permission): string => {
   const labels: Record<Permission, string> = {
-    [Permission.PATIENTS_VIEW]: 'View Patients',
-    [Permission.PATIENTS_CREATE]: 'Create Patients',
-    [Permission.PATIENTS_UPDATE]: 'Update Patients',
-    [Permission.PATIENTS_DELETE]: 'Delete Patients',
-    [Permission.PATIENTS_EXPORT]: 'Export Patient Data',
+    [Permission.PATIENTS_VIEW]: "View Patients",
+    [Permission.PATIENTS_CREATE]: "Create Patients",
+    [Permission.PATIENTS_UPDATE]: "Update Patients",
+    [Permission.PATIENTS_DELETE]: "Delete Patients",
+    [Permission.PATIENTS_EXPORT]: "Export Patient Data",
 
-    [Permission.APPOINTMENTS_VIEW]: 'View Appointments',
-    [Permission.APPOINTMENTS_CREATE]: 'Create Appointments',
-    [Permission.APPOINTMENTS_UPDATE]: 'Update Appointments',
-    [Permission.APPOINTMENTS_DELETE]: 'Delete Appointments',
-    [Permission.APPOINTMENTS_RESCHEDULE]: 'Reschedule Appointments',
+    [Permission.APPOINTMENTS_VIEW]: "View Appointments",
+    [Permission.APPOINTMENTS_CREATE]: "Create Appointments",
+    [Permission.APPOINTMENTS_UPDATE]: "Update Appointments",
+    [Permission.APPOINTMENTS_DELETE]: "Delete Appointments",
+    [Permission.APPOINTMENTS_RESCHEDULE]: "Reschedule Appointments",
 
-    [Permission.AUDIOGRAMS_VIEW]: 'View Audiograms',
-    [Permission.AUDIOGRAMS_CREATE]: 'Create Audiograms',
-    [Permission.AUDIOGRAMS_UPDATE]: 'Update Audiograms',
-    [Permission.AUDIOGRAMS_DELETE]: 'Delete Audiograms',
+    [Permission.AUDIOGRAMS_VIEW]: "View Audiograms",
+    [Permission.AUDIOGRAMS_CREATE]: "Create Audiograms",
+    [Permission.AUDIOGRAMS_UPDATE]: "Update Audiograms",
+    [Permission.AUDIOGRAMS_DELETE]: "Delete Audiograms",
 
-    [Permission.HEARING_AIDS_VIEW]: 'View Hearing Aids',
-    [Permission.HEARING_AIDS_CREATE]: 'Register Hearing Aids',
-    [Permission.HEARING_AIDS_UPDATE]: 'Update Hearing Aids',
-    [Permission.HEARING_AIDS_DELETE]: 'Delete Hearing Aids',
-    [Permission.HEARING_AIDS_FIT]: 'Fit Hearing Aids',
-    [Permission.HEARING_AIDS_ADJUST]: 'Adjust Hearing Aids',
+    [Permission.HEARING_AIDS_VIEW]: "View Hearing Aids",
+    [Permission.HEARING_AIDS_CREATE]: "Register Hearing Aids",
+    [Permission.HEARING_AIDS_UPDATE]: "Update Hearing Aids",
+    [Permission.HEARING_AIDS_DELETE]: "Delete Hearing Aids",
+    [Permission.HEARING_AIDS_FIT]: "Fit Hearing Aids",
+    [Permission.HEARING_AIDS_ADJUST]: "Adjust Hearing Aids",
 
-    [Permission.ENCOUNTERS_VIEW]: 'View Encounters',
-    [Permission.ENCOUNTERS_CREATE]: 'Create Encounters',
-    [Permission.ENCOUNTERS_UPDATE]: 'Update Encounters',
-    [Permission.ENCOUNTERS_COMPLETE]: 'Complete Encounters',
-    [Permission.ENCOUNTERS_DELETE]: 'Delete Encounters',
+    [Permission.ENCOUNTERS_VIEW]: "View Encounters",
+    [Permission.ENCOUNTERS_CREATE]: "Create Encounters",
+    [Permission.ENCOUNTERS_UPDATE]: "Update Encounters",
+    [Permission.ENCOUNTERS_COMPLETE]: "Complete Encounters",
+    [Permission.ENCOUNTERS_DELETE]: "Delete Encounters",
 
-    [Permission.CONSENTS_VIEW]: 'View Consent Forms',
-    [Permission.CONSENTS_CREATE]: 'Create Consent Forms',
-    [Permission.CONSENTS_SIGN]: 'Sign Consent Forms',
-    [Permission.CONSENTS_REVOKE]: 'Revoke Consent Forms',
+    [Permission.CONSENTS_VIEW]: "View Consent Forms",
+    [Permission.CONSENTS_CREATE]: "Create Consent Forms",
+    [Permission.CONSENTS_SIGN]: "Sign Consent Forms",
+    [Permission.CONSENTS_REVOKE]: "Revoke Consent Forms",
 
-    [Permission.LAB_VIEW]: 'View Lab Results',
-    [Permission.LAB_CREATE]: 'Create Lab Orders',
-    [Permission.LAB_UPDATE]: 'Update Lab Results',
-    [Permission.LAB_APPROVE]: 'Approve Lab Results',
-    [Permission.LAB_DELETE]: 'Delete Lab Results',
+    [Permission.LAB_VIEW]: "View Lab Results",
+    [Permission.LAB_CREATE]: "Create Lab Orders",
+    [Permission.LAB_UPDATE]: "Update Lab Results",
+    [Permission.LAB_APPROVE]: "Approve Lab Results",
+    [Permission.LAB_DELETE]: "Delete Lab Results",
 
-    [Permission.PHARMACY_VIEW]: 'View Prescriptions',
-    [Permission.PHARMACY_DISPENSE]: 'Dispense Medications',
-    [Permission.PHARMACY_MANAGE]: 'Manage Pharmacy',
+    [Permission.PHARMACY_VIEW]: "View Prescriptions",
+    [Permission.PHARMACY_DISPENSE]: "Dispense Medications",
+    [Permission.PHARMACY_MANAGE]: "Manage Pharmacy",
 
-    [Permission.RADIOLOGY_VIEW]: 'View Radiology',
-    [Permission.RADIOLOGY_CREATE]: 'Create Radiology Orders',
-    [Permission.RADIOLOGY_REPORT]: 'Write Radiology Reports',
-    [Permission.RADIOLOGY_DELETE]: 'Delete Radiology Records',
+    [Permission.RADIOLOGY_VIEW]: "View Radiology",
+    [Permission.RADIOLOGY_CREATE]: "Create Radiology Orders",
+    [Permission.RADIOLOGY_REPORT]: "Write Radiology Reports",
+    [Permission.RADIOLOGY_DELETE]: "Delete Radiology Records",
 
-    [Permission.FINANCIAL_VIEW]: 'View Financial Records',
-    [Permission.FINANCIAL_CREATE]: 'Create Invoices',
-    [Permission.FINANCIAL_UPDATE]: 'Update Financial Records',
-    [Permission.FINANCIAL_APPROVE]: 'Approve Payments',
-    [Permission.FINANCIAL_REPORTS]: 'View Financial Reports',
+    [Permission.FINANCIAL_VIEW]: "View Financial Records",
+    [Permission.FINANCIAL_CREATE]: "Create Invoices",
+    [Permission.FINANCIAL_UPDATE]: "Update Financial Records",
+    [Permission.FINANCIAL_APPROVE]: "Approve Payments",
+    [Permission.FINANCIAL_REPORTS]: "View Financial Reports",
 
-    [Permission.INVENTORY_VIEW]: 'View Inventory',
-    [Permission.INVENTORY_CREATE]: 'Add Inventory Items',
-    [Permission.INVENTORY_UPDATE]: 'Update Inventory',
-    [Permission.INVENTORY_DELETE]: 'Delete Inventory Items',
-    [Permission.INVENTORY_ORDER]: 'Create Purchase Orders',
+    [Permission.INVENTORY_VIEW]: "View Inventory",
+    [Permission.INVENTORY_CREATE]: "Add Inventory Items",
+    [Permission.INVENTORY_UPDATE]: "Update Inventory",
+    [Permission.INVENTORY_DELETE]: "Delete Inventory Items",
+    [Permission.INVENTORY_ORDER]: "Create Purchase Orders",
 
-    [Permission.HR_VIEW]: 'View Employee Records',
-    [Permission.HR_CREATE]: 'Create Employee Records',
-    [Permission.HR_UPDATE]: 'Update Employee Records',
-    [Permission.HR_DELETE]: 'Delete Employee Records',
-    [Permission.HR_PAYROLL]: 'Manage Payroll',
+    [Permission.HR_VIEW]: "View Employee Records",
+    [Permission.HR_CREATE]: "Create Employee Records",
+    [Permission.HR_UPDATE]: "Update Employee Records",
+    [Permission.HR_DELETE]: "Delete Employee Records",
+    [Permission.HR_PAYROLL]: "Manage Payroll",
 
-    [Permission.ADMIN_USERS]: 'Manage Users',
-    [Permission.ADMIN_ROLES]: 'Manage Roles',
-    [Permission.ADMIN_SETTINGS]: 'System Settings',
-    [Permission.ADMIN_AUDIT_LOGS]: 'View Audit Logs',
-    [Permission.ADMIN_SYSTEM]: 'System Administration',
+    [Permission.ADMIN_USERS]: "Manage Users",
+    [Permission.ADMIN_ROLES]: "Manage Roles",
+    [Permission.ADMIN_SETTINGS]: "System Settings",
+    [Permission.ADMIN_AUDIT_LOGS]: "View Audit Logs",
+    [Permission.ADMIN_SYSTEM]: "System Administration",
 
-    [Permission.ATTACHMENTS_VIEW]: 'View Attachments',
-    [Permission.ATTACHMENTS_UPLOAD]: 'Upload Attachments',
-    [Permission.ATTACHMENTS_DOWNLOAD]: 'Download Attachments',
-    [Permission.ATTACHMENTS_DELETE]: 'Delete Attachments',
+    [Permission.ATTACHMENTS_VIEW]: "View Attachments",
+    [Permission.ATTACHMENTS_UPLOAD]: "Upload Attachments",
+    [Permission.ATTACHMENTS_DOWNLOAD]: "Download Attachments",
+    [Permission.ATTACHMENTS_DELETE]: "Delete Attachments",
   };
 
   return labels[permission] || permission;
