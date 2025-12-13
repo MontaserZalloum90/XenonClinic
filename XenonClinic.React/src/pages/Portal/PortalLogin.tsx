@@ -1,50 +1,57 @@
-import { useState, useEffect } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { useMutation } from '@tanstack/react-query';
-import { api } from '../../lib/api';
+import { useState, useEffect } from "react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
+import { useMutation } from "@tanstack/react-query";
+import { api } from "../../lib/api";
 
 export const PortalLogin = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
-  const [error, setError] = useState('');
-  const [successMessage, setSuccessMessage] = useState('');
+  const [error, setError] = useState("");
+  const [successMessage, setSuccessMessage] = useState(
+    () => location.state?.message || "",
+  );
 
   useEffect(() => {
-    // Show success message if coming from registration
+    // Clear success message after it's shown
     if (location.state?.message) {
-      setSuccessMessage(location.state.message);
+      // Clear the location state to prevent message from persisting on refresh
+      window.history.replaceState({}, document.title);
     }
   }, [location]);
 
   const loginMutation = useMutation({
-    mutationFn: async (credentials: { email: string; password: string; rememberMe: boolean }) => {
-      const response = await api.post('/api/Portal/login', credentials);
+    mutationFn: async (credentials: {
+      email: string;
+      password: string;
+      rememberMe: boolean;
+    }) => {
+      const response = await api.post("/api/Portal/login", credentials);
       return response.data;
     },
     onSuccess: (data) => {
       // Store auth token
       if (rememberMe) {
-        localStorage.setItem('portalToken', data.token);
+        localStorage.setItem("portalToken", data.token);
       } else {
-        sessionStorage.setItem('portalToken', data.token);
+        sessionStorage.setItem("portalToken", data.token);
       }
-      navigate('/portal/dashboard');
+      navigate("/portal/dashboard");
     },
     onError: (error: Error) => {
-      setError(error.message || 'Invalid email or password. Please try again.');
+      setError(error.message || "Invalid email or password. Please try again.");
     },
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
-    setSuccessMessage('');
+    setError("");
+    setSuccessMessage("");
 
     if (!email || !password) {
-      setError('Please enter both email and password');
+      setError("Please enter both email and password");
       return;
     }
 
@@ -96,7 +103,10 @@ export const PortalLogin = () => {
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Email */}
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+              <label
+                htmlFor="email"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
                 Email Address
               </label>
               <input
@@ -114,7 +124,10 @@ export const PortalLogin = () => {
 
             {/* Password */}
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+              <label
+                htmlFor="password"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
                 Password
               </label>
               <input
@@ -140,12 +153,18 @@ export const PortalLogin = () => {
                   onChange={(e) => setRememberMe(e.target.checked)}
                   className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                 />
-                <label htmlFor="remember" className="ml-2 block text-sm text-gray-700">
+                <label
+                  htmlFor="remember"
+                  className="ml-2 block text-sm text-gray-700"
+                >
                   Remember me
                 </label>
               </div>
 
-              <Link to="/portal/forgot-password" className="text-sm text-blue-600 hover:text-blue-500">
+              <Link
+                to="/portal/forgot-password"
+                className="text-sm text-blue-600 hover:text-blue-500"
+              >
                 Forgot password?
               </Link>
             </div>
@@ -162,7 +181,7 @@ export const PortalLogin = () => {
                   Signing in...
                 </div>
               ) : (
-                'Sign In'
+                "Sign In"
               )}
             </button>
           </form>
@@ -170,8 +189,11 @@ export const PortalLogin = () => {
           {/* Register Link */}
           <div className="mt-6 text-center">
             <p className="text-sm text-gray-600">
-              Don't have an account?{' '}
-              <Link to="/portal/register" className="text-blue-600 hover:text-blue-500 font-medium">
+              Don't have an account?{" "}
+              <Link
+                to="/portal/register"
+                className="text-blue-600 hover:text-blue-500 font-medium"
+              >
                 Register here
               </Link>
             </p>

@@ -1,32 +1,37 @@
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { useMutation } from '@tanstack/react-query';
-import { api } from '../../lib/api';
-import type { PortalRegistration } from '../../types/portal';
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useMutation } from "@tanstack/react-query";
+import { api } from "../../lib/api";
+import type { PortalRegistration } from "../../types/portal";
 
 export const PortalRegistration = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState<PortalRegistration>({
-    email: '',
-    password: '',
-    confirmPassword: '',
-    phoneNumber: '',
+    email: "",
+    password: "",
+    confirmPassword: "",
+    phoneNumber: "",
     acceptTerms: false,
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const registrationMutation = useMutation({
     mutationFn: async (data: PortalRegistration) => {
-      const response = await api.post('/api/Portal/register', data);
+      const response = await api.post("/api/Portal/register", data);
       return response.data;
     },
     onSuccess: () => {
-      navigate('/portal/login', {
-        state: { message: 'Registration successful! Please check your email to verify your account.' }
+      navigate("/portal/login", {
+        state: {
+          message:
+            "Registration successful! Please check your email to verify your account.",
+        },
       });
     },
     onError: (error: Error) => {
-      setErrors({ submit: error.message || 'Registration failed. Please try again.' });
+      setErrors({
+        submit: error.message || "Registration failed. Please try again.",
+      });
     },
   });
 
@@ -34,29 +39,29 @@ export const PortalRegistration = () => {
     const newErrors: Record<string, string> = {};
 
     if (!formData.email) {
-      newErrors.email = 'Email is required';
+      newErrors.email = "Email is required";
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = 'Please enter a valid email address';
+      newErrors.email = "Please enter a valid email address";
     }
 
     if (!formData.password) {
-      newErrors.password = 'Password is required';
+      newErrors.password = "Password is required";
     } else if (formData.password.length < 8) {
-      newErrors.password = 'Password must be at least 8 characters';
+      newErrors.password = "Password must be at least 8 characters";
     }
 
     if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = 'Passwords do not match';
+      newErrors.confirmPassword = "Passwords do not match";
     }
 
     if (!formData.phoneNumber) {
-      newErrors.phoneNumber = 'Phone number is required';
-    } else if (!/^[\d\s\-\+\(\)]+$/.test(formData.phoneNumber)) {
-      newErrors.phoneNumber = 'Please enter a valid phone number';
+      newErrors.phoneNumber = "Phone number is required";
+    } else if (!/^[\d\s\-+()]+$/.test(formData.phoneNumber)) {
+      newErrors.phoneNumber = "Please enter a valid phone number";
     }
 
     if (!formData.acceptTerms) {
-      newErrors.acceptTerms = 'You must accept the terms and conditions';
+      newErrors.acceptTerms = "You must accept the terms and conditions";
     }
 
     setErrors(newErrors);
@@ -71,11 +76,14 @@ export const PortalRegistration = () => {
     }
   };
 
-  const handleChange = (field: keyof PortalRegistration, value: string | boolean) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+  const handleChange = (
+    field: keyof PortalRegistration,
+    value: string | boolean,
+  ) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
     // Clear error for this field when user starts typing
     if (errors[field]) {
-      setErrors(prev => {
+      setErrors((prev) => {
         const newErrors = { ...prev };
         delete newErrors[field];
         return newErrors;
@@ -106,7 +114,9 @@ export const PortalRegistration = () => {
             </div>
           </div>
           <h1 className="text-3xl font-bold text-gray-900">Patient Portal</h1>
-          <p className="text-gray-600 mt-2">Create your account to access your health information</p>
+          <p className="text-gray-600 mt-2">
+            Create your account to access your health information
+          </p>
         </div>
 
         {/* Registration Form */}
@@ -122,70 +132,96 @@ export const PortalRegistration = () => {
           <form onSubmit={handleSubmit} className="space-y-5">
             {/* Email */}
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+              <label
+                htmlFor="email"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
                 Email Address *
               </label>
               <input
                 id="email"
                 type="email"
                 value={formData.email}
-                onChange={(e) => handleChange('email', e.target.value)}
-                className={`input w-full ${errors.email ? 'border-red-300' : ''}`}
+                onChange={(e) => handleChange("email", e.target.value)}
+                className={`input w-full ${errors.email ? "border-red-300" : ""}`}
                 placeholder="Enter your email"
                 disabled={registrationMutation.isPending}
               />
-              {errors.email && <p className="mt-1 text-sm text-red-600">{errors.email}</p>}
+              {errors.email && (
+                <p className="mt-1 text-sm text-red-600">{errors.email}</p>
+              )}
             </div>
 
             {/* Phone */}
             <div>
-              <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
+              <label
+                htmlFor="phone"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
                 Phone Number *
               </label>
               <input
                 id="phone"
                 type="tel"
                 value={formData.phoneNumber}
-                onChange={(e) => handleChange('phoneNumber', e.target.value)}
-                className={`input w-full ${errors.phoneNumber ? 'border-red-300' : ''}`}
+                onChange={(e) => handleChange("phoneNumber", e.target.value)}
+                className={`input w-full ${errors.phoneNumber ? "border-red-300" : ""}`}
                 placeholder="Enter your phone number"
                 disabled={registrationMutation.isPending}
               />
-              {errors.phoneNumber && <p className="mt-1 text-sm text-red-600">{errors.phoneNumber}</p>}
+              {errors.phoneNumber && (
+                <p className="mt-1 text-sm text-red-600">
+                  {errors.phoneNumber}
+                </p>
+              )}
             </div>
 
             {/* Password */}
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+              <label
+                htmlFor="password"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
                 Password *
               </label>
               <input
                 id="password"
                 type="password"
                 value={formData.password}
-                onChange={(e) => handleChange('password', e.target.value)}
-                className={`input w-full ${errors.password ? 'border-red-300' : ''}`}
+                onChange={(e) => handleChange("password", e.target.value)}
+                className={`input w-full ${errors.password ? "border-red-300" : ""}`}
                 placeholder="At least 8 characters"
                 disabled={registrationMutation.isPending}
               />
-              {errors.password && <p className="mt-1 text-sm text-red-600">{errors.password}</p>}
+              {errors.password && (
+                <p className="mt-1 text-sm text-red-600">{errors.password}</p>
+              )}
             </div>
 
             {/* Confirm Password */}
             <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
+              <label
+                htmlFor="confirmPassword"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
                 Confirm Password *
               </label>
               <input
                 id="confirmPassword"
                 type="password"
                 value={formData.confirmPassword}
-                onChange={(e) => handleChange('confirmPassword', e.target.value)}
-                className={`input w-full ${errors.confirmPassword ? 'border-red-300' : ''}`}
+                onChange={(e) =>
+                  handleChange("confirmPassword", e.target.value)
+                }
+                className={`input w-full ${errors.confirmPassword ? "border-red-300" : ""}`}
                 placeholder="Re-enter your password"
                 disabled={registrationMutation.isPending}
               />
-              {errors.confirmPassword && <p className="mt-1 text-sm text-red-600">{errors.confirmPassword}</p>}
+              {errors.confirmPassword && (
+                <p className="mt-1 text-sm text-red-600">
+                  {errors.confirmPassword}
+                </p>
+              )}
             </div>
 
             {/* Terms Acceptance */}
@@ -195,22 +231,37 @@ export const PortalRegistration = () => {
                   id="terms"
                   type="checkbox"
                   checked={formData.acceptTerms}
-                  onChange={(e) => handleChange('acceptTerms', e.target.checked)}
+                  onChange={(e) =>
+                    handleChange("acceptTerms", e.target.checked)
+                  }
                   className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded mt-1"
                   disabled={registrationMutation.isPending}
                 />
-                <label htmlFor="terms" className="ml-2 block text-sm text-gray-700">
-                  I accept the{' '}
-                  <a href="#" className="text-blue-600 hover:text-blue-500 font-medium">
+                <label
+                  htmlFor="terms"
+                  className="ml-2 block text-sm text-gray-700"
+                >
+                  I accept the{" "}
+                  <a
+                    href="#"
+                    className="text-blue-600 hover:text-blue-500 font-medium"
+                  >
                     Terms and Conditions
-                  </a>{' '}
-                  and{' '}
-                  <a href="#" className="text-blue-600 hover:text-blue-500 font-medium">
+                  </a>{" "}
+                  and{" "}
+                  <a
+                    href="#"
+                    className="text-blue-600 hover:text-blue-500 font-medium"
+                  >
                     Privacy Policy
                   </a>
                 </label>
               </div>
-              {errors.acceptTerms && <p className="mt-1 text-sm text-red-600">{errors.acceptTerms}</p>}
+              {errors.acceptTerms && (
+                <p className="mt-1 text-sm text-red-600">
+                  {errors.acceptTerms}
+                </p>
+              )}
             </div>
 
             {/* Submit Button */}
@@ -225,7 +276,7 @@ export const PortalRegistration = () => {
                   Creating account...
                 </div>
               ) : (
-                'Create Account'
+                "Create Account"
               )}
             </button>
           </form>
@@ -233,8 +284,11 @@ export const PortalRegistration = () => {
           {/* Login Link */}
           <div className="mt-6 text-center">
             <p className="text-sm text-gray-600">
-              Already have an account?{' '}
-              <Link to="/portal/login" className="text-blue-600 hover:text-blue-500 font-medium">
+              Already have an account?{" "}
+              <Link
+                to="/portal/login"
+                className="text-blue-600 hover:text-blue-500 font-medium"
+              >
                 Sign in here
               </Link>
             </p>

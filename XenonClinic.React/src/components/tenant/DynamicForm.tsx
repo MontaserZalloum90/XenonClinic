@@ -1,12 +1,12 @@
-import React, { useState, useCallback, useMemo, useEffect } from 'react';
-import { useT, useSchema, useFormLayout } from '../../contexts/TenantContext';
+import React, { useState, useCallback, useMemo, useEffect } from "react";
+import { useT, useSchema, useFormLayout } from "../../contexts/TenantContext";
 import type {
   UISchema,
   FormLayout,
   FormSection,
   FieldDefinition,
   ConditionalRule,
-} from '../../types/tenant';
+} from "../../types/tenant";
 
 /**
  * DynamicForm - Renders a form based on schema and layout from tenant context
@@ -31,7 +31,7 @@ interface DynamicFormProps {
   /** Entity name to look up schema/layout */
   entityName: string;
   /** Form mode */
-  mode: 'create' | 'edit' | 'view';
+  mode: "create" | "edit" | "view";
   /** Initial form data */
   initialData?: Record<string, unknown>;
   /** Called on form submission */
@@ -60,7 +60,7 @@ export const DynamicForm: React.FC<DynamicFormProps> = ({
   schema: schemaProp,
   layout: layoutProp,
   isLoading = false,
-  className = '',
+  className = "",
 }) => {
   const t = useT();
   const contextSchema = useSchema(entityName);
@@ -69,16 +69,19 @@ export const DynamicForm: React.FC<DynamicFormProps> = ({
   const schema = schemaProp ?? contextSchema;
   const layout = layoutProp ?? contextLayout;
 
-  const [formData, setFormData] = useState<Record<string, unknown>>(initialData);
+  const [formData, setFormData] =
+    useState<Record<string, unknown>>(initialData);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set());
+  const [collapsedSections, setCollapsedSections] = useState<Set<string>>(
+    new Set(),
+  );
 
   // Initialize collapsed sections
   useEffect(() => {
     if (layout?.sections) {
       const collapsed = new Set<string>();
-      layout.sections.forEach(section => {
+      layout.sections.forEach((section) => {
         if (section.defaultCollapsed) {
           collapsed.add(section.id);
         }
@@ -93,17 +96,20 @@ export const DynamicForm: React.FC<DynamicFormProps> = ({
   }, [initialData]);
 
   // Field change handler
-  const handleFieldChange = useCallback((fieldName: string, value: unknown) => {
-    setFormData(prev => ({ ...prev, [fieldName]: value }));
-    // Clear error when field changes
-    if (errors[fieldName]) {
-      setErrors(prev => {
-        const next = { ...prev };
-        delete next[fieldName];
-        return next;
-      });
-    }
-  }, [errors]);
+  const handleFieldChange = useCallback(
+    (fieldName: string, value: unknown) => {
+      setFormData((prev) => ({ ...prev, [fieldName]: value }));
+      // Clear error when field changes
+      if (errors[fieldName]) {
+        setErrors((prev) => {
+          const next = { ...prev };
+          delete next[fieldName];
+          return next;
+        });
+      }
+    },
+    [errors],
+  );
 
   // Validate form
   const validate = useCallback((): boolean => {
@@ -119,7 +125,7 @@ export const DynamicForm: React.FC<DynamicFormProps> = ({
 
       // Required validation
       if (field.validation?.required) {
-        if (value === undefined || value === null || value === '') {
+        if (value === undefined || value === null || value === "") {
           const label = t(field.label ?? field.name, field.name);
           newErrors[field.name] = `${label} is required`;
           continue;
@@ -127,27 +133,42 @@ export const DynamicForm: React.FC<DynamicFormProps> = ({
       }
 
       // String validations
-      if (typeof value === 'string') {
-        if (field.validation?.minLength && value.length < field.validation.minLength) {
-          newErrors[field.name] = `Minimum ${field.validation.minLength} characters`;
+      if (typeof value === "string") {
+        if (
+          field.validation?.minLength &&
+          value.length < field.validation.minLength
+        ) {
+          newErrors[field.name] =
+            `Minimum ${field.validation.minLength} characters`;
         }
-        if (field.validation?.maxLength && value.length > field.validation.maxLength) {
-          newErrors[field.name] = `Maximum ${field.validation.maxLength} characters`;
+        if (
+          field.validation?.maxLength &&
+          value.length > field.validation.maxLength
+        ) {
+          newErrors[field.name] =
+            `Maximum ${field.validation.maxLength} characters`;
         }
         if (field.validation?.pattern) {
           const regex = new RegExp(field.validation.pattern);
           if (!regex.test(value)) {
-            newErrors[field.name] = field.validation.patternMessage ?? 'Invalid format';
+            newErrors[field.name] =
+              field.validation.patternMessage ?? "Invalid format";
           }
         }
       }
 
       // Number validations
-      if (typeof value === 'number') {
-        if (field.validation?.min !== undefined && value < field.validation.min) {
+      if (typeof value === "number") {
+        if (
+          field.validation?.min !== undefined &&
+          value < field.validation.min
+        ) {
           newErrors[field.name] = `Minimum value is ${field.validation.min}`;
         }
-        if (field.validation?.max !== undefined && value > field.validation.max) {
+        if (
+          field.validation?.max !== undefined &&
+          value > field.validation.max
+        ) {
           newErrors[field.name] = `Maximum value is ${field.validation.max}`;
         }
       }
@@ -161,7 +182,7 @@ export const DynamicForm: React.FC<DynamicFormProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (mode === 'view') return;
+    if (mode === "view") return;
     if (!validate()) return;
 
     setIsSubmitting(true);
@@ -174,7 +195,7 @@ export const DynamicForm: React.FC<DynamicFormProps> = ({
 
   // Toggle section collapse
   const toggleSection = (sectionId: string) => {
-    setCollapsedSections(prev => {
+    setCollapsedSections((prev) => {
       const next = new Set(prev);
       if (next.has(sectionId)) {
         next.delete(sectionId);
@@ -188,7 +209,7 @@ export const DynamicForm: React.FC<DynamicFormProps> = ({
   // Build field map for quick lookup
   const fieldMap = useMemo(() => {
     if (!schema) return new Map<string, FieldDefinition>();
-    return new Map(schema.fields.map(f => [f.name, f]));
+    return new Map(schema.fields.map((f) => [f.name, f]));
   }, [schema]);
 
   if (!schema) {
@@ -200,24 +221,29 @@ export const DynamicForm: React.FC<DynamicFormProps> = ({
   }
 
   // If no layout, render all fields in a single section
-  const sections: FormSection[] = layout?.sections ?? [{
-    id: 'default',
-    title: t(schema.displayName),
-    columns: 2,
-    fields: schema.fields.map(f => f.name),
-  }];
+  const sections: FormSection[] = layout?.sections ?? [
+    {
+      id: "default",
+      title: t(schema.displayName),
+      columns: 2,
+      fields: schema.fields.map((f) => f.name),
+    },
+  ];
 
-  const isViewMode = mode === 'view';
-  const submitLabel = layout?.submitLabel ?? (mode === 'create' ? 'action.create' : 'action.save');
-  const cancelLabel = layout?.cancelLabel ?? 'action.cancel';
+  const isViewMode = mode === "view";
+  const submitLabel =
+    layout?.submitLabel ??
+    (mode === "create" ? "action.create" : "action.save");
+  const cancelLabel = layout?.cancelLabel ?? "action.cancel";
 
   return (
     <form onSubmit={handleSubmit} className={`space-y-6 ${className}`}>
-      {sections.map(section => {
+      {sections.map((section) => {
         const isSectionVisible = evaluateVisibility(section.visible, formData);
         if (!isSectionVisible) return null;
 
-        const isCollapsed = section.collapsible && collapsedSections.has(section.id);
+        const isCollapsed =
+          section.collapsible && collapsedSections.has(section.id);
 
         return (
           <div
@@ -227,7 +253,9 @@ export const DynamicForm: React.FC<DynamicFormProps> = ({
             {/* Section Header */}
             <div
               className={`px-4 py-3 border-b flex items-center justify-between ${
-                section.collapsible ? 'cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700' : ''
+                section.collapsible
+                  ? "cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700"
+                  : ""
               }`}
               onClick={() => section.collapsible && toggleSection(section.id)}
             >
@@ -236,17 +264,24 @@ export const DynamicForm: React.FC<DynamicFormProps> = ({
                   {t(section.title, section.title)}
                 </h3>
                 {section.description && (
-                  <p className="text-sm text-gray-500">{t(section.description)}</p>
+                  <p className="text-sm text-gray-500">
+                    {t(section.description)}
+                  </p>
                 )}
               </div>
               {section.collapsible && (
                 <svg
-                  className={`h-5 w-5 transform transition-transform ${isCollapsed ? '' : 'rotate-180'}`}
+                  className={`h-5 w-5 transform transition-transform ${isCollapsed ? "" : "rotate-180"}`}
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
                 >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M19 9l-7 7-7-7"
+                  />
                 </svg>
               )}
             </div>
@@ -254,15 +289,22 @@ export const DynamicForm: React.FC<DynamicFormProps> = ({
             {/* Section Fields */}
             {!isCollapsed && (
               <div className="p-4">
-                <div className={`grid gap-4 ${getColumnsClass(section.columns ?? 2)}`}>
-                  {section.fields.map(fieldName => {
+                <div
+                  className={`grid gap-4 ${getColumnsClass(section.columns ?? 2)}`}
+                >
+                  {section.fields.map((fieldName) => {
                     const field = fieldMap.get(fieldName);
                     if (!field) return null;
 
-                    const isVisible = evaluateVisibility(field.visible, formData);
+                    const isVisible = evaluateVisibility(
+                      field.visible,
+                      formData,
+                    );
                     if (!isVisible) return null;
 
-                    const isDisabled = isViewMode || evaluateVisibility(field.disabled, formData);
+                    const isDisabled =
+                      isViewMode ||
+                      evaluateVisibility(field.disabled, formData);
 
                     return (
                       <div
@@ -275,7 +317,9 @@ export const DynamicForm: React.FC<DynamicFormProps> = ({
                           error={errors[fieldName]}
                           disabled={isDisabled}
                           readOnly={field.readOnly || isViewMode}
-                          onChange={(value) => handleFieldChange(fieldName, value)}
+                          onChange={(value) =>
+                            handleFieldChange(fieldName, value)
+                          }
                           t={t}
                         />
                       </div>
@@ -291,13 +335,13 @@ export const DynamicForm: React.FC<DynamicFormProps> = ({
       {/* Form Actions */}
       {!isViewMode && (
         <div className="flex items-center justify-end space-x-3 pt-4">
-          {onDelete && mode === 'edit' && layout?.showDelete && (
+          {onDelete && mode === "edit" && layout?.showDelete && (
             <button
               type="button"
               onClick={onDelete}
               className="px-4 py-2 text-sm font-medium text-red-600 hover:text-red-700 hover:bg-red-50 rounded-md"
             >
-              {t('action.delete')}
+              {t("action.delete")}
             </button>
           )}
           <div className="flex-1" />
@@ -315,7 +359,7 @@ export const DynamicForm: React.FC<DynamicFormProps> = ({
             disabled={isSubmitting || isLoading}
             className="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-md hover:bg-primary-700 disabled:opacity-50"
           >
-            {isSubmitting ? t('common.loading') : t(submitLabel)}
+            {isSubmitting ? t("common.loading") : t(submitLabel)}
           </button>
         </div>
       )}
@@ -352,27 +396,34 @@ const FormField: React.FC<FormFieldProps> = ({
 
   const baseInputClass = `
     block w-full rounded-md shadow-sm
-    ${error
-      ? 'border-red-300 focus:border-red-500 focus:ring-red-500'
-      : 'border-gray-300 focus:border-primary-500 focus:ring-primary-500'
+    ${
+      error
+        ? "border-red-300 focus:border-red-500 focus:ring-red-500"
+        : "border-gray-300 focus:border-primary-500 focus:ring-primary-500"
     }
-    ${disabled ? 'bg-gray-100 cursor-not-allowed' : ''}
-    ${readOnly ? 'bg-gray-50' : ''}
+    ${disabled ? "bg-gray-100 cursor-not-allowed" : ""}
+    ${readOnly ? "bg-gray-50" : ""}
     sm:text-sm
   `;
 
   const renderInput = () => {
     switch (field.type) {
-      case 'text':
-      case 'email':
-      case 'url':
-      case 'phone':
-      case 'emiratesId':
-      case 'passport':
+      case "text":
+      case "email":
+      case "url":
+      case "phone":
+      case "emiratesId":
+      case "passport":
         return (
           <input
-            type={field.type === 'email' ? 'email' : field.type === 'url' ? 'url' : 'text'}
-            value={(value as string) ?? ''}
+            type={
+              field.type === "email"
+                ? "email"
+                : field.type === "url"
+                  ? "url"
+                  : "text"
+            }
+            value={(value as string) ?? ""}
             onChange={(e) => onChange(e.target.value)}
             placeholder={placeholder}
             disabled={disabled}
@@ -381,36 +432,40 @@ const FormField: React.FC<FormFieldProps> = ({
           />
         );
 
-      case 'number':
-      case 'currency':
-      case 'percentage':
+      case "number":
+      case "currency":
+      case "percentage":
         return (
           <div className="relative">
-            {field.type === 'currency' && (
+            {field.type === "currency" && (
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
-                {field.currency ?? 'AED'}
+                {field.currency ?? "AED"}
               </span>
             )}
             <input
               type="number"
-              value={(value as number) ?? ''}
-              onChange={(e) => onChange(e.target.value ? Number(e.target.value) : undefined)}
+              value={(value as number) ?? ""}
+              onChange={(e) =>
+                onChange(e.target.value ? Number(e.target.value) : undefined)
+              }
               placeholder={placeholder}
               disabled={disabled}
               readOnly={readOnly}
               step={field.decimals ? Math.pow(10, -field.decimals) : 1}
-              className={`${baseInputClass} ${field.type === 'currency' ? 'pl-12' : ''} ${field.type === 'percentage' ? 'pr-8' : ''}`}
+              className={`${baseInputClass} ${field.type === "currency" ? "pl-12" : ""} ${field.type === "percentage" ? "pr-8" : ""}`}
             />
-            {field.type === 'percentage' && (
-              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">%</span>
+            {field.type === "percentage" && (
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">
+                %
+              </span>
             )}
           </div>
         );
 
-      case 'textarea':
+      case "textarea":
         return (
           <textarea
-            value={(value as string) ?? ''}
+            value={(value as string) ?? ""}
             onChange={(e) => onChange(e.target.value)}
             placeholder={placeholder}
             disabled={disabled}
@@ -420,11 +475,11 @@ const FormField: React.FC<FormFieldProps> = ({
           />
         );
 
-      case 'date':
+      case "date":
         return (
           <input
             type="date"
-            value={(value as string) ?? ''}
+            value={(value as string) ?? ""}
             onChange={(e) => onChange(e.target.value)}
             disabled={disabled}
             readOnly={readOnly}
@@ -432,11 +487,11 @@ const FormField: React.FC<FormFieldProps> = ({
           />
         );
 
-      case 'datetime':
+      case "datetime":
         return (
           <input
             type="datetime-local"
-            value={(value as string) ?? ''}
+            value={(value as string) ?? ""}
             onChange={(e) => onChange(e.target.value)}
             disabled={disabled}
             readOnly={readOnly}
@@ -444,11 +499,11 @@ const FormField: React.FC<FormFieldProps> = ({
           />
         );
 
-      case 'time':
+      case "time":
         return (
           <input
             type="time"
-            value={(value as string) ?? ''}
+            value={(value as string) ?? ""}
             onChange={(e) => onChange(e.target.value)}
             disabled={disabled}
             readOnly={readOnly}
@@ -456,16 +511,16 @@ const FormField: React.FC<FormFieldProps> = ({
           />
         );
 
-      case 'select':
+      case "select":
         return (
           <select
-            value={(value as string) ?? ''}
+            value={(value as string) ?? ""}
             onChange={(e) => onChange(e.target.value)}
             disabled={disabled}
             className={baseInputClass}
           >
             <option value="">{placeholder ?? `Select ${label}`}</option>
-            {field.options?.map(opt => (
+            {field.options?.map((opt) => (
               <option key={String(opt.value)} value={String(opt.value)}>
                 {opt.label}
               </option>
@@ -473,11 +528,11 @@ const FormField: React.FC<FormFieldProps> = ({
           </select>
         );
 
-      case 'multiselect':
+      case "multiselect": {
         const selectedValues = (value as unknown[]) ?? [];
         return (
           <div className="space-y-2">
-            {field.options?.map(opt => (
+            {field.options?.map((opt) => (
               <label key={String(opt.value)} className="flex items-center">
                 <input
                   type="checkbox"
@@ -486,7 +541,7 @@ const FormField: React.FC<FormFieldProps> = ({
                     if (e.target.checked) {
                       onChange([...selectedValues, opt.value]);
                     } else {
-                      onChange(selectedValues.filter(v => v !== opt.value));
+                      onChange(selectedValues.filter((v) => v !== opt.value));
                     }
                   }}
                   disabled={disabled}
@@ -497,8 +552,9 @@ const FormField: React.FC<FormFieldProps> = ({
             ))}
           </div>
         );
+      }
 
-      case 'checkbox':
+      case "checkbox":
         return (
           <label className="flex items-center">
             <input
@@ -512,21 +568,21 @@ const FormField: React.FC<FormFieldProps> = ({
           </label>
         );
 
-      case 'toggle':
+      case "toggle":
         return (
           <button
             type="button"
             onClick={() => !disabled && onChange(!value)}
             className={`
               relative inline-flex h-6 w-11 items-center rounded-full
-              ${value ? 'bg-primary-600' : 'bg-gray-200'}
-              ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
+              ${value ? "bg-primary-600" : "bg-gray-200"}
+              ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}
             `}
           >
             <span
               className={`
                 inline-block h-4 w-4 transform rounded-full bg-white transition
-                ${value ? 'translate-x-6' : 'translate-x-1'}
+                ${value ? "translate-x-6" : "translate-x-1"}
               `}
             />
           </button>
@@ -536,7 +592,7 @@ const FormField: React.FC<FormFieldProps> = ({
         return (
           <input
             type="text"
-            value={(value as string) ?? ''}
+            value={(value as string) ?? ""}
             onChange={(e) => onChange(e.target.value)}
             placeholder={placeholder}
             disabled={disabled}
@@ -548,7 +604,7 @@ const FormField: React.FC<FormFieldProps> = ({
   };
 
   // Don't show label for checkbox/toggle (they have inline labels)
-  if (field.type === 'checkbox') {
+  if (field.type === "checkbox") {
     return (
       <div>
         {renderInput()}
@@ -578,48 +634,73 @@ const FormField: React.FC<FormFieldProps> = ({
 
 function evaluateVisibility(
   condition: boolean | ConditionalRule[] | undefined,
-  data: Record<string, unknown>
+  data: Record<string, unknown>,
 ): boolean {
   if (condition === undefined) return true;
-  if (typeof condition === 'boolean') return condition;
+  if (typeof condition === "boolean") return condition;
 
   // Evaluate conditional rules
-  return condition.every(rule => {
+  return condition.every((rule) => {
     const fieldValue = data[rule.field];
 
     switch (rule.operator) {
-      case 'eq': return fieldValue === rule.value;
-      case 'neq': return fieldValue !== rule.value;
-      case 'gt': return Number(fieldValue) > Number(rule.value);
-      case 'gte': return Number(fieldValue) >= Number(rule.value);
-      case 'lt': return Number(fieldValue) < Number(rule.value);
-      case 'lte': return Number(fieldValue) <= Number(rule.value);
-      case 'in': return Array.isArray(rule.value) && rule.value.includes(fieldValue);
-      case 'notIn': return Array.isArray(rule.value) && !rule.value.includes(fieldValue);
-      case 'contains': return String(fieldValue).includes(String(rule.value));
-      case 'empty': return fieldValue === undefined || fieldValue === null || fieldValue === '';
-      case 'notEmpty': return fieldValue !== undefined && fieldValue !== null && fieldValue !== '';
-      default: return true;
+      case "eq":
+        return fieldValue === rule.value;
+      case "neq":
+        return fieldValue !== rule.value;
+      case "gt":
+        return Number(fieldValue) > Number(rule.value);
+      case "gte":
+        return Number(fieldValue) >= Number(rule.value);
+      case "lt":
+        return Number(fieldValue) < Number(rule.value);
+      case "lte":
+        return Number(fieldValue) <= Number(rule.value);
+      case "in":
+        return Array.isArray(rule.value) && rule.value.includes(fieldValue);
+      case "notIn":
+        return Array.isArray(rule.value) && !rule.value.includes(fieldValue);
+      case "contains":
+        return String(fieldValue).includes(String(rule.value));
+      case "empty":
+        return (
+          fieldValue === undefined || fieldValue === null || fieldValue === ""
+        );
+      case "notEmpty":
+        return (
+          fieldValue !== undefined && fieldValue !== null && fieldValue !== ""
+        );
+      default:
+        return true;
     }
   });
 }
 
 function getColumnsClass(columns: number): string {
   switch (columns) {
-    case 1: return 'grid-cols-1';
-    case 3: return 'grid-cols-1 md:grid-cols-3';
-    case 4: return 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4';
-    default: return 'grid-cols-1 md:grid-cols-2';
+    case 1:
+      return "grid-cols-1";
+    case 3:
+      return "grid-cols-1 md:grid-cols-3";
+    case 4:
+      return "grid-cols-1 md:grid-cols-2 lg:grid-cols-4";
+    default:
+      return "grid-cols-1 md:grid-cols-2";
   }
 }
 
 function getFieldWidthClass(width?: string): string {
   switch (width) {
-    case 'full': return 'col-span-full';
-    case 'half': return '';
-    case 'third': return 'md:col-span-1';
-    case 'quarter': return 'lg:col-span-1';
-    default: return '';
+    case "full":
+      return "col-span-full";
+    case "half":
+      return "";
+    case "third":
+      return "md:col-span-1";
+    case "quarter":
+      return "lg:col-span-1";
+    default:
+      return "";
   }
 }
 

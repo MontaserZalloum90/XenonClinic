@@ -1,5 +1,5 @@
-import React from 'react';
-import { useT } from '../../contexts/TenantContext';
+import React from "react";
+import { useT } from "../../contexts/TenantContext";
 
 /**
  * T Component - Renders translated/terminology text
@@ -26,7 +26,7 @@ interface TProps {
 export const T: React.FC<TProps> = ({
   k,
   fallback,
-  as: Component = 'span',
+  as: Component = "span",
   className,
   ...props
 }) => {
@@ -46,7 +46,7 @@ export const T: React.FC<TProps> = ({
  */
 export const interpolateTerminology = (
   template: string,
-  values: Record<string, string | number>
+  values: Record<string, string | number>,
 ): string => {
   return template.replace(/\{(\w+)\}/g, (_, key) => {
     return values[key]?.toString() ?? `{${key}}`;
@@ -56,7 +56,7 @@ export const interpolateTerminology = (
 /**
  * TInterpolate Component - Renders translated text with variable interpolation
  */
-interface TInterpolateProps extends Omit<TProps, 'fallback'> {
+interface TInterpolateProps extends Omit<TProps, "fallback"> {
   values: Record<string, string | number>;
   fallback?: string;
 }
@@ -65,7 +65,7 @@ export const TInterpolate: React.FC<TInterpolateProps> = ({
   k,
   values,
   fallback,
-  as: Component = 'span',
+  as: Component = "span",
   className,
   ...props
 }) => {
@@ -83,7 +83,7 @@ export const TInterpolate: React.FC<TInterpolateProps> = ({
  * <TPlural count={5} singular="entity.patient.singular" plural="entity.patient.plural" />
  * // Shows "5 Patients" (if terminology configured)
  */
-interface TPluralProps extends Omit<TProps, 'k'> {
+interface TPluralProps extends Omit<TProps, "k"> {
   count: number;
   singular: string;
   plural: string;
@@ -95,7 +95,7 @@ export const TPlural: React.FC<TPluralProps> = ({
   singular,
   plural,
   showCount = true,
-  as: Component = 'span',
+  as: Component = "span",
   className,
   ...props
 }) => {

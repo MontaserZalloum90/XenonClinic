@@ -3,21 +3,27 @@
  * Display sensitive information with masking and reveal controls
  */
 
-import { useState, useCallback } from 'react';
-import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
+import { useState, useCallback } from "react";
+import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
 import {
   maskSensitiveData,
   maskEmiratesId,
   maskPhoneNumber,
   maskEmail,
-} from '../../lib/security/encryption';
-import { auditLog, AuditAction, AuditResourceType } from '../../lib/security';
+} from "../../lib/security/encryption";
+import { auditLog, AuditAction, AuditResourceType } from "../../lib/security";
 
 // ============================================
 // TYPES
 // ============================================
 
-export type MaskType = 'emiratesId' | 'phone' | 'email' | 'ssn' | 'creditCard' | 'custom';
+export type MaskType =
+  | "emiratesId"
+  | "phone"
+  | "email"
+  | "ssn"
+  | "creditCard"
+  | "custom";
 
 export interface MaskedFieldProps {
   value: string;
@@ -38,22 +44,22 @@ export interface MaskedFieldProps {
 // ============================================
 
 const getMaskedValue = (value: string, type: MaskType): string => {
-  if (!value) return '';
+  if (!value) return "";
 
   switch (type) {
-    case 'emiratesId':
+    case "emiratesId":
       return maskEmiratesId(value);
-    case 'phone':
+    case "phone":
       return maskPhoneNumber(value);
-    case 'email':
+    case "email":
       return maskEmail(value);
-    case 'ssn':
+    case "ssn":
       // Show last 4 digits
-      return maskSensitiveData(value.replace(/\D/g, ''), { visibleEnd: 4 });
-    case 'creditCard':
+      return maskSensitiveData(value.replace(/\D/g, ""), { visibleEnd: 4 });
+    case "creditCard":
       // Show last 4 digits
-      return maskSensitiveData(value.replace(/\D/g, ''), { visibleEnd: 4 });
-    case 'custom':
+      return maskSensitiveData(value.replace(/\D/g, ""), { visibleEnd: 4 });
+    case "custom":
     default:
       return maskSensitiveData(value);
   }
@@ -65,7 +71,7 @@ const getMaskedValue = (value: string, type: MaskType): string => {
 
 export const MaskedField = ({
   value,
-  type = 'custom',
+  type = "custom",
   label,
   allowReveal = true,
   requiresJustification = false,
@@ -73,7 +79,7 @@ export const MaskedField = ({
   resourceType = AuditResourceType.PATIENT,
   resourceId,
   resourceDescription,
-  className = '',
+  className = "",
   revealDuration = 30000, // 30 seconds default
 }: MaskedFieldProps) => {
   const [isRevealed, setIsRevealed] = useState(false);
@@ -87,7 +93,7 @@ export const MaskedField = ({
       return;
     }
 
-    revealValue('Routine access');
+    revealValue("Routine access");
   }, [requiresJustification]);
 
   const revealValue = useCallback(
@@ -110,7 +116,14 @@ export const MaskedField = ({
         }, revealDuration);
       }
     },
-    [logAccess, resourceType, resourceId, resourceDescription, type, revealDuration]
+    [
+      logAccess,
+      resourceType,
+      resourceId,
+      resourceDescription,
+      type,
+      revealDuration,
+    ],
   );
 
   const handleHide = useCallback(() => {
@@ -122,13 +135,13 @@ export const MaskedField = ({
       setShowJustificationModal(false);
       revealValue(justification);
     },
-    [revealValue]
+    [revealValue],
   );
 
   return (
     <div className={`inline-flex items-center gap-2 ${className}`}>
       {label && <span className="text-sm text-gray-600">{label}:</span>}
-      <span className={`font-mono ${isRevealed ? '' : 'tracking-wider'}`}>
+      <span className={`font-mono ${isRevealed ? "" : "tracking-wider"}`}>
         {isRevealed ? value : maskedValue}
       </span>
       {allowReveal && value && (
@@ -136,7 +149,7 @@ export const MaskedField = ({
           type="button"
           onClick={isRevealed ? handleHide : handleReveal}
           className="p-1 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded transition-colors"
-          title={isRevealed ? 'Hide' : 'Reveal'}
+          title={isRevealed ? "Hide" : "Reveal"}
         >
           {isRevealed ? (
             <EyeSlashIcon className="h-4 w-4" />
@@ -151,7 +164,7 @@ export const MaskedField = ({
         <JustificationModal
           onSubmit={handleJustificationSubmit}
           onCancel={() => setShowJustificationModal(false)}
-          fieldType={type}
+          _fieldType={type}
         />
       )}
     </div>
@@ -165,26 +178,30 @@ export const MaskedField = ({
 interface JustificationModalProps {
   onSubmit: (justification: string) => void;
   onCancel: () => void;
-  fieldType: MaskType;
+  _fieldType: MaskType;
 }
 
-const JustificationModal = ({ onSubmit, onCancel, fieldType }: JustificationModalProps) => {
-  const [justification, setJustification] = useState('');
-  const [selectedReason, setSelectedReason] = useState('');
+const JustificationModal = ({
+  onSubmit,
+  onCancel,
+  _fieldType,
+}: JustificationModalProps) => {
+  const [justification, setJustification] = useState("");
+  const [selectedReason, setSelectedReason] = useState("");
 
   const reasons = [
-    'Patient verification',
-    'Medical record review',
-    'Billing/Insurance processing',
-    'Treatment planning',
-    'Emergency access',
-    'Other (specify)',
+    "Patient verification",
+    "Medical record review",
+    "Billing/Insurance processing",
+    "Treatment planning",
+    "Emergency access",
+    "Other (specify)",
   ];
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const finalJustification =
-      selectedReason === 'Other (specify)' ? justification : selectedReason;
+      selectedReason === "Other (specify)" ? justification : selectedReason;
     if (finalJustification) {
       onSubmit(finalJustification);
     }
@@ -194,7 +211,9 @@ const JustificationModal = ({ onSubmit, onCancel, fieldType }: JustificationModa
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
         <div className="px-6 py-4 border-b">
-          <h3 className="text-lg font-semibold text-gray-900">Access Justification Required</h3>
+          <h3 className="text-lg font-semibold text-gray-900">
+            Access Justification Required
+          </h3>
           <p className="text-sm text-gray-600 mt-1">
             Please provide a reason for viewing this sensitive information.
           </p>
@@ -222,7 +241,7 @@ const JustificationModal = ({ onSubmit, onCancel, fieldType }: JustificationModa
               </div>
             </div>
 
-            {selectedReason === 'Other (specify)' && (
+            {selectedReason === "Other (specify)" && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Please specify
@@ -252,7 +271,10 @@ const JustificationModal = ({ onSubmit, onCancel, fieldType }: JustificationModa
             </button>
             <button
               type="submit"
-              disabled={!selectedReason || (selectedReason === 'Other (specify)' && !justification)}
+              disabled={
+                !selectedReason ||
+                (selectedReason === "Other (specify)" && !justification)
+              }
               className="px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 disabled:opacity-50"
             >
               Reveal Information
@@ -277,7 +299,7 @@ interface SimpleMaskedFieldProps {
 
 export const MaskedEmiratesId = ({
   value,
-  label = 'Emirates ID',
+  label = "Emirates ID",
   ...props
 }: SimpleMaskedFieldProps) => (
   <MaskedField
@@ -292,7 +314,7 @@ export const MaskedEmiratesId = ({
 
 export const MaskedPhone = ({
   value,
-  label = 'Phone',
+  label = "Phone",
   ...props
 }: SimpleMaskedFieldProps) => (
   <MaskedField
@@ -306,7 +328,7 @@ export const MaskedPhone = ({
 
 export const MaskedEmail = ({
   value,
-  label = 'Email',
+  label = "Email",
   ...props
 }: SimpleMaskedFieldProps) => (
   <MaskedField
@@ -320,7 +342,7 @@ export const MaskedEmail = ({
 
 export const MaskedSSN = ({
   value,
-  label = 'SSN',
+  label = "SSN",
   ...props
 }: SimpleMaskedFieldProps) => (
   <MaskedField
@@ -345,7 +367,7 @@ interface UseMaskedDataOptions {
 export const useMaskedData = <T extends Record<string, unknown>>(
   data: T,
   fieldsToMask: Array<{ field: keyof T; type: MaskType }>,
-  options: UseMaskedDataOptions = {}
+  options: UseMaskedDataOptions = {},
 ): T => {
   const { autoMask = true } = options;
 
@@ -355,8 +377,11 @@ export const useMaskedData = <T extends Record<string, unknown>>(
 
   for (const { field, type } of fieldsToMask) {
     const value = data[field];
-    if (typeof value === 'string') {
-      (maskedData as Record<string, unknown>)[field as string] = getMaskedValue(value, type);
+    if (typeof value === "string") {
+      (maskedData as Record<string, unknown>)[field as string] = getMaskedValue(
+        value,
+        type,
+      );
     }
   }
 

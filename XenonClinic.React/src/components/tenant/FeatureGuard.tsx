@@ -1,7 +1,7 @@
-import React from 'react';
-import { Navigate } from 'react-router-dom';
-import { useTenant, useFeature } from '../../contexts/TenantContext';
-import { useAuth } from '../../contexts/AuthContext';
+import React from "react";
+import { Navigate } from "react-router-dom";
+import { useTenant, useFeature } from "../../contexts/TenantContext";
+import { useAuth } from "../../contexts/AuthContext";
 
 /**
  * FeatureGuard Component - Conditionally renders children based on feature flags
@@ -84,7 +84,7 @@ export const MultiFeatureGuard: React.FC<MultiFeatureGuardProps> = ({
     return null;
   }
 
-  const enabledFeatures = features.map(f => hasFeature(f));
+  const enabledFeatures = features.map((f) => hasFeature(f));
   const isEnabled = requireAll
     ? enabledFeatures.every(Boolean)
     : enabledFeatures.some(Boolean);
@@ -152,19 +152,31 @@ export const FeatureRoute: React.FC<FeatureRouteProps> = ({
     if (forbiddenComponent) {
       return <>{forbiddenComponent}</>;
     }
-    return <Navigate to="/forbidden" state={{ reason: 'feature_disabled', feature }} replace />;
+    return (
+      <Navigate
+        to="/forbidden"
+        state={{ reason: "feature_disabled", feature }}
+        replace
+      />
+    );
   }
 
   // Check roles if specified
   if (requiredRoles && requiredRoles.length > 0) {
     const userRoles = context?.userRoles ?? [];
-    const hasRole = requiredRoles.some(role => userRoles.includes(role));
+    const hasRole = requiredRoles.some((role) => userRoles.includes(role));
 
     if (!hasRole) {
       if (forbiddenComponent) {
         return <>{forbiddenComponent}</>;
       }
-      return <Navigate to="/forbidden" state={{ reason: 'insufficient_role' }} replace />;
+      return (
+        <Navigate
+          to="/forbidden"
+          state={{ reason: "insufficient_role" }}
+          replace
+        />
+      );
     }
   }
 
@@ -175,7 +187,9 @@ export const FeatureRoute: React.FC<FeatureRouteProps> = ({
  * useFeatureEnabled - Hook to check if feature is enabled
  * Returns loading state along with enabled status
  */
-export const useFeatureEnabled = (feature: string): {
+export const useFeatureEnabled = (
+  feature: string,
+): {
   enabled: boolean;
   isLoading: boolean;
 } => {
@@ -197,7 +211,7 @@ interface FeatureDisabledMessageProps {
 
 export const FeatureDisabledMessage: React.FC<FeatureDisabledMessageProps> = ({
   featureName,
-  className = '',
+  className = "",
 }) => {
   return (
     <div className={`text-center py-12 ${className}`}>
@@ -217,11 +231,11 @@ export const FeatureDisabledMessage: React.FC<FeatureDisabledMessageProps> = ({
         </svg>
       </div>
       <h3 className="mt-4 text-lg font-medium text-gray-900">
-        {featureName ? `${featureName} is not enabled` : 'Module not enabled'}
+        {featureName ? `${featureName} is not enabled` : "Module not enabled"}
       </h3>
       <p className="mt-2 text-sm text-gray-500">
-        This feature is not available for your organization.
-        Please contact your administrator for access.
+        This feature is not available for your organization. Please contact your
+        administrator for access.
       </p>
     </div>
   );

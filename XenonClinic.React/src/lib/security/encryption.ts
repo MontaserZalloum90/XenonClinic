@@ -10,7 +10,7 @@
 // ENCRYPTION CONFIGURATION
 // ============================================
 
-const ALGORITHM = 'AES-GCM';
+const ALGORITHM = "AES-GCM";
 const KEY_LENGTH = 256;
 const IV_LENGTH = 12; // 96 bits for GCM
 const SALT_LENGTH = 16;
@@ -18,21 +18,21 @@ const ITERATIONS = 100000;
 
 // Fields that should be encrypted
 export const SENSITIVE_FIELDS = [
-  'emiratesId',
-  'ssn',
-  'medicalHistory',
-  'diagnosis',
-  'treatmentNotes',
-  'medications',
-  'allergies',
-  'labResults',
-  'geneticInfo',
-  'mentalHealthNotes',
-  'substanceAbuseInfo',
-  'hivStatus',
-  'sexualHealth',
-  'bankAccount',
-  'insuranceNumber',
+  "emiratesId",
+  "ssn",
+  "medicalHistory",
+  "diagnosis",
+  "treatmentNotes",
+  "medications",
+  "allergies",
+  "labResults",
+  "geneticInfo",
+  "mentalHealthNotes",
+  "substanceAbuseInfo",
+  "hivStatus",
+  "sexualHealth",
+  "bankAccount",
+  "insuranceNumber",
 ] as const;
 
 export type SensitiveField = (typeof SENSITIVE_FIELDS)[number];
@@ -46,7 +46,7 @@ export type SensitiveField = (typeof SENSITIVE_FIELDS)[number];
  */
 const arrayBufferToBase64 = (buffer: ArrayBuffer): string => {
   const bytes = new Uint8Array(buffer);
-  let binary = '';
+  let binary = "";
   for (let i = 0; i < bytes.byteLength; i++) {
     binary += String.fromCharCode(bytes[i]);
   }
@@ -88,32 +88,32 @@ const generateSalt = (): Uint8Array => {
  */
 const deriveKey = async (
   password: string,
-  salt: Uint8Array
+  salt: Uint8Array,
 ): Promise<CryptoKey> => {
   const encoder = new TextEncoder();
   const passwordBuffer = encoder.encode(password);
 
   // Import password as key material
   const keyMaterial = await crypto.subtle.importKey(
-    'raw',
+    "raw",
     passwordBuffer,
-    'PBKDF2',
+    "PBKDF2",
     false,
-    ['deriveBits', 'deriveKey']
+    ["deriveBits", "deriveKey"],
   );
 
   // Derive the actual encryption key
   return crypto.subtle.deriveKey(
     {
-      name: 'PBKDF2',
+      name: "PBKDF2",
       salt: salt,
       iterations: ITERATIONS,
-      hash: 'SHA-256',
+      hash: "SHA-256",
     },
     keyMaterial,
     { name: ALGORITHM, length: KEY_LENGTH },
     false,
-    ['encrypt', 'decrypt']
+    ["encrypt", "decrypt"],
   );
 };
 
@@ -121,16 +121,19 @@ const deriveKey = async (
  * Get or generate the encryption key
  * In production, this should be derived from a secure source
  */
-const getEncryptionKey = async (): Promise<{ key: CryptoKey; salt: Uint8Array }> => {
+const getEncryptionKey = async (): Promise<{
+  key: CryptoKey;
+  salt: Uint8Array;
+}> => {
   // Check for existing key material in session
-  let saltBase64 = sessionStorage.getItem('encryption_salt');
+  const saltBase64 = sessionStorage.getItem("encryption_salt");
   let salt: Uint8Array;
 
   if (saltBase64) {
     salt = new Uint8Array(base64ToArrayBuffer(saltBase64));
   } else {
     salt = generateSalt();
-    sessionStorage.setItem('encryption_salt', arrayBufferToBase64(salt));
+    sessionStorage.setItem("encryption_salt", arrayBufferToBase64(salt));
   }
 
   // In production, this passphrase should come from:
@@ -138,7 +141,7 @@ const getEncryptionKey = async (): Promise<{ key: CryptoKey; salt: Uint8Array }>
   // 2. Server-provided session key
   // 3. Hardware security module (HSM)
   // For demo purposes, we use a combination of session token and fixed phrase
-  const token = localStorage.getItem('token') || '';
+  const token = localStorage.getItem("token") || "";
   const passphrase = `xenon_clinic_${token.substring(0, 32)}_healthcare_data`;
 
   const key = await deriveKey(passphrase, salt);
@@ -160,9 +163,11 @@ export interface EncryptedData {
 /**
  * Encrypt a string value
  */
-export const encryptString = async (plaintext: string): Promise<EncryptedData> => {
+export const encryptString = async (
+  plaintext: string,
+): Promise<EncryptedData> => {
   if (!plaintext) {
-    throw new Error('Cannot encrypt empty value');
+    throw new Error("Cannot encrypt empty value");
   }
 
   const { key, salt } = await getEncryptionKey();
@@ -173,7 +178,7 @@ export const encryptString = async (plaintext: string): Promise<EncryptedData> =
   const ciphertext = await crypto.subtle.encrypt(
     { name: ALGORITHM, iv },
     key,
-    data
+    data,
   );
 
   return {
@@ -188,9 +193,11 @@ export const encryptString = async (plaintext: string): Promise<EncryptedData> =
 /**
  * Decrypt an encrypted value
  */
-export const decryptString = async (encrypted: EncryptedData): Promise<string> => {
+export const decryptString = async (
+  encrypted: EncryptedData,
+): Promise<string> => {
   if (!encrypted || !encrypted.ciphertext) {
-    throw new Error('Invalid encrypted data');
+    throw new Error("Invalid encrypted data");
   }
 
   const salt = new Uint8Array(base64ToArrayBuffer(encrypted.salt));
@@ -198,14 +205,14 @@ export const decryptString = async (encrypted: EncryptedData): Promise<string> =
   const ciphertext = base64ToArrayBuffer(encrypted.ciphertext);
 
   // Get encryption key with the stored salt
-  const token = localStorage.getItem('token') || '';
+  const token = localStorage.getItem("token") || "";
   const passphrase = `xenon_clinic_${token.substring(0, 32)}_healthcare_data`;
   const key = await deriveKey(passphrase, salt);
 
   const decrypted = await crypto.subtle.decrypt(
     { name: ALGORITHM, iv },
     key,
-    ciphertext
+    ciphertext,
   );
 
   const decoder = new TextDecoder();
@@ -216,13 +223,13 @@ export const decryptString = async (encrypted: EncryptedData): Promise<string> =
  * Check if a value is encrypted
  */
 export const isEncrypted = (value: unknown): value is EncryptedData => {
-  if (!value || typeof value !== 'object') return false;
+  if (!value || typeof value !== "object") return false;
   const obj = value as Record<string, unknown>;
   return (
-    typeof obj.ciphertext === 'string' &&
-    typeof obj.iv === 'string' &&
-    typeof obj.salt === 'string' &&
-    typeof obj.algorithm === 'string'
+    typeof obj.ciphertext === "string" &&
+    typeof obj.iv === "string" &&
+    typeof obj.salt === "string" &&
+    typeof obj.algorithm === "string"
   );
 };
 
@@ -235,19 +242,19 @@ export const isEncrypted = (value: unknown): value is EncryptedData => {
  */
 export const encryptSensitiveFields = async <T extends Record<string, unknown>>(
   data: T,
-  fieldsToEncrypt: readonly string[] = SENSITIVE_FIELDS
+  fieldsToEncrypt: readonly string[] = SENSITIVE_FIELDS,
 ): Promise<T> => {
   const result = { ...data };
 
   for (const field of fieldsToEncrypt) {
     if (field in result && result[field] != null) {
       const value = result[field];
-      if (typeof value === 'string' && value.length > 0) {
+      if (typeof value === "string" && value.length > 0) {
         (result as Record<string, unknown>)[field] = await encryptString(value);
-      } else if (typeof value === 'object' && !isEncrypted(value)) {
+      } else if (typeof value === "object" && !isEncrypted(value)) {
         // Encrypt object by stringifying
         (result as Record<string, unknown>)[field] = await encryptString(
-          JSON.stringify(value)
+          JSON.stringify(value),
         );
       }
     }
@@ -261,7 +268,7 @@ export const encryptSensitiveFields = async <T extends Record<string, unknown>>(
  */
 export const decryptSensitiveFields = async <T extends Record<string, unknown>>(
   data: T,
-  fieldsToDecrypt: readonly string[] = SENSITIVE_FIELDS
+  fieldsToDecrypt: readonly string[] = SENSITIVE_FIELDS,
 ): Promise<T> => {
   const result = { ...data };
 
@@ -298,12 +305,12 @@ export const maskSensitiveData = (
     visibleStart?: number;
     visibleEnd?: number;
     maskChar?: string;
-  } = {}
+  } = {},
 ): string => {
   // Handle empty or null values
-  if (!value) return '';
+  if (!value) return "";
 
-  const { visibleStart = 0, visibleEnd = 4, maskChar = '*' } = options;
+  const { visibleStart = 0, visibleEnd = 4, maskChar = "*" } = options;
 
   if (value.length <= visibleStart + visibleEnd) {
     return maskChar.repeat(value.length);
@@ -320,20 +327,20 @@ export const maskSensitiveData = (
  * Mask Emirates ID (show last 4 digits)
  */
 export const maskEmiratesId = (emiratesId: string): string => {
-  if (!emiratesId) return '';
+  if (!emiratesId) return "";
   // Format: 784-YYYY-NNNNNNN-C
-  return maskSensitiveData(emiratesId.replace(/-/g, ''), {
+  return maskSensitiveData(emiratesId.replace(/-/g, ""), {
     visibleStart: 0,
     visibleEnd: 4,
-  }).replace(/(.{3})(.{4})(.{7})(.)/, '$1-$2-$3-$4');
+  }).replace(/(.{3})(.{4})(.{7})(.)/, "$1-$2-$3-$4");
 };
 
 /**
  * Mask phone number (show last 4 digits)
  */
 export const maskPhoneNumber = (phone: string): string => {
-  if (!phone) return '';
-  const digitsOnly = phone.replace(/\D/g, '');
+  if (!phone) return "";
+  const digitsOnly = phone.replace(/\D/g, "");
   return maskSensitiveData(digitsOnly, { visibleStart: 0, visibleEnd: 4 });
 };
 
@@ -341,11 +348,13 @@ export const maskPhoneNumber = (phone: string): string => {
  * Mask email (show first 2 chars and domain)
  */
 export const maskEmail = (email: string): string => {
-  if (!email) return '';
-  const [local, domain] = email.split('@');
+  if (!email) return "";
+  const [local, domain] = email.split("@");
   if (!domain) return maskSensitiveData(email);
   const maskedLocal =
-    local.length <= 2 ? maskSensitiveData(local) : `${local.substring(0, 2)}${maskSensitiveData(local.substring(2))}`;
+    local.length <= 2
+      ? maskSensitiveData(local)
+      : `${local.substring(0, 2)}${maskSensitiveData(local.substring(2))}`;
   return `${maskedLocal}@${domain}`;
 };
 
@@ -357,13 +366,16 @@ export const maskEmail = (email: string): string => {
  * Securely clear sensitive data from memory
  * Note: JavaScript doesn't guarantee memory clearing, but this helps
  */
-export const secureClear = (data: Record<string, unknown>, fields: string[]): void => {
+export const secureClear = (
+  data: Record<string, unknown>,
+  fields: string[],
+): void => {
   for (const field of fields) {
     if (field in data) {
       const value = data[field];
-      if (typeof value === 'string') {
+      if (typeof value === "string") {
         // Overwrite string content
-        (data as Record<string, unknown>)[field] = '\0'.repeat(value.length);
+        (data as Record<string, unknown>)[field] = "\0".repeat(value.length);
       }
       delete data[field];
     }
@@ -376,7 +388,7 @@ export const secureClear = (data: Record<string, unknown>, fields: string[]): vo
 export const withSecureData = async <T, R>(
   data: T & Record<string, unknown>,
   sensitiveFields: string[],
-  operation: (data: T) => Promise<R>
+  operation: (data: T) => Promise<R>,
 ): Promise<R> => {
   try {
     return await operation(data);
@@ -395,14 +407,17 @@ export const withSecureData = async <T, R>(
 export const hashData = async (data: string): Promise<string> => {
   const encoder = new TextEncoder();
   const dataBuffer = encoder.encode(data);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', dataBuffer);
+  const hashBuffer = await crypto.subtle.digest("SHA-256", dataBuffer);
   return arrayBufferToBase64(hashBuffer);
 };
 
 /**
  * Verify data against a hash
  */
-export const verifyHash = async (data: string, expectedHash: string): Promise<boolean> => {
+export const verifyHash = async (
+  data: string,
+  expectedHash: string,
+): Promise<boolean> => {
   const actualHash = await hashData(data);
   return actualHash === expectedHash;
 };
