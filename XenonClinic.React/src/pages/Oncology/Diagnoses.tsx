@@ -18,16 +18,6 @@ import type {
 import { format } from "date-fns";
 import { oncologyDiagnosisApi } from "../../lib/api";
 
-// Use real API
-const diagnosisApi = {
-  getAll: () => oncologyDiagnosisApi.getAll(),
-  create: (data: CreateCancerDiagnosisRequest) =>
-    oncologyDiagnosisApi.create(data),
-  update: (id: number, data: Partial<CancerDiagnosis>) =>
-    oncologyDiagnosisApi.update(id, data),
-  delete: (id: number) => oncologyDiagnosisApi.delete(id),
-};
-
 const getCancerTypeLabel = (type: CancerType): string => {
   const labels: Record<CancerType, string> = {
     breast: "Breast",
@@ -153,7 +143,7 @@ const DiagnosisForm = ({
 
   const createMutation = useMutation({
     mutationFn: (data: CreateCancerDiagnosisRequest) =>
-      diagnosisApi.create(data),
+      oncologyDiagnosisApi.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["cancer-diagnoses"] });
       onSuccess();
@@ -162,7 +152,7 @@ const DiagnosisForm = ({
 
   const updateMutation = useMutation({
     mutationFn: (data: DiagnosisFormData) =>
-      diagnosisApi.update(diagnosis!.id, {
+      oncologyDiagnosisApi.update(diagnosis!.id, {
         ...data,
         id: diagnosis!.id,
       } as Partial<CancerDiagnosis>),
@@ -576,11 +566,11 @@ export const Diagnoses = () => {
   // Fetch diagnoses
   const { data: diagnosesData, isLoading } = useQuery({
     queryKey: ["cancer-diagnoses"],
-    queryFn: () => diagnosisApi.getAll(),
+    queryFn: () => oncologyDiagnosisApi.getAll(),
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: number) => diagnosisApi.delete(id),
+    mutationFn: (id: number) => oncologyDiagnosisApi.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["cancer-diagnoses"] });
     },
