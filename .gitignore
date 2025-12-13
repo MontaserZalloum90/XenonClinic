@@ -31,6 +31,9 @@ Thumbs.db
 node_modules/
 package-lock.json
 
+## TypeScript build artifacts
+*.tsbuildinfo
+
 ## Playwright
 playwright-report/
 test-results/
