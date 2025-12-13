@@ -42,3 +42,14 @@ export {
   pediatricsData,
   allSpecialtyData,
 } from "./specialtyData";
+
+// Business Module Demo Data
+export {
+  marketingData,
+  salesData,
+  inventoryData,
+  physiotherapyData,
+  neurologyData,
+  ophthalmologyData,
+  allBusinessData,
+} from "./businessData";
