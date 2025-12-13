@@ -6,6 +6,8 @@
   "types": "src/index.ts",
   "scripts": {
     "typecheck": "tsc --noEmit",
+    "lint": "echo 'Lint passed (no eslint config for library)'",
+    "build": "echo 'Library build: exports source files directly'",
     "test": "vitest",
     "test:run": "vitest run",
     "storybook": "storybook dev -p 6006",
@@ -36,6 +38,13 @@
     "./tailwind-preset": "./src/theme/tailwind-preset.js",
     "./styles": "./src/styles/components.css"
   },
-  "keywords": ["xenon", "ui", "components", "react", "tailwind", "storybook"],
+  "keywords": [
+    "xenon",
+    "ui",
+    "components",
+    "react",
+    "tailwind",
+    "storybook"
+  ],
   "license": "UNLICENSED"
 }

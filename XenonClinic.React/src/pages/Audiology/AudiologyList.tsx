@@ -1,7 +1,6 @@
-import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
-  EarIcon,
   ChartBarIcon,
   DevicePhoneMobileIcon,
   ClipboardDocumentListIcon,
@@ -9,50 +8,70 @@ import {
   PlusIcon,
   MagnifyingGlassIcon,
   FunnelIcon,
-} from '@heroicons/react/24/outline';
-import { encounterApi, audiologyStatsApi } from '../../lib/api';
-import { Modal } from '../../components/ui/Modal';
-import { EncounterForm } from '../../components/audiology/EncounterForm';
-import type { Encounter, AudiologyStatistics } from '../../types/audiology';
-import { EncounterStatus, EncounterType } from '../../types/audiology';
-import { format } from 'date-fns';
-
-// Custom ear icon since HeroIcons doesn't have one
-const EarIconCustom = ({ className }: { className?: string }) => (
-  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-    <path d="M12 2C7.58 2 4 5.58 4 10c0 2.85 1.5 5.36 3.75 6.77.32.2.54.55.54.93v2.3c0 .55.45 1 1 1h.5c.55 0 1-.45 1-1v-2c0-.55.45-1 1-1s1 .45 1 1v2c0 .55.45 1 1 1h.5c.55 0 1-.45 1-1v-2.3c0-.38.22-.73.54-.93C18.5 15.36 20 12.85 20 10c0-4.42-3.58-8-8-8z" />
-    <path d="M12 6c-2.21 0-4 1.79-4 4" />
-  </svg>
-);
+} from "@heroicons/react/24/outline";
+import { encounterApi, audiologyStatsApi } from "../../lib/api";
+import { Modal } from "../../components/ui/Modal";
+import { EncounterForm } from "../../components/audiology/EncounterForm";
+import type {
+  Encounter,
+  AudiologyStatistics,
+  CreateEncounterRequest,
+  CreateEncounterTaskRequest,
+} from "../../types/audiology";
+import { EncounterStatus, EncounterType } from "../../types/audiology";
+import { format } from "date-fns";
 
 const getEncounterTypeLabel = (type: EncounterType): string => {
   const labels: Record<string, string> = {
-    [EncounterType.InitialConsultation]: 'Initial Consultation',
-    [EncounterType.FollowUp]: 'Follow-Up',
-    [EncounterType.HearingTest]: 'Hearing Test',
-    [EncounterType.HearingAidFitting]: 'HA Fitting',
-    [EncounterType.HearingAidAdjustment]: 'HA Adjustment',
-    [EncounterType.HearingAidRepair]: 'HA Repair',
-    [EncounterType.Counseling]: 'Counseling',
-    [EncounterType.TinnitusEvaluation]: 'Tinnitus Eval',
-    [EncounterType.BalanceAssessment]: 'Balance',
-    [EncounterType.CochlearImplantMapping]: 'CI Mapping',
+    [EncounterType.InitialConsultation]: "Initial Consultation",
+    [EncounterType.FollowUp]: "Follow-Up",
+    [EncounterType.HearingTest]: "Hearing Test",
+    [EncounterType.HearingAidFitting]: "HA Fitting",
+    [EncounterType.HearingAidAdjustment]: "HA Adjustment",
+    [EncounterType.HearingAidRepair]: "HA Repair",
+    [EncounterType.Counseling]: "Counseling",
+    [EncounterType.TinnitusEvaluation]: "Tinnitus Eval",
+    [EncounterType.BalanceAssessment]: "Balance",
+    [EncounterType.CochlearImplantMapping]: "CI Mapping",
   };
   return labels[type] || type;
 };
 
 const getStatusBadge = (status: EncounterStatus) => {
   const config: Record<string, { className: string; label: string }> = {
-    [EncounterStatus.Scheduled]: { className: 'bg-blue-100 text-blue-800', label: 'Scheduled' },
-    [EncounterStatus.CheckedIn]: { className: 'bg-purple-100 text-purple-800', label: 'Checked In' },
-    [EncounterStatus.InProgress]: { className: 'bg-yellow-100 text-yellow-800', label: 'In Progress' },
-    [EncounterStatus.Completed]: { className: 'bg-green-100 text-green-800', label: 'Completed' },
-    [EncounterStatus.Cancelled]: { className: 'bg-red-100 text-red-800', label: 'Cancelled' },
-    [EncounterStatus.NoShow]: { className: 'bg-gray-100 text-gray-800', label: 'No Show' },
+    [EncounterStatus.Scheduled]: {
+      className: "bg-blue-100 text-blue-800",
+      label: "Scheduled",
+    },
+    [EncounterStatus.CheckedIn]: {
+      className: "bg-purple-100 text-purple-800",
+      label: "Checked In",
+    },
+    [EncounterStatus.InProgress]: {
+      className: "bg-yellow-100 text-yellow-800",
+      label: "In Progress",
+    },
+    [EncounterStatus.Completed]: {
+      className: "bg-green-100 text-green-800",
+      label: "Completed",
+    },
+    [EncounterStatus.Cancelled]: {
+      className: "bg-red-100 text-red-800",
+      label: "Cancelled",
+    },
+    [EncounterStatus.NoShow]: {
+      className: "bg-gray-100 text-gray-800",
+      label: "No Show",
+    },
   };
-  const c = config[status] || { className: 'bg-gray-100 text-gray-800', label: status };
+  const c = config[status] || {
+    className: "bg-gray-100 text-gray-800",
+    label: status,
+  };
   return (
-    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${c.className}`}>
+    <span
+      className={`px-2 py-0.5 rounded-full text-xs font-medium ${c.className}`}
+    >
       {c.label}
     </span>
   );
@@ -60,19 +79,19 @@ const getStatusBadge = (status: EncounterStatus) => {
 
 export const AudiologyList = () => {
   const [showNewEncounter, setShowNewEncounter] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('');
-  const [typeFilter, setTypeFilter] = useState<string>('');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("");
+  const [typeFilter, setTypeFilter] = useState<string>("");
 
   // Fetch encounters
   const { data: encountersData, isLoading: encountersLoading } = useQuery({
-    queryKey: ['encounters'],
+    queryKey: ["encounters"],
     queryFn: () => encounterApi.getAll(),
   });
 
   // Fetch statistics
   const { data: statsData } = useQuery({
-    queryKey: ['audiology-stats'],
+    queryKey: ["audiology-stats"],
     queryFn: () => audiologyStatsApi.getDashboard(),
   });
 
@@ -103,9 +122,12 @@ export const AudiologyList = () => {
     return matchesSearch && matchesStatus && matchesType;
   });
 
-  const handleNewEncounter = (data: any, tasks: any[]) => {
+  const handleNewEncounter = (
+    data: CreateEncounterRequest,
+    tasks: CreateEncounterTaskRequest[],
+  ) => {
     // In real app, this would call the API
-    console.log('Creating encounter:', data, tasks);
+    console.log("Creating encounter:", data, tasks);
     setShowNewEncounter(false);
   };
 
@@ -115,7 +137,9 @@ export const AudiologyList = () => {
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Audiology</h1>
-          <p className="text-gray-600">Manage encounters, audiograms, and hearing aids</p>
+          <p className="text-gray-600">
+            Manage encounters, audiograms, and hearing aids
+          </p>
         </div>
         <button
           onClick={() => setShowNewEncounter(true)}
@@ -135,7 +159,9 @@ export const AudiologyList = () => {
             </div>
             <div className="ml-4">
               <p className="text-sm text-gray-500">Today's Encounters</p>
-              <p className="text-2xl font-bold text-gray-900">{stats.encountersToday}</p>
+              <p className="text-2xl font-bold text-gray-900">
+                {stats.encountersToday}
+              </p>
             </div>
           </div>
         </div>
@@ -147,7 +173,9 @@ export const AudiologyList = () => {
             </div>
             <div className="ml-4">
               <p className="text-sm text-gray-500">Audiograms This Month</p>
-              <p className="text-2xl font-bold text-gray-900">{stats.audiogramsThisMonth}</p>
+              <p className="text-2xl font-bold text-gray-900">
+                {stats.audiogramsThisMonth}
+              </p>
             </div>
           </div>
         </div>
@@ -159,7 +187,9 @@ export const AudiologyList = () => {
             </div>
             <div className="ml-4">
               <p className="text-sm text-gray-500">HA Fittings This Month</p>
-              <p className="text-2xl font-bold text-gray-900">{stats.hearingAidsFittedThisMonth}</p>
+              <p className="text-2xl font-bold text-gray-900">
+                {stats.hearingAidsFittedThisMonth}
+              </p>
             </div>
           </div>
         </div>
@@ -174,7 +204,9 @@ export const AudiologyList = () => {
               <p className="text-2xl font-bold text-gray-900">
                 {stats.pendingTasks}
                 {stats.overdueTasks > 0 && (
-                  <span className="text-sm text-red-600 ml-2">({stats.overdueTasks} overdue)</span>
+                  <span className="text-sm text-red-600 ml-2">
+                    ({stats.overdueTasks} overdue)
+                  </span>
                 )}
               </p>
             </div>
@@ -217,7 +249,7 @@ export const AudiologyList = () => {
               className="px-3 py-2 border border-gray-300 rounded-md"
             >
               <option value="">All Types</option>
-              {Object.entries(EncounterType).map(([key, value]) => (
+              {Object.entries(EncounterType).map(([, value]) => (
                 <option key={value} value={value}>
                   {getEncounterTypeLabel(value)}
                 </option>
@@ -259,13 +291,19 @@ export const AudiologyList = () => {
             <tbody className="bg-white divide-y divide-gray-200">
               {encountersLoading ? (
                 <tr>
-                  <td colSpan={7} className="px-6 py-12 text-center text-gray-500">
+                  <td
+                    colSpan={7}
+                    className="px-6 py-12 text-center text-gray-500"
+                  >
                     Loading encounters...
                   </td>
                 </tr>
               ) : filteredEncounters.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-6 py-12 text-center text-gray-500">
+                  <td
+                    colSpan={7}
+                    className="px-6 py-12 text-center text-gray-500"
+                  >
                     No encounters found
                   </td>
                 </tr>
@@ -274,17 +312,17 @@ export const AudiologyList = () => {
                   <tr key={encounter.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="font-medium text-gray-900">
-                        {encounter.patient?.fullNameEn || 'Unknown Patient'}
+                        {encounter.patient?.fullNameEn || "Unknown Patient"}
                       </div>
                       <div className="text-sm text-gray-500">
                         {encounter.patient?.phoneNumber}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {format(new Date(encounter.encounterDate), 'MMM d, yyyy')}
+                      {format(new Date(encounter.encounterDate), "MMM d, yyyy")}
                       {encounter.startTime && (
                         <span className="text-gray-500 ml-1">
-                          {format(new Date(encounter.startTime), 'h:mm a')}
+                          {format(new Date(encounter.startTime), "h:mm a")}
                         </span>
                       )}
                     </td>
@@ -292,13 +330,13 @@ export const AudiologyList = () => {
                       {getEncounterTypeLabel(encounter.encounterType)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {encounter.providerName || 'Unassigned'}
+                      {encounter.providerName || "Unassigned"}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       {getStatusBadge(encounter.status)}
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-500 max-w-xs truncate">
-                      {encounter.chiefComplaint || '-'}
+                      {encounter.chiefComplaint || "-"}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <button className="text-primary-600 hover:text-primary-900 mr-3">

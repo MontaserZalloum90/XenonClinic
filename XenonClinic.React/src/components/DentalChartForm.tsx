@@ -1,13 +1,13 @@
-import { useForm, useFieldArray } from 'react-hook-form';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useForm, useFieldArray } from "react-hook-form";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type {
   DentalChart,
   CreateDentalChartRequest,
   ToothCondition,
   ToothConditionType,
-} from '../types/dental';
-import { format } from 'date-fns';
-import { PlusIcon, TrashIcon } from '@heroicons/react/24/outline';
+} from "../types/dental";
+import { format } from "date-fns";
+import { PlusIcon, TrashIcon } from "@heroicons/react/24/outline";
 
 // Mock API functions - Replace with actual API calls
 const dentalChartApi = {
@@ -32,24 +32,26 @@ interface ChartFormData {
   notes?: string;
 }
 
-const getConditionLabel = (condition: ToothConditionType): string => {
-  const labels: Record<ToothConditionType, string> = {
-    healthy: 'Healthy',
-    cavity: 'Cavity',
-    filled: 'Filled',
-    crown: 'Crown',
-    bridge: 'Bridge',
-    implant: 'Implant',
-    missing: 'Missing',
-    root_canal: 'Root Canal',
-    fractured: 'Fractured',
-    worn: 'Worn',
-    decayed: 'Decayed',
-  };
-  return labels[condition] || condition;
+// Condition labels for tooth condition select options
+const conditionLabels: Record<ToothConditionType, string> = {
+  healthy: "Healthy",
+  cavity: "Cavity",
+  filled: "Filled",
+  crown: "Crown",
+  bridge: "Bridge",
+  implant: "Implant",
+  missing: "Missing",
+  root_canal: "Root Canal",
+  fractured: "Fractured",
+  worn: "Worn",
+  decayed: "Decayed",
 };
 
-export const DentalChartForm = ({ chart, onSuccess, onCancel }: DentalChartFormProps) => {
+export const DentalChartForm = ({
+  chart,
+  onSuccess,
+  onCancel,
+}: DentalChartFormProps) => {
   const queryClient = useQueryClient();
   const isEditing = !!chart;
 
@@ -62,25 +64,25 @@ export const DentalChartForm = ({ chart, onSuccess, onCancel }: DentalChartFormP
     defaultValues: chart
       ? {
           patientId: chart.patientId,
-          chartDate: format(new Date(chart.chartDate), 'yyyy-MM-dd'),
+          chartDate: format(new Date(chart.chartDate), "yyyy-MM-dd"),
           teeth: chart.teeth,
-          notes: chart.notes || '',
+          notes: chart.notes || "",
         }
       : {
-          chartDate: format(new Date(), 'yyyy-MM-dd'),
+          chartDate: format(new Date(), "yyyy-MM-dd"),
           teeth: [],
         },
   });
 
   const { fields, append, remove } = useFieldArray({
     control,
-    name: 'teeth',
+    name: "teeth",
   });
 
   const createMutation = useMutation({
     mutationFn: (data: CreateDentalChartRequest) => dentalChartApi.create(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['dental-charts'] });
+      queryClient.invalidateQueries({ queryKey: ["dental-charts"] });
       onSuccess();
     },
   });
@@ -89,7 +91,7 @@ export const DentalChartForm = ({ chart, onSuccess, onCancel }: DentalChartFormP
     mutationFn: (data: ChartFormData) =>
       dentalChartApi.update(chart!.id, { ...data, id: chart!.id }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['dental-charts'] });
+      queryClient.invalidateQueries({ queryKey: ["dental-charts"] });
       onSuccess();
     },
   });
@@ -105,8 +107,8 @@ export const DentalChartForm = ({ chart, onSuccess, onCancel }: DentalChartFormP
   const addTooth = () => {
     append({
       toothNumber: 1,
-      condition: 'healthy',
-      notes: '',
+      condition: "healthy",
+      notes: "",
     });
   };
 
@@ -118,7 +120,8 @@ export const DentalChartForm = ({ chart, onSuccess, onCancel }: DentalChartFormP
       {error && (
         <div className="p-3 bg-red-50 border border-red-200 rounded-md">
           <p className="text-sm text-red-600">
-            Error: {error instanceof Error ? error.message : 'An error occurred'}
+            Error:{" "}
+            {error instanceof Error ? error.message : "An error occurred"}
           </p>
         </div>
       )}
@@ -126,34 +129,47 @@ export const DentalChartForm = ({ chart, onSuccess, onCancel }: DentalChartFormP
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Patient ID */}
         <div>
-          <label htmlFor="patientId" className="block text-sm font-medium text-gray-700 mb-1">
+          <label
+            htmlFor="patientId"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
             Patient ID *
           </label>
           <input
             type="number"
             id="patientId"
-            {...register('patientId', { required: 'Patient ID is required', valueAsNumber: true })}
+            {...register("patientId", {
+              required: "Patient ID is required",
+              valueAsNumber: true,
+            })}
             className="input"
             placeholder="1"
           />
           {errors.patientId && (
-            <p className="mt-1 text-sm text-red-600">{errors.patientId.message}</p>
+            <p className="mt-1 text-sm text-red-600">
+              {errors.patientId.message}
+            </p>
           )}
         </div>
 
         {/* Chart Date */}
         <div>
-          <label htmlFor="chartDate" className="block text-sm font-medium text-gray-700 mb-1">
+          <label
+            htmlFor="chartDate"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
             Chart Date *
           </label>
           <input
             type="date"
             id="chartDate"
-            {...register('chartDate', { required: 'Chart date is required' })}
+            {...register("chartDate", { required: "Chart date is required" })}
             className="input"
           />
           {errors.chartDate && (
-            <p className="mt-1 text-sm text-red-600">{errors.chartDate.message}</p>
+            <p className="mt-1 text-sm text-red-600">
+              {errors.chartDate.message}
+            </p>
           )}
         </div>
       </div>
@@ -161,7 +177,9 @@ export const DentalChartForm = ({ chart, onSuccess, onCancel }: DentalChartFormP
       {/* Teeth Section */}
       <div>
         <div className="flex items-center justify-between mb-3">
-          <label className="block text-sm font-medium text-gray-700">Tooth Conditions</label>
+          <label className="block text-sm font-medium text-gray-700">
+            Tooth Conditions
+          </label>
           <button
             type="button"
             onClick={addTooth}
@@ -175,10 +193,15 @@ export const DentalChartForm = ({ chart, onSuccess, onCancel }: DentalChartFormP
         {fields.length > 0 ? (
           <div className="space-y-3 max-h-96 overflow-y-auto border border-gray-200 rounded-lg p-4">
             {fields.map((field, index) => (
-              <div key={field.id} className="grid grid-cols-12 gap-2 items-start p-3 bg-gray-50 rounded-lg">
+              <div
+                key={field.id}
+                className="grid grid-cols-12 gap-2 items-start p-3 bg-gray-50 rounded-lg"
+              >
                 {/* Tooth Number */}
                 <div className="col-span-2">
-                  <label className="block text-xs text-gray-600 mb-1">Tooth #</label>
+                  <label className="block text-xs text-gray-600 mb-1">
+                    Tooth #
+                  </label>
                   <input
                     type="number"
                     {...register(`teeth.${index}.toothNumber`, {
@@ -194,28 +217,28 @@ export const DentalChartForm = ({ chart, onSuccess, onCancel }: DentalChartFormP
 
                 {/* Condition */}
                 <div className="col-span-3">
-                  <label className="block text-xs text-gray-600 mb-1">Condition</label>
+                  <label className="block text-xs text-gray-600 mb-1">
+                    Condition
+                  </label>
                   <select
-                    {...register(`teeth.${index}.condition`, { required: true })}
+                    {...register(`teeth.${index}.condition`, {
+                      required: true,
+                    })}
                     className="input text-sm"
                   >
-                    <option value="healthy">Healthy</option>
-                    <option value="cavity">Cavity</option>
-                    <option value="filled">Filled</option>
-                    <option value="crown">Crown</option>
-                    <option value="bridge">Bridge</option>
-                    <option value="implant">Implant</option>
-                    <option value="missing">Missing</option>
-                    <option value="root_canal">Root Canal</option>
-                    <option value="fractured">Fractured</option>
-                    <option value="worn">Worn</option>
-                    <option value="decayed">Decayed</option>
+                    {Object.entries(conditionLabels).map(([value, label]) => (
+                      <option key={value} value={value}>
+                        {label}
+                      </option>
+                    ))}
                   </select>
                 </div>
 
                 {/* Notes */}
                 <div className="col-span-6">
-                  <label className="block text-xs text-gray-600 mb-1">Notes</label>
+                  <label className="block text-xs text-gray-600 mb-1">
+                    Notes
+                  </label>
                   <input
                     type="text"
                     {...register(`teeth.${index}.notes`)}
@@ -254,8 +277,18 @@ export const DentalChartForm = ({ chart, onSuccess, onCancel }: DentalChartFormP
 
       {/* Visual Tooth Diagram Placeholder */}
       <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center bg-gray-50">
-        <svg className="h-16 w-16 text-gray-400 mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        <svg
+          className="h-16 w-16 text-gray-400 mx-auto mb-2"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+          />
         </svg>
         <p className="text-sm text-gray-500">Visual Dental Chart</p>
         <p className="text-xs text-gray-400 mt-1">
@@ -265,12 +298,15 @@ export const DentalChartForm = ({ chart, onSuccess, onCancel }: DentalChartFormP
 
       {/* Notes */}
       <div>
-        <label htmlFor="notes" className="block text-sm font-medium text-gray-700 mb-1">
+        <label
+          htmlFor="notes"
+          className="block text-sm font-medium text-gray-700 mb-1"
+        >
           General Notes
         </label>
         <textarea
           id="notes"
-          {...register('notes')}
+          {...register("notes")}
           rows={3}
           className="input"
           placeholder="General observations and notes about the dental chart..."
@@ -291,12 +327,12 @@ export const DentalChartForm = ({ chart, onSuccess, onCancel }: DentalChartFormP
           {isPending ? (
             <div className="flex items-center">
               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-              {isEditing ? 'Updating...' : 'Creating...'}
+              {isEditing ? "Updating..." : "Creating..."}
             </div>
           ) : isEditing ? (
-            'Update Chart'
+            "Update Chart"
           ) : (
-            'Create Chart'
+            "Create Chart"
           )}
         </button>
       </div>
