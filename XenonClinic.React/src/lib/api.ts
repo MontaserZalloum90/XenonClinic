@@ -423,4 +423,108 @@ export const marketingStatsApi = {
   getCampaignPerformance: () => api.get('/api/MarketingApi/statistics/campaign-performance'),
 };
 
+// ============================================
+// CLINICAL VISITS API ENDPOINTS
+// ============================================
+
+export const clinicalVisitsApi = {
+  getAll: () => api.get('/api/ClinicalVisitsApi/visits'),
+  getById: (id: number) => api.get(`/api/ClinicalVisitsApi/visits/${id}`),
+  getByPatient: (patientId: number) => api.get(`/api/ClinicalVisitsApi/visits/patient/${patientId}`),
+  getByDoctor: (doctorId: number) => api.get(`/api/ClinicalVisitsApi/visits/doctor/${doctorId}`),
+  getToday: () => api.get('/api/ClinicalVisitsApi/visits/today'),
+  getByStatus: (status: number) => api.get(`/api/ClinicalVisitsApi/visits/status/${status}`),
+  getByType: (type: number) => api.get(`/api/ClinicalVisitsApi/visits/type/${type}`),
+  getByDateRange: (startDate: string, endDate: string) =>
+    api.get('/api/ClinicalVisitsApi/visits/date-range', { params: { startDate, endDate } }),
+  search: (searchTerm: string) =>
+    api.get(`/api/ClinicalVisitsApi/visits/search?searchTerm=${encodeURIComponent(searchTerm)}`),
+  create: (data: any) => api.post('/api/ClinicalVisitsApi/visits', data),
+  update: (id: number, data: any) => api.put(`/api/ClinicalVisitsApi/visits/${id}`, data),
+  delete: (id: number) => api.delete(`/api/ClinicalVisitsApi/visits/${id}`),
+  updateStatus: (id: number, status: number) =>
+    api.post(`/api/ClinicalVisitsApi/visits/${id}/status`, { status }),
+  getStatistics: (startDate?: string, endDate?: string) =>
+    api.get('/api/ClinicalVisitsApi/statistics', { params: { startDate, endDate } }),
+};
+
+// ============================================
+// WORKFLOW API ENDPOINTS
+// ============================================
+
+export const workflowDefinitionsApi = {
+  getAll: () => api.get('/api/WorkflowApi/definitions'),
+  getById: (id: number) => api.get(`/api/WorkflowApi/definitions/${id}`),
+  search: (searchTerm: string) =>
+    api.get(`/api/WorkflowApi/definitions/search?searchTerm=${encodeURIComponent(searchTerm)}`),
+  getActive: () => api.get('/api/WorkflowApi/definitions/active'),
+  getByCategory: (category: string) =>
+    api.get(`/api/WorkflowApi/definitions/category/${encodeURIComponent(category)}`),
+  create: (data: any) => api.post('/api/WorkflowApi/definitions', data),
+  update: (id: number, data: any) => api.put(`/api/WorkflowApi/definitions/${id}`, data),
+  delete: (id: number) => api.delete(`/api/WorkflowApi/definitions/${id}`),
+  toggleActive: (id: number, isActive: boolean) =>
+    api.post(`/api/WorkflowApi/definitions/${id}/toggle-active`, { isActive }),
+  getStatistics: () => api.get('/api/WorkflowApi/definitions/statistics'),
+};
+
+export const workflowInstancesApi = {
+  getAll: () => api.get('/api/WorkflowApi/instances'),
+  getById: (id: number) => api.get(`/api/WorkflowApi/instances/${id}`),
+  getByDefinition: (definitionId: number) =>
+    api.get(`/api/WorkflowApi/instances/definition/${definitionId}`),
+  getByEntity: (entityType: string, entityId: number) =>
+    api.get(`/api/WorkflowApi/instances/entity/${entityType}/${entityId}`),
+  getByStatus: (status: number) => api.get(`/api/WorkflowApi/instances/status/${status}`),
+  getPending: () => api.get('/api/WorkflowApi/instances/pending'),
+  getInProgress: () => api.get('/api/WorkflowApi/instances/in-progress'),
+  create: (data: any) => api.post('/api/WorkflowApi/instances', data),
+  update: (id: number, data: any) => api.put(`/api/WorkflowApi/instances/${id}`, data),
+  cancel: (id: number, reason?: string) =>
+    api.post(`/api/WorkflowApi/instances/${id}/cancel`, { reason }),
+  complete: (id: number) => api.post(`/api/WorkflowApi/instances/${id}/complete`),
+  getHistory: (id: number) => api.get(`/api/WorkflowApi/instances/${id}/history`),
+  addHistoryEntry: (id: number, data: any) =>
+    api.post(`/api/WorkflowApi/instances/${id}/history`, data),
+  getStatistics: () => api.get('/api/WorkflowApi/instances/statistics'),
+};
+
+// ============================================
+// ANALYTICS API ENDPOINTS
+// ============================================
+
+export const analyticsApi = {
+  // Dashboard
+  getDashboard: (startDate?: string, endDate?: string, departmentId?: number) =>
+    api.get('/api/AnalyticsApi/dashboard', { params: { startDate, endDate, departmentId } }),
+
+  // Reports
+  getAllReports: () => api.get('/api/AnalyticsApi/reports'),
+  getReportById: (id: number) => api.get(`/api/AnalyticsApi/reports/${id}`),
+  getRecentReports: (limit?: number) => api.get('/api/AnalyticsApi/reports/recent', { params: { limit } }),
+  getReportsByType: (type: number) => api.get(`/api/AnalyticsApi/reports/type/${type}`),
+  getReportsByStatus: (status: number) => api.get(`/api/AnalyticsApi/reports/status/${status}`),
+  createReport: (data: any) => api.post('/api/AnalyticsApi/reports', data),
+  updateReport: (id: number, data: any) => api.put(`/api/AnalyticsApi/reports/${id}`, data),
+  deleteReport: (id: number) => api.delete(`/api/AnalyticsApi/reports/${id}`),
+  downloadReport: (id: number) =>
+    api.get(`/api/AnalyticsApi/reports/${id}/download`, { responseType: 'blob' }),
+  regenerateReport: (id: number) => api.post(`/api/AnalyticsApi/reports/${id}/regenerate`),
+
+  // Statistics
+  getStatistics: () => api.get('/api/AnalyticsApi/statistics'),
+  getKPIs: (startDate?: string, endDate?: string) =>
+    api.get('/api/AnalyticsApi/kpis', { params: { startDate, endDate } }),
+
+  // Custom Analytics
+  getPatientAnalytics: (startDate?: string, endDate?: string) =>
+    api.get('/api/AnalyticsApi/patients', { params: { startDate, endDate } }),
+  getAppointmentAnalytics: (startDate?: string, endDate?: string) =>
+    api.get('/api/AnalyticsApi/appointments', { params: { startDate, endDate } }),
+  getRevenueAnalytics: (startDate?: string, endDate?: string) =>
+    api.get('/api/AnalyticsApi/revenue', { params: { startDate, endDate } }),
+  getDepartmentAnalytics: (departmentId?: number, startDate?: string, endDate?: string) =>
+    api.get('/api/AnalyticsApi/departments', { params: { departmentId, startDate, endDate } }),
+};
+
 export default api;
