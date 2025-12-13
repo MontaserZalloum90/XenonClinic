@@ -1,13 +1,13 @@
-import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Dialog } from '@headlessui/react';
-import { format } from 'date-fns';
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Dialog } from "@headlessui/react";
+import { format } from "date-fns";
 import type {
   MoleMapping,
   CreateMoleMappingRequest,
   MoleLocation,
   RiskLevel,
-} from '../../types/dermatology';
+} from "../../types/dermatology";
 
 // Mock API - Replace with actual dermatology API
 const moleMappingsApi = {
@@ -17,29 +17,33 @@ const moleMappingsApi = {
   },
   create: async (data: CreateMoleMappingRequest) => {
     // TODO: Implement actual API call
-    console.log('Creating mole mapping:', data);
-    return { data: { id: Date.now(), ...data, createdAt: new Date().toISOString() } };
+    console.log("Creating mole mapping:", data);
+    return {
+      data: { id: Date.now(), ...data, createdAt: new Date().toISOString() },
+    };
   },
   update: async (id: number, data: Partial<MoleMapping>) => {
     // TODO: Implement actual API call
-    console.log('Updating mole mapping:', id, data);
+    console.log("Updating mole mapping:", id, data);
     return { data: { id, ...data } };
   },
   delete: async (id: number) => {
     // TODO: Implement actual API call
-    console.log('Deleting mole mapping:', id);
+    console.log("Deleting mole mapping:", id);
     return { data: { success: true } };
   },
 };
 
 export const MoleMappings = () => {
   const queryClient = useQueryClient();
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedMapping, setSelectedMapping] = useState<MoleMapping | undefined>(undefined);
+  const [selectedMapping, setSelectedMapping] = useState<
+    MoleMapping | undefined
+  >(undefined);
 
   const { data: mappings, isLoading } = useQuery<MoleMapping[]>({
-    queryKey: ['mole-mappings'],
+    queryKey: ["mole-mappings"],
     queryFn: async () => {
       const response = await moleMappingsApi.getAll();
       return response.data;
@@ -47,9 +51,10 @@ export const MoleMappings = () => {
   });
 
   const createMutation = useMutation({
-    mutationFn: (data: CreateMoleMappingRequest) => moleMappingsApi.create(data),
+    mutationFn: (data: CreateMoleMappingRequest) =>
+      moleMappingsApi.create(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['mole-mappings'] });
+      queryClient.invalidateQueries({ queryKey: ["mole-mappings"] });
       setIsModalOpen(false);
       setSelectedMapping(undefined);
     },
@@ -59,7 +64,7 @@ export const MoleMappings = () => {
     mutationFn: ({ id, data }: { id: number; data: Partial<MoleMapping> }) =>
       moleMappingsApi.update(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['mole-mappings'] });
+      queryClient.invalidateQueries({ queryKey: ["mole-mappings"] });
       setIsModalOpen(false);
       setSelectedMapping(undefined);
     },
@@ -68,12 +73,12 @@ export const MoleMappings = () => {
   const deleteMutation = useMutation({
     mutationFn: (id: number) => moleMappingsApi.delete(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['mole-mappings'] });
+      queryClient.invalidateQueries({ queryKey: ["mole-mappings"] });
     },
   });
 
   const handleDelete = (mapping: MoleMapping) => {
-    if (window.confirm('Are you sure you want to delete this mole mapping?')) {
+    if (window.confirm("Are you sure you want to delete this mole mapping?")) {
       deleteMutation.mutate(mapping.id);
     }
   };
@@ -94,25 +99,27 @@ export const MoleMappings = () => {
   };
 
   const filteredMappings = mappings?.filter((mapping) =>
-    mapping.patient?.fullNameEn.toLowerCase().includes(searchTerm.toLowerCase())
+    mapping.patient?.fullNameEn
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase()),
   );
 
   const getRiskLevelLabel = (risk?: RiskLevel) => {
-    if (!risk) return 'Not assessed';
+    if (!risk) return "Not assessed";
     const labels: Record<RiskLevel, string> = {
-      low: 'Low Risk',
-      moderate: 'Moderate Risk',
-      high: 'High Risk',
+      low: "Low Risk",
+      moderate: "Moderate Risk",
+      high: "High Risk",
     };
     return labels[risk];
   };
 
   const getRiskLevelColor = (risk?: RiskLevel) => {
-    if (!risk) return 'text-gray-600 bg-gray-100';
+    if (!risk) return "text-gray-600 bg-gray-100";
     const colors: Record<RiskLevel, string> = {
-      low: 'text-green-600 bg-green-100',
-      moderate: 'text-yellow-600 bg-yellow-100',
-      high: 'text-red-600 bg-red-100',
+      low: "text-green-600 bg-green-100",
+      moderate: "text-yellow-600 bg-yellow-100",
+      high: "text-red-600 bg-red-100",
     };
     return colors[risk];
   };
@@ -122,7 +129,9 @@ export const MoleMappings = () => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Mole Mapping</h1>
-          <p className="text-gray-600 mt-1">Track and monitor mole locations and characteristics</p>
+          <p className="text-gray-600 mt-1">
+            Track and monitor mole locations and characteristics
+          </p>
         </div>
         <button onClick={handleCreate} className="btn btn-primary">
           New Mole Mapping
@@ -180,10 +189,11 @@ export const MoleMappings = () => {
                 {filteredMappings.map((mapping) => (
                   <tr key={mapping.id} className="hover:bg-gray-50">
                     <td className="px-4 py-3 text-sm text-gray-900">
-                      {format(new Date(mapping.mapDate), 'MMM d, yyyy')}
+                      {format(new Date(mapping.mapDate), "MMM d, yyyy")}
                     </td>
                     <td className="px-4 py-3 text-sm font-medium text-gray-900">
-                      {mapping.patient?.fullNameEn || `Patient #${mapping.patientId}`}
+                      {mapping.patient?.fullNameEn ||
+                        `Patient #${mapping.patientId}`}
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-600">
                       <span className="font-medium">{mapping.totalMoles}</span>
@@ -194,13 +204,13 @@ export const MoleMappings = () => {
                           {mapping.atypicalMoles}
                         </span>
                       ) : (
-                        '0'
+                        "0"
                       )}
                     </td>
                     <td className="px-4 py-3 text-sm">
                       <span
                         className={`px-2 py-1 rounded-full text-xs font-medium ${getRiskLevelColor(
-                          mapping.riskAssessment
+                          mapping.riskAssessment,
                         )}`}
                       >
                         {getRiskLevelLabel(mapping.riskAssessment)}
@@ -208,10 +218,15 @@ export const MoleMappings = () => {
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-600">
                       {mapping.nextMappingDate
-                        ? format(new Date(mapping.nextMappingDate), 'MMM d, yyyy')
-                        : '-'}
+                        ? format(
+                            new Date(mapping.nextMappingDate),
+                            "MMM d, yyyy",
+                          )
+                        : "-"}
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-600">{mapping.performedBy}</td>
+                    <td className="px-4 py-3 text-sm text-gray-600">
+                      {mapping.performedBy}
+                    </td>
                     <td className="px-4 py-3 text-sm">
                       <div className="flex items-center gap-2">
                         <button
@@ -235,19 +250,27 @@ export const MoleMappings = () => {
           </div>
         ) : (
           <div className="text-center py-8 text-gray-500">
-            {searchTerm ? 'No mole mappings found matching your search.' : 'No mole mappings found.'}
+            {searchTerm
+              ? "No mole mappings found matching your search."
+              : "No mole mappings found."}
           </div>
         )}
       </div>
 
       {/* Modal */}
-      <Dialog open={isModalOpen} onClose={handleModalClose} className="relative z-50">
+      <Dialog
+        open={isModalOpen}
+        onClose={handleModalClose}
+        className="relative z-50"
+      >
         <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
         <div className="fixed inset-0 flex items-center justify-center p-4">
           <Dialog.Panel className="mx-auto max-w-4xl w-full bg-white rounded-lg shadow-xl max-h-[90vh] overflow-y-auto">
             <div className="p-6">
               <Dialog.Title className="text-lg font-medium text-gray-900 mb-4">
-                {selectedMapping ? 'View/Edit Mole Mapping' : 'New Mole Mapping'}
+                {selectedMapping
+                  ? "View/Edit Mole Mapping"
+                  : "New Mole Mapping"}
               </Dialog.Title>
               <MoleMappingForm
                 mapping={selectedMapping}
@@ -259,7 +282,9 @@ export const MoleMappings = () => {
                   }
                 }}
                 onCancel={handleModalClose}
-                isSubmitting={createMutation.isPending || updateMutation.isPending}
+                isSubmitting={
+                  createMutation.isPending || updateMutation.isPending
+                }
               />
             </div>
           </Dialog.Panel>
@@ -277,34 +302,50 @@ interface MoleMappingFormProps {
   isSubmitting: boolean;
 }
 
-const MoleMappingForm = ({ mapping, onSubmit, onCancel, isSubmitting }: MoleMappingFormProps) => {
+const MoleMappingForm = ({
+  mapping,
+  onSubmit,
+  onCancel,
+  isSubmitting,
+}: MoleMappingFormProps) => {
   const [formData, setFormData] = useState({
     patientId: mapping?.patientId || 0,
     mapDate: mapping?.mapDate
-      ? mapping.mapDate.split('T')[0]
-      : new Date().toISOString().split('T')[0],
+      ? mapping.mapDate.split("T")[0]
+      : new Date().toISOString().split("T")[0],
     totalMoles: mapping?.totalMoles || 0,
     atypicalMoles: mapping?.atypicalMoles || 0,
-    riskAssessment: mapping?.riskAssessment || '',
-    recommendations: mapping?.recommendations || '',
-    nextMappingDate: mapping?.nextMappingDate ? mapping.nextMappingDate.split('T')[0] : '',
-    performedBy: mapping?.performedBy || '',
-    notes: mapping?.notes || '',
+    riskAssessment: mapping?.riskAssessment || "",
+    recommendations: mapping?.recommendations || "",
+    nextMappingDate: mapping?.nextMappingDate
+      ? mapping.nextMappingDate.split("T")[0]
+      : "",
+    performedBy: mapping?.performedBy || "",
+    notes: mapping?.notes || "",
   });
 
   const [locations, setLocations] = useState<MoleLocation[]>(
-    mapping?.locations || [{ bodyArea: '', count: 0, hasAtypical: false, description: '' }]
+    mapping?.locations || [
+      { bodyArea: "", count: 0, hasAtypical: false, description: "" },
+    ],
   );
 
   const handleAddLocation = () => {
-    setLocations([...locations, { bodyArea: '', count: 0, hasAtypical: false, description: '' }]);
+    setLocations([
+      ...locations,
+      { bodyArea: "", count: 0, hasAtypical: false, description: "" },
+    ]);
   };
 
   const handleRemoveLocation = (index: number) => {
     setLocations(locations.filter((_, i) => i !== index));
   };
 
-  const handleLocationChange = (index: number, field: keyof MoleLocation, value: any) => {
+  const handleLocationChange = (
+    index: number,
+    field: keyof MoleLocation,
+    value: string | number | boolean,
+  ) => {
     const newLocations = [...locations];
     newLocations[index] = { ...newLocations[index], [field]: value };
     setLocations(newLocations);
@@ -312,7 +353,9 @@ const MoleMappingForm = ({ mapping, onSubmit, onCancel, isSubmitting }: MoleMapp
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const validLocations = locations.filter((loc) => loc.bodyArea && loc.count > 0);
+    const validLocations = locations.filter(
+      (loc) => loc.bodyArea && loc.count > 0,
+    );
 
     onSubmit({
       ...formData,
@@ -331,8 +374,10 @@ const MoleMappingForm = ({ mapping, onSubmit, onCancel, isSubmitting }: MoleMapp
           <input
             type="number"
             required
-            value={formData.patientId || ''}
-            onChange={(e) => setFormData({ ...formData, patientId: parseInt(e.target.value) })}
+            value={formData.patientId || ""}
+            onChange={(e) =>
+              setFormData({ ...formData, patientId: parseInt(e.target.value) })
+            }
             className="input w-full"
           />
         </div>
@@ -342,7 +387,9 @@ const MoleMappingForm = ({ mapping, onSubmit, onCancel, isSubmitting }: MoleMapp
             type="date"
             required
             value={formData.mapDate}
-            onChange={(e) => setFormData({ ...formData, mapDate: e.target.value })}
+            onChange={(e) =>
+              setFormData({ ...formData, mapDate: e.target.value })
+            }
             className="input w-full"
           />
         </div>
@@ -356,7 +403,9 @@ const MoleMappingForm = ({ mapping, onSubmit, onCancel, isSubmitting }: MoleMapp
             required
             min="0"
             value={formData.totalMoles}
-            onChange={(e) => setFormData({ ...formData, totalMoles: parseInt(e.target.value) })}
+            onChange={(e) =>
+              setFormData({ ...formData, totalMoles: parseInt(e.target.value) })
+            }
             className="input w-full"
           />
         </div>
@@ -366,7 +415,12 @@ const MoleMappingForm = ({ mapping, onSubmit, onCancel, isSubmitting }: MoleMapp
             type="number"
             min="0"
             value={formData.atypicalMoles}
-            onChange={(e) => setFormData({ ...formData, atypicalMoles: parseInt(e.target.value) })}
+            onChange={(e) =>
+              setFormData({
+                ...formData,
+                atypicalMoles: parseInt(e.target.value),
+              })
+            }
             className="input w-full"
           />
         </div>
@@ -374,7 +428,9 @@ const MoleMappingForm = ({ mapping, onSubmit, onCancel, isSubmitting }: MoleMapp
           <label className="label">Risk Assessment</label>
           <select
             value={formData.riskAssessment}
-            onChange={(e) => setFormData({ ...formData, riskAssessment: e.target.value })}
+            onChange={(e) =>
+              setFormData({ ...formData, riskAssessment: e.target.value })
+            }
             className="input w-full"
           >
             <option value="">Select risk level</option>
@@ -404,7 +460,9 @@ const MoleMappingForm = ({ mapping, onSubmit, onCancel, isSubmitting }: MoleMapp
                   type="text"
                   placeholder="Body area"
                   value={location.bodyArea}
-                  onChange={(e) => handleLocationChange(index, 'bodyArea', e.target.value)}
+                  onChange={(e) =>
+                    handleLocationChange(index, "bodyArea", e.target.value)
+                  }
                   className="input w-full text-sm"
                 />
               </div>
@@ -415,7 +473,11 @@ const MoleMappingForm = ({ mapping, onSubmit, onCancel, isSubmitting }: MoleMapp
                   min="0"
                   value={location.count}
                   onChange={(e) =>
-                    handleLocationChange(index, 'count', parseInt(e.target.value) || 0)
+                    handleLocationChange(
+                      index,
+                      "count",
+                      parseInt(e.target.value) || 0,
+                    )
                   }
                   className="input w-full text-sm"
                 />
@@ -425,7 +487,13 @@ const MoleMappingForm = ({ mapping, onSubmit, onCancel, isSubmitting }: MoleMapp
                   <input
                     type="checkbox"
                     checked={location.hasAtypical || false}
-                    onChange={(e) => handleLocationChange(index, 'hasAtypical', e.target.checked)}
+                    onChange={(e) =>
+                      handleLocationChange(
+                        index,
+                        "hasAtypical",
+                        e.target.checked,
+                      )
+                    }
                     className="mr-1"
                   />
                   Atypical
@@ -435,8 +503,10 @@ const MoleMappingForm = ({ mapping, onSubmit, onCancel, isSubmitting }: MoleMapp
                 <input
                   type="text"
                   placeholder="Description"
-                  value={location.description || ''}
-                  onChange={(e) => handleLocationChange(index, 'description', e.target.value)}
+                  value={location.description || ""}
+                  onChange={(e) =>
+                    handleLocationChange(index, "description", e.target.value)
+                  }
                   className="input w-full text-sm"
                 />
               </div>
@@ -452,7 +522,9 @@ const MoleMappingForm = ({ mapping, onSubmit, onCancel, isSubmitting }: MoleMapp
             </div>
           ))}
           {locations.length === 0 && (
-            <p className="text-sm text-gray-500 text-center py-2">No locations added</p>
+            <p className="text-sm text-gray-500 text-center py-2">
+              No locations added
+            </p>
           )}
         </div>
       </div>
@@ -461,7 +533,9 @@ const MoleMappingForm = ({ mapping, onSubmit, onCancel, isSubmitting }: MoleMapp
         <label className="label">Recommendations</label>
         <textarea
           value={formData.recommendations}
-          onChange={(e) => setFormData({ ...formData, recommendations: e.target.value })}
+          onChange={(e) =>
+            setFormData({ ...formData, recommendations: e.target.value })
+          }
           className="input w-full"
           rows={3}
           placeholder="Clinical recommendations and follow-up instructions"
@@ -474,7 +548,9 @@ const MoleMappingForm = ({ mapping, onSubmit, onCancel, isSubmitting }: MoleMapp
           <input
             type="date"
             value={formData.nextMappingDate}
-            onChange={(e) => setFormData({ ...formData, nextMappingDate: e.target.value })}
+            onChange={(e) =>
+              setFormData({ ...formData, nextMappingDate: e.target.value })
+            }
             className="input w-full"
           />
         </div>
@@ -484,7 +560,9 @@ const MoleMappingForm = ({ mapping, onSubmit, onCancel, isSubmitting }: MoleMapp
             type="text"
             required
             value={formData.performedBy}
-            onChange={(e) => setFormData({ ...formData, performedBy: e.target.value })}
+            onChange={(e) =>
+              setFormData({ ...formData, performedBy: e.target.value })
+            }
             className="input w-full"
             placeholder="Provider name"
           />
@@ -506,8 +584,16 @@ const MoleMappingForm = ({ mapping, onSubmit, onCancel, isSubmitting }: MoleMapp
         <button type="button" onClick={onCancel} className="btn btn-secondary">
           Cancel
         </button>
-        <button type="submit" disabled={isSubmitting} className="btn btn-primary">
-          {isSubmitting ? 'Saving...' : mapping ? 'Update Mapping' : 'Create Mapping'}
+        <button
+          type="submit"
+          disabled={isSubmitting}
+          className="btn btn-primary"
+        >
+          {isSubmitting
+            ? "Saving..."
+            : mapping
+              ? "Update Mapping"
+              : "Create Mapping"}
         </button>
       </div>
     </form>

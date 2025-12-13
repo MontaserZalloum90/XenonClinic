@@ -9,7 +9,7 @@ export const ReportType = {
   Custom: 5,
 } as const;
 
-export type ReportType = typeof ReportType[keyof typeof ReportType];
+export type ReportType = (typeof ReportType)[keyof typeof ReportType];
 
 export const ReportStatus = {
   Pending: 0,
@@ -18,7 +18,7 @@ export const ReportStatus = {
   Failed: 3,
 } as const;
 
-export type ReportStatus = typeof ReportStatus[keyof typeof ReportStatus];
+export type ReportStatus = (typeof ReportStatus)[keyof typeof ReportStatus];
 
 export interface AnalyticsDashboard {
   totalPatients: number;
@@ -64,7 +64,7 @@ export interface Report {
   parameters: ReportParameters;
   generatedAt: string;
   generatedBy?: string;
-  data: any;
+  data: unknown;
   status: ReportStatus;
   fileUrl?: string;
   description?: string;
@@ -78,7 +78,7 @@ export interface ReportParameters {
   serviceType?: string;
   includeCharts?: boolean;
   includeDetails?: boolean;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export interface ChartData {

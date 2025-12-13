@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery } from "@tanstack/react-query";
 import {
   UserGroupIcon,
   BeakerIcon,
@@ -8,14 +8,23 @@ import {
   ExclamationTriangleIcon,
   ArrowTrendingUpIcon,
   DocumentTextIcon,
-} from '@heroicons/react/24/outline';
-import { format } from 'date-fns';
-import type { OncologyStatistics } from '../../types/oncology';
+} from "@heroicons/react/24/outline";
+import { format } from "date-fns";
+import type { OncologyStatistics } from "../../types/oncology";
+
+interface RecentActivity {
+  id: number;
+  patientName: string;
+  activity: string;
+  date: string;
+  status: string;
+  performedBy: string;
+}
 
 export const OncologyDashboard = () => {
   // Mock data - In production, replace with actual API calls
   const { data: stats } = useQuery<OncologyStatistics>({
-    queryKey: ['oncology-stats'],
+    queryKey: ["oncology-stats"],
     queryFn: async () => {
       // Mock implementation
       return {
@@ -38,34 +47,34 @@ export const OncologyDashboard = () => {
     },
   });
 
-  const { data: recentActivities } = useQuery<any[]>({
-    queryKey: ['recent-oncology-activities'],
+  const { data: recentActivities } = useQuery<RecentActivity[]>({
+    queryKey: ["recent-oncology-activities"],
     queryFn: async () => {
       // Mock implementation
       return [
         {
           id: 1,
-          patientName: 'Sarah Johnson',
-          activity: 'Chemotherapy Administration',
+          patientName: "Sarah Johnson",
+          activity: "Chemotherapy Administration",
           date: new Date().toISOString(),
-          status: 'Completed',
-          performedBy: 'Dr. Williams',
+          status: "Completed",
+          performedBy: "Dr. Williams",
         },
         {
           id: 2,
-          patientName: 'Michael Brown',
-          activity: 'Radiation Therapy Session',
+          patientName: "Michael Brown",
+          activity: "Radiation Therapy Session",
           date: new Date().toISOString(),
-          status: 'In Progress',
-          performedBy: 'Dr. Davis',
+          status: "In Progress",
+          performedBy: "Dr. Davis",
         },
         {
           id: 3,
-          patientName: 'Jennifer Lee',
-          activity: 'Tumor Marker Test',
+          patientName: "Jennifer Lee",
+          activity: "Tumor Marker Test",
           date: new Date().toISOString(),
-          status: 'Scheduled',
-          performedBy: 'Dr. Martinez',
+          status: "Scheduled",
+          performedBy: "Dr. Martinez",
         },
       ];
     },
@@ -80,13 +89,13 @@ export const OncologyDashboard = () => {
 
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
-      Completed: 'text-green-600 bg-green-100',
-      'In Progress': 'text-yellow-600 bg-yellow-100',
-      Scheduled: 'text-blue-600 bg-blue-100',
-      Pending: 'text-orange-600 bg-orange-100',
-      Cancelled: 'text-red-600 bg-red-100',
+      Completed: "text-green-600 bg-green-100",
+      "In Progress": "text-yellow-600 bg-yellow-100",
+      Scheduled: "text-blue-600 bg-blue-100",
+      Pending: "text-orange-600 bg-orange-100",
+      Cancelled: "text-red-600 bg-red-100",
     };
-    return colors[status] || 'text-gray-600 bg-gray-100';
+    return colors[status] || "text-gray-600 bg-gray-100";
   };
 
   return (
@@ -94,7 +103,9 @@ export const OncologyDashboard = () => {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Oncology Dashboard</h1>
+          <h1 className="text-2xl font-bold text-gray-900">
+            Oncology Dashboard
+          </h1>
           <p className="text-gray-600 mt-1">
             Cancer care and treatment management overview
           </p>
@@ -120,7 +131,9 @@ export const OncologyDashboard = () => {
             </div>
             <div className="ml-4">
               <p className="text-sm text-gray-500">Total Patients</p>
-              <p className="text-2xl font-bold text-gray-900">{statistics.totalPatients}</p>
+              <p className="text-2xl font-bold text-gray-900">
+                {statistics.totalPatients}
+              </p>
               {statistics.activePatients && (
                 <p className="text-xs text-green-600 mt-1">
                   {statistics.activePatients} active
@@ -137,7 +150,9 @@ export const OncologyDashboard = () => {
             </div>
             <div className="ml-4">
               <p className="text-sm text-gray-500">Active Treatments</p>
-              <p className="text-2xl font-bold text-gray-900">{statistics.activeTreatments}</p>
+              <p className="text-2xl font-bold text-gray-900">
+                {statistics.activeTreatments}
+              </p>
               {statistics.activeChemoProtocols && (
                 <p className="text-xs text-gray-600 mt-1">
                   {statistics.activeChemoProtocols} chemo protocols
@@ -241,7 +256,9 @@ export const OncologyDashboard = () => {
 
       {/* Quick Actions */}
       <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">
+          Quick Actions
+        </h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <a
             href="/oncology/diagnoses"
@@ -256,7 +273,9 @@ export const OncologyDashboard = () => {
             className="flex flex-col items-center justify-center p-4 border-2 border-gray-200 rounded-lg hover:border-primary-500 hover:bg-primary-50 transition-colors"
           >
             <BeakerIcon className="h-8 w-8 text-primary-600 mb-2" />
-            <span className="text-sm font-medium text-gray-900">Chemo Protocols</span>
+            <span className="text-sm font-medium text-gray-900">
+              Chemo Protocols
+            </span>
           </a>
 
           <a
@@ -264,7 +283,9 @@ export const OncologyDashboard = () => {
             className="flex flex-col items-center justify-center p-4 border-2 border-gray-200 rounded-lg hover:border-primary-500 hover:bg-primary-50 transition-colors"
           >
             <HeartIcon className="h-8 w-8 text-primary-600 mb-2" />
-            <span className="text-sm font-medium text-gray-900">Administration</span>
+            <span className="text-sm font-medium text-gray-900">
+              Administration
+            </span>
           </a>
 
           <a
@@ -280,7 +301,9 @@ export const OncologyDashboard = () => {
             className="flex flex-col items-center justify-center p-4 border-2 border-gray-200 rounded-lg hover:border-primary-500 hover:bg-primary-50 transition-colors"
           >
             <ChartBarIcon className="h-8 w-8 text-primary-600 mb-2" />
-            <span className="text-sm font-medium text-gray-900">Tumor Markers</span>
+            <span className="text-sm font-medium text-gray-900">
+              Tumor Markers
+            </span>
           </a>
         </div>
       </div>
@@ -288,7 +311,9 @@ export const OncologyDashboard = () => {
       {/* Recent Activities */}
       <div className="bg-white rounded-lg shadow overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900">Recent Activities</h2>
+          <h2 className="text-lg font-semibold text-gray-900">
+            Recent Activities
+          </h2>
         </div>
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
@@ -319,13 +344,15 @@ export const OncologyDashboard = () => {
                 recentActivities.map((activity) => (
                   <tr key={activity.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="font-medium text-gray-900">{activity.patientName}</div>
+                      <div className="font-medium text-gray-900">
+                        {activity.patientName}
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                       {activity.activity}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                      {format(new Date(activity.date), 'MMM d, yyyy h:mm a')}
+                      {format(new Date(activity.date), "MMM d, yyyy h:mm a")}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                       {activity.performedBy}
@@ -333,7 +360,7 @@ export const OncologyDashboard = () => {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span
                         className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
-                          activity.status
+                          activity.status,
                         )}`}
                       >
                         {activity.status}
@@ -348,7 +375,10 @@ export const OncologyDashboard = () => {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
+                  <td
+                    colSpan={6}
+                    className="px-6 py-12 text-center text-gray-500"
+                  >
                     No recent activities found
                   </td>
                 </tr>

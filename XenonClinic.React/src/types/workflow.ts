@@ -8,7 +8,8 @@ export const WorkflowStatus = {
   Failed: 4,
 } as const;
 
-export type WorkflowStatus = typeof WorkflowStatus[keyof typeof WorkflowStatus];
+export type WorkflowStatus =
+  (typeof WorkflowStatus)[keyof typeof WorkflowStatus];
 
 export const WorkflowStepType = {
   Manual: 0,
@@ -17,7 +18,8 @@ export const WorkflowStepType = {
   Notification: 3,
 } as const;
 
-export type WorkflowStepType = typeof WorkflowStepType[keyof typeof WorkflowStepType];
+export type WorkflowStepType =
+  (typeof WorkflowStepType)[keyof typeof WorkflowStepType];
 
 export interface WorkflowStep {
   id: string;
@@ -26,7 +28,7 @@ export interface WorkflowStep {
   assigneeRole?: string;
   actions?: string[];
   nextSteps?: string[];
-  conditions?: Record<string, any>;
+  conditions?: Record<string, unknown>;
   order?: number;
   description?: string;
 }
@@ -58,7 +60,7 @@ export interface WorkflowHistory {
   notes?: string;
   previousStatus?: WorkflowStatus;
   newStatus?: WorkflowStatus;
-  data?: Record<string, any>;
+  data?: Record<string, unknown>;
 }
 
 export interface WorkflowInstance {
@@ -79,7 +81,7 @@ export interface WorkflowInstance {
   assignedTo?: string;
   assignedToName?: string;
   history?: WorkflowHistory[];
-  data?: Record<string, any>;
+  data?: Record<string, unknown>;
   errorMessage?: string;
 }
 
@@ -120,7 +122,7 @@ export interface CreateWorkflowInstanceRequest {
   definitionId: number;
   entityType: string;
   entityId: number;
-  data?: Record<string, any>;
+  data?: Record<string, unknown>;
 }
 
 export interface UpdateWorkflowInstanceRequest {
@@ -128,6 +130,6 @@ export interface UpdateWorkflowInstanceRequest {
   currentStep?: string;
   status: WorkflowStatus;
   assignedTo?: string;
-  data?: Record<string, any>;
+  data?: Record<string, unknown>;
   notes?: string;
 }

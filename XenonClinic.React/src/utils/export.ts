@@ -5,23 +5,23 @@
 export interface ExportColumn {
   key: string;
   label: string;
-  format?: (value: any) => string;
+  format?: (value: unknown) => string;
 }
 
 /**
  * Export data to CSV format
  */
 export const exportToCSV = (
-  data: any[],
+  data: Record<string, unknown>[],
   columns: ExportColumn[],
-  filename: string
+  filename: string,
 ) => {
   if (!data || data.length === 0) {
-    throw new Error('No data to export');
+    throw new Error("No data to export");
   }
 
   // Create CSV header
-  const headers = columns.map((col) => col.label).join(',');
+  const headers = columns.map((col) => col.label).join(",");
 
   // Create CSV rows
   const rows = data.map((row) => {
@@ -33,90 +33,94 @@ export const exportToCSV = (
         }
         // Escape quotes and wrap in quotes if contains comma or quotes
         if (value === null || value === undefined) {
-          return '';
+          return "";
         }
         const stringValue = String(value);
-        if (stringValue.includes(',') || stringValue.includes('"') || stringValue.includes('\n')) {
+        if (
+          stringValue.includes(",") ||
+          stringValue.includes('"') ||
+          stringValue.includes("\n")
+        ) {
           return `"${stringValue.replace(/"/g, '""')}"`;
         }
         return stringValue;
       })
-      .join(',');
+      .join(",");
   });
 
   // Combine header and rows
-  const csv = [headers, ...rows].join('\n');
+  const csv = [headers, ...rows].join("\n");
 
   // Create and trigger download
-  downloadFile(csv, filename, 'text/csv;charset=utf-8;');
+  downloadFile(csv, filename, "text/csv;charset=utf-8;");
 };
 
 /**
  * Export data to Excel format (using HTML table format that Excel can read)
  */
 export const exportToExcel = (
-  data: any[],
+  data: Record<string, unknown>[],
   columns: ExportColumn[],
-  filename: string
+  filename: string,
 ) => {
   if (!data || data.length === 0) {
-    throw new Error('No data to export');
+    throw new Error("No data to export");
   }
 
   // Create HTML table
   let html = '<html><head><meta charset="utf-8"></head><body><table>';
 
   // Add header
-  html += '<thead><tr>';
+  html += "<thead><tr>";
   columns.forEach((col) => {
     html += `<th>${col.label}</th>`;
   });
-  html += '</tr></thead>';
+  html += "</tr></thead>";
 
   // Add rows
-  html += '<tbody>';
+  html += "<tbody>";
   data.forEach((row) => {
-    html += '<tr>';
+    html += "<tr>";
     columns.forEach((col) => {
       let value = row[col.key];
       if (col.format) {
         value = col.format(value);
       }
-      html += `<td>${value !== null && value !== undefined ? value : ''}</td>`;
+      html += `<td>${value !== null && value !== undefined ? value : ""}</td>`;
     });
-    html += '</tr>';
+    html += "</tr>";
   });
-  html += '</tbody></table></body></html>';
+  html += "</tbody></table></body></html>";
 
   // Create and trigger download
-  downloadFile(html, filename, 'application/vnd.ms-excel');
+  downloadFile(html, filename, "application/vnd.ms-excel");
 };
 
 /**
  * Export data to JSON format
  */
 export const exportToJSON = (
-  data: any[],
-  filename: string
+  data: Record<string, unknown>[],
+  filename: string,
 ) => {
   if (!data || data.length === 0) {
-    throw new Error('No data to export');
+    throw new Error("No data to export");
   }
 
   const json = JSON.stringify(data, null, 2);
-  downloadFile(json, filename, 'application/json;charset=utf-8;');
+  downloadFile(json, filename, "application/json;charset=utf-8;");
 };
 
 /**
  * Print data in a formatted table
  */
 export const printTable = (
-  data: any[],
+  data: Record<string, unknown>[],
   columns: ExportColumn[],
-  title?: string
+  title?: string,
 ) => {
   if (!data || data.length === 0) {
-    throw new Error('No data to print');
+    throw new Error("No data to print");
   }
 
   // Create print-friendly HTML
@@ -125,7 +129,7 @@ export const printTable = (
     <html>
     <head>
       <meta charset="utf-8">
-      <title>${title || 'Print'}</title>
+      <title>${title || "Print"}</title>
       <style>
         body { font-family: Arial, sans-serif; padding: 20px; }
         h1 { font-size: 24px; margin-bottom: 20px; }
@@ -145,32 +149,32 @@ export const printTable = (
     html += `<h1>${title}</h1>`;
   }
 
-  html += '<table>';
+  html += "<table>";
 
   // Add header
-  html += '<thead><tr>';
+  html += "<thead><tr>";
   columns.forEach((col) => {
     html += `<th>${col.label}</th>`;
   });
-  html += '</tr></thead>';
+  html += "</tr></thead>";
 
   // Add rows
-  html += '<tbody>';
+  html += "<tbody>";
   data.forEach((row) => {
-    html += '<tr>';
+    html += "<tr>";
     columns.forEach((col) => {
       let value = row[col.key];
       if (col.format) {
         value = col.format(value);
       }
-      html += `<td>${value !== null && value !== undefined ? value : ''}</td>`;
+      html += `<td>${value !== null && value !== undefined ? value : ""}</td>`;
     });
-    html += '</tr>';
+    html += "</tr>";
   });
-  html += '</tbody></table></body></html>';
+  html += "</tbody></table></body></html>";
 
   // Open in new window and print
-  const printWindow = window.open('', '_blank');
+  const printWindow = window.open("", "_blank");
   if (printWindow) {
     printWindow.document.write(html);
     printWindow.document.close();
@@ -188,7 +192,7 @@ export const printTable = (
 const downloadFile = (content: string, filename: string, mimeType: string) => {
   const blob = new Blob([content], { type: mimeType });
   const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
+  const link = document.createElement("a");
   link.href = url;
   link.download = filename;
   document.body.appendChild(link);
@@ -201,21 +205,21 @@ const downloadFile = (content: string, filename: string, mimeType: string) => {
  * Format helpers for common data types
  */
 export const formatters = {
-  date: (value: any) => {
-    if (!value) return '';
-    const date = new Date(value);
+  date: (value: unknown) => {
+    if (!value) return "";
+    const date = new Date(value as string | number | Date);
     return date.toLocaleDateString();
   },
-  datetime: (value: any) => {
-    if (!value) return '';
-    const date = new Date(value);
+  datetime: (value: unknown) => {
+    if (!value) return "";
+    const date = new Date(value as string | number | Date);
     return date.toLocaleString();
   },
-  currency: (value: any, currency = 'AED') => {
-    if (value === null || value === undefined) return '';
+  currency: (value: unknown, currency = "AED") => {
+    if (value === null || value === undefined) return "";
     return `${Number(value).toFixed(2)} ${currency}`;
   },
-  boolean: (value: any) => {
-    return value ? 'Yes' : 'No';
+  boolean: (value: unknown) => {
+    return value ? "Yes" : "No";
   },
 };

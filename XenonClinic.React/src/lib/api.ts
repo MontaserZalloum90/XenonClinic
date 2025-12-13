@@ -1,20 +1,21 @@
-import axios from 'axios';
-import { configureAxiosInstance, tokenStorage, getAxiosErrorMessage } from '@xenon/ui';
+import axios from "axios";
+import {
+  configureAxiosInstance,
+  tokenStorage,
+  getAxiosErrorMessage,
+} from "@xenon/ui";
 
 // API Base URL - adjust based on environment
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://localhost:5001';
+const API_BASE_URL = import.meta.env.VITE_API_URL || "https://localhost:5001";
 
 // Create axios instance with shared configuration
-export const api = configureAxiosInstance(
-  axios.create(),
-  {
-    baseURL: API_BASE_URL,
-    withCredentials: false,
-    onUnauthorized: () => {
-      window.location.href = '/login';
-    },
-  }
-);
+export const api = configureAxiosInstance(axios.create(), {
+  baseURL: API_BASE_URL,
+  withCredentials: false,
+  onUnauthorized: () => {
+    window.location.href = "/login";
+  },
+});
 
 // Re-export utilities for use in auth contexts
 export { tokenStorage, getAxiosErrorMessage };
@@ -22,88 +23,123 @@ export { tokenStorage, getAxiosErrorMessage };
 // API endpoints
 export const authApi = {
   login: (username: string, password: string) =>
-    api.post('/api/AuthApi/login', { username, password }),
+    api.post("/api/AuthApi/login", { username, password }),
 
-  register: (username: string, email: string, fullName: string, password: string) =>
-    api.post('/api/AuthApi/register', { username, email, fullName, password }),
+  register: (
+    username: string,
+    email: string,
+    fullName: string,
+    password: string,
+  ) =>
+    api.post("/api/AuthApi/register", { username, email, fullName, password }),
 
-  getCurrentUser: () => api.get('/api/AuthApi/me'),
+  getCurrentUser: () => api.get("/api/AuthApi/me"),
 
-  refreshToken: () => api.post('/api/AuthApi/refresh'),
+  refreshToken: () => api.post("/api/AuthApi/refresh"),
 };
 
 export const appointmentsApi = {
-  getAll: () => api.get('/api/AppointmentsApi'),
+  getAll: () => api.get("/api/AppointmentsApi"),
   getById: (id: number) => api.get(`/api/AppointmentsApi/${id}`),
   getByDate: (date: Date) => {
-    const dateStr = date.toISOString().split('T')[0];
+    const dateStr = date.toISOString().split("T")[0];
     return api.get(`/api/AppointmentsApi/date/${dateStr}`);
   },
-  getToday: () => api.get('/api/AppointmentsApi/today'),
-  getUpcoming: (days: number = 7) => api.get(`/api/AppointmentsApi/upcoming?days=${days}`),
-  create: (data: any) => api.post('/api/AppointmentsApi', data),
-  update: (id: number, data: any) => api.put(`/api/AppointmentsApi/${id}`, data),
+  getToday: () => api.get("/api/AppointmentsApi/today"),
+  getUpcoming: (days: number = 7) =>
+    api.get(`/api/AppointmentsApi/upcoming?days=${days}`),
+  create: (data: Record<string, unknown>) =>
+    api.post("/api/AppointmentsApi", data),
+  update: (id: number, data: Record<string, unknown>) =>
+    api.put(`/api/AppointmentsApi/${id}`, data),
   delete: (id: number) => api.delete(`/api/AppointmentsApi/${id}`),
   confirm: (id: number) => api.post(`/api/AppointmentsApi/${id}/confirm`),
-  cancel: (id: number, reason?: string) => api.post(`/api/AppointmentsApi/${id}/cancel`, { reason }),
+  cancel: (id: number, reason?: string) =>
+    api.post(`/api/AppointmentsApi/${id}/cancel`, { reason }),
   checkIn: (id: number) => api.post(`/api/AppointmentsApi/${id}/checkin`),
   complete: (id: number) => api.post(`/api/AppointmentsApi/${id}/complete`),
   getStatistics: (startDate?: string, endDate?: string) =>
-    api.get('/api/AppointmentsApi/statistics', { params: { startDate, endDate } }),
+    api.get("/api/AppointmentsApi/statistics", {
+      params: { startDate, endDate },
+    }),
 };
 
 export const patientsApi = {
-  getAll: () => api.get('/api/PatientsApi'),
+  getAll: () => api.get("/api/PatientsApi"),
   getById: (id: number) => api.get(`/api/PatientsApi/${id}`),
-  search: (searchTerm: string) => api.get(`/api/PatientsApi/search?searchTerm=${encodeURIComponent(searchTerm)}`),
-  getByEmiratesId: (emiratesId: string) => api.get(`/api/PatientsApi/emirates/${encodeURIComponent(emiratesId)}`),
-  create: (data: any) => api.post('/api/PatientsApi', data),
-  update: (id: number, data: any) => api.put(`/api/PatientsApi/${id}`, data),
+  search: (searchTerm: string) =>
+    api.get(
+      `/api/PatientsApi/search?searchTerm=${encodeURIComponent(searchTerm)}`,
+    ),
+  getByEmiratesId: (emiratesId: string) =>
+    api.get(`/api/PatientsApi/emirates/${encodeURIComponent(emiratesId)}`),
+  create: (data: Record<string, unknown>) => api.post("/api/PatientsApi", data),
+  update: (id: number, data: Record<string, unknown>) =>
+    api.put(`/api/PatientsApi/${id}`, data),
   delete: (id: number) => api.delete(`/api/PatientsApi/${id}`),
-  getMedicalHistory: (id: number) => api.get(`/api/PatientsApi/${id}/medical-history`),
+  getMedicalHistory: (id: number) =>
+    api.get(`/api/PatientsApi/${id}/medical-history`),
   getDocuments: (id: number) => api.get(`/api/PatientsApi/${id}/documents`),
-  getStatistics: () => api.get('/api/PatientsApi/statistics'),
+  getStatistics: () => api.get("/api/PatientsApi/statistics"),
 };
 
 export const laboratoryApi = {
-  getAllOrders: () => api.get('/api/LaboratoryApi/orders'),
+  getAllOrders: () => api.get("/api/LaboratoryApi/orders"),
   getOrderById: (id: number) => api.get(`/api/LaboratoryApi/orders/${id}`),
-  getPendingOrders: () => api.get('/api/LaboratoryApi/orders/pending'),
-  getUrgentOrders: () => api.get('/api/LaboratoryApi/orders/urgent'),
-  getOrdersByPatient: (patientId: number) => api.get(`/api/LaboratoryApi/orders/patient/${patientId}`),
-  createOrder: (data: any) => api.post('/api/LaboratoryApi/orders', data),
-  updateOrder: (id: number, data: any) => api.put(`/api/LaboratoryApi/orders/${id}`, data),
-  updateStatus: (id: number, status: number) => api.post(`/api/LaboratoryApi/orders/${id}/status`, { status }),
+  getPendingOrders: () => api.get("/api/LaboratoryApi/orders/pending"),
+  getUrgentOrders: () => api.get("/api/LaboratoryApi/orders/urgent"),
+  getOrdersByPatient: (patientId: number) =>
+    api.get(`/api/LaboratoryApi/orders/patient/${patientId}`),
+  createOrder: (data: Record<string, unknown>) =>
+    api.post("/api/LaboratoryApi/orders", data),
+  updateOrder: (id: number, data: Record<string, unknown>) =>
+    api.put(`/api/LaboratoryApi/orders/${id}`, data),
+  updateStatus: (id: number, status: number) =>
+    api.post(`/api/LaboratoryApi/orders/${id}/status`, { status }),
   deleteOrder: (id: number) => api.delete(`/api/LaboratoryApi/orders/${id}`),
-  getAllTests: () => api.get('/api/LaboratoryApi/tests'),
-  getStatistics: () => api.get('/api/LaboratoryApi/statistics'),
+  getAllTests: () => api.get("/api/LaboratoryApi/tests"),
+  getStatistics: () => api.get("/api/LaboratoryApi/statistics"),
 };
 
 export const hrApi = {
-  getAll: () => api.get('/api/HRApi/employees'),
+  getAll: () => api.get("/api/HRApi/employees"),
   getById: (id: number) => api.get(`/api/HRApi/employees/${id}`),
-  search: (searchTerm: string) => api.get(`/api/HRApi/employees/search?searchTerm=${encodeURIComponent(searchTerm)}`),
-  getByDepartment: (department: string) => api.get(`/api/HRApi/employees/department/${encodeURIComponent(department)}`),
-  getActive: () => api.get('/api/HRApi/employees/active'),
-  create: (data: any) => api.post('/api/HRApi/employees', data),
-  update: (id: number, data: any) => api.put(`/api/HRApi/employees/${id}`, data),
+  search: (searchTerm: string) =>
+    api.get(
+      `/api/HRApi/employees/search?searchTerm=${encodeURIComponent(searchTerm)}`,
+    ),
+  getByDepartment: (department: string) =>
+    api.get(
+      `/api/HRApi/employees/department/${encodeURIComponent(department)}`,
+    ),
+  getActive: () => api.get("/api/HRApi/employees/active"),
+  create: (data: Record<string, unknown>) =>
+    api.post("/api/HRApi/employees", data),
+  update: (id: number, data: Record<string, unknown>) =>
+    api.put(`/api/HRApi/employees/${id}`, data),
   delete: (id: number) => api.delete(`/api/HRApi/employees/${id}`),
-  getStatistics: () => api.get('/api/HRApi/statistics'),
+  getStatistics: () => api.get("/api/HRApi/statistics"),
 };
 
 export const financialApi = {
-  getAllInvoices: () => api.get('/api/FinancialApi/invoices'),
+  getAllInvoices: () => api.get("/api/FinancialApi/invoices"),
   getById: (id: number) => api.get(`/api/FinancialApi/invoices/${id}`),
-  search: (searchTerm: string) => api.get(`/api/FinancialApi/invoices/search?searchTerm=${encodeURIComponent(searchTerm)}`),
-  getUnpaid: () => api.get('/api/FinancialApi/invoices/unpaid'),
-  getOverdue: () => api.get('/api/FinancialApi/invoices/overdue'),
-  getByPatient: (patientId: number) => api.get(`/api/FinancialApi/invoices/patient/${patientId}`),
-  create: (data: any) => api.post('/api/FinancialApi/invoices', data),
-  update: (id: number, data: any) => api.put(`/api/FinancialApi/invoices/${id}`, data),
+  search: (searchTerm: string) =>
+    api.get(
+      `/api/FinancialApi/invoices/search?searchTerm=${encodeURIComponent(searchTerm)}`,
+    ),
+  getUnpaid: () => api.get("/api/FinancialApi/invoices/unpaid"),
+  getOverdue: () => api.get("/api/FinancialApi/invoices/overdue"),
+  getByPatient: (patientId: number) =>
+    api.get(`/api/FinancialApi/invoices/patient/${patientId}`),
+  create: (data: Record<string, unknown>) =>
+    api.post("/api/FinancialApi/invoices", data),
+  update: (id: number, data: Record<string, unknown>) =>
+    api.put(`/api/FinancialApi/invoices/${id}`, data),
   delete: (id: number) => api.delete(`/api/FinancialApi/invoices/${id}`),
   recordPayment: (id: number, amount: number, method: number) =>
     api.post(`/api/FinancialApi/invoices/${id}/payment`, { amount, method }),
-  getStatistics: () => api.get('/api/FinancialApi/statistics'),
+  getStatistics: () => api.get("/api/FinancialApi/statistics"),
 };
 
 // ============================================
@@ -112,18 +148,25 @@ export const financialApi = {
 
 export const salesApi = {
   // Sales
-  getAllSales: () => api.get('/api/SalesApi/sales'),
+  getAllSales: () => api.get("/api/SalesApi/sales"),
   getSaleById: (id: number) => api.get(`/api/SalesApi/sales/${id}`),
   getSaleByInvoiceNumber: (invoiceNumber: string) =>
     api.get(`/api/SalesApi/sales/invoice/${encodeURIComponent(invoiceNumber)}`),
-  getSalesByPatient: (patientId: number) => api.get(`/api/SalesApi/sales/patient/${patientId}`),
-  getSalesByStatus: (status: number) => api.get(`/api/SalesApi/sales/status/${status}`),
-  getSalesByPaymentStatus: (status: number) => api.get(`/api/SalesApi/sales/payment-status/${status}`),
+  getSalesByPatient: (patientId: number) =>
+    api.get(`/api/SalesApi/sales/patient/${patientId}`),
+  getSalesByStatus: (status: number) =>
+    api.get(`/api/SalesApi/sales/status/${status}`),
+  getSalesByPaymentStatus: (status: number) =>
+    api.get(`/api/SalesApi/sales/payment-status/${status}`),
   getSalesByDateRange: (startDate: string, endDate: string) =>
-    api.get('/api/SalesApi/sales/date-range', { params: { startDate, endDate } }),
-  getOverdueSales: () => api.get('/api/SalesApi/sales/overdue'),
-  createSale: (data: any) => api.post('/api/SalesApi/sales', data),
-  updateSale: (id: number, data: any) => api.put(`/api/SalesApi/sales/${id}`, data),
+    api.get("/api/SalesApi/sales/date-range", {
+      params: { startDate, endDate },
+    }),
+  getOverdueSales: () => api.get("/api/SalesApi/sales/overdue"),
+  createSale: (data: Record<string, unknown>) =>
+    api.post("/api/SalesApi/sales", data),
+  updateSale: (id: number, data: Record<string, unknown>) =>
+    api.put(`/api/SalesApi/sales/${id}`, data),
   deleteSale: (id: number) => api.delete(`/api/SalesApi/sales/${id}`),
   confirmSale: (id: number) => api.post(`/api/SalesApi/sales/${id}/confirm`),
   completeSale: (id: number) => api.post(`/api/SalesApi/sales/${id}/complete`),
@@ -131,99 +174,135 @@ export const salesApi = {
     api.post(`/api/SalesApi/sales/${id}/cancel`, { reason }),
 
   // Sale Items
-  getSaleItems: (saleId: number) => api.get(`/api/SalesApi/sales/${saleId}/items`),
-  addSaleItem: (saleId: number, data: any) => api.post(`/api/SalesApi/sales/${saleId}/items`, data),
-  updateSaleItem: (saleId: number, itemId: number, data: any) =>
-    api.put(`/api/SalesApi/sales/${saleId}/items/${itemId}`, data),
+  getSaleItems: (saleId: number) =>
+    api.get(`/api/SalesApi/sales/${saleId}/items`),
+  addSaleItem: (saleId: number, data: Record<string, unknown>) =>
+    api.post(`/api/SalesApi/sales/${saleId}/items`, data),
+  updateSaleItem: (
+    saleId: number,
+    itemId: number,
+    data: Record<string, unknown>,
+  ) => api.put(`/api/SalesApi/sales/${saleId}/items/${itemId}`, data),
   deleteSaleItem: (saleId: number, itemId: number) =>
     api.delete(`/api/SalesApi/sales/${saleId}/items/${itemId}`),
 
   // Payments
-  getPaymentsBySale: (saleId: number) => api.get(`/api/SalesApi/sales/${saleId}/payments`),
-  recordPayment: (saleId: number, data: any) =>
+  getPaymentsBySale: (saleId: number) =>
+    api.get(`/api/SalesApi/sales/${saleId}/payments`),
+  recordPayment: (saleId: number, data: Record<string, unknown>) =>
     api.post(`/api/SalesApi/sales/${saleId}/payments`, data),
   getPaymentById: (id: number) => api.get(`/api/SalesApi/payments/${id}`),
-  updatePayment: (id: number, data: any) => api.put(`/api/SalesApi/payments/${id}`, data),
+  updatePayment: (id: number, data: Record<string, unknown>) =>
+    api.put(`/api/SalesApi/payments/${id}`, data),
   deletePayment: (id: number) => api.delete(`/api/SalesApi/payments/${id}`),
   refundPayment: (id: number, amount: number, reason?: string) =>
     api.post(`/api/SalesApi/payments/${id}/refund`, { amount, reason }),
 
   // Statistics
   getStatistics: (startDate?: string, endDate?: string) =>
-    api.get('/api/SalesApi/statistics', { params: { startDate, endDate } }),
+    api.get("/api/SalesApi/statistics", { params: { startDate, endDate } }),
 };
 
 export const quotationsApi = {
   // Quotations
-  getAll: () => api.get('/api/SalesApi/quotations'),
+  getAll: () => api.get("/api/SalesApi/quotations"),
   getById: (id: number) => api.get(`/api/SalesApi/quotations/${id}`),
   getByNumber: (quotationNumber: string) =>
-    api.get(`/api/SalesApi/quotations/number/${encodeURIComponent(quotationNumber)}`),
-  getByPatient: (patientId: number) => api.get(`/api/SalesApi/quotations/patient/${patientId}`),
-  getByStatus: (status: number) => api.get(`/api/SalesApi/quotations/status/${status}`),
-  getActive: () => api.get('/api/SalesApi/quotations/active'),
-  getExpired: () => api.get('/api/SalesApi/quotations/expired'),
-  create: (data: any) => api.post('/api/SalesApi/quotations', data),
-  update: (id: number, data: any) => api.put(`/api/SalesApi/quotations/${id}`, data),
+    api.get(
+      `/api/SalesApi/quotations/number/${encodeURIComponent(quotationNumber)}`,
+    ),
+  getByPatient: (patientId: number) =>
+    api.get(`/api/SalesApi/quotations/patient/${patientId}`),
+  getByStatus: (status: number) =>
+    api.get(`/api/SalesApi/quotations/status/${status}`),
+  getActive: () => api.get("/api/SalesApi/quotations/active"),
+  getExpired: () => api.get("/api/SalesApi/quotations/expired"),
+  create: (data: Record<string, unknown>) =>
+    api.post("/api/SalesApi/quotations", data),
+  update: (id: number, data: Record<string, unknown>) =>
+    api.put(`/api/SalesApi/quotations/${id}`, data),
   delete: (id: number) => api.delete(`/api/SalesApi/quotations/${id}`),
   send: (id: number) => api.post(`/api/SalesApi/quotations/${id}/send`),
   accept: (id: number) => api.post(`/api/SalesApi/quotations/${id}/accept`),
   reject: (id: number, reason?: string) =>
     api.post(`/api/SalesApi/quotations/${id}/reject`, { reason }),
-  convertToSale: (id: number) => api.post(`/api/SalesApi/quotations/${id}/convert`),
+  convertToSale: (id: number) =>
+    api.post(`/api/SalesApi/quotations/${id}/convert`),
 
   // Quotation Items
-  getItems: (quotationId: number) => api.get(`/api/SalesApi/quotations/${quotationId}/items`),
-  addItem: (quotationId: number, data: any) =>
+  getItems: (quotationId: number) =>
+    api.get(`/api/SalesApi/quotations/${quotationId}/items`),
+  addItem: (quotationId: number, data: Record<string, unknown>) =>
     api.post(`/api/SalesApi/quotations/${quotationId}/items`, data),
-  updateItem: (quotationId: number, itemId: number, data: any) =>
-    api.put(`/api/SalesApi/quotations/${quotationId}/items/${itemId}`, data),
+  updateItem: (
+    quotationId: number,
+    itemId: number,
+    data: Record<string, unknown>,
+  ) => api.put(`/api/SalesApi/quotations/${quotationId}/items/${itemId}`, data),
   deleteItem: (quotationId: number, itemId: number) =>
     api.delete(`/api/SalesApi/quotations/${quotationId}/items/${itemId}`),
 };
 
 export const inventoryApi = {
-  getAllItems: () => api.get('/api/InventoryApi/items'),
+  getAllItems: () => api.get("/api/InventoryApi/items"),
   getById: (id: number) => api.get(`/api/InventoryApi/items/${id}`),
-  search: (searchTerm: string) => api.get(`/api/InventoryApi/items/search?searchTerm=${encodeURIComponent(searchTerm)}`),
-  getLowStock: () => api.get('/api/InventoryApi/items/low-stock'),
-  getOutOfStock: () => api.get('/api/InventoryApi/items/out-of-stock'),
-  getByCategory: (category: number) => api.get(`/api/InventoryApi/items/category/${category}`),
-  create: (data: any) => api.post('/api/InventoryApi/items', data),
-  update: (id: number, data: any) => api.put(`/api/InventoryApi/items/${id}`, data),
+  search: (searchTerm: string) =>
+    api.get(
+      `/api/InventoryApi/items/search?searchTerm=${encodeURIComponent(searchTerm)}`,
+    ),
+  getLowStock: () => api.get("/api/InventoryApi/items/low-stock"),
+  getOutOfStock: () => api.get("/api/InventoryApi/items/out-of-stock"),
+  getByCategory: (category: number) =>
+    api.get(`/api/InventoryApi/items/category/${category}`),
+  create: (data: Record<string, unknown>) =>
+    api.post("/api/InventoryApi/items", data),
+  update: (id: number, data: Record<string, unknown>) =>
+    api.put(`/api/InventoryApi/items/${id}`, data),
   delete: (id: number) => api.delete(`/api/InventoryApi/items/${id}`),
   adjustStock: (id: number, quantity: number, reason: string) =>
     api.post(`/api/InventoryApi/items/${id}/adjust`, { quantity, reason }),
-  getStatistics: () => api.get('/api/InventoryApi/statistics'),
+  getStatistics: () => api.get("/api/InventoryApi/statistics"),
 };
 
 export const pharmacyApi = {
-  getAllPrescriptions: () => api.get('/api/PharmacyApi/prescriptions'),
+  getAllPrescriptions: () => api.get("/api/PharmacyApi/prescriptions"),
   getById: (id: number) => api.get(`/api/PharmacyApi/prescriptions/${id}`),
-  search: (searchTerm: string) => api.get(`/api/PharmacyApi/prescriptions/search?searchTerm=${encodeURIComponent(searchTerm)}`),
-  getPending: () => api.get('/api/PharmacyApi/prescriptions/pending'),
-  getByPatient: (patientId: number) => api.get(`/api/PharmacyApi/prescriptions/patient/${patientId}`),
-  create: (data: any) => api.post('/api/PharmacyApi/prescriptions', data),
-  update: (id: number, data: any) => api.put(`/api/PharmacyApi/prescriptions/${id}`, data),
+  search: (searchTerm: string) =>
+    api.get(
+      `/api/PharmacyApi/prescriptions/search?searchTerm=${encodeURIComponent(searchTerm)}`,
+    ),
+  getPending: () => api.get("/api/PharmacyApi/prescriptions/pending"),
+  getByPatient: (patientId: number) =>
+    api.get(`/api/PharmacyApi/prescriptions/patient/${patientId}`),
+  create: (data: Record<string, unknown>) =>
+    api.post("/api/PharmacyApi/prescriptions", data),
+  update: (id: number, data: Record<string, unknown>) =>
+    api.put(`/api/PharmacyApi/prescriptions/${id}`, data),
   delete: (id: number) => api.delete(`/api/PharmacyApi/prescriptions/${id}`),
   dispense: (id: number, dispensedBy: string) =>
     api.post(`/api/PharmacyApi/prescriptions/${id}/dispense`, { dispensedBy }),
-  getStatistics: () => api.get('/api/PharmacyApi/statistics'),
+  getStatistics: () => api.get("/api/PharmacyApi/statistics"),
 };
 
 export const radiologyApi = {
-  getAllOrders: () => api.get('/api/RadiologyApi/orders'),
+  getAllOrders: () => api.get("/api/RadiologyApi/orders"),
   getById: (id: number) => api.get(`/api/RadiologyApi/orders/${id}`),
-  search: (searchTerm: string) => api.get(`/api/RadiologyApi/orders/search?searchTerm=${encodeURIComponent(searchTerm)}`),
-  getPending: () => api.get('/api/RadiologyApi/orders/pending'),
-  getScheduled: () => api.get('/api/RadiologyApi/orders/scheduled'),
-  getByPatient: (patientId: number) => api.get(`/api/RadiologyApi/orders/patient/${patientId}`),
-  create: (data: any) => api.post('/api/RadiologyApi/orders', data),
-  update: (id: number, data: any) => api.put(`/api/RadiologyApi/orders/${id}`, data),
+  search: (searchTerm: string) =>
+    api.get(
+      `/api/RadiologyApi/orders/search?searchTerm=${encodeURIComponent(searchTerm)}`,
+    ),
+  getPending: () => api.get("/api/RadiologyApi/orders/pending"),
+  getScheduled: () => api.get("/api/RadiologyApi/orders/scheduled"),
+  getByPatient: (patientId: number) =>
+    api.get(`/api/RadiologyApi/orders/patient/${patientId}`),
+  create: (data: Record<string, unknown>) =>
+    api.post("/api/RadiologyApi/orders", data),
+  update: (id: number, data: Record<string, unknown>) =>
+    api.put(`/api/RadiologyApi/orders/${id}`, data),
   delete: (id: number) => api.delete(`/api/RadiologyApi/orders/${id}`),
   updateStatus: (id: number, status: number) =>
     api.post(`/api/RadiologyApi/orders/${id}/status`, { status }),
-  getStatistics: () => api.get('/api/RadiologyApi/statistics'),
+  getStatistics: () => api.get("/api/RadiologyApi/statistics"),
 };
 
 // ============================================
@@ -231,84 +310,126 @@ export const radiologyApi = {
 // ============================================
 
 export const audiogramApi = {
-  getAll: () => api.get('/api/AudiologyApi/audiograms'),
+  getAll: () => api.get("/api/AudiologyApi/audiograms"),
   getById: (id: number) => api.get(`/api/AudiologyApi/audiograms/${id}`),
-  getByPatient: (patientId: number) => api.get(`/api/AudiologyApi/audiograms/patient/${patientId}`),
-  getLatestByPatient: (patientId: number) => api.get(`/api/AudiologyApi/audiograms/patient/${patientId}/latest`),
-  create: (data: any) => api.post('/api/AudiologyApi/audiograms', data),
-  update: (id: number, data: any) => api.put(`/api/AudiologyApi/audiograms/${id}`, data),
+  getByPatient: (patientId: number) =>
+    api.get(`/api/AudiologyApi/audiograms/patient/${patientId}`),
+  getLatestByPatient: (patientId: number) =>
+    api.get(`/api/AudiologyApi/audiograms/patient/${patientId}/latest`),
+  create: (data: Record<string, unknown>) =>
+    api.post("/api/AudiologyApi/audiograms", data),
+  update: (id: number, data: Record<string, unknown>) =>
+    api.put(`/api/AudiologyApi/audiograms/${id}`, data),
   delete: (id: number) => api.delete(`/api/AudiologyApi/audiograms/${id}`),
   compare: (patientId: number, audiogramIds: number[]) =>
-    api.post(`/api/AudiologyApi/audiograms/patient/${patientId}/compare`, { audiogramIds }),
+    api.post(`/api/AudiologyApi/audiograms/patient/${patientId}/compare`, {
+      audiogramIds,
+    }),
 };
 
 export const hearingAidApi = {
-  getAll: () => api.get('/api/AudiologyApi/hearing-aids'),
+  getAll: () => api.get("/api/AudiologyApi/hearing-aids"),
   getById: (id: number) => api.get(`/api/AudiologyApi/hearing-aids/${id}`),
-  getByPatient: (patientId: number) => api.get(`/api/AudiologyApi/hearing-aids/patient/${patientId}`),
+  getByPatient: (patientId: number) =>
+    api.get(`/api/AudiologyApi/hearing-aids/patient/${patientId}`),
   getBySerialNumber: (serialNumber: string) =>
-    api.get(`/api/AudiologyApi/hearing-aids/serial/${encodeURIComponent(serialNumber)}`),
+    api.get(
+      `/api/AudiologyApi/hearing-aids/serial/${encodeURIComponent(serialNumber)}`,
+    ),
   getWarrantyExpiring: (days: number = 30) =>
     api.get(`/api/AudiologyApi/hearing-aids/warranty-expiring?days=${days}`),
-  create: (data: any) => api.post('/api/AudiologyApi/hearing-aids', data),
-  update: (id: number, data: any) => api.put(`/api/AudiologyApi/hearing-aids/${id}`, data),
+  create: (data: Record<string, unknown>) =>
+    api.post("/api/AudiologyApi/hearing-aids", data),
+  update: (id: number, data: Record<string, unknown>) =>
+    api.put(`/api/AudiologyApi/hearing-aids/${id}`, data),
   delete: (id: number) => api.delete(`/api/AudiologyApi/hearing-aids/${id}`),
   updateStatus: (id: number, status: string) =>
     api.post(`/api/AudiologyApi/hearing-aids/${id}/status`, { status }),
 
   // Fittings
-  getFittings: (hearingAidId: number) => api.get(`/api/AudiologyApi/hearing-aids/${hearingAidId}/fittings`),
-  createFitting: (hearingAidId: number, data: any) =>
+  getFittings: (hearingAidId: number) =>
+    api.get(`/api/AudiologyApi/hearing-aids/${hearingAidId}/fittings`),
+  createFitting: (hearingAidId: number, data: Record<string, unknown>) =>
     api.post(`/api/AudiologyApi/hearing-aids/${hearingAidId}/fittings`, data),
-  updateFitting: (hearingAidId: number, fittingId: number, data: any) =>
-    api.put(`/api/AudiologyApi/hearing-aids/${hearingAidId}/fittings/${fittingId}`, data),
+  updateFitting: (
+    hearingAidId: number,
+    fittingId: number,
+    data: Record<string, unknown>,
+  ) =>
+    api.put(
+      `/api/AudiologyApi/hearing-aids/${hearingAidId}/fittings/${fittingId}`,
+      data,
+    ),
 
   // Adjustments
-  getAdjustments: (hearingAidId: number) => api.get(`/api/AudiologyApi/hearing-aids/${hearingAidId}/adjustments`),
-  createAdjustment: (hearingAidId: number, data: any) =>
-    api.post(`/api/AudiologyApi/hearing-aids/${hearingAidId}/adjustments`, data),
+  getAdjustments: (hearingAidId: number) =>
+    api.get(`/api/AudiologyApi/hearing-aids/${hearingAidId}/adjustments`),
+  createAdjustment: (hearingAidId: number, data: Record<string, unknown>) =>
+    api.post(
+      `/api/AudiologyApi/hearing-aids/${hearingAidId}/adjustments`,
+      data,
+    ),
 };
 
 export const encounterApi = {
-  getAll: () => api.get('/api/AudiologyApi/encounters'),
+  getAll: () => api.get("/api/AudiologyApi/encounters"),
   getById: (id: number) => api.get(`/api/AudiologyApi/encounters/${id}`),
-  getByPatient: (patientId: number) => api.get(`/api/AudiologyApi/encounters/patient/${patientId}`),
-  getToday: () => api.get('/api/AudiologyApi/encounters/today'),
+  getByPatient: (patientId: number) =>
+    api.get(`/api/AudiologyApi/encounters/patient/${patientId}`),
+  getToday: () => api.get("/api/AudiologyApi/encounters/today"),
   getByDateRange: (startDate: string, endDate: string) =>
-    api.get('/api/AudiologyApi/encounters', { params: { startDate, endDate } }),
-  getByStatus: (status: string) => api.get(`/api/AudiologyApi/encounters/status/${status}`),
-  create: (data: any) => api.post('/api/AudiologyApi/encounters', data),
-  update: (id: number, data: any) => api.put(`/api/AudiologyApi/encounters/${id}`, data),
+    api.get("/api/AudiologyApi/encounters", { params: { startDate, endDate } }),
+  getByStatus: (status: string) =>
+    api.get(`/api/AudiologyApi/encounters/status/${status}`),
+  create: (data: Record<string, unknown>) =>
+    api.post("/api/AudiologyApi/encounters", data),
+  update: (id: number, data: Record<string, unknown>) =>
+    api.put(`/api/AudiologyApi/encounters/${id}`, data),
   delete: (id: number) => api.delete(`/api/AudiologyApi/encounters/${id}`),
   updateStatus: (id: number, status: string) =>
     api.post(`/api/AudiologyApi/encounters/${id}/status`, { status }),
-  complete: (id: number) => api.post(`/api/AudiologyApi/encounters/${id}/complete`),
+  complete: (id: number) =>
+    api.post(`/api/AudiologyApi/encounters/${id}/complete`),
 
   // Tasks
-  getTasks: (encounterId: number) => api.get(`/api/AudiologyApi/encounters/${encounterId}/tasks`),
-  createTask: (encounterId: number, data: any) =>
+  getTasks: (encounterId: number) =>
+    api.get(`/api/AudiologyApi/encounters/${encounterId}/tasks`),
+  createTask: (encounterId: number, data: Record<string, unknown>) =>
     api.post(`/api/AudiologyApi/encounters/${encounterId}/tasks`, data),
-  updateTask: (encounterId: number, taskId: number, data: any) =>
-    api.put(`/api/AudiologyApi/encounters/${encounterId}/tasks/${taskId}`, data),
+  updateTask: (
+    encounterId: number,
+    taskId: number,
+    data: Record<string, unknown>,
+  ) =>
+    api.put(
+      `/api/AudiologyApi/encounters/${encounterId}/tasks/${taskId}`,
+      data,
+    ),
   completeTask: (encounterId: number, taskId: number) =>
-    api.post(`/api/AudiologyApi/encounters/${encounterId}/tasks/${taskId}/complete`),
+    api.post(
+      `/api/AudiologyApi/encounters/${encounterId}/tasks/${taskId}/complete`,
+    ),
   deleteTask: (encounterId: number, taskId: number) =>
     api.delete(`/api/AudiologyApi/encounters/${encounterId}/tasks/${taskId}`),
 
   // All tasks (across encounters)
-  getAllPendingTasks: () => api.get('/api/AudiologyApi/tasks/pending'),
-  getOverdueTasks: () => api.get('/api/AudiologyApi/tasks/overdue'),
+  getAllPendingTasks: () => api.get("/api/AudiologyApi/tasks/pending"),
+  getOverdueTasks: () => api.get("/api/AudiologyApi/tasks/overdue"),
   getTasksByAssignee: (assignee: string) =>
     api.get(`/api/AudiologyApi/tasks/assignee/${encodeURIComponent(assignee)}`),
 };
 
 export const consentApi = {
-  getAll: () => api.get('/api/AudiologyApi/consents'),
+  getAll: () => api.get("/api/AudiologyApi/consents"),
   getById: (id: number) => api.get(`/api/AudiologyApi/consents/${id}`),
-  getByPatient: (patientId: number) => api.get(`/api/AudiologyApi/consents/patient/${patientId}`),
-  getPending: (patientId: number) => api.get(`/api/AudiologyApi/consents/patient/${patientId}/pending`),
-  create: (data: any) => api.post('/api/AudiologyApi/consents', data),
-  sign: (id: number, data: any) => api.post(`/api/AudiologyApi/consents/${id}/sign`, data),
+  getByPatient: (patientId: number) =>
+    api.get(`/api/AudiologyApi/consents/patient/${patientId}`),
+  getPending: (patientId: number) =>
+    api.get(`/api/AudiologyApi/consents/patient/${patientId}/pending`),
+  create: (data: Record<string, unknown>) =>
+    api.post("/api/AudiologyApi/consents", data),
+  sign: (id: number, data: Record<string, unknown>) =>
+    api.post(`/api/AudiologyApi/consents/${id}/sign`, data),
   revoke: (id: number, reason: string) =>
     api.post(`/api/AudiologyApi/consents/${id}/revoke`, { reason }),
   delete: (id: number) => api.delete(`/api/AudiologyApi/consents/${id}`),
@@ -317,25 +438,33 @@ export const consentApi = {
 };
 
 export const attachmentApi = {
-  getByPatient: (patientId: number) => api.get(`/api/AudiologyApi/attachments/patient/${patientId}`),
-  getByEncounter: (encounterId: number) => api.get(`/api/AudiologyApi/attachments/encounter/${encounterId}`),
+  getByPatient: (patientId: number) =>
+    api.get(`/api/AudiologyApi/attachments/patient/${patientId}`),
+  getByEncounter: (encounterId: number) =>
+    api.get(`/api/AudiologyApi/attachments/encounter/${encounterId}`),
   getById: (id: number) => api.get(`/api/AudiologyApi/attachments/${id}`),
   upload: (data: FormData) =>
-    api.post('/api/AudiologyApi/attachments', data, {
-      headers: { 'Content-Type': 'multipart/form-data' },
+    api.post("/api/AudiologyApi/attachments", data, {
+      headers: { "Content-Type": "multipart/form-data" },
     }),
   download: (id: number) =>
-    api.get(`/api/AudiologyApi/attachments/${id}/download`, { responseType: 'blob' }),
+    api.get(`/api/AudiologyApi/attachments/${id}/download`, {
+      responseType: "blob",
+    }),
   delete: (id: number) => api.delete(`/api/AudiologyApi/attachments/${id}`),
-  updateMetadata: (id: number, data: any) => api.put(`/api/AudiologyApi/attachments/${id}`, data),
+  updateMetadata: (id: number, data: Record<string, unknown>) =>
+    api.put(`/api/AudiologyApi/attachments/${id}`, data),
 };
 
 export const audiologyStatsApi = {
-  getDashboard: () => api.get('/api/AudiologyApi/statistics/dashboard'),
+  getDashboard: () => api.get("/api/AudiologyApi/statistics/dashboard"),
   getEncounterStats: (startDate?: string, endDate?: string) =>
-    api.get('/api/AudiologyApi/statistics/encounters', { params: { startDate, endDate } }),
-  getHearingAidStats: () => api.get('/api/AudiologyApi/statistics/hearing-aids'),
-  getPatientStats: () => api.get('/api/AudiologyApi/statistics/patients'),
+    api.get("/api/AudiologyApi/statistics/encounters", {
+      params: { startDate, endDate },
+    }),
+  getHearingAidStats: () =>
+    api.get("/api/AudiologyApi/statistics/hearing-aids"),
+  getPatientStats: () => api.get("/api/AudiologyApi/statistics/patients"),
 };
 
 // ============================================
@@ -343,65 +472,89 @@ export const audiologyStatsApi = {
 // ============================================
 
 export const campaignApi = {
-  getAll: () => api.get('/api/MarketingApi/campaigns'),
+  getAll: () => api.get("/api/MarketingApi/campaigns"),
   getById: (id: number) => api.get(`/api/MarketingApi/campaigns/${id}`),
-  getActive: () => api.get('/api/MarketingApi/campaigns/active'),
-  getByStatus: (status: string) => api.get(`/api/MarketingApi/campaigns/status/${status}`),
-  getByType: (type: string) => api.get(`/api/MarketingApi/campaigns/type/${type}`),
+  getActive: () => api.get("/api/MarketingApi/campaigns/active"),
+  getByStatus: (status: string) =>
+    api.get(`/api/MarketingApi/campaigns/status/${status}`),
+  getByType: (type: string) =>
+    api.get(`/api/MarketingApi/campaigns/type/${type}`),
   search: (searchTerm: string) =>
-    api.get(`/api/MarketingApi/campaigns/search?searchTerm=${encodeURIComponent(searchTerm)}`),
-  create: (data: any) => api.post('/api/MarketingApi/campaigns', data),
-  update: (id: number, data: any) => api.put(`/api/MarketingApi/campaigns/${id}`, data),
+    api.get(
+      `/api/MarketingApi/campaigns/search?searchTerm=${encodeURIComponent(searchTerm)}`,
+    ),
+  create: (data: Record<string, unknown>) =>
+    api.post("/api/MarketingApi/campaigns", data),
+  update: (id: number, data: Record<string, unknown>) =>
+    api.put(`/api/MarketingApi/campaigns/${id}`, data),
   delete: (id: number) => api.delete(`/api/MarketingApi/campaigns/${id}`),
   updateStatus: (id: number, status: string) =>
     api.post(`/api/MarketingApi/campaigns/${id}/status`, { status }),
-  activate: (id: number) => api.post(`/api/MarketingApi/campaigns/${id}/activate`),
+  activate: (id: number) =>
+    api.post(`/api/MarketingApi/campaigns/${id}/activate`),
   pause: (id: number) => api.post(`/api/MarketingApi/campaigns/${id}/pause`),
-  complete: (id: number) => api.post(`/api/MarketingApi/campaigns/${id}/complete`),
-  getPerformance: (id: number) => api.get(`/api/MarketingApi/campaigns/${id}/performance`),
+  complete: (id: number) =>
+    api.post(`/api/MarketingApi/campaigns/${id}/complete`),
+  getPerformance: (id: number) =>
+    api.get(`/api/MarketingApi/campaigns/${id}/performance`),
 };
 
 export const leadApi = {
-  getAll: () => api.get('/api/MarketingApi/leads'),
+  getAll: () => api.get("/api/MarketingApi/leads"),
   getById: (id: number) => api.get(`/api/MarketingApi/leads/${id}`),
-  getByStatus: (status: string) => api.get(`/api/MarketingApi/leads/status/${status}`),
-  getBySource: (source: string) => api.get(`/api/MarketingApi/leads/source/${source}`),
-  getByCampaign: (campaignId: number) => api.get(`/api/MarketingApi/leads/campaign/${campaignId}`),
-  getNew: () => api.get('/api/MarketingApi/leads/new'),
-  getQualified: () => api.get('/api/MarketingApi/leads/qualified'),
-  getNeedingFollowUp: () => api.get('/api/MarketingApi/leads/follow-up'),
-  getOverdueFollowUps: () => api.get('/api/MarketingApi/leads/overdue'),
+  getByStatus: (status: string) =>
+    api.get(`/api/MarketingApi/leads/status/${status}`),
+  getBySource: (source: string) =>
+    api.get(`/api/MarketingApi/leads/source/${source}`),
+  getByCampaign: (campaignId: number) =>
+    api.get(`/api/MarketingApi/leads/campaign/${campaignId}`),
+  getNew: () => api.get("/api/MarketingApi/leads/new"),
+  getQualified: () => api.get("/api/MarketingApi/leads/qualified"),
+  getNeedingFollowUp: () => api.get("/api/MarketingApi/leads/follow-up"),
+  getOverdueFollowUps: () => api.get("/api/MarketingApi/leads/overdue"),
   search: (searchTerm: string) =>
-    api.get(`/api/MarketingApi/leads/search?searchTerm=${encodeURIComponent(searchTerm)}`),
-  create: (data: any) => api.post('/api/MarketingApi/leads', data),
-  update: (id: number, data: any) => api.put(`/api/MarketingApi/leads/${id}`, data),
+    api.get(
+      `/api/MarketingApi/leads/search?searchTerm=${encodeURIComponent(searchTerm)}`,
+    ),
+  create: (data: Record<string, unknown>) =>
+    api.post("/api/MarketingApi/leads", data),
+  update: (id: number, data: Record<string, unknown>) =>
+    api.put(`/api/MarketingApi/leads/${id}`, data),
   delete: (id: number) => api.delete(`/api/MarketingApi/leads/${id}`),
   updateStatus: (id: number, status: string) =>
     api.post(`/api/MarketingApi/leads/${id}/status`, { status }),
-  convert: (id: number, patientData?: any) =>
+  convert: (id: number, patientData?: Record<string, unknown>) =>
     api.post(`/api/MarketingApi/leads/${id}/convert`, patientData),
   markAsLost: (id: number, reason: string) =>
     api.post(`/api/MarketingApi/leads/${id}/lost`, { reason }),
   logContact: (id: number, notes?: string) =>
     api.post(`/api/MarketingApi/leads/${id}/contact`, { notes }),
   scheduleFollowUp: (id: number, date: string, notes?: string) =>
-    api.post(`/api/MarketingApi/leads/${id}/schedule-follow-up`, { date, notes }),
+    api.post(`/api/MarketingApi/leads/${id}/schedule-follow-up`, {
+      date,
+      notes,
+    }),
   assign: (id: number, userId: string) =>
     api.post(`/api/MarketingApi/leads/${id}/assign`, { userId }),
 };
 
 export const marketingActivityApi = {
-  getAll: () => api.get('/api/MarketingApi/activities'),
+  getAll: () => api.get("/api/MarketingApi/activities"),
   getById: (id: number) => api.get(`/api/MarketingApi/activities/${id}`),
-  getByLead: (leadId: number) => api.get(`/api/MarketingApi/activities/lead/${leadId}`),
-  getByCampaign: (campaignId: number) => api.get(`/api/MarketingApi/activities/campaign/${campaignId}`),
-  getByPatient: (patientId: number) => api.get(`/api/MarketingApi/activities/patient/${patientId}`),
-  getToday: () => api.get('/api/MarketingApi/activities/today'),
-  getScheduled: () => api.get('/api/MarketingApi/activities/scheduled'),
+  getByLead: (leadId: number) =>
+    api.get(`/api/MarketingApi/activities/lead/${leadId}`),
+  getByCampaign: (campaignId: number) =>
+    api.get(`/api/MarketingApi/activities/campaign/${campaignId}`),
+  getByPatient: (patientId: number) =>
+    api.get(`/api/MarketingApi/activities/patient/${patientId}`),
+  getToday: () => api.get("/api/MarketingApi/activities/today"),
+  getScheduled: () => api.get("/api/MarketingApi/activities/scheduled"),
   getByDateRange: (startDate: string, endDate: string) =>
-    api.get('/api/MarketingApi/activities', { params: { startDate, endDate } }),
-  create: (data: any) => api.post('/api/MarketingApi/activities', data),
-  update: (id: number, data: any) => api.put(`/api/MarketingApi/activities/${id}`, data),
+    api.get("/api/MarketingApi/activities", { params: { startDate, endDate } }),
+  create: (data: Record<string, unknown>) =>
+    api.post("/api/MarketingApi/activities", data),
+  update: (id: number, data: Record<string, unknown>) =>
+    api.put(`/api/MarketingApi/activities/${id}`, data),
   delete: (id: number) => api.delete(`/api/MarketingApi/activities/${id}`),
   complete: (id: number, outcome?: string) =>
     api.post(`/api/MarketingApi/activities/${id}/complete`, { outcome }),
@@ -410,17 +563,23 @@ export const marketingActivityApi = {
 };
 
 export const marketingStatsApi = {
-  getDashboard: () => api.get('/api/MarketingApi/statistics/dashboard'),
+  getDashboard: () => api.get("/api/MarketingApi/statistics/dashboard"),
   getCampaignStats: (startDate?: string, endDate?: string) =>
-    api.get('/api/MarketingApi/statistics/campaigns', { params: { startDate, endDate } }),
-  getLeadStats: () => api.get('/api/MarketingApi/statistics/leads'),
-  getLeadFunnel: () => api.get('/api/MarketingApi/statistics/funnel'),
+    api.get("/api/MarketingApi/statistics/campaigns", {
+      params: { startDate, endDate },
+    }),
+  getLeadStats: () => api.get("/api/MarketingApi/statistics/leads"),
+  getLeadFunnel: () => api.get("/api/MarketingApi/statistics/funnel"),
   getLeadTrends: (days?: number) =>
-    api.get('/api/MarketingApi/statistics/trends', { params: { days } }),
-  getConversionRates: () => api.get('/api/MarketingApi/statistics/conversion-rates'),
+    api.get("/api/MarketingApi/statistics/trends", { params: { days } }),
+  getConversionRates: () =>
+    api.get("/api/MarketingApi/statistics/conversion-rates"),
   getROIReport: (startDate?: string, endDate?: string) =>
-    api.get('/api/MarketingApi/statistics/roi', { params: { startDate, endDate } }),
-  getCampaignPerformance: () => api.get('/api/MarketingApi/statistics/campaign-performance'),
+    api.get("/api/MarketingApi/statistics/roi", {
+      params: { startDate, endDate },
+    }),
+  getCampaignPerformance: () =>
+    api.get("/api/MarketingApi/statistics/campaign-performance"),
 };
 
 // ============================================
@@ -428,24 +587,36 @@ export const marketingStatsApi = {
 // ============================================
 
 export const clinicalVisitsApi = {
-  getAll: () => api.get('/api/ClinicalVisitsApi/visits'),
+  getAll: () => api.get("/api/ClinicalVisitsApi/visits"),
   getById: (id: number) => api.get(`/api/ClinicalVisitsApi/visits/${id}`),
-  getByPatient: (patientId: number) => api.get(`/api/ClinicalVisitsApi/visits/patient/${patientId}`),
-  getByDoctor: (doctorId: number) => api.get(`/api/ClinicalVisitsApi/visits/doctor/${doctorId}`),
-  getToday: () => api.get('/api/ClinicalVisitsApi/visits/today'),
-  getByStatus: (status: number) => api.get(`/api/ClinicalVisitsApi/visits/status/${status}`),
-  getByType: (type: number) => api.get(`/api/ClinicalVisitsApi/visits/type/${type}`),
+  getByPatient: (patientId: number) =>
+    api.get(`/api/ClinicalVisitsApi/visits/patient/${patientId}`),
+  getByDoctor: (doctorId: number) =>
+    api.get(`/api/ClinicalVisitsApi/visits/doctor/${doctorId}`),
+  getToday: () => api.get("/api/ClinicalVisitsApi/visits/today"),
+  getByStatus: (status: number) =>
+    api.get(`/api/ClinicalVisitsApi/visits/status/${status}`),
+  getByType: (type: number) =>
+    api.get(`/api/ClinicalVisitsApi/visits/type/${type}`),
   getByDateRange: (startDate: string, endDate: string) =>
-    api.get('/api/ClinicalVisitsApi/visits/date-range', { params: { startDate, endDate } }),
+    api.get("/api/ClinicalVisitsApi/visits/date-range", {
+      params: { startDate, endDate },
+    }),
   search: (searchTerm: string) =>
-    api.get(`/api/ClinicalVisitsApi/visits/search?searchTerm=${encodeURIComponent(searchTerm)}`),
-  create: (data: any) => api.post('/api/ClinicalVisitsApi/visits', data),
-  update: (id: number, data: any) => api.put(`/api/ClinicalVisitsApi/visits/${id}`, data),
+    api.get(
+      `/api/ClinicalVisitsApi/visits/search?searchTerm=${encodeURIComponent(searchTerm)}`,
+    ),
+  create: (data: Record<string, unknown>) =>
+    api.post("/api/ClinicalVisitsApi/visits", data),
+  update: (id: number, data: Record<string, unknown>) =>
+    api.put(`/api/ClinicalVisitsApi/visits/${id}`, data),
   delete: (id: number) => api.delete(`/api/ClinicalVisitsApi/visits/${id}`),
   updateStatus: (id: number, status: number) =>
     api.post(`/api/ClinicalVisitsApi/visits/${id}/status`, { status }),
   getStatistics: (startDate?: string, endDate?: string) =>
-    api.get('/api/ClinicalVisitsApi/statistics', { params: { startDate, endDate } }),
+    api.get("/api/ClinicalVisitsApi/statistics", {
+      params: { startDate, endDate },
+    }),
 };
 
 // ============================================
@@ -453,40 +624,51 @@ export const clinicalVisitsApi = {
 // ============================================
 
 export const workflowDefinitionsApi = {
-  getAll: () => api.get('/api/WorkflowApi/definitions'),
+  getAll: () => api.get("/api/WorkflowApi/definitions"),
   getById: (id: number) => api.get(`/api/WorkflowApi/definitions/${id}`),
   search: (searchTerm: string) =>
-    api.get(`/api/WorkflowApi/definitions/search?searchTerm=${encodeURIComponent(searchTerm)}`),
-  getActive: () => api.get('/api/WorkflowApi/definitions/active'),
+    api.get(
+      `/api/WorkflowApi/definitions/search?searchTerm=${encodeURIComponent(searchTerm)}`,
+    ),
+  getActive: () => api.get("/api/WorkflowApi/definitions/active"),
   getByCategory: (category: string) =>
-    api.get(`/api/WorkflowApi/definitions/category/${encodeURIComponent(category)}`),
-  create: (data: any) => api.post('/api/WorkflowApi/definitions', data),
-  update: (id: number, data: any) => api.put(`/api/WorkflowApi/definitions/${id}`, data),
+    api.get(
+      `/api/WorkflowApi/definitions/category/${encodeURIComponent(category)}`,
+    ),
+  create: (data: Record<string, unknown>) =>
+    api.post("/api/WorkflowApi/definitions", data),
+  update: (id: number, data: Record<string, unknown>) =>
+    api.put(`/api/WorkflowApi/definitions/${id}`, data),
   delete: (id: number) => api.delete(`/api/WorkflowApi/definitions/${id}`),
   toggleActive: (id: number, isActive: boolean) =>
     api.post(`/api/WorkflowApi/definitions/${id}/toggle-active`, { isActive }),
-  getStatistics: () => api.get('/api/WorkflowApi/definitions/statistics'),
+  getStatistics: () => api.get("/api/WorkflowApi/definitions/statistics"),
 };
 
 export const workflowInstancesApi = {
-  getAll: () => api.get('/api/WorkflowApi/instances'),
+  getAll: () => api.get("/api/WorkflowApi/instances"),
   getById: (id: number) => api.get(`/api/WorkflowApi/instances/${id}`),
   getByDefinition: (definitionId: number) =>
     api.get(`/api/WorkflowApi/instances/definition/${definitionId}`),
   getByEntity: (entityType: string, entityId: number) =>
     api.get(`/api/WorkflowApi/instances/entity/${entityType}/${entityId}`),
-  getByStatus: (status: number) => api.get(`/api/WorkflowApi/instances/status/${status}`),
-  getPending: () => api.get('/api/WorkflowApi/instances/pending'),
-  getInProgress: () => api.get('/api/WorkflowApi/instances/in-progress'),
-  create: (data: any) => api.post('/api/WorkflowApi/instances', data),
-  update: (id: number, data: any) => api.put(`/api/WorkflowApi/instances/${id}`, data),
+  getByStatus: (status: number) =>
+    api.get(`/api/WorkflowApi/instances/status/${status}`),
+  getPending: () => api.get("/api/WorkflowApi/instances/pending"),
+  getInProgress: () => api.get("/api/WorkflowApi/instances/in-progress"),
+  create: (data: Record<string, unknown>) =>
+    api.post("/api/WorkflowApi/instances", data),
+  update: (id: number, data: Record<string, unknown>) =>
+    api.put(`/api/WorkflowApi/instances/${id}`, data),
   cancel: (id: number, reason?: string) =>
     api.post(`/api/WorkflowApi/instances/${id}/cancel`, { reason }),
-  complete: (id: number) => api.post(`/api/WorkflowApi/instances/${id}/complete`),
-  getHistory: (id: number) => api.get(`/api/WorkflowApi/instances/${id}/history`),
-  addHistoryEntry: (id: number, data: any) =>
+  complete: (id: number) =>
+    api.post(`/api/WorkflowApi/instances/${id}/complete`),
+  getHistory: (id: number) =>
+    api.get(`/api/WorkflowApi/instances/${id}/history`),
+  addHistoryEntry: (id: number, data: Record<string, unknown>) =>
     api.post(`/api/WorkflowApi/instances/${id}/history`, data),
-  getStatistics: () => api.get('/api/WorkflowApi/instances/statistics'),
+  getStatistics: () => api.get("/api/WorkflowApi/instances/statistics"),
 };
 
 // ============================================
@@ -496,35 +678,53 @@ export const workflowInstancesApi = {
 export const analyticsApi = {
   // Dashboard
   getDashboard: (startDate?: string, endDate?: string, departmentId?: number) =>
-    api.get('/api/AnalyticsApi/dashboard', { params: { startDate, endDate, departmentId } }),
+    api.get("/api/AnalyticsApi/dashboard", {
+      params: { startDate, endDate, departmentId },
+    }),
 
   // Reports
-  getAllReports: () => api.get('/api/AnalyticsApi/reports'),
+  getAllReports: () => api.get("/api/AnalyticsApi/reports"),
   getReportById: (id: number) => api.get(`/api/AnalyticsApi/reports/${id}`),
-  getRecentReports: (limit?: number) => api.get('/api/AnalyticsApi/reports/recent', { params: { limit } }),
-  getReportsByType: (type: number) => api.get(`/api/AnalyticsApi/reports/type/${type}`),
-  getReportsByStatus: (status: number) => api.get(`/api/AnalyticsApi/reports/status/${status}`),
-  createReport: (data: any) => api.post('/api/AnalyticsApi/reports', data),
-  updateReport: (id: number, data: any) => api.put(`/api/AnalyticsApi/reports/${id}`, data),
+  getRecentReports: (limit?: number) =>
+    api.get("/api/AnalyticsApi/reports/recent", { params: { limit } }),
+  getReportsByType: (type: number) =>
+    api.get(`/api/AnalyticsApi/reports/type/${type}`),
+  getReportsByStatus: (status: number) =>
+    api.get(`/api/AnalyticsApi/reports/status/${status}`),
+  createReport: (data: Record<string, unknown>) =>
+    api.post("/api/AnalyticsApi/reports", data),
+  updateReport: (id: number, data: Record<string, unknown>) =>
+    api.put(`/api/AnalyticsApi/reports/${id}`, data),
   deleteReport: (id: number) => api.delete(`/api/AnalyticsApi/reports/${id}`),
   downloadReport: (id: number) =>
-    api.get(`/api/AnalyticsApi/reports/${id}/download`, { responseType: 'blob' }),
-  regenerateReport: (id: number) => api.post(`/api/AnalyticsApi/reports/${id}/regenerate`),
+    api.get(`/api/AnalyticsApi/reports/${id}/download`, {
+      responseType: "blob",
+    }),
+  regenerateReport: (id: number) =>
+    api.post(`/api/AnalyticsApi/reports/${id}/regenerate`),
 
   // Statistics
-  getStatistics: () => api.get('/api/AnalyticsApi/statistics'),
+  getStatistics: () => api.get("/api/AnalyticsApi/statistics"),
   getKPIs: (startDate?: string, endDate?: string) =>
-    api.get('/api/AnalyticsApi/kpis', { params: { startDate, endDate } }),
+    api.get("/api/AnalyticsApi/kpis", { params: { startDate, endDate } }),
 
   // Custom Analytics
   getPatientAnalytics: (startDate?: string, endDate?: string) =>
-    api.get('/api/AnalyticsApi/patients', { params: { startDate, endDate } }),
+    api.get("/api/AnalyticsApi/patients", { params: { startDate, endDate } }),
   getAppointmentAnalytics: (startDate?: string, endDate?: string) =>
-    api.get('/api/AnalyticsApi/appointments', { params: { startDate, endDate } }),
+    api.get("/api/AnalyticsApi/appointments", {
+      params: { startDate, endDate },
+    }),
   getRevenueAnalytics: (startDate?: string, endDate?: string) =>
-    api.get('/api/AnalyticsApi/revenue', { params: { startDate, endDate } }),
-  getDepartmentAnalytics: (departmentId?: number, startDate?: string, endDate?: string) =>
-    api.get('/api/AnalyticsApi/departments', { params: { departmentId, startDate, endDate } }),
+    api.get("/api/AnalyticsApi/revenue", { params: { startDate, endDate } }),
+  getDepartmentAnalytics: (
+    departmentId?: number,
+    startDate?: string,
+    endDate?: string,
+  ) =>
+    api.get("/api/AnalyticsApi/departments", {
+      params: { departmentId, startDate, endDate },
+    }),
 };
 
 export default api;
