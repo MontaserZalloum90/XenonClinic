@@ -15,17 +15,7 @@ import type {
   TreatmentType,
 } from "../../types/dental";
 import { format } from "date-fns";
-import { dentalTreatmentApi as dentalTreatmentApiImport } from "../../lib/api";
-
-// Use real API
-const dentalTreatmentApi = {
-  getAll: () => dentalTreatmentApiImport.getAll(),
-  create: (data: CreateDentalTreatmentRequest) =>
-    dentalTreatmentApiImport.create(data),
-  update: (id: number, data: Partial<DentalTreatment>) =>
-    dentalTreatmentApiImport.update(id, data),
-  delete: (id: number) => dentalTreatmentApiImport.delete(id),
-};
+import { dentalTreatmentApi } from "../../lib/api";
 
 const getTreatmentTypeLabel = (type: TreatmentType): string => {
   const labels: Record<TreatmentType, string> = {

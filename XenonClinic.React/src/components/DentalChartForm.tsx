@@ -8,16 +8,7 @@ import type {
 } from "../types/dental";
 import { format } from "date-fns";
 import { PlusIcon, TrashIcon } from "@heroicons/react/24/outline";
-
-// Mock API functions - Replace with actual API calls
-const dentalChartApi = {
-  create: async (data: CreateDentalChartRequest) => ({
-    data: { id: Date.now(), ...data },
-  }),
-  update: async (id: number, data: Partial<DentalChart>) => ({
-    data: { id, ...data },
-  }),
-};
+import { dentalChartApi } from "../lib/api";
 
 interface DentalChartFormProps {
   chart?: DentalChart;

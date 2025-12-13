@@ -1,17 +1,11 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { hrApi } from "../../lib/api";
+import { hrApi, payrollApi } from "../../lib/api";
 import type { Employee, HRStatistics } from "../../types/hr";
 import type { PayrollRecord } from "../../types/payroll";
 import { HRForm } from "../../components/HRForm";
 import { Dialog } from "@headlessui/react";
 import { format } from "date-fns";
-
-// Mock payroll API - Replace with actual API when backend is ready
-const payrollApi = {
-  getByEmployee: (_employeeId: number) =>
-    Promise.resolve({ data: [] as PayrollRecord[] }),
-};
 
 export const EmployeesList = () => {
   const queryClient = useQueryClient();

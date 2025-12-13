@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { api } from "../../lib/api";
+import { orthopedicExamsApi } from "../../lib/api";
 import type {
   OrthopedicExam,
   CreateOrthopedicExamRequest,
@@ -8,15 +8,6 @@ import type {
 import { useT } from "../../contexts/TenantContext";
 import { Dialog } from "@headlessui/react";
 import { format } from "date-fns";
-
-const orthopedicsApi = {
-  getAllExams: () => api.get("/api/OrthopedicsApi/exams"),
-  createExam: (data: CreateOrthopedicExamRequest) =>
-    api.post("/api/OrthopedicsApi/exams", data),
-  updateExam: (id: number, data: Partial<CreateOrthopedicExamRequest>) =>
-    api.put(`/api/OrthopedicsApi/exams/${id}`, data),
-  deleteExam: (id: number) => api.delete(`/api/OrthopedicsApi/exams/${id}`),
-};
 
 export const OrthopedicExams = () => {
   const t = useT();
@@ -31,14 +22,14 @@ export const OrthopedicExams = () => {
   const { data: exams, isLoading } = useQuery<OrthopedicExam[]>({
     queryKey: ["orthopedic-exams"],
     queryFn: async () => {
-      const response = await orthopedicsApi.getAllExams();
+      const response = await orthopedicExamsApi.getAll();
       return response.data;
     },
   });
 
   const createMutation = useMutation({
     mutationFn: (data: CreateOrthopedicExamRequest) =>
-      orthopedicsApi.createExam(data),
+      orthopedicExamsApi.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["orthopedic-exams"] });
       queryClient.invalidateQueries({ queryKey: ["orthopedics-stats"] });
@@ -54,7 +45,7 @@ export const OrthopedicExams = () => {
     }: {
       id: number;
       data: Partial<CreateOrthopedicExamRequest>;
-    }) => orthopedicsApi.updateExam(id, data),
+    }) => orthopedicExamsApi.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["orthopedic-exams"] });
       queryClient.invalidateQueries({ queryKey: ["orthopedics-stats"] });
@@ -64,7 +55,7 @@ export const OrthopedicExams = () => {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: number) => orthopedicsApi.deleteExam(id),
+    mutationFn: (id: number) => orthopedicExamsApi.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["orthopedic-exams"] });
       queryClient.invalidateQueries({ queryKey: ["orthopedics-stats"] });

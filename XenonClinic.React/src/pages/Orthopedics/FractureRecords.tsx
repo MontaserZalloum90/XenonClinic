@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { api } from "../../lib/api";
+import { fracturesApi } from "../../lib/api";
 import type {
   FractureRecord,
   CreateFractureRecordRequest,
@@ -8,15 +8,6 @@ import type {
 import { useT } from "../../contexts/TenantContext";
 import { Dialog } from "@headlessui/react";
 import { format } from "date-fns";
-
-const fracturesApi = {
-  getAll: () => api.get("/api/OrthopedicsApi/fractures"),
-  create: (data: CreateFractureRecordRequest) =>
-    api.post("/api/OrthopedicsApi/fractures", data),
-  update: (id: number, data: Partial<CreateFractureRecordRequest>) =>
-    api.put(`/api/OrthopedicsApi/fractures/${id}`, data),
-  delete: (id: number) => api.delete(`/api/OrthopedicsApi/fractures/${id}`),
-};
 
 export const FractureRecords = () => {
   const t = useT();
