@@ -53,3 +53,16 @@ export {
   ophthalmologyData,
   allBusinessData,
 } from "./businessData";
+
+// Medical Services Demo Data
+export {
+  dialysisData,
+  entData,
+  fertilityData,
+  obgynData,
+  clinicalVisitData,
+  analyticsData,
+  workflowData,
+  portalData,
+  allMedicalServicesData,
+} from "./medicalServicesData";
