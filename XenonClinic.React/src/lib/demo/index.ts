@@ -8,7 +8,7 @@ export {
   DemoService,
   type DemoStatus,
   type LoadDemoResult,
-} from './demoService';
+} from "./demoService";
 
 export {
   type ClinicType,
@@ -25,4 +25,20 @@ export {
   audiologyDemoData,
   generalClinicDemoData,
   dentalClinicDemoData,
-} from './demoData';
+} from "./demoData";
+
+// Specialty Demo Data
+export {
+  orthopedicsData,
+  oncologyData,
+  laboratoryData,
+  radiologyData,
+  pharmacyData,
+  hrData,
+  financialData,
+  dentalData,
+  cardiologyData,
+  dermatologyData,
+  pediatricsData,
+  allSpecialtyData,
+} from "./specialtyData";
