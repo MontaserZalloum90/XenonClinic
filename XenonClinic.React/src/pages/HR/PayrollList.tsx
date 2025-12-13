@@ -8,35 +8,7 @@ import type {
   Allowance,
   Deduction,
 } from "../../types/payroll";
-
-// Mock API - Replace with actual API when backend is ready
-const payrollApi = {
-  getAll: () => Promise.resolve({ data: [] as PayrollRecord[] }),
-  getByPeriod: (_period: string) =>
-    Promise.resolve({ data: [] as PayrollRecord[] }),
-  getById: (_id: number) => Promise.resolve({ data: {} as PayrollRecord }),
-  create: (_data: unknown) => Promise.resolve({ data: {} as PayrollRecord }),
-  update: (_id: number, _data: unknown) =>
-    Promise.resolve({ data: {} as PayrollRecord }),
-  delete: (_id: number) => Promise.resolve({ data: {} }),
-  process: (_id: number) => Promise.resolve({ data: {} as PayrollRecord }),
-  approve: (_id: number) => Promise.resolve({ data: {} as PayrollRecord }),
-  pay: (_id: number, _data: unknown) =>
-    Promise.resolve({ data: {} as PayrollRecord }),
-  cancel: (_id: number) => Promise.resolve({ data: {} as PayrollRecord }),
-  getStatistics: () =>
-    Promise.resolve({
-      data: {
-        totalPayroll: 0,
-        pendingApproval: 0,
-        paidThisMonth: 0,
-        totalEmployeesInPayroll: 0,
-        averageSalary: 0,
-        totalAllowances: 0,
-        totalDeductions: 0,
-      } as PayrollStatistics,
-    }),
-};
+import { payrollApi } from "../../lib/api";
 
 export const PayrollList = () => {
   const queryClient = useQueryClient();
@@ -52,21 +24,19 @@ export const PayrollList = () => {
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState("Bank Transfer");
 
-  const { data: payrollRecords, isLoading } = useQuery<PayrollRecord[]>({
+  const { data: payrollResponse, isLoading } = useQuery<PayrollRecord[]>({
     queryKey: ["payroll-records", selectedPeriod],
-    queryFn: async () => {
-      const response = await payrollApi.getByPeriod(selectedPeriod);
-      return response.data;
-    },
+    queryFn: () => payrollApi.getByPeriod(selectedPeriod),
   });
 
-  const { data: stats } = useQuery<PayrollStatistics>({
+  const payrollRecords = payrollResponse?.data || [];
+
+  const { data: statsResponse } = useQuery<PayrollStatistics>({
     queryKey: ["payroll-stats"],
-    queryFn: async () => {
-      const response = await payrollApi.getStatistics();
-      return response.data;
-    },
+    queryFn: () => payrollApi.getStatistics(),
   });
+
+  const stats = statsResponse?.data;
 
   const processMutation = useMutation({
     mutationFn: (id: number) => payrollApi.process(id),

@@ -13,6 +13,7 @@ import {
 import { format } from "date-fns";
 import type { VaccinationRecord } from "../../types/pediatrics";
 import { VaccinationStatus, VaccineName } from "../../types/pediatrics";
+import { vaccinationsApi } from "../../lib/api";
 
 export const Vaccinations = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -22,97 +23,12 @@ export const Vaccinations = () => {
     VaccinationRecord | undefined
   >(undefined);
 
-  const { data: records, isLoading } = useQuery<VaccinationRecord[]>({
+  const { data: recordsResponse, isLoading } = useQuery<VaccinationRecord[]>({
     queryKey: ["vaccination-records"],
-    queryFn: async () => {
-      return [
-        {
-          id: 1,
-          patientId: 6001,
-          patientName: "Emma Johnson (2 months)",
-          vaccineName: VaccineName.DTaP,
-          doseNumber: 1,
-          administeredDate: new Date().toISOString(),
-          batchNumber: "DTaP-2024-001",
-          site: "Left thigh",
-          administeredBy: "RN Maria Garcia",
-          nextDueDate: new Date(
-            Date.now() + 60 * 24 * 60 * 60 * 1000,
-          ).toISOString(),
-          status: VaccinationStatus.Administered,
-          createdAt: new Date().toISOString(),
-        },
-        {
-          id: 2,
-          patientId: 6001,
-          patientName: "Emma Johnson (2 months)",
-          vaccineName: VaccineName.IPV,
-          doseNumber: 1,
-          administeredDate: new Date().toISOString(),
-          batchNumber: "IPV-2024-042",
-          site: "Right thigh",
-          administeredBy: "RN Maria Garcia",
-          nextDueDate: new Date(
-            Date.now() + 60 * 24 * 60 * 60 * 1000,
-          ).toISOString(),
-          status: VaccinationStatus.Administered,
-          createdAt: new Date().toISOString(),
-        },
-        {
-          id: 3,
-          patientId: 6002,
-          patientName: "Liam Smith (12 months)",
-          vaccineName: VaccineName.MMR,
-          doseNumber: 1,
-          scheduledDate: new Date(
-            Date.now() + 7 * 24 * 60 * 60 * 1000,
-          ).toISOString(),
-          status: VaccinationStatus.Scheduled,
-          createdAt: new Date().toISOString(),
-        },
-        {
-          id: 4,
-          patientId: 6003,
-          patientName: "Sophia Williams (4 months)",
-          vaccineName: VaccineName.HepB,
-          doseNumber: 2,
-          scheduledDate: new Date(
-            Date.now() - 14 * 24 * 60 * 60 * 1000,
-          ).toISOString(),
-          status: VaccinationStatus.Missed,
-          notes: "Parent cancelled - rescheduling needed",
-          createdAt: new Date().toISOString(),
-        },
-        {
-          id: 5,
-          patientId: 6004,
-          patientName: "Noah Brown (6 years)",
-          vaccineName: VaccineName.Varicella,
-          doseNumber: 2,
-          administeredDate: new Date(
-            Date.now() - 30 * 24 * 60 * 60 * 1000,
-          ).toISOString(),
-          batchNumber: "VAR-2024-018",
-          site: "Left deltoid",
-          administeredBy: "Dr. Sarah Chen",
-          status: VaccinationStatus.Administered,
-          createdAt: new Date().toISOString(),
-        },
-        {
-          id: 6,
-          patientId: 6005,
-          patientName: "Olivia Davis (15 years)",
-          vaccineName: VaccineName.HPV,
-          doseNumber: 1,
-          scheduledDate: new Date(
-            Date.now() + 3 * 24 * 60 * 60 * 1000,
-          ).toISOString(),
-          status: VaccinationStatus.Scheduled,
-          createdAt: new Date().toISOString(),
-        },
-      ];
-    },
+    queryFn: () => vaccinationsApi.getAll(),
   });
+
+  const records = recordsResponse?.data || [];
 
   const filteredRecords = records?.filter((record) => {
     const matchesSearch =

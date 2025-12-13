@@ -6,20 +6,7 @@ import type {
   SalaryStructure,
   SalaryStructureFormData,
 } from "../../types/payroll";
-
-// Mock API - Replace with actual API when backend is ready
-const salaryStructureApi = {
-  getAll: () => Promise.resolve({ data: [] as SalaryStructure[] }),
-  getById: (_id: number) => Promise.resolve({ data: {} as SalaryStructure }),
-  getActive: () => Promise.resolve({ data: [] as SalaryStructure[] }),
-  create: (_data: SalaryStructureFormData) =>
-    Promise.resolve({ data: {} as SalaryStructure }),
-  update: (_id: number, _data: SalaryStructureFormData) =>
-    Promise.resolve({ data: {} as SalaryStructure }),
-  delete: (_id: number) => Promise.resolve({ data: {} }),
-  activate: (_id: number) => Promise.resolve({ data: {} as SalaryStructure }),
-  deactivate: (_id: number) => Promise.resolve({ data: {} as SalaryStructure }),
-};
+import { salaryStructuresApi } from "../../lib/api";
 
 export const SalaryStructures = () => {
   const queryClient = useQueryClient();
@@ -29,17 +16,16 @@ export const SalaryStructures = () => {
     SalaryStructure | undefined
   >(undefined);
 
-  const { data: structures, isLoading } = useQuery<SalaryStructure[]>({
+  const { data: structuresResponse, isLoading } = useQuery<SalaryStructure[]>({
     queryKey: ["salary-structures"],
-    queryFn: async () => {
-      const response = await salaryStructureApi.getAll();
-      return response.data;
-    },
+    queryFn: () => salaryStructuresApi.getAll(),
   });
+
+  const structures = structuresResponse?.data || [];
 
   const createMutation = useMutation({
     mutationFn: (data: SalaryStructureFormData) =>
-      salaryStructureApi.create(data),
+      salaryStructuresApi.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["salary-structures"] });
       handleModalClose();
@@ -48,7 +34,7 @@ export const SalaryStructures = () => {
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: number; data: SalaryStructureFormData }) =>
-      salaryStructureApi.update(id, data),
+      salaryStructuresApi.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["salary-structures"] });
       handleModalClose();
@@ -56,7 +42,7 @@ export const SalaryStructures = () => {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: number) => salaryStructureApi.delete(id),
+    mutationFn: (id: number) => salaryStructuresApi.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["salary-structures"] });
     },

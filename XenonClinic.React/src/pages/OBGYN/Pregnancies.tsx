@@ -3,16 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Dialog } from "@headlessui/react";
 import { format } from "date-fns";
 import type { Pregnancy, PregnancyStatus } from "../../types/obgyn";
-
-// Mock API
-const pregnancyApi = {
-  getAll: async (): Promise<Pregnancy[]> => [],
-  create: async (data: Partial<Pregnancy>): Promise<Pregnancy> =>
-    ({ id: 1, ...data }) as Pregnancy,
-  update: async (id: number, data: Partial<Pregnancy>): Promise<Pregnancy> =>
-    ({ id, ...data }) as Pregnancy,
-  delete: async (): Promise<void> => {},
-};
+import { pregnanciesApi } from "../../lib/api";
 
 export const Pregnancies = () => {
   const queryClient = useQueryClient();
@@ -22,13 +13,15 @@ export const Pregnancies = () => {
     Pregnancy | undefined
   >();
 
-  const { data: pregnancies, isLoading } = useQuery({
+  const { data: pregnanciesResponse, isLoading } = useQuery({
     queryKey: ["pregnancies"],
-    queryFn: pregnancyApi.getAll,
+    queryFn: () => pregnanciesApi.getAll(),
   });
 
+  const pregnancies = pregnanciesResponse?.data || [];
+
   const deleteMutation = useMutation({
-    mutationFn: pregnancyApi.delete,
+    mutationFn: (id: number) => pregnanciesApi.delete(id),
     onSuccess: () =>
       queryClient.invalidateQueries({ queryKey: ["pregnancies"] }),
   });

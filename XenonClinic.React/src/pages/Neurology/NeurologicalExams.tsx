@@ -13,6 +13,7 @@ import type {
   CreateNeurologicalExamRequest,
 } from "../../types/neurology";
 import { ExamStatus, MentalStatus } from "../../types/neurology";
+import { neurologicalExamsApi } from "../../lib/api";
 
 export const NeurologicalExams = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -22,67 +23,12 @@ export const NeurologicalExams = () => {
     NeurologicalExam | undefined
   >(undefined);
 
-  // Mock data - Replace with actual API calls
-  const { data: exams, isLoading } = useQuery<NeurologicalExam[]>({
+  const { data: response, isLoading } = useQuery<NeurologicalExam[]>({
     queryKey: ["neurological-exams"],
-    queryFn: async () => {
-      // Mock implementation
-      return [
-        {
-          id: 1,
-          patientId: 2001,
-          patientName: "Sarah Johnson",
-          examDate: new Date().toISOString(),
-          mentalStatus: MentalStatus.Alert,
-          cranialNerves: "II-XII intact",
-          motorFunction: "5/5 strength all extremities",
-          sensory: "Intact to light touch and pinprick",
-          reflexes: "2+ symmetric throughout",
-          coordination: "Finger-to-nose intact, no dysmetria",
-          gait: "Normal, tandem gait intact",
-          diagnosis: "Migraine without aura",
-          performedBy: "Dr. Martinez",
-          status: ExamStatus.Completed,
-          createdAt: new Date().toISOString(),
-        },
-        {
-          id: 2,
-          patientId: 2002,
-          patientName: "Michael Brown",
-          examDate: new Date().toISOString(),
-          mentalStatus: MentalStatus.Alert,
-          cranialNerves: "CN VII weakness on right side",
-          motorFunction: "4/5 right upper and lower extremity",
-          sensory: "Decreased on right side",
-          reflexes: "3+ on right, 2+ on left",
-          coordination: "Impaired on right side",
-          gait: "Hemiplegic gait",
-          diagnosis: "Post-stroke residual deficit",
-          performedBy: "Dr. Chen",
-          status: ExamStatus.Reviewed,
-          createdAt: new Date().toISOString(),
-        },
-        {
-          id: 3,
-          patientId: 2003,
-          patientName: "Emily Davis",
-          examDate: new Date().toISOString(),
-          mentalStatus: MentalStatus.Confused,
-          cranialNerves: "Difficult to assess",
-          motorFunction: "3/5 bilateral lower extremities",
-          sensory: "Intact",
-          reflexes: "1+ throughout",
-          coordination: "Unable to assess",
-          gait: "Unable to assess",
-          diagnosis: "Encephalopathy, etiology unclear",
-          performedBy: "Dr. Williams",
-          status: ExamStatus.Pending,
-          notes: "Patient confused, requires further workup",
-          createdAt: new Date().toISOString(),
-        },
-      ];
-    },
+    queryFn: () => neurologicalExamsApi.getAll(),
   });
+
+  const exams = response?.data || [];
 
   const filteredExams = exams?.filter((exam) => {
     const matchesSearch =

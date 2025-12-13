@@ -3,30 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Dialog } from "@headlessui/react";
 import { format } from "date-fns";
 import type { SkinPhoto } from "../../types/dermatology";
-
-// Mock API - Replace with actual dermatology API
-const skinPhotosApi = {
-  getAll: async () => {
-    // TODO: Implement actual API call
-    return { data: [] as SkinPhoto[] };
-  },
-  create: async (data: FormData) => {
-    // TODO: Implement actual API call with file upload
-    console.log("Uploading skin photo:", data);
-    return {
-      data: {
-        id: Date.now(),
-        photoUrl: "/placeholder-image.jpg",
-        createdAt: new Date().toISOString(),
-      },
-    };
-  },
-  delete: async (id: number) => {
-    // TODO: Implement actual API call
-    console.log("Deleting skin photo:", id);
-    return { data: { success: true } };
-  },
-};
+import { skinPhotosApi } from "../../lib/api";
 
 export const SkinPhotos = () => {
   const queryClient = useQueryClient();

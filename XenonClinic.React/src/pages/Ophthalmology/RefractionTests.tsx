@@ -6,16 +6,7 @@ import type {
 } from "../../types/ophthalmology";
 import { Dialog } from "@headlessui/react";
 import { format } from "date-fns";
-
-// Mock API - Replace with actual API when backend is ready
-const refractionApi = {
-  getAll: () => Promise.resolve({ data: [] as RefractionTest[] }),
-  create: (data: CreateRefractionTestRequest) =>
-    Promise.resolve({ data: { id: 1, ...data } }),
-  update: (id: number, data: Partial<CreateRefractionTestRequest>) =>
-    Promise.resolve({ data: { id, ...data } }),
-  delete: () => Promise.resolve({ data: { success: true } }),
-};
+import { refractionApi } from "../../lib/api";
 
 export const RefractionTests = () => {
   const queryClient = useQueryClient();

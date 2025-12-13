@@ -9,6 +9,7 @@ import {
   BoltIcon,
 } from "@heroicons/react/24/outline";
 import { format } from "date-fns";
+import { emgApi } from "../../lib/api";
 
 // EMG Types
 const EMGStatus = {
@@ -57,57 +58,12 @@ export const EMGStudies = () => {
     undefined,
   );
 
-  const { data: studies, isLoading } = useQuery<EMGStudy[]>({
+  const { data: response, isLoading } = useQuery<EMGStudy[]>({
     queryKey: ["emg-studies"],
-    queryFn: async () => {
-      return [
-        {
-          id: 1,
-          patientId: 4001,
-          patientName: "Thomas Anderson",
-          studyDate: new Date().toISOString(),
-          referralReason: "Numbness and tingling in bilateral hands",
-          nervesStudied: ["Median", "Ulnar", "Radial"],
-          musclesStudied: ["APB", "ADM", "FDI"],
-          findings: EMGFinding.CarpalTunnel,
-          interpretation: "Bilateral carpal tunnel syndrome, moderate severity",
-          performedBy: "Dr. Martinez",
-          interpretedBy: "Dr. Chen",
-          status: EMGStatus.Interpreted,
-          createdAt: new Date().toISOString(),
-        },
-        {
-          id: 2,
-          patientId: 4002,
-          patientName: "Patricia White",
-          studyDate: new Date().toISOString(),
-          referralReason: "Lower back pain radiating to right leg",
-          nervesStudied: ["Peroneal", "Tibial", "Sural"],
-          musclesStudied: ["Tibialis anterior", "Gastrocnemius", "Paraspinals"],
-          findings: EMGFinding.Radiculopathy,
-          interpretation: "Right L5 radiculopathy, active denervation changes",
-          performedBy: "Dr. Williams",
-          status: EMGStatus.Completed,
-          createdAt: new Date().toISOString(),
-        },
-        {
-          id: 3,
-          patientId: 4003,
-          patientName: "Michael Brown",
-          studyDate: new Date().toISOString(),
-          referralReason: "Progressive weakness in legs",
-          nervesStudied: ["Peroneal", "Tibial", "Femoral"],
-          musclesStudied: ["Quadriceps", "Tibialis anterior", "Gastrocnemius"],
-          findings: EMGFinding.Neuropathy,
-          interpretation: "Length-dependent sensorimotor polyneuropathy",
-          performedBy: "Dr. Martinez",
-          interpretedBy: "Dr. Martinez",
-          status: EMGStatus.Interpreted,
-          createdAt: new Date().toISOString(),
-        },
-      ];
-    },
+    queryFn: () => emgApi.getAll(),
   });
+
+  const studies = response?.data || [];
 
   const filteredStudies = studies?.filter((study) => {
     const matchesSearch =

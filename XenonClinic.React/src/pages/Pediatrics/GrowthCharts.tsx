@@ -11,27 +11,7 @@ import type {
   GrowthMeasurement,
   CreateGrowthMeasurementRequest,
 } from "../../types/pediatrics";
-
-// Mock API functions - Replace with actual API calls
-const growthApi = {
-  getAll: async () => ({
-    data: [] as GrowthMeasurement[],
-  }),
-  create: async (data: CreateGrowthMeasurementRequest) => ({
-    data: {
-      id: Date.now(),
-      ...data,
-      bmi: 0,
-      createdAt: new Date().toISOString(),
-    },
-  }),
-  update: async (id: number, data: Partial<GrowthMeasurement>) => ({
-    data: { id, ...data },
-  }),
-  delete: async () => ({
-    data: { success: true },
-  }),
-};
+import { growthChartsApi } from "../../lib/api";
 
 export const GrowthCharts = () => {
   const queryClient = useQueryClient();
@@ -44,11 +24,11 @@ export const GrowthCharts = () => {
   // Fetch growth measurements
   const { data: measurementsData, isLoading } = useQuery({
     queryKey: ["growth-measurements"],
-    queryFn: () => growthApi.getAll(),
+    queryFn: () => growthChartsApi.getAll(),
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: number) => growthApi.delete(id),
+    mutationFn: (id: number) => growthChartsApi.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["growth-measurements"] });
     },
@@ -453,7 +433,7 @@ const GrowthMeasurementForm = ({
 
   const createMutation = useMutation({
     mutationFn: (data: CreateGrowthMeasurementRequest) =>
-      growthApi.create(data),
+      growthChartsApi.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["growth-measurements"] });
       onSuccess();

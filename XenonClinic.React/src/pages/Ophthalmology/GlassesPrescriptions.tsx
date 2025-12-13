@@ -9,16 +9,7 @@ import { PrescriptionStatus as PrescriptionStatusEnum } from "../../types/ophtha
 import { Dialog } from "@headlessui/react";
 import { format } from "date-fns";
 import { PrinterIcon, PlusIcon } from "@heroicons/react/24/outline";
-
-// Mock API - Replace with actual API when backend is ready
-const prescriptionApi = {
-  getAll: () => Promise.resolve({ data: [] as GlassesPrescription[] }),
-  create: (data: CreateGlassesPrescriptionRequest) =>
-    Promise.resolve({ data: { id: 1, ...data } }),
-  update: (id: number, data: Partial<CreateGlassesPrescriptionRequest>) =>
-    Promise.resolve({ data: { id, ...data } }),
-  delete: () => Promise.resolve({ data: { success: true } }),
-};
+import { glassesPrescriptionsApi as prescriptionApi } from "../../lib/api";
 
 export const GlassesPrescriptions = () => {
   const queryClient = useQueryClient();

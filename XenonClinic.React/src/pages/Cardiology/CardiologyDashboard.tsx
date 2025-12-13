@@ -11,34 +11,17 @@ import {
 } from "@heroicons/react/24/outline";
 import { format } from "date-fns";
 import type { CardiologyStatistics } from "../../types/cardiology";
+import { cardiologyApi } from "../../lib/api";
 
 export const CardiologyDashboard = () => {
-  // Mock data - In production, replace with actual API calls
-  const { data: stats } = useQuery<CardiologyStatistics>({
+  const { data: statsResponse } = useQuery<CardiologyStatistics>({
     queryKey: ["cardiology-stats"],
-    queryFn: async () => {
-      // Mock implementation
-      return {
-        totalPatients: 342,
-        newPatientsThisMonth: 28,
-        ecgsToday: 12,
-        ecgsThisWeek: 45,
-        ecgsThisMonth: 178,
-        echosThisWeek: 8,
-        echosThisMonth: 32,
-        stressTestsThisMonth: 15,
-        cathsThisMonth: 7,
-        pendingResults: 23,
-        pendingReviews: 9,
-        abnormalECGs: 34,
-        reducedEF: 12,
-        positiveStressTests: 4,
-        monthlyRevenue: 125000,
-      };
-    },
+    queryFn: () => cardiologyApi.getDashboard(),
   });
 
-  const { data: recentProcedures } = useQuery<
+  const stats = statsResponse?.data;
+
+  const { data: recentProceduresResponse } = useQuery<
     Array<{
       id: number;
       patientName: string;
@@ -49,36 +32,10 @@ export const CardiologyDashboard = () => {
     }>
   >({
     queryKey: ["recent-procedures"],
-    queryFn: async () => {
-      // Mock implementation
-      return [
-        {
-          id: 1,
-          patientName: "John Smith",
-          procedureType: "ECG",
-          date: new Date().toISOString(),
-          status: "Completed",
-          performedBy: "Dr. Johnson",
-        },
-        {
-          id: 2,
-          patientName: "Mary Johnson",
-          procedureType: "Echo",
-          date: new Date().toISOString(),
-          status: "In Progress",
-          performedBy: "Dr. Williams",
-        },
-        {
-          id: 3,
-          patientName: "Robert Davis",
-          procedureType: "Stress Test",
-          date: new Date().toISOString(),
-          status: "Scheduled",
-          performedBy: "Dr. Brown",
-        },
-      ];
-    },
+    queryFn: () => cardiologyApi.getStatistics(),
   });
+
+  const recentProcedures = recentProceduresResponse?.data || [];
 
   const statistics = stats || {
     totalPatients: 0,

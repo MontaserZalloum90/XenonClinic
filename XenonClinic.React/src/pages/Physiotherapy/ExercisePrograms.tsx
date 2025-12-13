@@ -11,7 +11,7 @@ import {
   ArrowPathIcon,
 } from "@heroicons/react/24/outline";
 import { format } from "date-fns";
-import api from "../../lib/api";
+import { exerciseProgramsApi } from "../../lib/api";
 
 interface ExerciseProgram {
   id: number;
@@ -62,96 +62,6 @@ const statusConfig = {
   },
 };
 
-const mockPrograms: ExerciseProgram[] = [
-  {
-    id: 1,
-    patientId: 101,
-    patientName: "John Smith",
-    programName: "Post-ACL Reconstruction Phase 2",
-    startDate: "2024-01-15",
-    status: "active",
-    goal: "Restore full ROM and improve quadriceps strength",
-    exercises: [
-      { name: "Quad Sets", sets: 3, reps: 15, holdTime: 5 },
-      { name: "Straight Leg Raises", sets: 3, reps: 12 },
-      { name: "Heel Slides", sets: 3, reps: 15 },
-      {
-        name: "Stationary Bike",
-        sets: 1,
-        reps: 1,
-        notes: "15 minutes, low resistance",
-      },
-    ],
-    frequency: "Daily",
-    duration: "6 weeks",
-    precautions: "No pivoting or cutting movements. Stop if sharp pain occurs.",
-    prescribedBy: "Dr. Sarah Johnson",
-    compliance: 85,
-  },
-  {
-    id: 2,
-    patientId: 102,
-    patientName: "Mary Johnson",
-    programName: "Lower Back Strengthening",
-    startDate: "2024-01-10",
-    status: "active",
-    goal: "Core stability and pain reduction",
-    exercises: [
-      { name: "Bird Dog", sets: 3, reps: 10, holdTime: 5 },
-      { name: "Dead Bug", sets: 3, reps: 10 },
-      { name: "Bridges", sets: 3, reps: 12, holdTime: 3 },
-      { name: "Cat-Cow Stretch", sets: 2, reps: 10 },
-    ],
-    frequency: "5x per week",
-    duration: "8 weeks",
-    prescribedBy: "Dr. Michael Brown",
-    compliance: 92,
-  },
-  {
-    id: 3,
-    patientId: 103,
-    patientName: "Robert Davis",
-    programName: "Shoulder Rotator Cuff Protocol",
-    startDate: "2023-12-20",
-    endDate: "2024-02-15",
-    status: "completed",
-    goal: "Full shoulder ROM and strength recovery",
-    exercises: [
-      { name: "Pendulum Exercises", sets: 2, reps: 20 },
-      { name: "External Rotation with Band", sets: 3, reps: 15 },
-      { name: "Internal Rotation with Band", sets: 3, reps: 15 },
-      { name: "Scapular Squeezes", sets: 3, reps: 12, holdTime: 5 },
-    ],
-    frequency: "Daily",
-    duration: "8 weeks",
-    prescribedBy: "Dr. Sarah Johnson",
-    progressNotes: "Excellent progress. Full ROM achieved. Discharged.",
-    compliance: 95,
-  },
-  {
-    id: 4,
-    patientId: 104,
-    patientName: "Lisa Wilson",
-    programName: "Balance and Fall Prevention",
-    startDate: "2024-01-05",
-    status: "paused",
-    goal: "Improve balance and reduce fall risk",
-    exercises: [
-      { name: "Single Leg Stance", sets: 3, reps: 4, holdTime: 30 },
-      { name: "Tandem Walking", sets: 2, reps: 10 },
-      { name: "Heel-Toe Walk", sets: 2, reps: 10 },
-      { name: "Sit to Stand", sets: 3, reps: 10 },
-    ],
-    frequency: "3x per week",
-    duration: "12 weeks",
-    precautions:
-      "Use support as needed. Perform near a wall or with supervision.",
-    prescribedBy: "Dr. Emily Chen",
-    progressNotes: "Paused due to hip pain. Awaiting orthopedic consult.",
-    compliance: 70,
-  },
-];
-
 export function ExercisePrograms() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -159,18 +69,12 @@ export function ExercisePrograms() {
   const [selectedProgram, setSelectedProgram] =
     useState<ExerciseProgram | null>(null);
 
-  const { data: programs = mockPrograms, isLoading } = useQuery({
+  const { data: programs = [], isLoading } = useQuery({
     queryKey: ["exercise-programs", searchTerm, statusFilter],
     queryFn: async () => {
-      const response = await api.get("/api/physiotherapy/exercise-programs", {
-        params: {
-          search: searchTerm,
-          status: statusFilter !== "all" ? statusFilter : undefined,
-        },
-      });
+      const response = await exerciseProgramsApi.getAll();
       return response.data;
     },
-    placeholderData: mockPrograms,
   });
 
   const filteredPrograms = programs.filter((program: ExerciseProgram) => {

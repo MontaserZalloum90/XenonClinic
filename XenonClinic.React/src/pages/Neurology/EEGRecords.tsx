@@ -11,6 +11,7 @@ import {
 import { format } from "date-fns";
 import type { EEGRecord, CreateEEGRequest } from "../../types/neurology";
 import { EEGStatus, EEGFinding } from "../../types/neurology";
+import { eegApi } from "../../lib/api";
 
 export const EEGRecords = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -20,58 +21,12 @@ export const EEGRecords = () => {
     undefined,
   );
 
-  const { data: records, isLoading } = useQuery<EEGRecord[]>({
+  const { data: response, isLoading } = useQuery<EEGRecord[]>({
     queryKey: ["eeg-records"],
-    queryFn: async () => {
-      return [
-        {
-          id: 1,
-          patientId: 3001,
-          patientName: "James Wilson",
-          recordDate: new Date().toISOString(),
-          duration: 30,
-          findings: EEGFinding.Normal,
-          interpretation: "Normal awake and sleep EEG",
-          performedBy: "Tech. Anderson",
-          interpretedBy: "Dr. Martinez",
-          status: EEGStatus.Interpreted,
-          createdAt: new Date().toISOString(),
-        },
-        {
-          id: 2,
-          patientId: 3002,
-          patientName: "Linda Garcia",
-          recordDate: new Date().toISOString(),
-          duration: 45,
-          findings: EEGFinding.EpilepticActivity,
-          interpretation:
-            "Intermittent spike and wave discharges in left temporal region",
-          abnormalities: ["Left temporal spikes", "Focal slowing"],
-          performedBy: "Tech. Thompson",
-          status: EEGStatus.Completed,
-          createdAt: new Date().toISOString(),
-        },
-        {
-          id: 3,
-          patientId: 3003,
-          patientName: "Robert Martinez",
-          recordDate: new Date().toISOString(),
-          duration: 60,
-          findings: EEGFinding.Slowing,
-          interpretation:
-            "Diffuse background slowing, suggestive of encephalopathy",
-          abnormalities: [
-            "Generalized slowing",
-            "Absence of normal alpha rhythm",
-          ],
-          performedBy: "Tech. Davis",
-          interpretedBy: "Dr. Chen",
-          status: EEGStatus.Interpreted,
-          createdAt: new Date().toISOString(),
-        },
-      ];
-    },
+    queryFn: () => eegApi.getAll(),
   });
+
+  const records = response?.data || [];
 
   const filteredRecords = records?.filter((record) => {
     const matchesSearch =

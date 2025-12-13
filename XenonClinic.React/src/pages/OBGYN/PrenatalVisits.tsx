@@ -9,6 +9,7 @@ import {
   CalendarIcon,
 } from "@heroicons/react/24/outline";
 import { format } from "date-fns";
+import { prenatalVisitsApi } from "../../lib/api";
 
 interface PrenatalVisit {
   id: number;
@@ -41,85 +42,12 @@ export const PrenatalVisits = () => {
     undefined,
   );
 
-  const { data: visits, isLoading } = useQuery<PrenatalVisit[]>({
+  const { data: visitsResponse, isLoading } = useQuery<PrenatalVisit[]>({
     queryKey: ["prenatal-visits"],
-    queryFn: async () => {
-      return [
-        {
-          id: 1,
-          patientId: 7001,
-          patientName: "Maria Garcia",
-          visitDate: new Date().toISOString(),
-          gestationalAge: 28,
-          weight: 68.5,
-          bloodPressure: "118/76",
-          fundalHeight: 28,
-          fetalHeartRate: 145,
-          fetalMovement: "Active",
-          urineProtein: "Negative",
-          urineGlucose: "Negative",
-          edema: "None",
-          assessment: "Normal pregnancy progression at 28 weeks",
-          plan: "Continue prenatal vitamins, glucose tolerance test scheduled",
-          nextVisitDate: new Date(
-            Date.now() + 14 * 24 * 60 * 60 * 1000,
-          ).toISOString(),
-          performedBy: "Dr. Sarah Chen",
-          riskLevel: "low",
-          createdAt: new Date().toISOString(),
-        },
-        {
-          id: 2,
-          patientId: 7002,
-          patientName: "Jennifer Wilson",
-          visitDate: new Date().toISOString(),
-          gestationalAge: 32,
-          weight: 75.2,
-          bloodPressure: "142/92",
-          fundalHeight: 31,
-          fetalHeartRate: 152,
-          fetalMovement: "Active",
-          urineProtein: "Trace",
-          urineGlucose: "Negative",
-          edema: "Mild ankle swelling",
-          complaints: "Occasional headaches",
-          assessment: "Elevated blood pressure, monitoring for preeclampsia",
-          plan: "BP monitoring twice daily, repeat labs in 1 week, immediate return if symptoms worsen",
-          nextVisitDate: new Date(
-            Date.now() + 7 * 24 * 60 * 60 * 1000,
-          ).toISOString(),
-          performedBy: "Dr. Michael Williams",
-          riskLevel: "high",
-          createdAt: new Date().toISOString(),
-        },
-        {
-          id: 3,
-          patientId: 7003,
-          patientName: "Lisa Anderson",
-          visitDate: new Date(
-            Date.now() - 7 * 24 * 60 * 60 * 1000,
-          ).toISOString(),
-          gestationalAge: 20,
-          weight: 62.0,
-          bloodPressure: "110/70",
-          fundalHeight: 20,
-          fetalHeartRate: 155,
-          fetalMovement: "Beginning to feel",
-          urineProtein: "Negative",
-          urineGlucose: "Negative",
-          edema: "None",
-          assessment: "Normal 20-week anatomy scan",
-          plan: "Continue routine care",
-          nextVisitDate: new Date(
-            Date.now() + 21 * 24 * 60 * 60 * 1000,
-          ).toISOString(),
-          performedBy: "Dr. Sarah Chen",
-          riskLevel: "low",
-          createdAt: new Date().toISOString(),
-        },
-      ];
-    },
+    queryFn: () => prenatalVisitsApi.getAll(),
   });
+
+  const visits = visitsResponse?.data || [];
 
   const filteredVisits = visits?.filter((visit) => {
     const matchesSearch =

@@ -11,7 +11,7 @@ import {
   ExclamationCircleIcon,
 } from "@heroicons/react/24/outline";
 import { format } from "date-fns";
-import api from "../../lib/api";
+import { embryoRecordsApi } from "../../lib/api";
 
 interface EmbryoRecord {
   id: number;
@@ -73,128 +73,6 @@ const gradeDescriptions: { [key: string]: string } = {
   CC: "Poor - Low quality blastocyst",
 };
 
-const mockRecords: EmbryoRecord[] = [
-  {
-    id: 1,
-    cycleId: 1,
-    patientId: 101,
-    patientName: "Jennifer Davis",
-    embryoNumber: 1,
-    fertilizationDate: "2024-01-15",
-    day: 5,
-    grade: "AA",
-    cellCount: undefined,
-    fragmentation: "none",
-    status: "developing",
-    embryologist: "Dr. Lisa Wang",
-    notes: "Excellent development. Candidate for transfer.",
-  },
-  {
-    id: 2,
-    cycleId: 1,
-    patientId: 101,
-    patientName: "Jennifer Davis",
-    embryoNumber: 2,
-    fertilizationDate: "2024-01-15",
-    day: 5,
-    grade: "AB",
-    fragmentation: "<10%",
-    status: "developing",
-    embryologist: "Dr. Lisa Wang",
-  },
-  {
-    id: 3,
-    cycleId: 1,
-    patientId: 101,
-    patientName: "Jennifer Davis",
-    embryoNumber: 3,
-    fertilizationDate: "2024-01-15",
-    day: 5,
-    grade: "BB",
-    fragmentation: "10-15%",
-    status: "frozen",
-    cryopreservationDate: "2024-01-20",
-    tankLocation: "Tank A",
-    canisterPosition: "C1-S3",
-    embryologist: "Dr. Lisa Wang",
-  },
-  {
-    id: 4,
-    cycleId: 2,
-    patientId: 102,
-    patientName: "Amanda Wilson",
-    embryoNumber: 1,
-    fertilizationDate: "2023-12-29",
-    day: 5,
-    grade: "AA",
-    status: "transferred",
-    transferDate: "2024-01-03",
-    embryologist: "Dr. Lisa Wang",
-    notes: "Single embryo transfer performed.",
-  },
-  {
-    id: 5,
-    cycleId: 2,
-    patientId: 102,
-    patientName: "Amanda Wilson",
-    embryoNumber: 2,
-    fertilizationDate: "2023-12-29",
-    day: 5,
-    grade: "AB",
-    status: "transferred",
-    transferDate: "2024-01-03",
-    embryologist: "Dr. Lisa Wang",
-  },
-  {
-    id: 6,
-    cycleId: 2,
-    patientId: 102,
-    patientName: "Amanda Wilson",
-    embryoNumber: 3,
-    fertilizationDate: "2023-12-29",
-    day: 5,
-    grade: "BA",
-    status: "frozen",
-    cryopreservationDate: "2024-01-03",
-    tankLocation: "Tank B",
-    canisterPosition: "C2-S1",
-    embryologist: "Dr. Lisa Wang",
-  },
-  {
-    id: 7,
-    cycleId: 3,
-    patientId: 103,
-    patientName: "Michelle Thompson",
-    embryoNumber: 1,
-    fertilizationDate: "2023-12-03",
-    day: 6,
-    grade: "AA",
-    status: "thawed",
-    cryopreservationDate: "2023-12-08",
-    thawDate: "2024-01-08",
-    survivalPostThaw: true,
-    transferDate: "2024-01-08",
-    embryologist: "Dr. Lisa Wang",
-    notes:
-      "Successfully thawed and transferred. Resulted in positive pregnancy.",
-  },
-  {
-    id: 8,
-    cycleId: 3,
-    patientId: 103,
-    patientName: "Michelle Thompson",
-    embryoNumber: 2,
-    fertilizationDate: "2023-12-03",
-    day: 3,
-    grade: "CC",
-    cellCount: 4,
-    fragmentation: ">25%",
-    status: "discarded",
-    embryologist: "Dr. Lisa Wang",
-    notes: "Poor development. Arrested at 4-cell stage.",
-  },
-];
-
 export function EmbryoRecords() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -203,18 +81,12 @@ export function EmbryoRecords() {
     null,
   );
 
-  const { data: embryos = mockRecords, isLoading } = useQuery({
+  const { data: embryos = [], isLoading } = useQuery({
     queryKey: ["embryo-records", searchTerm, statusFilter],
     queryFn: async () => {
-      const response = await api.get("/api/fertility/embryo-records", {
-        params: {
-          search: searchTerm,
-          status: statusFilter !== "all" ? statusFilter : undefined,
-        },
-      });
+      const response = await embryoRecordsApi.getAll();
       return response.data;
     },
-    placeholderData: mockRecords,
   });
 
   const filteredEmbryos = embryos.filter((embryo: EmbryoRecord) => {

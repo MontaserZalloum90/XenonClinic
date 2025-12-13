@@ -6,16 +6,7 @@ import type {
 } from "../../types/ophthalmology";
 import { Dialog } from "@headlessui/react";
 import { format } from "date-fns";
-
-// Mock API - Replace with actual API when backend is ready
-const fundusApi = {
-  getAll: () => Promise.resolve({ data: [] as FundusExam[] }),
-  create: (data: CreateFundusExamRequest) =>
-    Promise.resolve({ data: { id: 1, ...data } }),
-  update: (id: number, data: Partial<CreateFundusExamRequest>) =>
-    Promise.resolve({ data: { id, ...data } }),
-  delete: () => Promise.resolve({ data: { success: true } }),
-};
+import { fundusApi } from "../../lib/api";
 
 export const FundusExams = () => {
   const queryClient = useQueryClient();

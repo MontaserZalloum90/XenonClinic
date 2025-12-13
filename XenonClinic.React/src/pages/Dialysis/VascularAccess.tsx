@@ -11,7 +11,7 @@ import {
   ArrowPathIcon,
 } from "@heroicons/react/24/outline";
 import { format } from "date-fns";
-import api from "../../lib/api";
+import { vascularAccessApi } from "../../lib/api";
 
 interface VascularAccessRecord {
   id: number;
@@ -86,108 +86,6 @@ const statusConfig = {
   },
 };
 
-const mockRecords: VascularAccessRecord[] = [
-  {
-    id: 1,
-    patientId: 101,
-    patientName: "John Smith",
-    accessType: "avf",
-    location: "Left forearm (radiocephalic)",
-    creationDate: "2023-06-15",
-    maturityDate: "2023-09-15",
-    status: "functioning",
-    lastAssessmentDate: "2024-01-20",
-    thrill: "strong",
-    bruit: "strong",
-    flowRate: 650,
-    notes: "Well-functioning AVF. Good needle placement sites.",
-    surgeon: "Dr. James Wilson",
-  },
-  {
-    id: 2,
-    patientId: 102,
-    patientName: "Mary Johnson",
-    accessType: "avg",
-    location: "Right upper arm",
-    creationDate: "2023-10-01",
-    maturityDate: "2023-12-01",
-    status: "functioning",
-    lastAssessmentDate: "2024-01-18",
-    thrill: "strong",
-    bruit: "strong",
-    flowRate: 580,
-    complications: ["Mild pseudoaneurysm at venous anastomosis"],
-    interventions: [
-      {
-        date: "2024-01-05",
-        type: "Fistulogram",
-        outcome: "No significant stenosis",
-        performedBy: "Dr. Robert Lee",
-      },
-    ],
-    surgeon: "Dr. James Wilson",
-  },
-  {
-    id: 3,
-    patientId: 103,
-    patientName: "Robert Davis",
-    accessType: "avf",
-    location: "Left upper arm (brachiocephalic)",
-    creationDate: "2023-11-20",
-    status: "maturing",
-    lastAssessmentDate: "2024-01-22",
-    thrill: "weak",
-    bruit: "weak",
-    notes: "AVF still maturing. Using temporary CVC for dialysis.",
-    surgeon: "Dr. James Wilson",
-  },
-  {
-    id: 4,
-    patientId: 104,
-    patientName: "Lisa Wilson",
-    accessType: "cvc_tunneled",
-    location: "Right internal jugular",
-    creationDate: "2024-01-10",
-    status: "functioning",
-    lastAssessmentDate: "2024-01-22",
-    thrill: "absent",
-    bruit: "absent",
-    notes: "Temporary access while AVF matures. Exit site clean.",
-    surgeon: "Dr. Emily Chen",
-  },
-  {
-    id: 5,
-    patientId: 105,
-    patientName: "Thomas Brown",
-    accessType: "avf",
-    location: "Right forearm",
-    creationDate: "2022-03-10",
-    maturityDate: "2022-06-10",
-    status: "failing",
-    lastAssessmentDate: "2024-01-19",
-    thrill: "weak",
-    bruit: "weak",
-    flowRate: 320,
-    complications: ["Stenosis at venous anastomosis", "Poor clearance"],
-    interventions: [
-      {
-        date: "2023-08-15",
-        type: "Angioplasty",
-        outcome: "Partial improvement",
-        performedBy: "Dr. Robert Lee",
-      },
-      {
-        date: "2024-01-15",
-        type: "Fistulogram",
-        outcome: "Recurrent stenosis identified",
-        performedBy: "Dr. Robert Lee",
-      },
-    ],
-    notes: "Scheduled for revision. Considering new AVF creation.",
-    surgeon: "Dr. James Wilson",
-  },
-];
-
 export function VascularAccess() {
   const [searchTerm, setSearchTerm] = useState("");
   const [typeFilter, setTypeFilter] = useState<string>("all");
@@ -196,19 +94,12 @@ export function VascularAccess() {
   const [selectedRecord, setSelectedRecord] =
     useState<VascularAccessRecord | null>(null);
 
-  const { data: records = mockRecords, isLoading } = useQuery({
+  const { data: records = [], isLoading } = useQuery({
     queryKey: ["vascular-access", searchTerm, typeFilter, statusFilter],
     queryFn: async () => {
-      const response = await api.get("/api/dialysis/vascular-access", {
-        params: {
-          search: searchTerm,
-          type: typeFilter !== "all" ? typeFilter : undefined,
-          status: statusFilter !== "all" ? statusFilter : undefined,
-        },
-      });
+      const response = await vascularAccessApi.getAll();
       return response.data;
     },
-    placeholderData: mockRecords,
   });
 
   const filteredRecords = records.filter((record: VascularAccessRecord) => {

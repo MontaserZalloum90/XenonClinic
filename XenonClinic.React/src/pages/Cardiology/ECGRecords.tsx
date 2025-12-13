@@ -10,6 +10,7 @@ import {
 import { format } from "date-fns";
 import type { ECGRecord, CreateECGRequest } from "../../types/cardiology";
 import { ECGStatus, HeartRhythm } from "../../types/cardiology";
+import { ecgApi } from "../../lib/api";
 
 export const ECGRecords = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -19,61 +20,12 @@ export const ECGRecords = () => {
     undefined,
   );
 
-  // Mock data - Replace with actual API calls
-  const { data: records, isLoading } = useQuery<ECGRecord[]>({
+  const { data: response, isLoading } = useQuery<ECGRecord[]>({
     queryKey: ["ecg-records"],
-    queryFn: async () => {
-      // Mock implementation
-      return [
-        {
-          id: 1,
-          patientId: 1001,
-          patientName: "John Smith",
-          recordDate: new Date().toISOString(),
-          heartRate: 72,
-          rhythm: HeartRhythm.Sinus,
-          interpretation: "Normal sinus rhythm",
-          abnormalities: [],
-          performedBy: "Dr. Johnson",
-          status: ECGStatus.Completed,
-          prInterval: 160,
-          qrsDuration: 90,
-          qtInterval: 380,
-          qtcInterval: 410,
-          createdAt: new Date().toISOString(),
-        },
-        {
-          id: 2,
-          patientId: 1002,
-          patientName: "Mary Williams",
-          recordDate: new Date().toISOString(),
-          heartRate: 105,
-          rhythm: HeartRhythm.AFib,
-          interpretation: "Atrial fibrillation with rapid ventricular response",
-          abnormalities: ["Irregular rhythm", "Absent P waves"],
-          performedBy: "Dr. Brown",
-          status: ECGStatus.Reviewed,
-          reviewedBy: "Dr. Johnson",
-          createdAt: new Date().toISOString(),
-        },
-        {
-          id: 3,
-          patientId: 1003,
-          patientName: "Robert Davis",
-          recordDate: new Date().toISOString(),
-          heartRate: 58,
-          rhythm: HeartRhythm.Bradycardia,
-          interpretation: "Sinus bradycardia",
-          abnormalities: ["Low heart rate"],
-          performedBy: "Dr. Williams",
-          status: ECGStatus.Pending,
-          prInterval: 170,
-          qrsDuration: 85,
-          createdAt: new Date().toISOString(),
-        },
-      ];
-    },
+    queryFn: () => ecgApi.getAll(),
   });
+
+  const records = response?.data || [];
 
   const filteredRecords = records?.filter((record) => {
     const matchesSearch =

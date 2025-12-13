@@ -1,48 +1,28 @@
-import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Dialog } from '@headlessui/react';
-import { format } from 'date-fns';
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Dialog } from "@headlessui/react";
+import { format } from "date-fns";
 import type {
   SkinBiopsy,
   CreateSkinBiopsyRequest,
   UpdateBiopsyResultRequest,
   BiopsyStatus,
   BiopsyTechnique,
-} from '../../types/dermatology';
-
-// Mock API - Replace with actual dermatology API
-const biopsiesApi = {
-  getAll: async () => {
-    // TODO: Implement actual API call
-    return { data: [] as SkinBiopsy[] };
-  },
-  create: async (data: CreateSkinBiopsyRequest) => {
-    // TODO: Implement actual API call
-    console.log('Creating biopsy:', data);
-    return { data: { id: Date.now(), ...data, createdAt: new Date().toISOString() } };
-  },
-  updateResult: async (data: UpdateBiopsyResultRequest) => {
-    // TODO: Implement actual API call
-    console.log('Updating biopsy result:', data);
-    return { data: { id: data.biopsyId, ...data } };
-  },
-  delete: async (id: number) => {
-    // TODO: Implement actual API call
-    console.log('Deleting biopsy:', id);
-    return { data: { success: true } };
-  },
-};
+} from "../../types/dermatology";
+import { biopsiesApi } from "../../lib/api";
 
 export const Biopsies = () => {
   const queryClient = useQueryClient();
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isResultModalOpen, setIsResultModalOpen] = useState(false);
-  const [selectedBiopsy, setSelectedBiopsy] = useState<SkinBiopsy | undefined>(undefined);
+  const [selectedBiopsy, setSelectedBiopsy] = useState<SkinBiopsy | undefined>(
+    undefined,
+  );
 
   const { data: biopsies, isLoading } = useQuery<SkinBiopsy[]>({
-    queryKey: ['skin-biopsies'],
+    queryKey: ["skin-biopsies"],
     queryFn: async () => {
       const response = await biopsiesApi.getAll();
       return response.data;
@@ -52,15 +32,16 @@ export const Biopsies = () => {
   const createMutation = useMutation({
     mutationFn: (data: CreateSkinBiopsyRequest) => biopsiesApi.create(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['skin-biopsies'] });
+      queryClient.invalidateQueries({ queryKey: ["skin-biopsies"] });
       setIsModalOpen(false);
     },
   });
 
   const updateResultMutation = useMutation({
-    mutationFn: (data: UpdateBiopsyResultRequest) => biopsiesApi.updateResult(data),
+    mutationFn: (data: UpdateBiopsyResultRequest) =>
+      biopsiesApi.updateResult(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['skin-biopsies'] });
+      queryClient.invalidateQueries({ queryKey: ["skin-biopsies"] });
       setIsResultModalOpen(false);
       setSelectedBiopsy(undefined);
     },
@@ -69,12 +50,12 @@ export const Biopsies = () => {
   const deleteMutation = useMutation({
     mutationFn: (id: number) => biopsiesApi.delete(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['skin-biopsies'] });
+      queryClient.invalidateQueries({ queryKey: ["skin-biopsies"] });
     },
   });
 
   const handleDelete = (biopsy: SkinBiopsy) => {
-    if (window.confirm('Are you sure you want to delete this biopsy record?')) {
+    if (window.confirm("Are you sure you want to delete this biopsy record?")) {
       deleteMutation.mutate(biopsy.id);
     }
   };
@@ -100,56 +81,67 @@ export const Biopsies = () => {
   const filteredBiopsies = biopsies
     ?.filter((biopsy) => {
       const matchesSearch =
-        biopsy.patient?.fullNameEn.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        biopsy.patient?.fullNameEn
+          .toLowerCase()
+          .includes(searchTerm.toLowerCase()) ||
         biopsy.site.toLowerCase().includes(searchTerm.toLowerCase()) ||
         biopsy.indication.toLowerCase().includes(searchTerm.toLowerCase());
 
-      const matchesStatus = statusFilter === 'all' || biopsy.status === statusFilter;
+      const matchesStatus =
+        statusFilter === "all" || biopsy.status === statusFilter;
 
       return matchesSearch && matchesStatus;
     })
-    .sort((a, b) => new Date(b.biopsyDate).getTime() - new Date(a.biopsyDate).getTime());
+    .sort(
+      (a, b) =>
+        new Date(b.biopsyDate).getTime() - new Date(a.biopsyDate).getTime(),
+    );
 
   const getStatusLabel = (status: BiopsyStatus) => {
     const labels: Record<BiopsyStatus, string> = {
-      pending: 'Pending',
-      processing: 'Processing',
-      completed: 'Completed',
-      requires_followup: 'Requires Follow-up',
+      pending: "Pending",
+      processing: "Processing",
+      completed: "Completed",
+      requires_followup: "Requires Follow-up",
     };
     return labels[status];
   };
 
   const getStatusColor = (status: BiopsyStatus) => {
     const colors: Record<BiopsyStatus, string> = {
-      pending: 'text-yellow-600 bg-yellow-100',
-      processing: 'text-blue-600 bg-blue-100',
-      completed: 'text-green-600 bg-green-100',
-      requires_followup: 'text-red-600 bg-red-100',
+      pending: "text-yellow-600 bg-yellow-100",
+      processing: "text-blue-600 bg-blue-100",
+      completed: "text-green-600 bg-green-100",
+      requires_followup: "text-red-600 bg-red-100",
     };
     return colors[status];
   };
 
   const getTechniqueLabel = (technique: BiopsyTechnique) => {
     const labels: Record<BiopsyTechnique, string> = {
-      shave: 'Shave Biopsy',
-      punch: 'Punch Biopsy',
-      excisional: 'Excisional Biopsy',
-      incisional: 'Incisional Biopsy',
+      shave: "Shave Biopsy",
+      punch: "Punch Biopsy",
+      excisional: "Excisional Biopsy",
+      incisional: "Incisional Biopsy",
     };
     return labels[technique];
   };
 
-  const pendingCount = biopsies?.filter((b) => b.status === 'pending').length || 0;
-  const processingCount = biopsies?.filter((b) => b.status === 'processing').length || 0;
-  const followUpCount = biopsies?.filter((b) => b.status === 'requires_followup').length || 0;
+  const pendingCount =
+    biopsies?.filter((b) => b.status === "pending").length || 0;
+  const processingCount =
+    biopsies?.filter((b) => b.status === "processing").length || 0;
+  const followUpCount =
+    biopsies?.filter((b) => b.status === "requires_followup").length || 0;
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Skin Biopsies</h1>
-          <p className="text-gray-600 mt-1">Manage biopsy procedures and pathology results</p>
+          <p className="text-gray-600 mt-1">
+            Manage biopsy procedures and pathology results
+          </p>
         </div>
         <button onClick={handleCreate} className="btn btn-primary">
           New Biopsy
@@ -160,15 +152,21 @@ export const Biopsies = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="card">
           <p className="text-sm text-gray-600">Pending Results</p>
-          <p className="text-2xl font-bold text-yellow-600 mt-1">{pendingCount}</p>
+          <p className="text-2xl font-bold text-yellow-600 mt-1">
+            {pendingCount}
+          </p>
         </div>
         <div className="card">
           <p className="text-sm text-gray-600">Processing</p>
-          <p className="text-2xl font-bold text-blue-600 mt-1">{processingCount}</p>
+          <p className="text-2xl font-bold text-blue-600 mt-1">
+            {processingCount}
+          </p>
         </div>
         <div className="card">
           <p className="text-sm text-gray-600">Requires Follow-up</p>
-          <p className="text-2xl font-bold text-red-600 mt-1">{followUpCount}</p>
+          <p className="text-2xl font-bold text-red-600 mt-1">
+            {followUpCount}
+          </p>
         </div>
       </div>
 
@@ -234,19 +232,22 @@ export const Biopsies = () => {
                 {filteredBiopsies.map((biopsy) => (
                   <tr key={biopsy.id} className="hover:bg-gray-50">
                     <td className="px-4 py-3 text-sm text-gray-900">
-                      {format(new Date(biopsy.biopsyDate), 'MMM d, yyyy')}
+                      {format(new Date(biopsy.biopsyDate), "MMM d, yyyy")}
                     </td>
                     <td className="px-4 py-3 text-sm font-medium text-gray-900">
-                      {biopsy.patient?.fullNameEn || `Patient #${biopsy.patientId}`}
+                      {biopsy.patient?.fullNameEn ||
+                        `Patient #${biopsy.patientId}`}
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-600">{biopsy.site}</td>
+                    <td className="px-4 py-3 text-sm text-gray-600">
+                      {biopsy.site}
+                    </td>
                     <td className="px-4 py-3 text-sm text-gray-600">
                       {getTechniqueLabel(biopsy.technique)}
                     </td>
                     <td className="px-4 py-3 text-sm">
                       <span
                         className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
-                          biopsy.status
+                          biopsy.status,
                         )}`}
                       >
                         {getStatusLabel(biopsy.status)}
@@ -254,13 +255,15 @@ export const Biopsies = () => {
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-600">
                       {biopsy.resultDate
-                        ? format(new Date(biopsy.resultDate), 'MMM d, yyyy')
-                        : '-'}
+                        ? format(new Date(biopsy.resultDate), "MMM d, yyyy")
+                        : "-"}
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-600">{biopsy.performedBy}</td>
+                    <td className="px-4 py-3 text-sm text-gray-600">
+                      {biopsy.performedBy}
+                    </td>
                     <td className="px-4 py-3 text-sm">
                       <div className="flex items-center gap-2">
-                        {biopsy.status !== 'completed' && (
+                        {biopsy.status !== "completed" && (
                           <button
                             onClick={() => handleAddResult(biopsy)}
                             className="text-primary-600 hover:text-primary-800"
@@ -283,15 +286,19 @@ export const Biopsies = () => {
           </div>
         ) : (
           <div className="text-center py-8 text-gray-500">
-            {searchTerm || statusFilter !== 'all'
-              ? 'No biopsies found matching your filters.'
-              : 'No biopsies found.'}
+            {searchTerm || statusFilter !== "all"
+              ? "No biopsies found matching your filters."
+              : "No biopsies found."}
           </div>
         )}
       </div>
 
       {/* Create Biopsy Modal */}
-      <Dialog open={isModalOpen} onClose={handleModalClose} className="relative z-50">
+      <Dialog
+        open={isModalOpen}
+        onClose={handleModalClose}
+        className="relative z-50"
+      >
         <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
         <div className="fixed inset-0 flex items-center justify-center p-4">
           <Dialog.Panel className="mx-auto max-w-3xl w-full bg-white rounded-lg shadow-xl max-h-[90vh] overflow-y-auto">
@@ -310,7 +317,11 @@ export const Biopsies = () => {
       </Dialog>
 
       {/* Add Result Modal */}
-      <Dialog open={isResultModalOpen} onClose={handleResultModalClose} className="relative z-50">
+      <Dialog
+        open={isResultModalOpen}
+        onClose={handleResultModalClose}
+        className="relative z-50"
+      >
         <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
         <div className="fixed inset-0 flex items-center justify-center p-4">
           <Dialog.Panel className="mx-auto max-w-3xl w-full bg-white rounded-lg shadow-xl max-h-[90vh] overflow-y-auto">
@@ -344,13 +355,13 @@ interface BiopsyFormProps {
 const BiopsyForm = ({ onSubmit, onCancel, isSubmitting }: BiopsyFormProps) => {
   const [formData, setFormData] = useState({
     patientId: 0,
-    biopsyDate: new Date().toISOString().split('T')[0],
-    site: '',
-    indication: '',
-    technique: 'punch' as BiopsyTechnique,
-    specimenDescription: '',
-    performedBy: '',
-    notes: '',
+    biopsyDate: new Date().toISOString().split("T")[0],
+    site: "",
+    indication: "",
+    technique: "punch" as BiopsyTechnique,
+    specimenDescription: "",
+    performedBy: "",
+    notes: "",
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -370,8 +381,10 @@ const BiopsyForm = ({ onSubmit, onCancel, isSubmitting }: BiopsyFormProps) => {
           <input
             type="number"
             required
-            value={formData.patientId || ''}
-            onChange={(e) => setFormData({ ...formData, patientId: parseInt(e.target.value) })}
+            value={formData.patientId || ""}
+            onChange={(e) =>
+              setFormData({ ...formData, patientId: parseInt(e.target.value) })
+            }
             className="input w-full"
           />
         </div>
@@ -381,7 +394,9 @@ const BiopsyForm = ({ onSubmit, onCancel, isSubmitting }: BiopsyFormProps) => {
             type="date"
             required
             value={formData.biopsyDate}
-            onChange={(e) => setFormData({ ...formData, biopsyDate: e.target.value })}
+            onChange={(e) =>
+              setFormData({ ...formData, biopsyDate: e.target.value })
+            }
             className="input w-full"
           />
         </div>
@@ -404,7 +419,12 @@ const BiopsyForm = ({ onSubmit, onCancel, isSubmitting }: BiopsyFormProps) => {
           <select
             required
             value={formData.technique}
-            onChange={(e) => setFormData({ ...formData, technique: e.target.value as BiopsyTechnique })}
+            onChange={(e) =>
+              setFormData({
+                ...formData,
+                technique: e.target.value as BiopsyTechnique,
+              })
+            }
             className="input w-full"
           >
             <option value="shave">Shave Biopsy</option>
@@ -420,7 +440,9 @@ const BiopsyForm = ({ onSubmit, onCancel, isSubmitting }: BiopsyFormProps) => {
         <textarea
           required
           value={formData.indication}
-          onChange={(e) => setFormData({ ...formData, indication: e.target.value })}
+          onChange={(e) =>
+            setFormData({ ...formData, indication: e.target.value })
+          }
           className="input w-full"
           rows={2}
           placeholder="Reason for biopsy and clinical findings"
@@ -431,7 +453,9 @@ const BiopsyForm = ({ onSubmit, onCancel, isSubmitting }: BiopsyFormProps) => {
         <label className="label">Specimen Description</label>
         <textarea
           value={formData.specimenDescription}
-          onChange={(e) => setFormData({ ...formData, specimenDescription: e.target.value })}
+          onChange={(e) =>
+            setFormData({ ...formData, specimenDescription: e.target.value })
+          }
           className="input w-full"
           rows={2}
           placeholder="Description of specimen collected"
@@ -444,7 +468,9 @@ const BiopsyForm = ({ onSubmit, onCancel, isSubmitting }: BiopsyFormProps) => {
           type="text"
           required
           value={formData.performedBy}
-          onChange={(e) => setFormData({ ...formData, performedBy: e.target.value })}
+          onChange={(e) =>
+            setFormData({ ...formData, performedBy: e.target.value })
+          }
           className="input w-full"
           placeholder="Provider name"
         />
@@ -465,8 +491,12 @@ const BiopsyForm = ({ onSubmit, onCancel, isSubmitting }: BiopsyFormProps) => {
         <button type="button" onClick={onCancel} className="btn btn-secondary">
           Cancel
         </button>
-        <button type="submit" disabled={isSubmitting} className="btn btn-primary">
-          {isSubmitting ? 'Creating...' : 'Create Biopsy'}
+        <button
+          type="submit"
+          disabled={isSubmitting}
+          className="btn btn-primary"
+        >
+          {isSubmitting ? "Creating..." : "Create Biopsy"}
         </button>
       </div>
     </form>
@@ -481,16 +511,21 @@ interface BiopsyResultFormProps {
   isSubmitting: boolean;
 }
 
-const BiopsyResultForm = ({ biopsy, onSubmit, onCancel, isSubmitting }: BiopsyResultFormProps) => {
+const BiopsyResultForm = ({
+  biopsy,
+  onSubmit,
+  onCancel,
+  isSubmitting,
+}: BiopsyResultFormProps) => {
   const [formData, setFormData] = useState({
-    pathologyResult: biopsy.pathologyResult || '',
-    diagnosis: biopsy.diagnosis || '',
+    pathologyResult: biopsy.pathologyResult || "",
+    diagnosis: biopsy.diagnosis || "",
     status: biopsy.status,
     resultDate: biopsy.resultDate
-      ? biopsy.resultDate.split('T')[0]
-      : new Date().toISOString().split('T')[0],
+      ? biopsy.resultDate.split("T")[0]
+      : new Date().toISOString().split("T")[0],
     followUpRequired: biopsy.followUpRequired || false,
-    followUpDate: biopsy.followUpDate ? biopsy.followUpDate.split('T')[0] : '',
+    followUpDate: biopsy.followUpDate ? biopsy.followUpDate.split("T")[0] : "",
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -507,9 +542,21 @@ const BiopsyResultForm = ({ biopsy, onSubmit, onCancel, isSubmitting }: BiopsyRe
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="bg-gray-50 p-3 rounded-lg mb-4">
-        <p className="text-sm text-gray-600">Patient: <span className="font-medium text-gray-900">{biopsy.patient?.fullNameEn || `#${biopsy.patientId}`}</span></p>
-        <p className="text-sm text-gray-600">Site: <span className="font-medium text-gray-900">{biopsy.site}</span></p>
-        <p className="text-sm text-gray-600">Biopsy Date: <span className="font-medium text-gray-900">{format(new Date(biopsy.biopsyDate), 'MMMM d, yyyy')}</span></p>
+        <p className="text-sm text-gray-600">
+          Patient:{" "}
+          <span className="font-medium text-gray-900">
+            {biopsy.patient?.fullNameEn || `#${biopsy.patientId}`}
+          </span>
+        </p>
+        <p className="text-sm text-gray-600">
+          Site: <span className="font-medium text-gray-900">{biopsy.site}</span>
+        </p>
+        <p className="text-sm text-gray-600">
+          Biopsy Date:{" "}
+          <span className="font-medium text-gray-900">
+            {format(new Date(biopsy.biopsyDate), "MMMM d, yyyy")}
+          </span>
+        </p>
       </div>
 
       <div>
@@ -517,7 +564,9 @@ const BiopsyResultForm = ({ biopsy, onSubmit, onCancel, isSubmitting }: BiopsyRe
         <textarea
           required
           value={formData.pathologyResult}
-          onChange={(e) => setFormData({ ...formData, pathologyResult: e.target.value })}
+          onChange={(e) =>
+            setFormData({ ...formData, pathologyResult: e.target.value })
+          }
           className="input w-full"
           rows={4}
           placeholder="Detailed pathology findings"
@@ -529,7 +578,9 @@ const BiopsyResultForm = ({ biopsy, onSubmit, onCancel, isSubmitting }: BiopsyRe
         <input
           type="text"
           value={formData.diagnosis}
-          onChange={(e) => setFormData({ ...formData, diagnosis: e.target.value })}
+          onChange={(e) =>
+            setFormData({ ...formData, diagnosis: e.target.value })
+          }
           className="input w-full"
           placeholder="Final diagnosis"
         />
@@ -541,7 +592,12 @@ const BiopsyResultForm = ({ biopsy, onSubmit, onCancel, isSubmitting }: BiopsyRe
           <select
             required
             value={formData.status}
-            onChange={(e) => setFormData({ ...formData, status: e.target.value as BiopsyStatus })}
+            onChange={(e) =>
+              setFormData({
+                ...formData,
+                status: e.target.value as BiopsyStatus,
+              })
+            }
             className="input w-full"
           >
             <option value="processing">Processing</option>
@@ -555,7 +611,9 @@ const BiopsyResultForm = ({ biopsy, onSubmit, onCancel, isSubmitting }: BiopsyRe
             type="date"
             required
             value={formData.resultDate}
-            onChange={(e) => setFormData({ ...formData, resultDate: e.target.value })}
+            onChange={(e) =>
+              setFormData({ ...formData, resultDate: e.target.value })
+            }
             className="input w-full"
           />
         </div>
@@ -566,7 +624,9 @@ const BiopsyResultForm = ({ biopsy, onSubmit, onCancel, isSubmitting }: BiopsyRe
           type="checkbox"
           id="followUpRequired"
           checked={formData.followUpRequired}
-          onChange={(e) => setFormData({ ...formData, followUpRequired: e.target.checked })}
+          onChange={(e) =>
+            setFormData({ ...formData, followUpRequired: e.target.checked })
+          }
           className="mr-2"
         />
         <label htmlFor="followUpRequired" className="text-sm text-gray-700">
@@ -580,7 +640,9 @@ const BiopsyResultForm = ({ biopsy, onSubmit, onCancel, isSubmitting }: BiopsyRe
           <input
             type="date"
             value={formData.followUpDate}
-            onChange={(e) => setFormData({ ...formData, followUpDate: e.target.value })}
+            onChange={(e) =>
+              setFormData({ ...formData, followUpDate: e.target.value })
+            }
             className="input w-full"
           />
         </div>
@@ -590,8 +652,12 @@ const BiopsyResultForm = ({ biopsy, onSubmit, onCancel, isSubmitting }: BiopsyRe
         <button type="button" onClick={onCancel} className="btn btn-secondary">
           Cancel
         </button>
-        <button type="submit" disabled={isSubmitting} className="btn btn-primary">
-          {isSubmitting ? 'Saving...' : 'Save Result'}
+        <button
+          type="submit"
+          disabled={isSubmitting}
+          className="btn btn-primary"
+        >
+          {isSubmitting ? "Saving..." : "Save Result"}
         </button>
       </div>
     </form>

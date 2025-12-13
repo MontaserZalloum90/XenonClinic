@@ -8,6 +8,7 @@ import {
   PhotoIcon,
 } from "@heroicons/react/24/outline";
 import { format } from "date-fns";
+import { ultrasoundsApi } from "../../lib/api";
 
 interface Ultrasound {
   id: number;
@@ -55,68 +56,12 @@ export const Ultrasounds = () => {
     undefined,
   );
 
-  const { data: exams, isLoading } = useQuery<Ultrasound[]>({
+  const { data: examsResponse, isLoading } = useQuery<Ultrasound[]>({
     queryKey: ["ultrasounds"],
-    queryFn: async () => {
-      return [
-        {
-          id: 1,
-          patientId: 7001,
-          patientName: "Maria Garcia",
-          examDate: new Date().toISOString(),
-          gestationalAge: 20,
-          examType: "anatomy" as const,
-          fetalHeartRate: 148,
-          estimatedFetalWeight: 350,
-          amnioticFluidIndex: 14,
-          placentaLocation: "Posterior",
-          presentation: "Cephalic",
-          findings:
-            "Normal anatomy survey. Four chamber heart view normal. Brain structures normal. Spine intact.",
-          impression: "Normal 20-week anatomy scan. No abnormalities detected.",
-          performedBy: "Tech. Maria Santos",
-          status: "reviewed" as const,
-          images: 25,
-          createdAt: new Date().toISOString(),
-        },
-        {
-          id: 2,
-          patientId: 7002,
-          patientName: "Jennifer Wilson",
-          examDate: new Date().toISOString(),
-          gestationalAge: 32,
-          examType: "growth" as const,
-          fetalHeartRate: 145,
-          estimatedFetalWeight: 1800,
-          amnioticFluidIndex: 12,
-          placentaLocation: "Anterior",
-          presentation: "Cephalic",
-          findings: "EFW 1800g, 50th percentile. Normal AFI.",
-          impression: "Appropriate fetal growth for gestational age.",
-          performedBy: "Tech. John Davis",
-          status: "completed" as const,
-          images: 15,
-          createdAt: new Date().toISOString(),
-        },
-        {
-          id: 3,
-          patientId: 7003,
-          patientName: "Lisa Anderson",
-          examDate: new Date(
-            Date.now() + 2 * 24 * 60 * 60 * 1000,
-          ).toISOString(),
-          gestationalAge: 12,
-          examType: "dating" as const,
-          placentaLocation: "TBD",
-          findings: "",
-          impression: "",
-          performedBy: "Tech. Maria Santos",
-          status: "pending" as const,
-          createdAt: new Date().toISOString(),
-        },
-      ];
-    },
+    queryFn: () => ultrasoundsApi.getAll(),
   });
+
+  const exams = examsResponse?.data || [];
 
   const filteredExams = exams?.filter((exam) => {
     const matchesSearch =

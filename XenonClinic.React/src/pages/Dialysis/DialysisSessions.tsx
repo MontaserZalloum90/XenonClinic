@@ -8,6 +8,7 @@ import {
   BeakerIcon,
 } from "@heroicons/react/24/outline";
 import { format } from "date-fns";
+import { dialysisSessionsApi } from "../../lib/api";
 
 interface DialysisSession {
   id: number;
@@ -43,78 +44,11 @@ export const DialysisSessions = () => {
     DialysisSession | undefined
   >(undefined);
 
-  const { data: sessions, isLoading } = useQuery<DialysisSession[]>({
+  const { data: sessions = [], isLoading } = useQuery<DialysisSession[]>({
     queryKey: ["dialysis-sessions"],
     queryFn: async () => {
-      return [
-        {
-          id: 1,
-          patientId: 9001,
-          patientName: "George Thompson",
-          sessionDate: new Date().toISOString(),
-          dialysisType: "hemodialysis" as const,
-          accessType: "AVF" as const,
-          machine: "Fresenius 5008S #3",
-          duration: 240,
-          preWeight: 78.5,
-          postWeight: 75.2,
-          fluidRemoved: 3.3,
-          bloodFlow: 350,
-          dialysateFlow: 500,
-          heparin: 4000,
-          preVitals: { bp: "158/92", hr: 82, temp: 36.5 },
-          postVitals: { bp: "138/82", hr: 78, temp: 36.4 },
-          ktv: 1.45,
-          urr: 72,
-          performedBy: "RN Maria Garcia",
-          status: "completed" as const,
-          notes: "Uneventful session",
-          createdAt: new Date().toISOString(),
-        },
-        {
-          id: 2,
-          patientId: 9002,
-          patientName: "Patricia Wilson",
-          sessionDate: new Date().toISOString(),
-          dialysisType: "hemodialysis" as const,
-          accessType: "catheter" as const,
-          machine: "Fresenius 5008S #5",
-          duration: 180,
-          preWeight: 65.2,
-          postWeight: 63.0,
-          fluidRemoved: 2.2,
-          bloodFlow: 300,
-          dialysateFlow: 500,
-          heparin: 3000,
-          preVitals: { bp: "145/88", hr: 76, temp: 36.6 },
-          postVitals: { bp: "130/78", hr: 72, temp: 36.5 },
-          intradialyticEvents: [
-            "Mild cramping at 120 min - resolved with saline",
-          ],
-          performedBy: "RN John Davis",
-          status: "completed" as const,
-          createdAt: new Date().toISOString(),
-        },
-        {
-          id: 3,
-          patientId: 9003,
-          patientName: "Robert Martinez",
-          sessionDate: new Date(Date.now() + 4 * 60 * 60 * 1000).toISOString(),
-          dialysisType: "hemodialysis" as const,
-          accessType: "AVG" as const,
-          machine: "Fresenius 5008S #1",
-          duration: 240,
-          preWeight: 82.0,
-          postWeight: 82.0,
-          fluidRemoved: 0,
-          bloodFlow: 350,
-          preVitals: { bp: "150/90", hr: 80, temp: 36.5 },
-          postVitals: { bp: "150/90", hr: 80, temp: 36.5 },
-          performedBy: "RN Maria Garcia",
-          status: "scheduled" as const,
-          createdAt: new Date().toISOString(),
-        },
-      ];
+      const response = await dialysisSessionsApi.getAll();
+      return response.data;
     },
   });
 

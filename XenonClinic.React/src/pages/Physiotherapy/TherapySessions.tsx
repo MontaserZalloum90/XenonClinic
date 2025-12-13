@@ -8,6 +8,7 @@ import {
   UserGroupIcon,
 } from "@heroicons/react/24/outline";
 import { format } from "date-fns";
+import { therapySessionsApi } from "../../lib/api";
 
 interface TherapySession {
   id: number;
@@ -38,85 +39,11 @@ export const TherapySessions = () => {
     TherapySession | undefined
   >(undefined);
 
-  const { data: sessions, isLoading } = useQuery<TherapySession[]>({
+  const { data: sessions = [], isLoading } = useQuery<TherapySession[]>({
     queryKey: ["therapy-sessions"],
     queryFn: async () => {
-      return [
-        {
-          id: 1,
-          patientId: 8001,
-          patientName: "Robert Johnson",
-          sessionDate: new Date().toISOString(),
-          sessionType: "follow-up" as const,
-          treatmentArea: "Lower back",
-          diagnosis: "Chronic low back pain - L4-L5 disc herniation",
-          interventions: [
-            "Manual therapy",
-            "Core strengthening",
-            "Posture education",
-          ],
-          duration: 45,
-          painLevelBefore: 6,
-          painLevelAfter: 3,
-          progress: "improving" as const,
-          goals: "Return to work without pain",
-          homeExercises:
-            "Bird-dog, dead bug, cat-cow stretches - 10 reps each, twice daily",
-          nextSessionDate: new Date(
-            Date.now() + 3 * 24 * 60 * 60 * 1000,
-          ).toISOString(),
-          therapist: "PT Sarah Wilson",
-          status: "completed" as const,
-          createdAt: new Date().toISOString(),
-        },
-        {
-          id: 2,
-          patientId: 8002,
-          patientName: "Emily Davis",
-          sessionDate: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(),
-          sessionType: "follow-up" as const,
-          treatmentArea: "Right shoulder",
-          diagnosis: "Post-surgical rotator cuff repair",
-          interventions: [
-            "ROM exercises",
-            "Strengthening",
-            "Scar mobilization",
-          ],
-          duration: 60,
-          painLevelBefore: 4,
-          progress: "improving" as const,
-          goals: "Full ROM and return to tennis",
-          therapist: "PT Michael Chen",
-          status: "scheduled" as const,
-          createdAt: new Date().toISOString(),
-        },
-        {
-          id: 3,
-          patientId: 8003,
-          patientName: "William Martinez",
-          sessionDate: new Date().toISOString(),
-          sessionType: "initial" as const,
-          treatmentArea: "Left knee",
-          diagnosis: "ACL reconstruction - 6 weeks post-op",
-          interventions: [
-            "Gait training",
-            "Quad strengthening",
-            "Balance exercises",
-          ],
-          duration: 60,
-          painLevelBefore: 5,
-          painLevelAfter: 4,
-          progress: "stable" as const,
-          goals: "Return to recreational sports",
-          homeExercises: "Quad sets, heel slides, straight leg raises",
-          nextSessionDate: new Date(
-            Date.now() + 2 * 24 * 60 * 60 * 1000,
-          ).toISOString(),
-          therapist: "PT Sarah Wilson",
-          status: "completed" as const,
-          createdAt: new Date().toISOString(),
-        },
-      ];
+      const response = await therapySessionsApi.getAll();
+      return response.data;
     },
   });
 

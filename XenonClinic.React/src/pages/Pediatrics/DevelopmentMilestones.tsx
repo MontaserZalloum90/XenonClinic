@@ -13,6 +13,7 @@ import {
 import { format } from "date-fns";
 import type { DevelopmentMilestone } from "../../types/pediatrics";
 import { MilestoneCategory, MilestoneStatus } from "../../types/pediatrics";
+import { developmentMilestonesApi } from "../../lib/api";
 
 export const DevelopmentMilestones = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -23,99 +24,14 @@ export const DevelopmentMilestones = () => {
     DevelopmentMilestone | undefined
   >(undefined);
 
-  const { data: milestones, isLoading } = useQuery<DevelopmentMilestone[]>({
+  const { data: milestonesResponse, isLoading } = useQuery<
+    DevelopmentMilestone[]
+  >({
     queryKey: ["development-milestones"],
-    queryFn: async () => {
-      return [
-        {
-          id: 1,
-          patientId: 6001,
-          patientName: "Emma Johnson (6 months)",
-          milestoneCategory: MilestoneCategory.Motor,
-          milestoneName: "Sits without support",
-          expectedAge: 6,
-          achievedDate: new Date().toISOString(),
-          status: MilestoneStatus.Achieved,
-          assessedBy: "Dr. Sarah Chen",
-          createdAt: new Date().toISOString(),
-        },
-        {
-          id: 2,
-          patientId: 6001,
-          patientName: "Emma Johnson (6 months)",
-          milestoneCategory: MilestoneCategory.Social,
-          milestoneName: "Responds to own name",
-          expectedAge: 6,
-          achievedDate: new Date().toISOString(),
-          status: MilestoneStatus.Achieved,
-          assessedBy: "Dr. Sarah Chen",
-          createdAt: new Date().toISOString(),
-        },
-        {
-          id: 3,
-          patientId: 6002,
-          patientName: "Liam Smith (12 months)",
-          milestoneCategory: MilestoneCategory.Language,
-          milestoneName: "Says mama/dada",
-          expectedAge: 12,
-          status: MilestoneStatus.NotYetAchieved,
-          assessedBy: "Dr. Michael Williams",
-          notes: "Babbling present, continue to monitor",
-          createdAt: new Date().toISOString(),
-        },
-        {
-          id: 4,
-          patientId: 6003,
-          patientName: "Sophia Williams (18 months)",
-          milestoneCategory: MilestoneCategory.Gross_Motor,
-          milestoneName: "Walks independently",
-          expectedAge: 15,
-          status: MilestoneStatus.Delayed,
-          assessedBy: "Dr. Sarah Chen",
-          notes: "Referred to PT evaluation",
-          createdAt: new Date().toISOString(),
-        },
-        {
-          id: 5,
-          patientId: 6004,
-          patientName: "Noah Brown (24 months)",
-          milestoneCategory: MilestoneCategory.Cognitive,
-          milestoneName: "Points to named objects",
-          expectedAge: 18,
-          achievedDate: new Date(
-            Date.now() - 60 * 24 * 60 * 60 * 1000,
-          ).toISOString(),
-          status: MilestoneStatus.Achieved,
-          assessedBy: "Dr. Michael Williams",
-          createdAt: new Date().toISOString(),
-        },
-        {
-          id: 6,
-          patientId: 6004,
-          patientName: "Noah Brown (24 months)",
-          milestoneCategory: MilestoneCategory.Language,
-          milestoneName: "Uses 2-word phrases",
-          expectedAge: 24,
-          achievedDate: new Date().toISOString(),
-          status: MilestoneStatus.Achieved,
-          assessedBy: "Dr. Michael Williams",
-          createdAt: new Date().toISOString(),
-        },
-        {
-          id: 7,
-          patientId: 6005,
-          patientName: "Olivia Davis (9 months)",
-          milestoneCategory: MilestoneCategory.Fine_Motor,
-          milestoneName: "Picks up small objects with pincer grasp",
-          expectedAge: 9,
-          status: MilestoneStatus.Concerning,
-          assessedBy: "Dr. Sarah Chen",
-          notes: "Unable to demonstrate pincer grasp, recommend OT evaluation",
-          createdAt: new Date().toISOString(),
-        },
-      ];
-    },
+    queryFn: () => developmentMilestonesApi.getAll(),
   });
+
+  const milestones = milestonesResponse?.data || [];
 
   const filteredMilestones = milestones?.filter((milestone) => {
     const matchesSearch =

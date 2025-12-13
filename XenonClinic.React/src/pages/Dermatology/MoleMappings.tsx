@@ -8,31 +8,7 @@ import type {
   MoleLocation,
   RiskLevel,
 } from "../../types/dermatology";
-
-// Mock API - Replace with actual dermatology API
-const moleMappingsApi = {
-  getAll: async () => {
-    // TODO: Implement actual API call
-    return { data: [] as MoleMapping[] };
-  },
-  create: async (data: CreateMoleMappingRequest) => {
-    // TODO: Implement actual API call
-    console.log("Creating mole mapping:", data);
-    return {
-      data: { id: Date.now(), ...data, createdAt: new Date().toISOString() },
-    };
-  },
-  update: async (id: number, data: Partial<MoleMapping>) => {
-    // TODO: Implement actual API call
-    console.log("Updating mole mapping:", id, data);
-    return { data: { id, ...data } };
-  },
-  delete: async (id: number) => {
-    // TODO: Implement actual API call
-    console.log("Deleting mole mapping:", id);
-    return { data: { success: true } };
-  },
-};
+import { moleMappingsApi } from "../../lib/api";
 
 export const MoleMappings = () => {
   const queryClient = useQueryClient();

@@ -13,6 +13,7 @@ import type {
   CreateEchoRequest,
 } from "../../types/cardiology";
 import { EchoStatus, ValveFinding } from "../../types/cardiology";
+import { echoApi } from "../../lib/api";
 
 export const EchoRecords = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -22,79 +23,12 @@ export const EchoRecords = () => {
     EchocardiogramRecord | undefined
   >(undefined);
 
-  // Mock data - Replace with actual API calls
-  const { data: records, isLoading } = useQuery<EchocardiogramRecord[]>({
+  const { data: response, isLoading } = useQuery<EchocardiogramRecord[]>({
     queryKey: ["echo-records"],
-    queryFn: async () => {
-      // Mock implementation
-      return [
-        {
-          id: 1,
-          patientId: 1001,
-          patientName: "John Smith",
-          date: new Date().toISOString(),
-          ejectionFraction: 55,
-          leftVentricleSize: "Normal",
-          rightVentricleSize: "Normal",
-          wallMotion: "Normal global and regional wall motion",
-          valveFindings: {
-            mitral: ValveFinding.Normal,
-            aortic: ValveFinding.Normal,
-            tricuspid: ValveFinding.Normal,
-            pulmonary: ValveFinding.Normal,
-          },
-          conclusions: "Normal echocardiogram study",
-          performedBy: "Dr. Johnson",
-          interpretedBy: "Dr. Williams",
-          status: EchoStatus.Reported,
-          diastolicFunction: "Normal",
-          pericardialEffusion: false,
-          createdAt: new Date().toISOString(),
-        },
-        {
-          id: 2,
-          patientId: 1002,
-          patientName: "Mary Williams",
-          date: new Date().toISOString(),
-          ejectionFraction: 35,
-          leftVentricleSize: "Dilated",
-          rightVentricleSize: "Normal",
-          wallMotion:
-            "Reduced global systolic function with hypokinesis of anterior and anteroseptal walls",
-          valveFindings: {
-            mitral: ValveFinding.Regurgitation,
-            aortic: ValveFinding.Normal,
-            tricuspid: ValveFinding.Normal,
-          },
-          conclusions:
-            "Reduced left ventricular systolic function with EF 35%. Mild mitral regurgitation.",
-          performedBy: "Dr. Brown",
-          status: EchoStatus.Completed,
-          diastolicFunction: "Impaired relaxation",
-          pericardialEffusion: false,
-          estimatedPAP: 35,
-          createdAt: new Date().toISOString(),
-        },
-        {
-          id: 3,
-          patientId: 1003,
-          patientName: "Robert Davis",
-          date: new Date().toISOString(),
-          ejectionFraction: 62,
-          leftVentricleSize: "Normal",
-          wallMotion: "Normal",
-          valveFindings: {
-            mitral: ValveFinding.Normal,
-            aortic: ValveFinding.Stenosis,
-          },
-          conclusions: "Moderate aortic stenosis. Normal LV systolic function.",
-          performedBy: "Dr. Johnson",
-          status: EchoStatus.InProgress,
-          createdAt: new Date().toISOString(),
-        },
-      ];
-    },
+    queryFn: () => echoApi.getAll(),
   });
+
+  const records = response?.data || [];
 
   const filteredRecords = records?.filter((record) => {
     const matchesSearch =

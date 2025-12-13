@@ -11,7 +11,7 @@ import {
   CalendarIcon,
 } from "@heroicons/react/24/outline";
 import { format, differenceInDays } from "date-fns";
-import api from "../../lib/api";
+import { entHearingAidsApi } from "../../lib/api";
 
 interface HearingAidRecord {
   id: number;
@@ -82,140 +82,6 @@ const statusConfig = {
   },
 };
 
-const mockRecords: HearingAidRecord[] = [
-  {
-    id: 1,
-    patientId: 101,
-    patientName: "John Smith",
-    ear: "left",
-    manufacturer: "Phonak",
-    model: "Paradise P90-R",
-    serialNumber: "PHN2024-001234",
-    type: "ric",
-    fittingDate: "2024-01-10",
-    warrantyExpiry: "2027-01-10",
-    status: "active",
-    programmingSettings: {
-      programCount: 4,
-      primaryProgram: "AutoSense OS 4.0",
-      feedbackManagement: "on",
-      noiseReduction: "high",
-      directionality: "adaptive",
-    },
-    adjustments: [
-      {
-        date: "2024-01-17",
-        type: "Fine-tuning",
-        changes: "Increased gain at 2-4kHz by 3dB per patient feedback",
-        performedBy: "Sarah Johnson, AuD",
-      },
-    ],
-    nextAppointment: "2024-02-10",
-    fittedBy: "Sarah Johnson, AuD",
-  },
-  {
-    id: 2,
-    patientId: 102,
-    patientName: "Mary Johnson",
-    ear: "binaural",
-    manufacturer: "Oticon",
-    model: "More 1",
-    serialNumber: "OTI2024-005678",
-    type: "bte",
-    fittingDate: "2023-11-15",
-    warrantyExpiry: "2026-11-15",
-    status: "active",
-    programmingSettings: {
-      programCount: 3,
-      primaryProgram: "MoreSound Intelligence",
-      feedbackManagement: "on",
-      noiseReduction: "medium",
-      directionality: "adaptive",
-    },
-    notes: "Patient very satisfied with binaural fitting",
-    fittedBy: "Dr. Michael Brown",
-  },
-  {
-    id: 3,
-    patientId: 103,
-    patientName: "Robert Davis",
-    ear: "right",
-    manufacturer: "Widex",
-    model: "Moment 440",
-    serialNumber: "WDX2023-009876",
-    type: "cic",
-    fittingDate: "2023-08-20",
-    warrantyExpiry: "2026-08-20",
-    status: "repair",
-    programmingSettings: {
-      programCount: 2,
-      primaryProgram: "PureSound",
-      feedbackManagement: "on",
-      noiseReduction: "low",
-      directionality: "omnidirectional",
-    },
-    notes: "Sent for repair - intermittent static noise",
-    fittedBy: "Sarah Johnson, AuD",
-  },
-  {
-    id: 4,
-    patientId: 104,
-    patientName: "Lisa Wilson",
-    ear: "left",
-    manufacturer: "Starkey",
-    model: "Genesis AI 24",
-    serialNumber: "STK2024-002345",
-    type: "ite",
-    fittingDate: "2024-01-05",
-    warrantyExpiry: "2027-01-05",
-    status: "active",
-    programmingSettings: {
-      programCount: 4,
-      primaryProgram: "Edge Mode",
-      feedbackManagement: "on",
-      noiseReduction: "high",
-      directionality: "adaptive",
-    },
-    nextAppointment: "2024-02-05",
-    fittedBy: "Dr. Michael Brown",
-  },
-  {
-    id: 5,
-    patientId: 105,
-    patientName: "Thomas Brown",
-    ear: "binaural",
-    manufacturer: "ReSound",
-    model: "ONE 9",
-    serialNumber: "RSN2023-007890",
-    type: "ric",
-    fittingDate: "2023-06-10",
-    warrantyExpiry: "2026-06-10",
-    status: "active",
-    programmingSettings: {
-      programCount: 5,
-      primaryProgram: "All-Around",
-      feedbackManagement: "on",
-      noiseReduction: "medium",
-      directionality: "adaptive",
-    },
-    adjustments: [
-      {
-        date: "2023-07-01",
-        type: "Initial adjustment",
-        changes: "Reduced high frequency gain for comfort",
-        performedBy: "Sarah Johnson, AuD",
-      },
-      {
-        date: "2023-09-15",
-        type: "Program addition",
-        changes: "Added music program per patient request",
-        performedBy: "Sarah Johnson, AuD",
-      },
-    ],
-    fittedBy: "Sarah Johnson, AuD",
-  },
-];
-
 export function HearingAids() {
   const [searchTerm, setSearchTerm] = useState("");
   const [typeFilter, setTypeFilter] = useState<string>("all");
@@ -225,19 +91,12 @@ export function HearingAids() {
     null,
   );
 
-  const { data: records = mockRecords, isLoading } = useQuery({
+  const { data: records = [], isLoading } = useQuery({
     queryKey: ["hearing-aids", searchTerm, typeFilter, statusFilter],
     queryFn: async () => {
-      const response = await api.get("/api/ent/hearing-aids", {
-        params: {
-          search: searchTerm,
-          type: typeFilter !== "all" ? typeFilter : undefined,
-          status: statusFilter !== "all" ? statusFilter : undefined,
-        },
-      });
+      const response = await entHearingAidsApi.getAll();
       return response.data;
     },
-    placeholderData: mockRecords,
   });
 
   const filteredRecords = records.filter((record: HearingAidRecord) => {

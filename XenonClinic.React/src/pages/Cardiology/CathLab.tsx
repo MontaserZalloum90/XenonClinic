@@ -14,6 +14,7 @@ import type {
   CreateCathRequest,
 } from "../../types/cardiology";
 import { CathProcedureType, AccessSite } from "../../types/cardiology";
+import { cathLabApi } from "../../lib/api";
 
 export const CathLab = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -23,78 +24,12 @@ export const CathLab = () => {
     CardiacCatheterization | undefined
   >(undefined);
 
-  // Mock data - Replace with actual API calls
-  const { data: procedures, isLoading } = useQuery<CardiacCatheterization[]>({
+  const { data: response, isLoading } = useQuery<CardiacCatheterization[]>({
     queryKey: ["cath-procedures"],
-    queryFn: async () => {
-      // Mock implementation
-      return [
-        {
-          id: 1,
-          patientId: 1001,
-          patientName: "John Smith",
-          procedure: CathProcedureType.Diagnostic,
-          date: new Date().toISOString(),
-          accessSite: AccessSite.Radial,
-          coronaryFindings: "Normal coronary arteries",
-          findings: "No significant stenosis in LAD, LCx, or RCA. LMCA patent.",
-          interventions: [],
-          complications: [],
-          contrast: 150,
-          fluoroscopyTime: 8,
-          conclusions: "Normal diagnostic coronary angiography",
-          performedBy: "Dr. Johnson",
-          assistedBy: "Dr. Williams",
-          createdAt: new Date().toISOString(),
-        },
-        {
-          id: 2,
-          patientId: 1002,
-          patientName: "Mary Williams",
-          procedure: CathProcedureType.PCI,
-          date: new Date().toISOString(),
-          accessSite: AccessSite.Femoral,
-          coronaryFindings: "90% stenosis in proximal LAD",
-          findings:
-            "Severe stenosis in proximal LAD. LCx and RCA with mild disease.",
-          interventions: ["Drug-eluting stent placement in LAD"],
-          stentsPlaced: 1,
-          complications: [],
-          contrast: 220,
-          fluoroscopyTime: 25,
-          conclusions:
-            "Successful PCI to LAD with drug-eluting stent. TIMI 3 flow achieved.",
-          recommendations: "Dual antiplatelet therapy for 12 months",
-          performedBy: "Dr. Brown",
-          assistedBy: "Dr. Johnson",
-          createdAt: new Date().toISOString(),
-        },
-        {
-          id: 3,
-          patientId: 1003,
-          patientName: "Robert Davis",
-          procedure: CathProcedureType.Stent,
-          date: new Date().toISOString(),
-          accessSite: AccessSite.Radial,
-          coronaryFindings: "In-stent restenosis in RCA",
-          findings: "Severe in-stent restenosis in mid RCA.",
-          interventions: [
-            "Balloon angioplasty",
-            "Drug-eluting stent placement",
-          ],
-          stentsPlaced: 1,
-          complications: ["Minor bleeding at access site"],
-          contrast: 180,
-          fluoroscopyTime: 18,
-          conclusions:
-            "Successful treatment of in-stent restenosis with additional stent.",
-          recommendations: "Continue dual antiplatelet therapy",
-          performedBy: "Dr. Williams",
-          createdAt: new Date().toISOString(),
-        },
-      ];
-    },
+    queryFn: () => cathLabApi.getAll(),
   });
+
+  const procedures = response?.data || [];
 
   const filteredProcedures = procedures?.filter((proc) => {
     const matchesSearch =

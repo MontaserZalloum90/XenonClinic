@@ -10,7 +10,7 @@ import {
   ExclamationCircleIcon,
 } from "@heroicons/react/24/outline";
 import { format } from "date-fns";
-import api from "../../lib/api";
+import { audiometryApi } from "../../lib/api";
 
 interface AudiometryTest {
   id: number;
@@ -81,136 +81,6 @@ const hearingLossConfig = {
   mixed: { label: "Mixed Loss", color: "bg-red-100 text-red-800" },
 };
 
-const mockTests: AudiometryTest[] = [
-  {
-    id: 1,
-    patientId: 101,
-    patientName: "John Smith",
-    testDate: "2024-01-22",
-    testType: "pure_tone",
-    status: "reviewed",
-    leftEar: {
-      pta: 35,
-      frequencies: {
-        "250": 30,
-        "500": 35,
-        "1000": 35,
-        "2000": 40,
-        "4000": 45,
-        "8000": 50,
-      },
-    },
-    rightEar: {
-      pta: 25,
-      frequencies: {
-        "250": 20,
-        "500": 25,
-        "1000": 25,
-        "2000": 30,
-        "4000": 35,
-        "8000": 40,
-      },
-    },
-    interpretation:
-      "Mild sensorineural hearing loss in left ear, slight high-frequency loss in right ear",
-    hearingLossType: "sensorineural",
-    recommendations:
-      "Recommend hearing aid evaluation for left ear. Retest in 6 months.",
-    performedBy: "Sarah Johnson, AuD",
-    reviewedBy: "Dr. Michael Brown",
-  },
-  {
-    id: 2,
-    patientId: 102,
-    patientName: "Mary Johnson",
-    testDate: "2024-01-21",
-    testType: "speech",
-    status: "completed",
-    leftEar: {
-      srt: 30,
-      wrs: 88,
-    },
-    rightEar: {
-      srt: 25,
-      wrs: 92,
-    },
-    interpretation:
-      "Speech reception thresholds slightly elevated bilaterally. Word recognition scores good.",
-    hearingLossType: "sensorineural",
-    performedBy: "Sarah Johnson, AuD",
-    notes: "Patient reports difficulty hearing in noisy environments.",
-  },
-  {
-    id: 3,
-    patientId: 103,
-    patientName: "Robert Davis",
-    testDate: "2024-01-23",
-    testType: "tympanometry",
-    status: "scheduled",
-    leftEar: {},
-    rightEar: {},
-    interpretation: "Pending",
-    performedBy: "Sarah Johnson, AuD",
-    notes: "Follow-up for otitis media treatment",
-  },
-  {
-    id: 4,
-    patientId: 104,
-    patientName: "Lisa Wilson",
-    testDate: "2024-01-20",
-    testType: "pure_tone",
-    status: "reviewed",
-    leftEar: {
-      pta: 15,
-      frequencies: {
-        "250": 15,
-        "500": 15,
-        "1000": 15,
-        "2000": 15,
-        "4000": 20,
-        "8000": 20,
-      },
-    },
-    rightEar: {
-      pta: 15,
-      frequencies: {
-        "250": 10,
-        "500": 15,
-        "1000": 15,
-        "2000": 15,
-        "4000": 15,
-        "8000": 20,
-      },
-    },
-    interpretation: "Hearing within normal limits bilaterally",
-    hearingLossType: "normal",
-    recommendations: "Routine follow-up in 1 year",
-    performedBy: "Sarah Johnson, AuD",
-    reviewedBy: "Dr. Michael Brown",
-  },
-  {
-    id: 5,
-    patientId: 105,
-    patientName: "Thomas Brown",
-    testDate: "2024-01-19",
-    testType: "abr",
-    status: "reviewed",
-    leftEar: {
-      pta: 55,
-    },
-    rightEar: {
-      pta: 60,
-    },
-    interpretation:
-      "ABR thresholds elevated bilaterally consistent with moderate sensorineural hearing loss",
-    hearingLossType: "sensorineural",
-    recommendations:
-      "Binaural hearing aids recommended. Refer to hearing aid specialist.",
-    performedBy: "Dr. Emily Chen",
-    reviewedBy: "Dr. Michael Brown",
-  },
-];
-
 export function AudiometryTests() {
   const [searchTerm, setSearchTerm] = useState("");
   const [typeFilter, setTypeFilter] = useState<string>("all");
@@ -218,19 +88,12 @@ export function AudiometryTests() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedTest, setSelectedTest] = useState<AudiometryTest | null>(null);
 
-  const { data: tests = mockTests, isLoading } = useQuery({
+  const { data: tests = [], isLoading } = useQuery({
     queryKey: ["audiometry-tests", searchTerm, typeFilter, statusFilter],
     queryFn: async () => {
-      const response = await api.get("/api/ent/audiometry-tests", {
-        params: {
-          search: searchTerm,
-          type: typeFilter !== "all" ? typeFilter : undefined,
-          status: statusFilter !== "all" ? statusFilter : undefined,
-        },
-      });
+      const response = await audiometryApi.getAll();
       return response.data;
     },
-    placeholderData: mockTests,
   });
 
   const filteredTests = tests.filter((test: AudiometryTest) => {

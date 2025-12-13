@@ -8,16 +8,7 @@ import type {
 import { IOPMethod as IOPMethodEnum } from "../../types/ophthalmology";
 import { Dialog } from "@headlessui/react";
 import { format } from "date-fns";
-
-// Mock API - Replace with actual API when backend is ready
-const iopApi = {
-  getAll: () => Promise.resolve({ data: [] as IOPMeasurement[] }),
-  create: (data: CreateIOPMeasurementRequest) =>
-    Promise.resolve({ data: { id: 1, ...data } }),
-  update: (id: number, data: Partial<CreateIOPMeasurementRequest>) =>
-    Promise.resolve({ data: { id, ...data } }),
-  delete: () => Promise.resolve({ data: { success: true } }),
-};
+import { iopApi } from "../../lib/api";
 
 export const IOPMeasurements = () => {
   const queryClient = useQueryClient();

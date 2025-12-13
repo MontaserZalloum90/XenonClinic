@@ -12,7 +12,7 @@ import {
   CalendarIcon,
 } from "@heroicons/react/24/outline";
 import { format, differenceInDays } from "date-fns";
-import api from "../../lib/api";
+import { ivfCyclesApi } from "../../lib/api";
 
 interface IVFCycle {
   id: number;
@@ -110,112 +110,18 @@ const protocolConfig: { [key: string]: string } = {
   donor_egg: "Donor Egg",
 };
 
-const mockCycles: IVFCycle[] = [
-  {
-    id: 1,
-    patientId: 101,
-    patientName: "Sarah Johnson",
-    cycleNumber: 1,
-    startDate: "2024-01-05",
-    protocol: "short_antagonist",
-    status: "stimulation",
-    stimulationDays: 8,
-    managedBy: "Dr. Emily Chen",
-    medications: [
-      { name: "Gonal-F", dose: "225 IU", startDay: 2 },
-      { name: "Cetrotide", dose: "0.25mg", startDay: 6 },
-    ],
-    notes: "Good response. E2 rising appropriately.",
-  },
-  {
-    id: 2,
-    patientId: 102,
-    patientName: "Jennifer Davis",
-    cycleNumber: 2,
-    startDate: "2024-01-02",
-    protocol: "short_antagonist",
-    status: "fertilization",
-    stimulationDays: 11,
-    triggerDate: "2024-01-13",
-    retrievalDate: "2024-01-15",
-    oocytesRetrieved: 12,
-    matureOocytes: 10,
-    fertilized: 8,
-    managedBy: "Dr. Emily Chen",
-    notes: "ICSI performed. 8 embryos developing.",
-  },
-  {
-    id: 3,
-    patientId: 103,
-    patientName: "Amanda Wilson",
-    cycleNumber: 1,
-    startDate: "2023-12-15",
-    protocol: "long_agonist",
-    status: "waiting_result",
-    stimulationDays: 12,
-    triggerDate: "2023-12-27",
-    retrievalDate: "2023-12-29",
-    oocytesRetrieved: 15,
-    matureOocytes: 12,
-    fertilized: 9,
-    embryosTransferred: 2,
-    transferDate: "2024-01-03",
-    betaHCGDate: "2024-01-17",
-    managedBy: "Dr. Michael Brown",
-    notes: "2 blastocysts transferred. Waiting for beta HCG.",
-  },
-  {
-    id: 4,
-    patientId: 104,
-    patientName: "Michelle Thompson",
-    cycleNumber: 3,
-    startDate: "2023-11-20",
-    protocol: "freeze_all",
-    status: "positive",
-    stimulationDays: 10,
-    triggerDate: "2023-12-01",
-    retrievalDate: "2023-12-03",
-    oocytesRetrieved: 18,
-    matureOocytes: 15,
-    fertilized: 12,
-    embryosTransferred: 1,
-    transferDate: "2024-01-08",
-    betaHCGDate: "2024-01-22",
-    betaHCGResult: 245,
-    managedBy: "Dr. Emily Chen",
-    notes: "FET cycle. Single blastocyst transfer. Positive result!",
-  },
-  {
-    id: 5,
-    patientId: 105,
-    patientName: "Lisa Anderson",
-    cycleNumber: 1,
-    startDate: "2024-01-10",
-    protocol: "natural_cycle",
-    status: "planning",
-    managedBy: "Dr. Michael Brown",
-    notes: "Natural cycle for poor responders. Baseline scheduled.",
-  },
-];
-
 export function IVFCycles() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedCycle, setSelectedCycle] = useState<IVFCycle | null>(null);
 
-  const { data: cycles = mockCycles, isLoading } = useQuery({
+  const { data: cycles = [], isLoading } = useQuery({
     queryKey: ["ivf-cycles", searchTerm, statusFilter],
     queryFn: async () => {
-      const response = await api.get("/api/fertility/ivf-cycles", {
-        params: {
-          search: searchTerm,
-          status: statusFilter !== "all" ? statusFilter : undefined,
-        },
-      });
+      const response = await ivfCyclesApi.getAll();
       return response.data;
     },
-    placeholderData: mockCycles,
   });
 
   const filteredCycles = cycles.filter((cycle: IVFCycle) => {

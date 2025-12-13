@@ -823,4 +823,557 @@ export const dentalStatsApi = {
   getDashboard: () => api.get("/api/DentalApi/statistics/dashboard"),
 };
 
+// ============================================
+// DERMATOLOGY API ENDPOINTS
+// ============================================
+
+export const dermatologyApi = {
+  getDashboard: () => api.get("/api/DermatologyApi/dashboard"),
+  getStatistics: () => api.get("/api/DermatologyApi/statistics"),
+};
+
+export const skinExamsApi = {
+  getAll: () => api.get("/api/DermatologyApi/skin-exams"),
+  getById: (id: number) => api.get(`/api/DermatologyApi/skin-exams/${id}`),
+  getByPatient: (patientId: number) =>
+    api.get(`/api/DermatologyApi/skin-exams/patient/${patientId}`),
+  create: (data: Record<string, unknown>) =>
+    api.post("/api/DermatologyApi/skin-exams", data),
+  update: (id: number, data: Record<string, unknown>) =>
+    api.put(`/api/DermatologyApi/skin-exams/${id}`, data),
+  delete: (id: number) => api.delete(`/api/DermatologyApi/skin-exams/${id}`),
+};
+
+export const skinPhotosApi = {
+  getAll: () => api.get("/api/DermatologyApi/skin-photos"),
+  getById: (id: number) => api.get(`/api/DermatologyApi/skin-photos/${id}`),
+  getByPatient: (patientId: number) =>
+    api.get(`/api/DermatologyApi/skin-photos/patient/${patientId}`),
+  create: (data: Record<string, unknown>) =>
+    api.post("/api/DermatologyApi/skin-photos", data),
+  update: (id: number, data: Record<string, unknown>) =>
+    api.put(`/api/DermatologyApi/skin-photos/${id}`, data),
+  delete: (id: number) => api.delete(`/api/DermatologyApi/skin-photos/${id}`),
+};
+
+export const moleMappingsApi = {
+  getAll: () => api.get("/api/DermatologyApi/mole-mappings"),
+  getById: (id: number) => api.get(`/api/DermatologyApi/mole-mappings/${id}`),
+  getByPatient: (patientId: number) =>
+    api.get(`/api/DermatologyApi/mole-mappings/patient/${patientId}`),
+  create: (data: Record<string, unknown>) =>
+    api.post("/api/DermatologyApi/mole-mappings", data),
+  update: (id: number, data: Record<string, unknown>) =>
+    api.put(`/api/DermatologyApi/mole-mappings/${id}`, data),
+  delete: (id: number) => api.delete(`/api/DermatologyApi/mole-mappings/${id}`),
+};
+
+export const biopsiesApi = {
+  getAll: () => api.get("/api/DermatologyApi/biopsies"),
+  getById: (id: number) => api.get(`/api/DermatologyApi/biopsies/${id}`),
+  getByPatient: (patientId: number) =>
+    api.get(`/api/DermatologyApi/biopsies/patient/${patientId}`),
+  create: (data: Record<string, unknown>) =>
+    api.post("/api/DermatologyApi/biopsies", data),
+  update: (id: number, data: Record<string, unknown>) =>
+    api.put(`/api/DermatologyApi/biopsies/${id}`, data),
+  delete: (id: number) => api.delete(`/api/DermatologyApi/biopsies/${id}`),
+};
+
+// ============================================
+// OPHTHALMOLOGY API ENDPOINTS
+// ============================================
+
+export const ophthalmologyApi = {
+  getDashboard: () => api.get("/api/OphthalmologyApi/dashboard"),
+  getStatistics: () => api.get("/api/OphthalmologyApi/statistics"),
+};
+
+export const visualAcuityApi = {
+  getAll: () => api.get("/api/OphthalmologyApi/visual-acuity"),
+  getById: (id: number) => api.get(`/api/OphthalmologyApi/visual-acuity/${id}`),
+  getByPatient: (patientId: number) =>
+    api.get(`/api/OphthalmologyApi/visual-acuity/patient/${patientId}`),
+  create: (data: Record<string, unknown>) =>
+    api.post("/api/OphthalmologyApi/visual-acuity", data),
+  update: (id: number, data: Record<string, unknown>) =>
+    api.put(`/api/OphthalmologyApi/visual-acuity/${id}`, data),
+  delete: (id: number) =>
+    api.delete(`/api/OphthalmologyApi/visual-acuity/${id}`),
+};
+
+export const refractionApi = {
+  getAll: () => api.get("/api/OphthalmologyApi/refraction"),
+  getById: (id: number) => api.get(`/api/OphthalmologyApi/refraction/${id}`),
+  getByPatient: (patientId: number) =>
+    api.get(`/api/OphthalmologyApi/refraction/patient/${patientId}`),
+  create: (data: Record<string, unknown>) =>
+    api.post("/api/OphthalmologyApi/refraction", data),
+  update: (id: number, data: Record<string, unknown>) =>
+    api.put(`/api/OphthalmologyApi/refraction/${id}`, data),
+  delete: (id: number) => api.delete(`/api/OphthalmologyApi/refraction/${id}`),
+};
+
+export const iopApi = {
+  getAll: () => api.get("/api/OphthalmologyApi/iop"),
+  getById: (id: number) => api.get(`/api/OphthalmologyApi/iop/${id}`),
+  getByPatient: (patientId: number) =>
+    api.get(`/api/OphthalmologyApi/iop/patient/${patientId}`),
+  create: (data: Record<string, unknown>) =>
+    api.post("/api/OphthalmologyApi/iop", data),
+  update: (id: number, data: Record<string, unknown>) =>
+    api.put(`/api/OphthalmologyApi/iop/${id}`, data),
+  delete: (id: number) => api.delete(`/api/OphthalmologyApi/iop/${id}`),
+};
+
+export const slitLampApi = {
+  getAll: () => api.get("/api/OphthalmologyApi/slit-lamp"),
+  getById: (id: number) => api.get(`/api/OphthalmologyApi/slit-lamp/${id}`),
+  getByPatient: (patientId: number) =>
+    api.get(`/api/OphthalmologyApi/slit-lamp/patient/${patientId}`),
+  create: (data: Record<string, unknown>) =>
+    api.post("/api/OphthalmologyApi/slit-lamp", data),
+  update: (id: number, data: Record<string, unknown>) =>
+    api.put(`/api/OphthalmologyApi/slit-lamp/${id}`, data),
+  delete: (id: number) => api.delete(`/api/OphthalmologyApi/slit-lamp/${id}`),
+};
+
+export const fundusApi = {
+  getAll: () => api.get("/api/OphthalmologyApi/fundus"),
+  getById: (id: number) => api.get(`/api/OphthalmologyApi/fundus/${id}`),
+  getByPatient: (patientId: number) =>
+    api.get(`/api/OphthalmologyApi/fundus/patient/${patientId}`),
+  create: (data: Record<string, unknown>) =>
+    api.post("/api/OphthalmologyApi/fundus", data),
+  update: (id: number, data: Record<string, unknown>) =>
+    api.put(`/api/OphthalmologyApi/fundus/${id}`, data),
+  delete: (id: number) => api.delete(`/api/OphthalmologyApi/fundus/${id}`),
+};
+
+export const glassesPrescriptionsApi = {
+  getAll: () => api.get("/api/OphthalmologyApi/prescriptions"),
+  getById: (id: number) => api.get(`/api/OphthalmologyApi/prescriptions/${id}`),
+  getByPatient: (patientId: number) =>
+    api.get(`/api/OphthalmologyApi/prescriptions/patient/${patientId}`),
+  create: (data: Record<string, unknown>) =>
+    api.post("/api/OphthalmologyApi/prescriptions", data),
+  update: (id: number, data: Record<string, unknown>) =>
+    api.put(`/api/OphthalmologyApi/prescriptions/${id}`, data),
+  delete: (id: number) =>
+    api.delete(`/api/OphthalmologyApi/prescriptions/${id}`),
+};
+
+// ============================================
+// CARDIOLOGY API ENDPOINTS
+// ============================================
+
+export const cardiologyApi = {
+  getDashboard: () => api.get("/api/CardiologyApi/dashboard"),
+  getStatistics: () => api.get("/api/CardiologyApi/statistics"),
+};
+
+export const ecgApi = {
+  getAll: () => api.get("/api/CardiologyApi/ecg"),
+  getById: (id: number) => api.get(`/api/CardiologyApi/ecg/${id}`),
+  getByPatient: (patientId: number) =>
+    api.get(`/api/CardiologyApi/ecg/patient/${patientId}`),
+  create: (data: Record<string, unknown>) =>
+    api.post("/api/CardiologyApi/ecg", data),
+  update: (id: number, data: Record<string, unknown>) =>
+    api.put(`/api/CardiologyApi/ecg/${id}`, data),
+  delete: (id: number) => api.delete(`/api/CardiologyApi/ecg/${id}`),
+};
+
+export const echoApi = {
+  getAll: () => api.get("/api/CardiologyApi/echo"),
+  getById: (id: number) => api.get(`/api/CardiologyApi/echo/${id}`),
+  getByPatient: (patientId: number) =>
+    api.get(`/api/CardiologyApi/echo/patient/${patientId}`),
+  create: (data: Record<string, unknown>) =>
+    api.post("/api/CardiologyApi/echo", data),
+  update: (id: number, data: Record<string, unknown>) =>
+    api.put(`/api/CardiologyApi/echo/${id}`, data),
+  delete: (id: number) => api.delete(`/api/CardiologyApi/echo/${id}`),
+};
+
+export const stressTestsApi = {
+  getAll: () => api.get("/api/CardiologyApi/stress-tests"),
+  getById: (id: number) => api.get(`/api/CardiologyApi/stress-tests/${id}`),
+  getByPatient: (patientId: number) =>
+    api.get(`/api/CardiologyApi/stress-tests/patient/${patientId}`),
+  create: (data: Record<string, unknown>) =>
+    api.post("/api/CardiologyApi/stress-tests", data),
+  update: (id: number, data: Record<string, unknown>) =>
+    api.put(`/api/CardiologyApi/stress-tests/${id}`, data),
+  delete: (id: number) => api.delete(`/api/CardiologyApi/stress-tests/${id}`),
+};
+
+export const cathLabApi = {
+  getAll: () => api.get("/api/CardiologyApi/cath-lab"),
+  getById: (id: number) => api.get(`/api/CardiologyApi/cath-lab/${id}`),
+  getByPatient: (patientId: number) =>
+    api.get(`/api/CardiologyApi/cath-lab/patient/${patientId}`),
+  create: (data: Record<string, unknown>) =>
+    api.post("/api/CardiologyApi/cath-lab", data),
+  update: (id: number, data: Record<string, unknown>) =>
+    api.put(`/api/CardiologyApi/cath-lab/${id}`, data),
+  delete: (id: number) => api.delete(`/api/CardiologyApi/cath-lab/${id}`),
+};
+
+// ============================================
+// NEUROLOGY API ENDPOINTS
+// ============================================
+
+export const neurologyApi = {
+  getDashboard: () => api.get("/api/NeurologyApi/dashboard"),
+  getStatistics: () => api.get("/api/NeurologyApi/statistics"),
+};
+
+export const neurologicalExamsApi = {
+  getAll: () => api.get("/api/NeurologyApi/exams"),
+  getById: (id: number) => api.get(`/api/NeurologyApi/exams/${id}`),
+  getByPatient: (patientId: number) =>
+    api.get(`/api/NeurologyApi/exams/patient/${patientId}`),
+  create: (data: Record<string, unknown>) =>
+    api.post("/api/NeurologyApi/exams", data),
+  update: (id: number, data: Record<string, unknown>) =>
+    api.put(`/api/NeurologyApi/exams/${id}`, data),
+  delete: (id: number) => api.delete(`/api/NeurologyApi/exams/${id}`),
+};
+
+export const eegApi = {
+  getAll: () => api.get("/api/NeurologyApi/eeg"),
+  getById: (id: number) => api.get(`/api/NeurologyApi/eeg/${id}`),
+  getByPatient: (patientId: number) =>
+    api.get(`/api/NeurologyApi/eeg/patient/${patientId}`),
+  create: (data: Record<string, unknown>) =>
+    api.post("/api/NeurologyApi/eeg", data),
+  update: (id: number, data: Record<string, unknown>) =>
+    api.put(`/api/NeurologyApi/eeg/${id}`, data),
+  delete: (id: number) => api.delete(`/api/NeurologyApi/eeg/${id}`),
+};
+
+export const emgApi = {
+  getAll: () => api.get("/api/NeurologyApi/emg"),
+  getById: (id: number) => api.get(`/api/NeurologyApi/emg/${id}`),
+  getByPatient: (patientId: number) =>
+    api.get(`/api/NeurologyApi/emg/patient/${patientId}`),
+  create: (data: Record<string, unknown>) =>
+    api.post("/api/NeurologyApi/emg", data),
+  update: (id: number, data: Record<string, unknown>) =>
+    api.put(`/api/NeurologyApi/emg/${id}`, data),
+  delete: (id: number) => api.delete(`/api/NeurologyApi/emg/${id}`),
+};
+
+// ============================================
+// OBGYN API ENDPOINTS
+// ============================================
+
+export const obgynApi = {
+  getDashboard: () => api.get("/api/OBGYNApi/dashboard"),
+  getStatistics: () => api.get("/api/OBGYNApi/statistics"),
+};
+
+export const pregnanciesApi = {
+  getAll: () => api.get("/api/OBGYNApi/pregnancies"),
+  getById: (id: number) => api.get(`/api/OBGYNApi/pregnancies/${id}`),
+  getByPatient: (patientId: number) =>
+    api.get(`/api/OBGYNApi/pregnancies/patient/${patientId}`),
+  create: (data: Record<string, unknown>) =>
+    api.post("/api/OBGYNApi/pregnancies", data),
+  update: (id: number, data: Record<string, unknown>) =>
+    api.put(`/api/OBGYNApi/pregnancies/${id}`, data),
+  delete: (id: number) => api.delete(`/api/OBGYNApi/pregnancies/${id}`),
+};
+
+export const prenatalVisitsApi = {
+  getAll: () => api.get("/api/OBGYNApi/prenatal-visits"),
+  getById: (id: number) => api.get(`/api/OBGYNApi/prenatal-visits/${id}`),
+  getByPatient: (patientId: number) =>
+    api.get(`/api/OBGYNApi/prenatal-visits/patient/${patientId}`),
+  create: (data: Record<string, unknown>) =>
+    api.post("/api/OBGYNApi/prenatal-visits", data),
+  update: (id: number, data: Record<string, unknown>) =>
+    api.put(`/api/OBGYNApi/prenatal-visits/${id}`, data),
+  delete: (id: number) => api.delete(`/api/OBGYNApi/prenatal-visits/${id}`),
+};
+
+export const ultrasoundsApi = {
+  getAll: () => api.get("/api/OBGYNApi/ultrasounds"),
+  getById: (id: number) => api.get(`/api/OBGYNApi/ultrasounds/${id}`),
+  getByPatient: (patientId: number) =>
+    api.get(`/api/OBGYNApi/ultrasounds/patient/${patientId}`),
+  create: (data: Record<string, unknown>) =>
+    api.post("/api/OBGYNApi/ultrasounds", data),
+  update: (id: number, data: Record<string, unknown>) =>
+    api.put(`/api/OBGYNApi/ultrasounds/${id}`, data),
+  delete: (id: number) => api.delete(`/api/OBGYNApi/ultrasounds/${id}`),
+};
+
+// ============================================
+// PEDIATRICS API ENDPOINTS
+// ============================================
+
+export const pediatricsApi = {
+  getDashboard: () => api.get("/api/PediatricsApi/dashboard"),
+  getStatistics: () => api.get("/api/PediatricsApi/statistics"),
+};
+
+export const growthChartsApi = {
+  getAll: () => api.get("/api/PediatricsApi/growth-charts"),
+  getById: (id: number) => api.get(`/api/PediatricsApi/growth-charts/${id}`),
+  getByPatient: (patientId: number) =>
+    api.get(`/api/PediatricsApi/growth-charts/patient/${patientId}`),
+  create: (data: Record<string, unknown>) =>
+    api.post("/api/PediatricsApi/growth-charts", data),
+  update: (id: number, data: Record<string, unknown>) =>
+    api.put(`/api/PediatricsApi/growth-charts/${id}`, data),
+  delete: (id: number) => api.delete(`/api/PediatricsApi/growth-charts/${id}`),
+};
+
+export const vaccinationsApi = {
+  getAll: () => api.get("/api/PediatricsApi/vaccinations"),
+  getById: (id: number) => api.get(`/api/PediatricsApi/vaccinations/${id}`),
+  getByPatient: (patientId: number) =>
+    api.get(`/api/PediatricsApi/vaccinations/patient/${patientId}`),
+  create: (data: Record<string, unknown>) =>
+    api.post("/api/PediatricsApi/vaccinations", data),
+  update: (id: number, data: Record<string, unknown>) =>
+    api.put(`/api/PediatricsApi/vaccinations/${id}`, data),
+  delete: (id: number) => api.delete(`/api/PediatricsApi/vaccinations/${id}`),
+};
+
+export const developmentMilestonesApi = {
+  getAll: () => api.get("/api/PediatricsApi/milestones"),
+  getById: (id: number) => api.get(`/api/PediatricsApi/milestones/${id}`),
+  getByPatient: (patientId: number) =>
+    api.get(`/api/PediatricsApi/milestones/patient/${patientId}`),
+  create: (data: Record<string, unknown>) =>
+    api.post("/api/PediatricsApi/milestones", data),
+  update: (id: number, data: Record<string, unknown>) =>
+    api.put(`/api/PediatricsApi/milestones/${id}`, data),
+  delete: (id: number) => api.delete(`/api/PediatricsApi/milestones/${id}`),
+};
+
+// ============================================
+// ENT API ENDPOINTS
+// ============================================
+
+export const entApi = {
+  getDashboard: () => api.get("/api/ENTApi/dashboard"),
+  getStatistics: () => api.get("/api/ENTApi/statistics"),
+};
+
+export const audiometryApi = {
+  getAll: () => api.get("/api/ENTApi/audiometry"),
+  getById: (id: number) => api.get(`/api/ENTApi/audiometry/${id}`),
+  getByPatient: (patientId: number) =>
+    api.get(`/api/ENTApi/audiometry/patient/${patientId}`),
+  create: (data: Record<string, unknown>) =>
+    api.post("/api/ENTApi/audiometry", data),
+  update: (id: number, data: Record<string, unknown>) =>
+    api.put(`/api/ENTApi/audiometry/${id}`, data),
+  delete: (id: number) => api.delete(`/api/ENTApi/audiometry/${id}`),
+};
+
+export const entHearingAidsApi = {
+  getAll: () => api.get("/api/ENTApi/hearing-aids"),
+  getById: (id: number) => api.get(`/api/ENTApi/hearing-aids/${id}`),
+  getByPatient: (patientId: number) =>
+    api.get(`/api/ENTApi/hearing-aids/patient/${patientId}`),
+  create: (data: Record<string, unknown>) =>
+    api.post("/api/ENTApi/hearing-aids", data),
+  update: (id: number, data: Record<string, unknown>) =>
+    api.put(`/api/ENTApi/hearing-aids/${id}`, data),
+  delete: (id: number) => api.delete(`/api/ENTApi/hearing-aids/${id}`),
+};
+
+// ============================================
+// DIALYSIS API ENDPOINTS
+// ============================================
+
+export const dialysisApi = {
+  getDashboard: () => api.get("/api/DialysisApi/dashboard"),
+  getStatistics: () => api.get("/api/DialysisApi/statistics"),
+};
+
+export const dialysisSessionsApi = {
+  getAll: () => api.get("/api/DialysisApi/sessions"),
+  getById: (id: number) => api.get(`/api/DialysisApi/sessions/${id}`),
+  getByPatient: (patientId: number) =>
+    api.get(`/api/DialysisApi/sessions/patient/${patientId}`),
+  create: (data: Record<string, unknown>) =>
+    api.post("/api/DialysisApi/sessions", data),
+  update: (id: number, data: Record<string, unknown>) =>
+    api.put(`/api/DialysisApi/sessions/${id}`, data),
+  delete: (id: number) => api.delete(`/api/DialysisApi/sessions/${id}`),
+};
+
+export const vascularAccessApi = {
+  getAll: () => api.get("/api/DialysisApi/vascular-access"),
+  getById: (id: number) => api.get(`/api/DialysisApi/vascular-access/${id}`),
+  getByPatient: (patientId: number) =>
+    api.get(`/api/DialysisApi/vascular-access/patient/${patientId}`),
+  create: (data: Record<string, unknown>) =>
+    api.post("/api/DialysisApi/vascular-access", data),
+  update: (id: number, data: Record<string, unknown>) =>
+    api.put(`/api/DialysisApi/vascular-access/${id}`, data),
+  delete: (id: number) => api.delete(`/api/DialysisApi/vascular-access/${id}`),
+};
+
+// ============================================
+// FERTILITY API ENDPOINTS
+// ============================================
+
+export const fertilityApi = {
+  getDashboard: () => api.get("/api/FertilityApi/dashboard"),
+  getStatistics: () => api.get("/api/FertilityApi/statistics"),
+};
+
+export const ivfCyclesApi = {
+  getAll: () => api.get("/api/FertilityApi/ivf-cycles"),
+  getById: (id: number) => api.get(`/api/FertilityApi/ivf-cycles/${id}`),
+  getByPatient: (patientId: number) =>
+    api.get(`/api/FertilityApi/ivf-cycles/patient/${patientId}`),
+  create: (data: Record<string, unknown>) =>
+    api.post("/api/FertilityApi/ivf-cycles", data),
+  update: (id: number, data: Record<string, unknown>) =>
+    api.put(`/api/FertilityApi/ivf-cycles/${id}`, data),
+  delete: (id: number) => api.delete(`/api/FertilityApi/ivf-cycles/${id}`),
+};
+
+export const embryoRecordsApi = {
+  getAll: () => api.get("/api/FertilityApi/embryos"),
+  getById: (id: number) => api.get(`/api/FertilityApi/embryos/${id}`),
+  getByPatient: (patientId: number) =>
+    api.get(`/api/FertilityApi/embryos/patient/${patientId}`),
+  create: (data: Record<string, unknown>) =>
+    api.post("/api/FertilityApi/embryos", data),
+  update: (id: number, data: Record<string, unknown>) =>
+    api.put(`/api/FertilityApi/embryos/${id}`, data),
+  delete: (id: number) => api.delete(`/api/FertilityApi/embryos/${id}`),
+};
+
+// ============================================
+// PHYSIOTHERAPY API ENDPOINTS
+// ============================================
+
+export const physiotherapyApi = {
+  getDashboard: () => api.get("/api/PhysiotherapyApi/dashboard"),
+  getStatistics: () => api.get("/api/PhysiotherapyApi/statistics"),
+};
+
+export const therapySessionsApi = {
+  getAll: () => api.get("/api/PhysiotherapyApi/sessions"),
+  getById: (id: number) => api.get(`/api/PhysiotherapyApi/sessions/${id}`),
+  getByPatient: (patientId: number) =>
+    api.get(`/api/PhysiotherapyApi/sessions/patient/${patientId}`),
+  create: (data: Record<string, unknown>) =>
+    api.post("/api/PhysiotherapyApi/sessions", data),
+  update: (id: number, data: Record<string, unknown>) =>
+    api.put(`/api/PhysiotherapyApi/sessions/${id}`, data),
+  delete: (id: number) => api.delete(`/api/PhysiotherapyApi/sessions/${id}`),
+};
+
+export const exerciseProgramsApi = {
+  getAll: () => api.get("/api/PhysiotherapyApi/exercise-programs"),
+  getById: (id: number) =>
+    api.get(`/api/PhysiotherapyApi/exercise-programs/${id}`),
+  getByPatient: (patientId: number) =>
+    api.get(`/api/PhysiotherapyApi/exercise-programs/patient/${patientId}`),
+  create: (data: Record<string, unknown>) =>
+    api.post("/api/PhysiotherapyApi/exercise-programs", data),
+  update: (id: number, data: Record<string, unknown>) =>
+    api.put(`/api/PhysiotherapyApi/exercise-programs/${id}`, data),
+  delete: (id: number) =>
+    api.delete(`/api/PhysiotherapyApi/exercise-programs/${id}`),
+};
+
+// ============================================
+// ORTHOPEDICS API ENDPOINTS
+// ============================================
+
+export const orthopedicsApi = {
+  getDashboard: () => api.get("/api/OrthopedicsApi/dashboard"),
+  getStatistics: () => api.get("/api/OrthopedicsApi/statistics"),
+};
+
+export const orthopedicExamsApi = {
+  getAll: () => api.get("/api/OrthopedicsApi/exams"),
+  getById: (id: number) => api.get(`/api/OrthopedicsApi/exams/${id}`),
+  getByPatient: (patientId: number) =>
+    api.get(`/api/OrthopedicsApi/exams/patient/${patientId}`),
+  create: (data: Record<string, unknown>) =>
+    api.post("/api/OrthopedicsApi/exams", data),
+  update: (id: number, data: Record<string, unknown>) =>
+    api.put(`/api/OrthopedicsApi/exams/${id}`, data),
+  delete: (id: number) => api.delete(`/api/OrthopedicsApi/exams/${id}`),
+};
+
+export const fracturesApi = {
+  getAll: () => api.get("/api/OrthopedicsApi/fractures"),
+  getById: (id: number) => api.get(`/api/OrthopedicsApi/fractures/${id}`),
+  getByPatient: (patientId: number) =>
+    api.get(`/api/OrthopedicsApi/fractures/patient/${patientId}`),
+  create: (data: Record<string, unknown>) =>
+    api.post("/api/OrthopedicsApi/fractures", data),
+  update: (id: number, data: Record<string, unknown>) =>
+    api.put(`/api/OrthopedicsApi/fractures/${id}`, data),
+  delete: (id: number) => api.delete(`/api/OrthopedicsApi/fractures/${id}`),
+};
+
+export const surgeriesApi = {
+  getAll: () => api.get("/api/OrthopedicsApi/surgeries"),
+  getById: (id: number) => api.get(`/api/OrthopedicsApi/surgeries/${id}`),
+  getByPatient: (patientId: number) =>
+    api.get(`/api/OrthopedicsApi/surgeries/patient/${patientId}`),
+  create: (data: Record<string, unknown>) =>
+    api.post("/api/OrthopedicsApi/surgeries", data),
+  update: (id: number, data: Record<string, unknown>) =>
+    api.put(`/api/OrthopedicsApi/surgeries/${id}`, data),
+  delete: (id: number) => api.delete(`/api/OrthopedicsApi/surgeries/${id}`),
+};
+
+// ============================================
+// HR ADDITIONAL API ENDPOINTS
+// ============================================
+
+export const payrollApi = {
+  getAll: () => api.get("/api/HRApi/payroll"),
+  getById: (id: number) => api.get(`/api/HRApi/payroll/${id}`),
+  getByEmployee: (employeeId: number) =>
+    api.get(`/api/HRApi/payroll/employee/${employeeId}`),
+  create: (data: Record<string, unknown>) =>
+    api.post("/api/HRApi/payroll", data),
+  update: (id: number, data: Record<string, unknown>) =>
+    api.put(`/api/HRApi/payroll/${id}`, data),
+  delete: (id: number) => api.delete(`/api/HRApi/payroll/${id}`),
+  process: (month: number, year: number) =>
+    api.post("/api/HRApi/payroll/process", { month, year }),
+};
+
+export const salaryStructuresApi = {
+  getAll: () => api.get("/api/HRApi/salary-structures"),
+  getById: (id: number) => api.get(`/api/HRApi/salary-structures/${id}`),
+  create: (data: Record<string, unknown>) =>
+    api.post("/api/HRApi/salary-structures", data),
+  update: (id: number, data: Record<string, unknown>) =>
+    api.put(`/api/HRApi/salary-structures/${id}`, data),
+  delete: (id: number) => api.delete(`/api/HRApi/salary-structures/${id}`),
+};
+
+// ============================================
+// PORTAL API ENDPOINTS
+// ============================================
+
+export const portalApi = {
+  getDashboard: () => api.get("/api/PortalApi/dashboard"),
+  getProfile: () => api.get("/api/PortalApi/profile"),
+  updateProfile: (data: Record<string, unknown>) =>
+    api.put("/api/PortalApi/profile", data),
+  getAppointments: () => api.get("/api/PortalApi/appointments"),
+  getDocuments: () => api.get("/api/PortalApi/documents"),
+  getDocument: (id: number) => api.get(`/api/PortalApi/documents/${id}`),
+};
+
 export default api;

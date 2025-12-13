@@ -10,39 +10,17 @@ import {
 } from "@heroicons/react/24/outline";
 import { format } from "date-fns";
 import type { PediatricStatistics } from "../../types/pediatrics";
+import { pediatricsApi } from "../../lib/api";
 
 export const PediatricsDashboard = () => {
-  // Mock data - In production, replace with actual API calls
-  const { data: stats } = useQuery<PediatricStatistics>({
+  const { data: statsResponse } = useQuery<PediatricStatistics>({
     queryKey: ["pediatric-stats"],
-    queryFn: async () => {
-      // Mock implementation
-      return {
-        totalPediatricPatients: 567,
-        newPatientsThisMonth: 42,
-        growthMeasurementsThisMonth: 89,
-        growthMeasurementsToday: 8,
-        milestonesTracked: 234,
-        milestonesDelayed: 12,
-        milestonesAchievedThisMonth: 45,
-        vaccinationsThisMonth: 156,
-        vaccinationsToday: 15,
-        overdueVaccinations: 23,
-        upcomingVaccinations: 67,
-        ageDistribution: {
-          infants: 123,
-          toddlers: 145,
-          preschool: 98,
-          schoolAge: 156,
-          adolescents: 45,
-        },
-        growthConcerns: 8,
-        developmentConcerns: 5,
-      };
-    },
+    queryFn: () => pediatricsApi.getStatistics(),
   });
 
-  const { data: recentActivities } = useQuery<
+  const stats = statsResponse?.data;
+
+  const { data: activitiesResponse } = useQuery<
     Array<{
       id: number;
       patientName: string;
@@ -53,36 +31,10 @@ export const PediatricsDashboard = () => {
     }>
   >({
     queryKey: ["recent-activities"],
-    queryFn: async () => {
-      // Mock implementation
-      return [
-        {
-          id: 1,
-          patientName: "Emma Johnson",
-          activity: "Growth Measurement",
-          date: new Date().toISOString(),
-          details: "Height: 110cm, Weight: 18kg",
-          status: "Completed",
-        },
-        {
-          id: 2,
-          patientName: "Noah Smith",
-          activity: "Vaccination",
-          date: new Date().toISOString(),
-          details: "MMR Dose 2",
-          status: "Completed",
-        },
-        {
-          id: 3,
-          patientName: "Olivia Davis",
-          activity: "Milestone Assessment",
-          date: new Date().toISOString(),
-          details: "Language development review",
-          status: "In Progress",
-        },
-      ];
-    },
+    queryFn: () => pediatricsApi.getRecentActivities(),
   });
+
+  const recentActivities = activitiesResponse?.data || [];
 
   const statistics = stats || {
     totalPediatricPatients: 0,

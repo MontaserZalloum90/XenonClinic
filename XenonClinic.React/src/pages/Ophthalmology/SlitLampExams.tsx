@@ -6,16 +6,7 @@ import type {
 } from "../../types/ophthalmology";
 import { Dialog } from "@headlessui/react";
 import { format } from "date-fns";
-
-// Mock API - Replace with actual API when backend is ready
-const slitLampApi = {
-  getAll: () => Promise.resolve({ data: [] as SlitLampExam[] }),
-  create: (data: CreateSlitLampExamRequest) =>
-    Promise.resolve({ data: { id: 1, ...data } }),
-  update: (id: number, data: Partial<CreateSlitLampExamRequest>) =>
-    Promise.resolve({ data: { id, ...data } }),
-  delete: () => Promise.resolve({ data: { success: true } }),
-};
+import { slitLampApi } from "../../lib/api";
 
 export const SlitLampExams = () => {
   const queryClient = useQueryClient();
