@@ -7,27 +7,9 @@ import {
   BeakerIcon,
 } from "@heroicons/react/24/outline";
 import { Dialog } from "@headlessui/react";
-import type {
-  PeriodontalExam,
-  CreatePeriodontalExamRequest,
-} from "../../types/dental";
+import type { PeriodontalExam } from "../../types/dental";
 import { format } from "date-fns";
-
-// Mock API functions - Replace with actual API calls
-const periodontalExamApi = {
-  getAll: async () => ({
-    data: [] as PeriodontalExam[],
-  }),
-  create: async (data: CreatePeriodontalExamRequest) => ({
-    data: { id: Date.now(), ...data },
-  }),
-  update: async (id: number, data: Partial<PeriodontalExam>) => ({
-    data: { id, ...data },
-  }),
-  delete: async () => ({
-    data: { success: true },
-  }),
-};
+import { dentalPeriodontalApi } from "../../lib/api";
 
 interface ExamFormData {
   patientId: number;
@@ -73,7 +55,7 @@ const PeriodontalExamForm = ({
 
   const createMutation = useMutation({
     mutationFn: (data: ExamFormData) =>
-      periodontalExamApi.create({
+      dentalPeriodontalApi.create({
         ...data,
         pocketDepths: [],
         bleedingPoints: [],
@@ -86,7 +68,7 @@ const PeriodontalExamForm = ({
 
   const updateMutation = useMutation({
     mutationFn: (data: ExamFormData) =>
-      periodontalExamApi.update(exam!.id, { ...data, id: exam!.id }),
+      dentalPeriodontalApi.update(exam!.id, { ...data, id: exam!.id }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["periodontal-exams"] });
       onSuccess();
@@ -307,11 +289,11 @@ export const PeriodontalExams = () => {
   // Fetch exams
   const { data: examsData, isLoading } = useQuery({
     queryKey: ["periodontal-exams"],
-    queryFn: () => periodontalExamApi.getAll(),
+    queryFn: () => dentalPeriodontalApi.getAll(),
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: number) => periodontalExamApi.delete(id),
+    mutationFn: (id: number) => dentalPeriodontalApi.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["periodontal-exams"] });
     },

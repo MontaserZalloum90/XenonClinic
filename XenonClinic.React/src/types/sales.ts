@@ -10,7 +10,7 @@ export const SaleStatus = {
   Refunded: 4,
 } as const;
 
-export type SaleStatus = typeof SaleStatus[keyof typeof SaleStatus];
+export type SaleStatus = (typeof SaleStatus)[keyof typeof SaleStatus];
 
 export const PaymentStatus = {
   Pending: 0,
@@ -21,18 +21,10 @@ export const PaymentStatus = {
   Cancelled: 5,
 } as const;
 
-export type PaymentStatus = typeof PaymentStatus[keyof typeof PaymentStatus];
+export type PaymentStatus = (typeof PaymentStatus)[keyof typeof PaymentStatus];
 
-export const PaymentMethod = {
-  Cash: 0,
-  Card: 1,
-  BankTransfer: 2,
-  Insurance: 3,
-  Installment: 4,
-  Cheque: 5,
-} as const;
-
-export type PaymentMethod = typeof PaymentMethod[keyof typeof PaymentMethod];
+// Re-export PaymentMethod from common types for backward compatibility
+export { PaymentMethod } from "./common";
 
 export const QuotationStatus = {
   Draft: 0,
@@ -42,7 +34,8 @@ export const QuotationStatus = {
   Expired: 4,
 } as const;
 
-export type QuotationStatus = typeof QuotationStatus[keyof typeof QuotationStatus];
+export type QuotationStatus =
+  (typeof QuotationStatus)[keyof typeof QuotationStatus];
 
 // ============================================
 // SALE INTERFACES
@@ -276,87 +269,90 @@ export interface SalesStatistics {
 
 export const getSaleStatusLabel = (status: SaleStatus): string => {
   const labels: Record<SaleStatus, string> = {
-    [SaleStatus.Draft]: 'Draft',
-    [SaleStatus.Confirmed]: 'Confirmed',
-    [SaleStatus.Completed]: 'Completed',
-    [SaleStatus.Cancelled]: 'Cancelled',
-    [SaleStatus.Refunded]: 'Refunded',
+    [SaleStatus.Draft]: "Draft",
+    [SaleStatus.Confirmed]: "Confirmed",
+    [SaleStatus.Completed]: "Completed",
+    [SaleStatus.Cancelled]: "Cancelled",
+    [SaleStatus.Refunded]: "Refunded",
   };
-  return labels[status] || 'Unknown';
+  return labels[status] || "Unknown";
 };
 
 export const getSaleStatusColor = (status: SaleStatus): string => {
   const colors: Record<SaleStatus, string> = {
-    [SaleStatus.Draft]: 'text-gray-600 bg-gray-100',
-    [SaleStatus.Confirmed]: 'text-blue-600 bg-blue-100',
-    [SaleStatus.Completed]: 'text-green-600 bg-green-100',
-    [SaleStatus.Cancelled]: 'text-red-600 bg-red-100',
-    [SaleStatus.Refunded]: 'text-orange-600 bg-orange-100',
+    [SaleStatus.Draft]: "text-gray-600 bg-gray-100",
+    [SaleStatus.Confirmed]: "text-blue-600 bg-blue-100",
+    [SaleStatus.Completed]: "text-green-600 bg-green-100",
+    [SaleStatus.Cancelled]: "text-red-600 bg-red-100",
+    [SaleStatus.Refunded]: "text-orange-600 bg-orange-100",
   };
-  return colors[status] || 'text-gray-600 bg-gray-100';
+  return colors[status] || "text-gray-600 bg-gray-100";
 };
 
 export const getPaymentStatusLabel = (status: PaymentStatus): string => {
   const labels: Record<PaymentStatus, string> = {
-    [PaymentStatus.Pending]: 'Pending',
-    [PaymentStatus.Partial]: 'Partially Paid',
-    [PaymentStatus.Paid]: 'Paid',
-    [PaymentStatus.Refunded]: 'Refunded',
-    [PaymentStatus.Overdue]: 'Overdue',
-    [PaymentStatus.Cancelled]: 'Cancelled',
+    [PaymentStatus.Pending]: "Pending",
+    [PaymentStatus.Partial]: "Partially Paid",
+    [PaymentStatus.Paid]: "Paid",
+    [PaymentStatus.Refunded]: "Refunded",
+    [PaymentStatus.Overdue]: "Overdue",
+    [PaymentStatus.Cancelled]: "Cancelled",
   };
-  return labels[status] || 'Unknown';
+  return labels[status] || "Unknown";
 };
 
 export const getPaymentStatusColor = (status: PaymentStatus): string => {
   const colors: Record<PaymentStatus, string> = {
-    [PaymentStatus.Pending]: 'text-yellow-600 bg-yellow-100',
-    [PaymentStatus.Partial]: 'text-blue-600 bg-blue-100',
-    [PaymentStatus.Paid]: 'text-green-600 bg-green-100',
-    [PaymentStatus.Refunded]: 'text-orange-600 bg-orange-100',
-    [PaymentStatus.Overdue]: 'text-red-600 bg-red-100',
-    [PaymentStatus.Cancelled]: 'text-gray-600 bg-gray-100',
+    [PaymentStatus.Pending]: "text-yellow-600 bg-yellow-100",
+    [PaymentStatus.Partial]: "text-blue-600 bg-blue-100",
+    [PaymentStatus.Paid]: "text-green-600 bg-green-100",
+    [PaymentStatus.Refunded]: "text-orange-600 bg-orange-100",
+    [PaymentStatus.Overdue]: "text-red-600 bg-red-100",
+    [PaymentStatus.Cancelled]: "text-gray-600 bg-gray-100",
   };
-  return colors[status] || 'text-gray-600 bg-gray-100';
+  return colors[status] || "text-gray-600 bg-gray-100";
 };
 
 export const getPaymentMethodLabel = (method: PaymentMethod): string => {
   const labels: Record<PaymentMethod, string> = {
-    [PaymentMethod.Cash]: 'Cash',
-    [PaymentMethod.Card]: 'Card',
-    [PaymentMethod.BankTransfer]: 'Bank Transfer',
-    [PaymentMethod.Insurance]: 'Insurance',
-    [PaymentMethod.Installment]: 'Installment',
-    [PaymentMethod.Cheque]: 'Cheque',
+    [PaymentMethod.Cash]: "Cash",
+    [PaymentMethod.Card]: "Card",
+    [PaymentMethod.BankTransfer]: "Bank Transfer",
+    [PaymentMethod.Insurance]: "Insurance",
+    [PaymentMethod.Installment]: "Installment",
+    [PaymentMethod.Cheque]: "Cheque",
   };
-  return labels[method] || 'Unknown';
+  return labels[method] || "Unknown";
 };
 
 export const getQuotationStatusLabel = (status: QuotationStatus): string => {
   const labels: Record<QuotationStatus, string> = {
-    [QuotationStatus.Draft]: 'Draft',
-    [QuotationStatus.Sent]: 'Sent',
-    [QuotationStatus.Accepted]: 'Accepted',
-    [QuotationStatus.Rejected]: 'Rejected',
-    [QuotationStatus.Expired]: 'Expired',
+    [QuotationStatus.Draft]: "Draft",
+    [QuotationStatus.Sent]: "Sent",
+    [QuotationStatus.Accepted]: "Accepted",
+    [QuotationStatus.Rejected]: "Rejected",
+    [QuotationStatus.Expired]: "Expired",
   };
-  return labels[status] || 'Unknown';
+  return labels[status] || "Unknown";
 };
 
 export const getQuotationStatusColor = (status: QuotationStatus): string => {
   const colors: Record<QuotationStatus, string> = {
-    [QuotationStatus.Draft]: 'text-gray-600 bg-gray-100',
-    [QuotationStatus.Sent]: 'text-blue-600 bg-blue-100',
-    [QuotationStatus.Accepted]: 'text-green-600 bg-green-100',
-    [QuotationStatus.Rejected]: 'text-red-600 bg-red-100',
-    [QuotationStatus.Expired]: 'text-orange-600 bg-orange-100',
+    [QuotationStatus.Draft]: "text-gray-600 bg-gray-100",
+    [QuotationStatus.Sent]: "text-blue-600 bg-blue-100",
+    [QuotationStatus.Accepted]: "text-green-600 bg-green-100",
+    [QuotationStatus.Rejected]: "text-red-600 bg-red-100",
+    [QuotationStatus.Expired]: "text-orange-600 bg-orange-100",
   };
-  return colors[status] || 'text-gray-600 bg-gray-100';
+  return colors[status] || "text-gray-600 bg-gray-100";
 };
 
-export const formatCurrency = (amount: number, currency: string = 'AED'): string => {
-  return new Intl.NumberFormat('en-AE', {
-    style: 'currency',
+export const formatCurrency = (
+  amount: number,
+  currency: string = "AED",
+): string => {
+  return new Intl.NumberFormat("en-AE", {
+    style: "currency",
     currency,
   }).format(amount);
 };

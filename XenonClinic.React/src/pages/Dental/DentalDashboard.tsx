@@ -10,56 +10,23 @@ import {
 } from "@heroicons/react/24/outline";
 import type { DentalStatistics, DentalTreatment } from "../../types/dental";
 import { format } from "date-fns";
-
-// Mock API functions - Replace with actual API calls
-const dentalApi = {
-  getStatistics: async () => ({
-    data: {
-      totalPatients: 245,
-      newPatientsThisMonth: 18,
-      treatmentsToday: 12,
-      treatmentsThisWeek: 47,
-      treatmentsThisMonth: 186,
-      pendingTreatments: 23,
-      completedTreatments: 163,
-      monthlyRevenue: 125400,
-      outstandingPayments: 8500,
-      chartsThisMonth: 34,
-      periodontalExamsThisMonth: 15,
-      treatmentTypeDistribution: {
-        cleaning: 45,
-        filling: 38,
-        extraction: 12,
-        crown: 18,
-        root_canal: 9,
-      },
-      statusDistribution: {
-        planned: 23,
-        in_progress: 8,
-        completed: 163,
-      },
-    } as DentalStatistics,
-  }),
-  getRecentTreatments: async () => ({
-    data: [] as DentalTreatment[],
-  }),
-};
+import { dentalStatsApi, dentalTreatmentApi } from "../../lib/api";
 
 export const DentalDashboard = () => {
-  // Fetch statistics
+  // Fetch statistics from real API
   const { data: statsData, isLoading: statsLoading } = useQuery({
     queryKey: ["dental-stats"],
-    queryFn: () => dentalApi.getStatistics(),
+    queryFn: () => dentalStatsApi.getDashboard(),
   });
 
-  // Fetch recent treatments
+  // Fetch recent treatments from real API
   const { data: treatmentsData, isLoading: treatmentsLoading } = useQuery({
     queryKey: ["recent-treatments"],
-    queryFn: () => dentalApi.getRecentTreatments(),
+    queryFn: () => dentalTreatmentApi.getAll(),
   });
 
-  const stats = statsData?.data;
-  const recentTreatments = treatmentsData?.data || [];
+  const stats: DentalStatistics | undefined = statsData?.data;
+  const recentTreatments: DentalTreatment[] = treatmentsData?.data || [];
 
   return (
     <div className="space-y-6">

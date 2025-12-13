@@ -7,17 +7,10 @@ export const InvoiceStatus = {
   Cancelled: 5,
 } as const;
 
-export type InvoiceStatus = typeof InvoiceStatus[keyof typeof InvoiceStatus];
+export type InvoiceStatus = (typeof InvoiceStatus)[keyof typeof InvoiceStatus];
 
-export const PaymentMethod = {
-  Cash: 0,
-  Card: 1,
-  BankTransfer: 2,
-  Insurance: 3,
-  Other: 4,
-} as const;
-
-export type PaymentMethod = typeof PaymentMethod[keyof typeof PaymentMethod];
+// Re-export PaymentMethod from common types for backward compatibility
+export { PaymentMethod } from "./common";
 
 export interface Invoice {
   id: number;

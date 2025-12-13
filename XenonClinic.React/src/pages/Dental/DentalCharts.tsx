@@ -9,16 +9,7 @@ import { Dialog } from "@headlessui/react";
 import type { DentalChart, ToothCondition } from "../../types/dental";
 import { DentalChartForm } from "../../components/DentalChartForm";
 import { format } from "date-fns";
-
-// Mock API functions - Replace with actual API calls
-const dentalChartApi = {
-  getAll: async () => ({
-    data: [] as DentalChart[],
-  }),
-  delete: async () => ({
-    data: { success: true },
-  }),
-};
+import { dentalChartApi } from "../../lib/api";
 
 export const DentalCharts = () => {
   const queryClient = useQueryClient();
@@ -38,6 +29,9 @@ export const DentalCharts = () => {
     mutationFn: (id: number) => dentalChartApi.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["dental-charts"] });
+    },
+    onError: (error) => {
+      console.error("Failed to delete dental chart:", error);
     },
   });
 

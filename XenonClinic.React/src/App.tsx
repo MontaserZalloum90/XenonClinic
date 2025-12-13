@@ -5,6 +5,7 @@ import { AuthProvider } from "./contexts/AuthContext";
 import { ProtectedRoute, Roles } from "./components/ProtectedRoute";
 import { Layout } from "./components/layout/Layout";
 import { ToastProvider } from "./components/ui/Toast";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 
 // Loading component for Suspense fallback
 const PageLoader = () => (
@@ -348,17 +349,21 @@ const queryClient = new QueryClient({
   },
 });
 
-// Helper component for protected routes with layout
+// Helper component for protected routes with layout and error boundary
 const ProtectedPage = ({
   children,
   roles,
+  moduleName,
 }: {
   children: React.ReactNode;
   roles?: string[];
+  moduleName?: string;
 }) => (
   <ProtectedRoute requiredRoles={roles}>
     <Layout>
-      <Suspense fallback={<PageLoader />}>{children}</Suspense>
+      <ErrorBoundary moduleName={moduleName}>
+        <Suspense fallback={<PageLoader />}>{children}</Suspense>
+      </ErrorBoundary>
     </Layout>
   </ProtectedRoute>
 );
@@ -430,6 +435,7 @@ function App() {
                         Roles.NURSE,
                         Roles.LAB_TECHNICIAN,
                       ]}
+                      moduleName="Laboratory"
                     >
                       <LaboratoryList />
                     </ProtectedPage>
@@ -496,6 +502,7 @@ function App() {
                   element={
                     <ProtectedPage
                       roles={[Roles.ADMIN, Roles.DOCTOR, Roles.PHARMACIST]}
+                      moduleName="Pharmacy"
                     >
                       <PharmacyList />
                     </ProtectedPage>
@@ -516,7 +523,7 @@ function App() {
                 <Route
                   path="/audiology"
                   element={
-                    <ProtectedPage>
+                    <ProtectedPage moduleName="Audiology">
                       <AudiologyList />
                     </ProtectedPage>
                   }
@@ -642,7 +649,7 @@ function App() {
                 <Route
                   path="/dental"
                   element={
-                    <ProtectedPage>
+                    <ProtectedPage moduleName="Dental">
                       <DentalDashboard />
                     </ProtectedPage>
                   }
@@ -650,7 +657,7 @@ function App() {
                 <Route
                   path="/dental/charts"
                   element={
-                    <ProtectedPage>
+                    <ProtectedPage moduleName="Dental Charts">
                       <DentalCharts />
                     </ProtectedPage>
                   }
@@ -658,7 +665,7 @@ function App() {
                 <Route
                   path="/dental/treatments"
                   element={
-                    <ProtectedPage>
+                    <ProtectedPage moduleName="Dental Treatments">
                       <DentalTreatments />
                     </ProtectedPage>
                   }
@@ -666,7 +673,7 @@ function App() {
                 <Route
                   path="/dental/periodontal"
                   element={
-                    <ProtectedPage>
+                    <ProtectedPage moduleName="Periodontal Exams">
                       <PeriodontalExams />
                     </ProtectedPage>
                   }
@@ -860,7 +867,7 @@ function App() {
                 <Route
                   path="/oncology"
                   element={
-                    <ProtectedPage>
+                    <ProtectedPage moduleName="Oncology">
                       <OncologyDashboard />
                     </ProtectedPage>
                   }
@@ -868,7 +875,7 @@ function App() {
                 <Route
                   path="/oncology/diagnoses"
                   element={
-                    <ProtectedPage>
+                    <ProtectedPage moduleName="Oncology Diagnoses">
                       <Diagnoses />
                     </ProtectedPage>
                   }
@@ -876,7 +883,7 @@ function App() {
                 <Route
                   path="/oncology/chemotherapy"
                   element={
-                    <ProtectedPage>
+                    <ProtectedPage moduleName="Chemotherapy">
                       <ChemotherapySessions />
                     </ProtectedPage>
                   }
@@ -884,7 +891,7 @@ function App() {
                 <Route
                   path="/oncology/treatment-plans"
                   element={
-                    <ProtectedPage>
+                    <ProtectedPage moduleName="Treatment Plans">
                       <TreatmentPlans />
                     </ProtectedPage>
                   }

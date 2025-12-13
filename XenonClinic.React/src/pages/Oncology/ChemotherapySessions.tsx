@@ -12,6 +12,7 @@ import {
 import { format } from "date-fns";
 import type { ChemotherapyAdministration } from "../../types/oncology";
 import { AdverseReactionSeverity } from "../../types/oncology";
+import { oncologyChemotherapyApi } from "../../lib/api";
 
 const SessionStatus = {
   Scheduled: "scheduled",
@@ -35,104 +36,12 @@ export const ChemotherapySessions = () => {
     ChemoSession | undefined
   >(undefined);
 
-  const { data: sessions, isLoading } = useQuery<ChemoSession[]>({
+  const { data: sessionsResponse, isLoading } = useQuery({
     queryKey: ["chemo-sessions"],
-    queryFn: async () => {
-      return [
-        {
-          id: 1,
-          protocolId: 101,
-          protocolName: "FOLFOX",
-          patientId: 5001,
-          patientName: "Margaret Thompson",
-          cycleNumber: 3,
-          administeredDate: new Date().toISOString(),
-          premedications: ["Ondansetron 8mg", "Dexamethasone 12mg"],
-          vitalSigns: {
-            bloodPressure: "120/80",
-            heartRate: 72,
-            temperature: 36.8,
-            weight: 65,
-          },
-          performedBy: "RN Sarah Johnson",
-          duration: 240,
-          status: SessionStatus.Completed,
-          createdAt: new Date().toISOString(),
-        },
-        {
-          id: 2,
-          protocolId: 102,
-          protocolName: "AC-T",
-          patientId: 5002,
-          patientName: "Richard Davis",
-          cycleNumber: 2,
-          administeredDate: new Date().toISOString(),
-          premedications: [
-            "Ondansetron 8mg",
-            "Dexamethasone 20mg",
-            "Diphenhydramine 25mg",
-          ],
-          vitalSigns: {
-            bloodPressure: "135/85",
-            heartRate: 78,
-            temperature: 37.0,
-            weight: 82,
-          },
-          adverseReactions: [
-            {
-              reaction: "Nausea",
-              severity: AdverseReactionSeverity.Mild,
-              treatment: "Additional ondansetron",
-            },
-          ],
-          performedBy: "RN Michael Brown",
-          duration: 180,
-          status: SessionStatus.Completed,
-          createdAt: new Date().toISOString(),
-        },
-        {
-          id: 3,
-          protocolId: 103,
-          protocolName: "CHOP",
-          patientId: 5003,
-          patientName: "Elizabeth Wilson",
-          cycleNumber: 1,
-          administeredDate: new Date(Date.now() + 86400000).toISOString(),
-          premedications: ["Ondansetron 8mg", "Allopurinol 300mg"],
-          performedBy: "RN Lisa Anderson",
-          status: SessionStatus.Scheduled,
-          createdAt: new Date().toISOString(),
-        },
-        {
-          id: 4,
-          protocolId: 101,
-          protocolName: "FOLFOX",
-          patientId: 5004,
-          patientName: "James Martinez",
-          cycleNumber: 5,
-          administeredDate: new Date().toISOString(),
-          premedications: ["Ondansetron 8mg", "Dexamethasone 12mg"],
-          vitalSigns: {
-            bloodPressure: "128/82",
-            heartRate: 68,
-            temperature: 36.5,
-            weight: 75,
-          },
-          adverseReactions: [
-            {
-              reaction: "Peripheral neuropathy",
-              severity: AdverseReactionSeverity.Moderate,
-              treatment: "Dose reduction noted",
-            },
-          ],
-          performedBy: "RN Sarah Johnson",
-          duration: 240,
-          status: SessionStatus.Completed,
-          createdAt: new Date().toISOString(),
-        },
-      ];
-    },
+    queryFn: () => oncologyChemotherapyApi.getAll(),
   });
+
+  const sessions: ChemoSession[] = sessionsResponse?.data || [];
 
   const filteredSessions = sessions?.filter((session) => {
     const matchesSearch =
