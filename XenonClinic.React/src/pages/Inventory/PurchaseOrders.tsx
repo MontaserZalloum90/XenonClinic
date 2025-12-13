@@ -100,6 +100,7 @@ export function PurchaseOrders() {
     PurchaseOrder["status"] | "all"
   >("all");
   const [selectedPO, setSelectedPO] = useState<PurchaseOrder | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const queryClient = useQueryClient();
 
   const { data: orders = [], isLoading } = useQuery({
@@ -132,6 +133,28 @@ export function PurchaseOrders() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["purchase-orders"] });
       setSelectedPO(null);
+    },
+  });
+
+  const createPOMutation = useMutation({
+    mutationFn: (data: {
+      vendorName: string;
+      vendorContact?: string;
+      vendorEmail?: string;
+      expectedDelivery?: string;
+      paymentTerms?: string;
+      shippingAddress?: string;
+      notes?: string;
+      items: {
+        itemCode: string;
+        itemName: string;
+        quantity: number;
+        unitPrice: number;
+      }[];
+    }) => api.post("/api/inventory/purchase-orders", data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["purchase-orders"] });
+      setIsModalOpen(false);
     },
   });
 
@@ -592,6 +615,209 @@ export function PurchaseOrders() {
           </div>
         </Dialog>
       )}
+
+      {/* Create PO Modal */}
+      <Dialog
+        open={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        className="relative z-50"
+      >
+        <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
+        <div className="fixed inset-0 flex items-center justify-center p-4">
+          <Dialog.Panel className="mx-auto max-w-2xl w-full rounded-lg bg-white shadow-xl max-h-[90vh] overflow-y-auto">
+            <div className="border-b px-6 py-4">
+              <Dialog.Title className="text-lg font-semibold text-gray-900">
+                Create New Purchase Order
+              </Dialog.Title>
+            </div>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                const formData = new FormData(e.currentTarget);
+                createPOMutation.mutate({
+                  vendorName: formData.get("vendorName") as string,
+                  vendorContact:
+                    (formData.get("vendorContact") as string) || undefined,
+                  vendorEmail:
+                    (formData.get("vendorEmail") as string) || undefined,
+                  expectedDelivery:
+                    (formData.get("expectedDelivery") as string) || undefined,
+                  paymentTerms:
+                    (formData.get("paymentTerms") as string) || undefined,
+                  shippingAddress:
+                    (formData.get("shippingAddress") as string) || undefined,
+                  notes: (formData.get("notes") as string) || undefined,
+                  items: [
+                    {
+                      itemCode: formData.get("itemCode") as string,
+                      itemName: formData.get("itemName") as string,
+                      quantity:
+                        parseInt(formData.get("quantity") as string) || 1,
+                      unitPrice:
+                        parseFloat(formData.get("unitPrice") as string) || 0,
+                    },
+                  ],
+                });
+              }}
+              className="p-6 space-y-4"
+            >
+              <div className="grid grid-cols-2 gap-4">
+                <div className="col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Vendor Name *
+                  </label>
+                  <input
+                    type="text"
+                    name="vendorName"
+                    required
+                    className="w-full rounded-md border border-gray-300 py-2 px-3 focus:border-blue-500 focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Contact Person
+                  </label>
+                  <input
+                    type="text"
+                    name="vendorContact"
+                    className="w-full rounded-md border border-gray-300 py-2 px-3 focus:border-blue-500 focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Vendor Email
+                  </label>
+                  <input
+                    type="email"
+                    name="vendorEmail"
+                    className="w-full rounded-md border border-gray-300 py-2 px-3 focus:border-blue-500 focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Expected Delivery
+                  </label>
+                  <input
+                    type="date"
+                    name="expectedDelivery"
+                    className="w-full rounded-md border border-gray-300 py-2 px-3 focus:border-blue-500 focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Payment Terms
+                  </label>
+                  <select
+                    name="paymentTerms"
+                    className="w-full rounded-md border border-gray-300 py-2 px-3 focus:border-blue-500 focus:outline-none"
+                  >
+                    <option value="">Select terms</option>
+                    <option value="Net 30">Net 30</option>
+                    <option value="Net 60">Net 60</option>
+                    <option value="Due on Receipt">Due on Receipt</option>
+                    <option value="Prepaid">Prepaid</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="border-t pt-4 mt-4">
+                <h4 className="text-sm font-medium text-gray-900 mb-3">
+                  Initial Item
+                </h4>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Item Code *
+                    </label>
+                    <input
+                      type="text"
+                      name="itemCode"
+                      required
+                      className="w-full rounded-md border border-gray-300 py-2 px-3 focus:border-blue-500 focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Item Name *
+                    </label>
+                    <input
+                      type="text"
+                      name="itemName"
+                      required
+                      className="w-full rounded-md border border-gray-300 py-2 px-3 focus:border-blue-500 focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Quantity *
+                    </label>
+                    <input
+                      type="number"
+                      name="quantity"
+                      min="1"
+                      defaultValue="1"
+                      required
+                      className="w-full rounded-md border border-gray-300 py-2 px-3 focus:border-blue-500 focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Unit Price *
+                    </label>
+                    <input
+                      type="number"
+                      name="unitPrice"
+                      min="0"
+                      step="0.01"
+                      required
+                      className="w-full rounded-md border border-gray-300 py-2 px-3 focus:border-blue-500 focus:outline-none"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Shipping Address
+                </label>
+                <textarea
+                  name="shippingAddress"
+                  rows={2}
+                  className="w-full rounded-md border border-gray-300 py-2 px-3 focus:border-blue-500 focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Notes
+                </label>
+                <textarea
+                  name="notes"
+                  rows={2}
+                  className="w-full rounded-md border border-gray-300 py-2 px-3 focus:border-blue-500 focus:outline-none"
+                />
+              </div>
+
+              <div className="flex justify-end gap-3 pt-4 border-t">
+                <button
+                  type="button"
+                  onClick={() => setIsModalOpen(false)}
+                  className="rounded-md bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={createPOMutation.isPending}
+                  className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+                >
+                  {createPOMutation.isPending ? "Creating..." : "Create PO"}
+                </button>
+              </div>
+            </form>
+          </Dialog.Panel>
+        </div>
+      </Dialog>
     </div>
   );
 }
