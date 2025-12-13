@@ -727,4 +727,100 @@ export const analyticsApi = {
     }),
 };
 
+// ============================================
+// ONCOLOGY API ENDPOINTS
+// ============================================
+
+export const oncologyDiagnosisApi = {
+  getAll: () => api.get("/api/OncologyApi/diagnoses"),
+  getById: (id: number) => api.get(`/api/OncologyApi/diagnoses/${id}`),
+  getByPatient: (patientId: number) =>
+    api.get(`/api/OncologyApi/diagnoses/patient/${patientId}`),
+  create: (data: Record<string, unknown>) =>
+    api.post("/api/OncologyApi/diagnoses", data),
+  update: (id: number, data: Record<string, unknown>) =>
+    api.put(`/api/OncologyApi/diagnoses/${id}`, data),
+  delete: (id: number) => api.delete(`/api/OncologyApi/diagnoses/${id}`),
+  getStatistics: () => api.get("/api/OncologyApi/diagnoses/statistics"),
+};
+
+export const oncologyTreatmentPlanApi = {
+  getAll: () => api.get("/api/OncologyApi/treatment-plans"),
+  getById: (id: number) => api.get(`/api/OncologyApi/treatment-plans/${id}`),
+  getByPatient: (patientId: number) =>
+    api.get(`/api/OncologyApi/treatment-plans/patient/${patientId}`),
+  getByDiagnosis: (diagnosisId: number) =>
+    api.get(`/api/OncologyApi/treatment-plans/diagnosis/${diagnosisId}`),
+  create: (data: Record<string, unknown>) =>
+    api.post("/api/OncologyApi/treatment-plans", data),
+  update: (id: number, data: Record<string, unknown>) =>
+    api.put(`/api/OncologyApi/treatment-plans/${id}`, data),
+  delete: (id: number) => api.delete(`/api/OncologyApi/treatment-plans/${id}`),
+};
+
+export const oncologyChemotherapyApi = {
+  getAll: () => api.get("/api/OncologyApi/chemotherapy-sessions"),
+  getById: (id: number) =>
+    api.get(`/api/OncologyApi/chemotherapy-sessions/${id}`),
+  getByPatient: (patientId: number) =>
+    api.get(`/api/OncologyApi/chemotherapy-sessions/patient/${patientId}`),
+  getByTreatmentPlan: (planId: number) =>
+    api.get(`/api/OncologyApi/chemotherapy-sessions/plan/${planId}`),
+  create: (data: Record<string, unknown>) =>
+    api.post("/api/OncologyApi/chemotherapy-sessions", data),
+  update: (id: number, data: Record<string, unknown>) =>
+    api.put(`/api/OncologyApi/chemotherapy-sessions/${id}`, data),
+  delete: (id: number) =>
+    api.delete(`/api/OncologyApi/chemotherapy-sessions/${id}`),
+};
+
+export const oncologyStatsApi = {
+  getDashboard: () => api.get("/api/OncologyApi/statistics/dashboard"),
+  getRecentActivity: () => api.get("/api/OncologyApi/statistics/activity"),
+};
+
+// ============================================
+// DENTAL API ENDPOINTS
+// ============================================
+
+export const dentalTreatmentApi = {
+  getAll: () => api.get("/api/DentalApi/treatments"),
+  getById: (id: number) => api.get(`/api/DentalApi/treatments/${id}`),
+  getByPatient: (patientId: number) =>
+    api.get(`/api/DentalApi/treatments/patient/${patientId}`),
+  create: (data: Record<string, unknown>) =>
+    api.post("/api/DentalApi/treatments", data),
+  update: (id: number, data: Record<string, unknown>) =>
+    api.put(`/api/DentalApi/treatments/${id}`, data),
+  delete: (id: number) => api.delete(`/api/DentalApi/treatments/${id}`),
+};
+
+export const dentalChartApi = {
+  getAll: () => api.get("/api/DentalApi/charts"),
+  getById: (id: number) => api.get(`/api/DentalApi/charts/${id}`),
+  getByPatient: (patientId: number) =>
+    api.get(`/api/DentalApi/charts/patient/${patientId}`),
+  create: (data: Record<string, unknown>) =>
+    api.post("/api/DentalApi/charts", data),
+  update: (id: number, data: Record<string, unknown>) =>
+    api.put(`/api/DentalApi/charts/${id}`, data),
+  delete: (id: number) => api.delete(`/api/DentalApi/charts/${id}`),
+};
+
+export const dentalPeriodontalApi = {
+  getAll: () => api.get("/api/DentalApi/periodontal-exams"),
+  getById: (id: number) => api.get(`/api/DentalApi/periodontal-exams/${id}`),
+  getByPatient: (patientId: number) =>
+    api.get(`/api/DentalApi/periodontal-exams/patient/${patientId}`),
+  create: (data: Record<string, unknown>) =>
+    api.post("/api/DentalApi/periodontal-exams", data),
+  update: (id: number, data: Record<string, unknown>) =>
+    api.put(`/api/DentalApi/periodontal-exams/${id}`, data),
+  delete: (id: number) => api.delete(`/api/DentalApi/periodontal-exams/${id}`),
+};
+
+export const dentalStatsApi = {
+  getDashboard: () => api.get("/api/DentalApi/statistics/dashboard"),
+};
+
 export default api;

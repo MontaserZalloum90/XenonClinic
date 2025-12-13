@@ -69,6 +69,7 @@ export function QualityControl() {
   const [dateFilter, setDateFilter] = useState(
     new Date().toISOString().split("T")[0],
   );
+  const [_isModalOpen, setIsModalOpen] = useState(false);
   const queryClient = useQueryClient();
 
   const { data: qcResults = [], isLoading } = useQuery({

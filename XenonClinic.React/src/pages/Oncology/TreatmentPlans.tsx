@@ -9,11 +9,8 @@ import {
   ClipboardDocumentListIcon,
 } from "@heroicons/react/24/outline";
 import { format } from "date-fns";
-import {
-  ChemoProtocolStatus,
-  CancerType,
-  CancerStage,
-} from "../../types/oncology";
+import { ChemoProtocolStatus } from "../../types/oncology";
+import { oncologyTreatmentPlanApi } from "../../lib/api";
 
 interface TreatmentPlan {
   id: number;
@@ -50,117 +47,12 @@ export const TreatmentPlans = () => {
     undefined,
   );
 
-  const { data: plans, isLoading } = useQuery<TreatmentPlan[]>({
+  const { data: plansResponse, isLoading } = useQuery({
     queryKey: ["treatment-plans"],
-    queryFn: async () => {
-      return [
-        {
-          id: 1,
-          patientId: 5001,
-          patientName: "Margaret Thompson",
-          diagnosisId: 101,
-          cancerType: CancerType.Colorectal,
-          stage: CancerStage.Stage3,
-          planName: "Adjuvant FOLFOX Therapy",
-          treatmentType: "chemotherapy",
-          protocol: "FOLFOX",
-          drugs: ["Oxaliplatin", "5-Fluorouracil", "Leucovorin"],
-          totalCycles: 12,
-          completedCycles: 6,
-          startDate: "2024-09-15",
-          expectedEndDate: "2025-03-15",
-          status: ChemoProtocolStatus.Active,
-          oncologist: "Dr. Sarah Chen",
-          notes: "Good tolerance so far, mild neuropathy",
-          createdAt: new Date().toISOString(),
-        },
-        {
-          id: 2,
-          patientId: 5002,
-          patientName: "Richard Davis",
-          diagnosisId: 102,
-          cancerType: CancerType.Breast,
-          stage: CancerStage.Stage2,
-          planName: "Neoadjuvant AC-T Protocol",
-          treatmentType: "chemotherapy",
-          protocol: "AC-T",
-          drugs: ["Doxorubicin", "Cyclophosphamide", "Paclitaxel"],
-          totalCycles: 8,
-          completedCycles: 4,
-          startDate: "2024-10-01",
-          expectedEndDate: "2025-02-01",
-          status: ChemoProtocolStatus.Active,
-          oncologist: "Dr. Michael Williams",
-          notes: "Transitioning to paclitaxel phase",
-          createdAt: new Date().toISOString(),
-        },
-        {
-          id: 3,
-          patientId: 5003,
-          patientName: "Elizabeth Wilson",
-          diagnosisId: 103,
-          cancerType: CancerType.Lymphoma,
-          stage: CancerStage.Stage2,
-          planName: "R-CHOP Protocol",
-          treatmentType: "chemotherapy",
-          protocol: "R-CHOP",
-          drugs: [
-            "Rituximab",
-            "Cyclophosphamide",
-            "Doxorubicin",
-            "Vincristine",
-            "Prednisone",
-          ],
-          totalCycles: 6,
-          completedCycles: 0,
-          startDate: new Date(Date.now() + 86400000)
-            .toISOString()
-            .split("T")[0],
-          status: ChemoProtocolStatus.Planned,
-          oncologist: "Dr. Sarah Chen",
-          createdAt: new Date().toISOString(),
-        },
-        {
-          id: 4,
-          patientId: 5004,
-          patientName: "James Martinez",
-          diagnosisId: 104,
-          cancerType: CancerType.Lung,
-          stage: CancerStage.Stage4,
-          planName: "Pembrolizumab + Chemotherapy",
-          treatmentType: "combination",
-          protocol: "Keytruda + Pemetrexed/Carboplatin",
-          drugs: ["Pembrolizumab", "Pemetrexed", "Carboplatin"],
-          totalCycles: 4,
-          completedCycles: 4,
-          startDate: "2024-06-01",
-          expectedEndDate: "2024-10-01",
-          status: ChemoProtocolStatus.Completed,
-          oncologist: "Dr. Michael Williams",
-          notes: "Good response, transitioning to maintenance",
-          createdAt: new Date().toISOString(),
-        },
-        {
-          id: 5,
-          patientId: 5005,
-          patientName: "Patricia Brown",
-          diagnosisId: 105,
-          cancerType: CancerType.Breast,
-          stage: CancerStage.Stage1,
-          planName: "Adjuvant Radiation Therapy",
-          treatmentType: "radiation",
-          totalCycles: 25,
-          completedCycles: 20,
-          startDate: "2024-11-01",
-          expectedEndDate: "2024-12-15",
-          status: ChemoProtocolStatus.Active,
-          oncologist: "Dr. Lisa Anderson",
-          notes: "Minimal skin reaction",
-          createdAt: new Date().toISOString(),
-        },
-      ];
-    },
+    queryFn: () => oncologyTreatmentPlanApi.getAll(),
   });
+
+  const plans: TreatmentPlan[] = plansResponse?.data || [];
 
   const filteredPlans = plans?.filter((plan) => {
     const matchesSearch =

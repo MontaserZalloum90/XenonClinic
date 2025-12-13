@@ -84,6 +84,7 @@ export function MedicationDispensing() {
   >("all");
   const [selectedItem, setSelectedItem] = useState<DispensingItem | null>(null);
   const [isDispenseModalOpen, setIsDispenseModalOpen] = useState(false);
+  const [quantityToDispense, setQuantityToDispense] = useState<number>(0);
   const queryClient = useQueryClient();
 
   const { data: items = [], isLoading } = useQuery({
@@ -364,6 +365,7 @@ export function MedicationDispensing() {
                           <button
                             onClick={() => {
                               setSelectedItem(item);
+                              setQuantityToDispense(item.quantity);
                               setIsDispenseModalOpen(true);
                             }}
                             className="rounded bg-purple-600 px-3 py-1 text-xs font-medium text-white hover:bg-purple-700"
@@ -441,9 +443,26 @@ export function MedicationDispensing() {
                     </label>
                     <input
                       type="number"
-                      defaultValue={selectedItem.quantity}
+                      value={quantityToDispense}
+                      onChange={(e) => {
+                        const val = parseInt(e.target.value, 10);
+                        if (
+                          !isNaN(val) &&
+                          val >= 0 &&
+                          val <= selectedItem.quantity
+                        ) {
+                          setQuantityToDispense(val);
+                        }
+                      }}
+                      min={0}
+                      max={selectedItem.quantity}
                       className="w-full rounded-md border border-gray-300 py-2 px-3 focus:border-blue-500 focus:outline-none"
                     />
+                    {quantityToDispense > selectedItem.quantity && (
+                      <p className="text-red-600 text-xs mt-1">
+                        Cannot exceed ordered quantity
+                      </p>
+                    )}
                   </div>
                 </div>
 
@@ -482,10 +501,14 @@ export function MedicationDispensing() {
                   onClick={() =>
                     dispenseMutation.mutate({
                       id: selectedItem.id,
-                      quantityDispensed: selectedItem.quantity,
+                      quantityDispensed: quantityToDispense,
                     })
                   }
-                  className="rounded-md bg-purple-600 px-4 py-2 text-sm font-medium text-white hover:bg-purple-700"
+                  disabled={
+                    quantityToDispense <= 0 ||
+                    quantityToDispense > selectedItem.quantity
+                  }
+                  className="rounded-md bg-purple-600 px-4 py-2 text-sm font-medium text-white hover:bg-purple-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
                 >
                   Complete Dispensing
                 </button>

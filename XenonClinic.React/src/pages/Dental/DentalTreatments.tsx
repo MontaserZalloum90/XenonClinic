@@ -15,21 +15,16 @@ import type {
   TreatmentType,
 } from "../../types/dental";
 import { format } from "date-fns";
+import { dentalTreatmentApi as dentalTreatmentApiImport } from "../../lib/api";
 
-// Mock API functions - Replace with actual API calls
+// Use real API
 const dentalTreatmentApi = {
-  getAll: async () => ({
-    data: [] as DentalTreatment[],
-  }),
-  create: async (data: CreateDentalTreatmentRequest) => ({
-    data: { id: Date.now(), ...data },
-  }),
-  update: async (id: number, data: Partial<DentalTreatment>) => ({
-    data: { id, ...data },
-  }),
-  delete: async () => ({
-    data: { success: true },
-  }),
+  getAll: () => dentalTreatmentApiImport.getAll(),
+  create: (data: CreateDentalTreatmentRequest) =>
+    dentalTreatmentApiImport.create(data),
+  update: (id: number, data: Partial<DentalTreatment>) =>
+    dentalTreatmentApiImport.update(id, data),
+  delete: (id: number) => dentalTreatmentApiImport.delete(id),
 };
 
 const getTreatmentTypeLabel = (type: TreatmentType): string => {

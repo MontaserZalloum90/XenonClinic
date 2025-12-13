@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   ChartBarIcon,
   DevicePhoneMobileIcon,
@@ -82,6 +82,10 @@ export const AudiologyList = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("");
   const [typeFilter, setTypeFilter] = useState<string>("");
+  const [selectedPatientId, setSelectedPatientId] = useState<number | null>(
+    null,
+  );
+  const queryClient = useQueryClient();
 
   // Fetch encounters
   const { data: encountersData, isLoading: encountersLoading } = useQuery({
@@ -122,13 +126,41 @@ export const AudiologyList = () => {
     return matchesSearch && matchesStatus && matchesType;
   });
 
+  // Mutation for creating encounters
+  const createEncounterMutation = useMutation({
+    mutationFn: async ({
+      data,
+      tasks,
+    }: {
+      data: CreateEncounterRequest;
+      tasks: CreateEncounterTaskRequest[];
+    }) => {
+      const response = await encounterApi.create(data);
+      // Create tasks if any
+      if (tasks.length > 0 && response.data?.id) {
+        await Promise.all(
+          tasks.map((task) => encounterApi.createTask(response.data.id, task)),
+        );
+      }
+      return response;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["encounters"] });
+      queryClient.invalidateQueries({ queryKey: ["audiology-stats"] });
+      setShowNewEncounter(false);
+      setSelectedPatientId(null);
+    },
+  });
+
   const handleNewEncounter = (
     data: CreateEncounterRequest,
     tasks: CreateEncounterTaskRequest[],
   ) => {
-    // In real app, this would call the API
-    console.log("Creating encounter:", data, tasks);
-    setShowNewEncounter(false);
+    if (!data.patientId || data.patientId === 0) {
+      alert("Please select a patient before creating an encounter");
+      return;
+    }
+    createEncounterMutation.mutate({ data, tasks });
   };
 
   return (
@@ -359,15 +391,44 @@ export const AudiologyList = () => {
       {/* New Encounter Modal */}
       <Modal
         isOpen={showNewEncounter}
-        onClose={() => setShowNewEncounter(false)}
+        onClose={() => {
+          setShowNewEncounter(false);
+          setSelectedPatientId(null);
+        }}
         title="New Encounter"
         size="xl"
       >
-        <EncounterForm
-          patientId={0} // Would be selected from patient search
-          onSubmit={handleNewEncounter}
-          onCancel={() => setShowNewEncounter(false)}
-        />
+        {!selectedPatientId ? (
+          <div className="p-4">
+            <p className="text-gray-600 mb-4">
+              Search and select a patient to create an encounter:
+            </p>
+            <input
+              type="text"
+              placeholder="Search patient by name or ID..."
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500"
+              onChange={(e) => {
+                // In production, this would search patients via API
+                const patientId = parseInt(e.target.value, 10);
+                if (!isNaN(patientId) && patientId > 0) {
+                  setSelectedPatientId(patientId);
+                }
+              }}
+            />
+            <p className="text-sm text-gray-500 mt-2">
+              Enter patient ID to continue (patient search to be implemented)
+            </p>
+          </div>
+        ) : (
+          <EncounterForm
+            patientId={selectedPatientId}
+            onSubmit={handleNewEncounter}
+            onCancel={() => {
+              setShowNewEncounter(false);
+              setSelectedPatientId(null);
+            }}
+          />
+        )}
       </Modal>
     </div>
   );

@@ -83,6 +83,7 @@ export function SpecimenCollection() {
   const [statusFilter, setStatusFilter] = useState<Specimen["status"] | "all">(
     "all",
   );
+  const [_isModalOpen, setIsModalOpen] = useState(false);
   const queryClient = useQueryClient();
 
   const { data: specimens = [], isLoading } = useQuery({

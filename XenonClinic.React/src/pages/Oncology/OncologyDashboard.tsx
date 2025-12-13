@@ -11,6 +11,7 @@ import {
 } from "@heroicons/react/24/outline";
 import { format } from "date-fns";
 import type { OncologyStatistics } from "../../types/oncology";
+import { oncologyStatsApi } from "../../lib/api";
 
 interface RecentActivity {
   id: number;
@@ -22,63 +23,20 @@ interface RecentActivity {
 }
 
 export const OncologyDashboard = () => {
-  // Mock data - In production, replace with actual API calls
-  const { data: stats } = useQuery<OncologyStatistics>({
+  // Real API calls - data fetched from backend
+  const { data: statsResponse } = useQuery({
     queryKey: ["oncology-stats"],
-    queryFn: async () => {
-      // Mock implementation
-      return {
-        totalPatients: 156,
-        activePatients: 89,
-        newPatientsThisMonth: 12,
-        newDiagnosesThisMonth: 8,
-        activeTreatments: 67,
-        activeChemoProtocols: 42,
-        activeRadiationTreatments: 25,
-        completedTreatmentsThisMonth: 18,
-        chemoAdministrationsToday: 15,
-        chemoAdministrationsThisWeek: 78,
-        radiationSessionsThisWeek: 125,
-        tumorMarkersThisMonth: 45,
-        abnormalMarkers: 12,
-        remissionRate: 68.5,
-        adverseReactionRate: 12.3,
-      };
-    },
+    queryFn: () => oncologyStatsApi.getDashboard(),
   });
 
-  const { data: recentActivities } = useQuery<RecentActivity[]>({
+  const stats: OncologyStatistics | undefined = statsResponse?.data;
+
+  const { data: activitiesResponse } = useQuery({
     queryKey: ["recent-oncology-activities"],
-    queryFn: async () => {
-      // Mock implementation
-      return [
-        {
-          id: 1,
-          patientName: "Sarah Johnson",
-          activity: "Chemotherapy Administration",
-          date: new Date().toISOString(),
-          status: "Completed",
-          performedBy: "Dr. Williams",
-        },
-        {
-          id: 2,
-          patientName: "Michael Brown",
-          activity: "Radiation Therapy Session",
-          date: new Date().toISOString(),
-          status: "In Progress",
-          performedBy: "Dr. Davis",
-        },
-        {
-          id: 3,
-          patientName: "Jennifer Lee",
-          activity: "Tumor Marker Test",
-          date: new Date().toISOString(),
-          status: "Scheduled",
-          performedBy: "Dr. Martinez",
-        },
-      ];
-    },
+    queryFn: () => oncologyStatsApi.getRecentActivity(),
   });
+
+  const recentActivities: RecentActivity[] = activitiesResponse?.data || [];
 
   const statistics = stats || {
     totalPatients: 0,

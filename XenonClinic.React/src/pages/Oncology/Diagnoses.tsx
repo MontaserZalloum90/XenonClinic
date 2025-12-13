@@ -16,21 +16,16 @@ import type {
   CancerGrade,
 } from "../../types/oncology";
 import { format } from "date-fns";
+import { oncologyDiagnosisApi } from "../../lib/api";
 
-// Mock API functions - Replace with actual API calls
+// Use real API
 const diagnosisApi = {
-  getAll: async () => ({
-    data: [] as CancerDiagnosis[],
-  }),
-  create: async (data: CreateCancerDiagnosisRequest) => ({
-    data: { id: Date.now(), ...data },
-  }),
-  update: async (id: number, data: Partial<CancerDiagnosis>) => ({
-    data: { id, ...data },
-  }),
-  delete: async () => ({
-    data: { success: true },
-  }),
+  getAll: () => oncologyDiagnosisApi.getAll(),
+  create: (data: CreateCancerDiagnosisRequest) =>
+    oncologyDiagnosisApi.create(data),
+  update: (id: number, data: Partial<CancerDiagnosis>) =>
+    oncologyDiagnosisApi.update(id, data),
+  delete: (id: number) => oncologyDiagnosisApi.delete(id),
 };
 
 const getCancerTypeLabel = (type: CancerType): string => {
