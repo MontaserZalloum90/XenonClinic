@@ -26,29 +26,39 @@ export interface RequestConfig {
   signal?: AbortSignal;
 }
 
-export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
+export type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 
 // ============================================
 // Token Management
 // ============================================
 
-const TOKEN_KEY = 'auth_token';
-const USER_KEY = 'user_info';
+const TOKEN_KEY = "auth_token";
+const USER_KEY = "user_info";
 
 export const tokenStorage = {
   getToken: (): string | null => {
-    if (typeof window === 'undefined') return null;
+    if (typeof window === "undefined") return null;
     return localStorage.getItem(TOKEN_KEY);
   },
 
   setToken: (token: string): void => {
-    if (typeof window === 'undefined') return;
+    if (typeof window === "undefined") return;
     localStorage.setItem(TOKEN_KEY, token);
   },
 
   removeToken: (): void => {
-    if (typeof window === 'undefined') return;
+    if (typeof window === "undefined") return;
     localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(USER_KEY);
+  },
+
+  clearToken: (): void => {
+    if (typeof window === "undefined") return;
+    localStorage.removeItem(TOKEN_KEY);
+  },
+
+  clearUserData: (): void => {
+    if (typeof window === "undefined") return;
     localStorage.removeItem(USER_KEY);
   },
 
@@ -63,14 +73,14 @@ export const tokenStorage = {
 
 export function createApiClient(baseUrl: string) {
   const defaultHeaders: Record<string, string> = {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   };
 
   async function request<T>(
     method: HttpMethod,
     endpoint: string,
     data?: unknown,
-    config?: RequestConfig
+    config?: RequestConfig,
   ): Promise<ApiResponse<T>> {
     try {
       const token = tokenStorage.getToken();
@@ -86,7 +96,7 @@ export function createApiClient(baseUrl: string) {
         signal: config?.signal,
       };
 
-      if (data && method !== 'GET') {
+      if (data && method !== "GET") {
         options.body = JSON.stringify(data);
       }
 
@@ -96,15 +106,17 @@ export function createApiClient(baseUrl: string) {
         // Handle 401 Unauthorized
         if (response.status === 401) {
           tokenStorage.removeToken();
-          if (typeof window !== 'undefined') {
-            window.location.href = '/login';
+          if (typeof window !== "undefined") {
+            window.location.href = "/login";
           }
         }
 
         const errorData = await response.json().catch(() => ({}));
         return {
           success: false,
-          error: errorData.message || `Request failed with status ${response.status}`,
+          error:
+            errorData.message ||
+            `Request failed with status ${response.status}`,
         };
       }
 
@@ -119,26 +131,26 @@ export function createApiClient(baseUrl: string) {
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Network error',
+        error: error instanceof Error ? error.message : "Network error",
       };
     }
   }
 
   return {
     get: <T>(endpoint: string, config?: RequestConfig) =>
-      request<T>('GET', endpoint, undefined, config),
+      request<T>("GET", endpoint, undefined, config),
 
     post: <T>(endpoint: string, data?: unknown, config?: RequestConfig) =>
-      request<T>('POST', endpoint, data, config),
+      request<T>("POST", endpoint, data, config),
 
     put: <T>(endpoint: string, data?: unknown, config?: RequestConfig) =>
-      request<T>('PUT', endpoint, data, config),
+      request<T>("PUT", endpoint, data, config),
 
     patch: <T>(endpoint: string, data?: unknown, config?: RequestConfig) =>
-      request<T>('PATCH', endpoint, data, config),
+      request<T>("PATCH", endpoint, data, config),
 
     delete: <T>(endpoint: string, config?: RequestConfig) =>
-      request<T>('DELETE', endpoint, undefined, config),
+      request<T>("DELETE", endpoint, undefined, config),
   };
 }
 
@@ -146,17 +158,19 @@ export function createApiClient(baseUrl: string) {
 // Query String Helpers
 // ============================================
 
-export function buildQueryString(params: Record<string, string | number | boolean | undefined>): string {
+export function buildQueryString(
+  params: Record<string, string | number | boolean | undefined>,
+): string {
   const searchParams = new URLSearchParams();
 
   Object.entries(params).forEach(([key, value]) => {
-    if (value !== undefined && value !== null && value !== '') {
+    if (value !== undefined && value !== null && value !== "") {
       searchParams.append(key, String(value));
     }
   });
 
   const queryString = searchParams.toString();
-  return queryString ? `?${queryString}` : '';
+  return queryString ? `?${queryString}` : "";
 }
 
 // ============================================
@@ -165,10 +179,10 @@ export function buildQueryString(params: Record<string, string | number | boolea
 
 export function isApiError(error: unknown): error is ApiError {
   return (
-    typeof error === 'object' &&
+    typeof error === "object" &&
     error !== null &&
-    'status' in error &&
-    'message' in error
+    "status" in error &&
+    "message" in error
   );
 }
 
@@ -179,7 +193,7 @@ export function getErrorMessage(error: unknown): string {
   if (error instanceof Error) {
     return error.message;
   }
-  return 'An unexpected error occurred';
+  return "An unexpected error occurred";
 }
 
 // ============================================
@@ -188,7 +202,7 @@ export function getErrorMessage(error: unknown): string {
 
 export async function withRetry<T>(
   fn: () => Promise<T>,
-  options: { maxRetries?: number; delay?: number; backoff?: number } = {}
+  options: { maxRetries?: number; delay?: number; backoff?: number } = {},
 ): Promise<T> {
   const { maxRetries = 3, delay = 1000, backoff = 2 } = options;
 
@@ -201,7 +215,9 @@ export async function withRetry<T>(
       lastError = error instanceof Error ? error : new Error(String(error));
 
       if (attempt < maxRetries - 1) {
-        await new Promise(resolve => setTimeout(resolve, delay * Math.pow(backoff, attempt)));
+        await new Promise((resolve) =>
+          setTimeout(resolve, delay * Math.pow(backoff, attempt)),
+        );
       }
     }
   }

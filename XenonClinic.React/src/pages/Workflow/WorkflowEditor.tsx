@@ -1,24 +1,23 @@
-import { useState, useEffect, useCallback } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
-import { workflowDesignerApi } from '../../components/workflow/workflowApi';
-import { WorkflowDesigner } from '../../components/workflow/WorkflowDesigner';
+import { useState, useEffect, useCallback } from "react";
+import { useParams, Link } from "react-router-dom";
+import { workflowDesignerApi } from "../../components/workflow/workflowApi";
+import { WorkflowDesigner } from "../../components/workflow/WorkflowDesigner";
 import type {
   WorkflowDesignModel,
   NodeTypeCatalog,
   WorkflowValidationResult,
-} from '../../components/workflow/types';
-import { Toast } from '../../components/ui/Toast';
+} from "../../components/workflow/types";
+import { useToast } from "../../components/ui/Toast";
 
 export function WorkflowEditor() {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
+  const { showToast } = useToast();
   const [workflow, setWorkflow] = useState<WorkflowDesignModel | null>(null);
   const [nodeTypes, setNodeTypes] = useState<NodeTypeCatalog | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
   // Fetch workflow and node types
   useEffect(() => {
@@ -35,7 +34,9 @@ export function WorkflowEditor() {
         setNodeTypes(nodeTypesData);
         setError(null);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load workflow');
+        setError(
+          err instanceof Error ? err.message : "Failed to load workflow",
+        );
       } finally {
         setLoading(false);
       }
@@ -49,19 +50,22 @@ export function WorkflowEditor() {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       if (hasUnsavedChanges) {
         e.preventDefault();
-        e.returnValue = '';
+        e.returnValue = "";
       }
     };
 
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
   }, [hasUnsavedChanges]);
 
   // Handle workflow changes
-  const handleWorkflowChange = useCallback((updatedWorkflow: WorkflowDesignModel) => {
-    setWorkflow(updatedWorkflow);
-    setHasUnsavedChanges(true);
-  }, []);
+  const handleWorkflowChange = useCallback(
+    (updatedWorkflow: WorkflowDesignModel) => {
+      setWorkflow(updatedWorkflow);
+      setHasUnsavedChanges(true);
+    },
+    [],
+  );
 
   // Save workflow
   const handleSave = async () => {
@@ -72,12 +76,12 @@ export function WorkflowEditor() {
       const saved = await workflowDesignerApi.saveWorkflow(id, workflow);
       setWorkflow(saved);
       setHasUnsavedChanges(false);
-      setToast({ message: 'Workflow saved successfully', type: 'success' });
+      showToast("success", "Workflow saved successfully");
     } catch (err) {
-      setToast({
-        message: err instanceof Error ? err.message : 'Failed to save workflow',
-        type: 'error',
-      });
+      showToast(
+        "error",
+        err instanceof Error ? err.message : "Failed to save workflow",
+      );
     } finally {
       setSaving(false);
     }
@@ -92,19 +96,19 @@ export function WorkflowEditor() {
     try {
       const result = await workflowDesignerApi.validateWorkflow(workflow);
       if (result.isValid) {
-        setToast({ message: 'Workflow is valid', type: 'success' });
+        showToast("success", "Workflow is valid");
       } else {
-        setToast({
-          message: `Validation failed: ${result.errors.length} error(s)`,
-          type: 'error',
-        });
+        showToast(
+          "error",
+          `Validation failed: ${result.errors.length} error(s)`,
+        );
       }
       return result;
     } catch (err) {
-      setToast({
-        message: err instanceof Error ? err.message : 'Validation failed',
-        type: 'error',
-      });
+      showToast(
+        "error",
+        err instanceof Error ? err.message : "Validation failed",
+      );
       return { isValid: false, errors: [], warnings: [] };
     }
   };
@@ -119,14 +123,17 @@ export function WorkflowEditor() {
     }
 
     try {
-      const published = await workflowDesignerApi.publishWorkflow(id, workflow.version);
+      const published = await workflowDesignerApi.publishWorkflow(
+        id,
+        workflow.version,
+      );
       setWorkflow(published);
-      setToast({ message: 'Workflow published successfully', type: 'success' });
+      showToast("success", "Workflow published successfully");
     } catch (err) {
-      setToast({
-        message: err instanceof Error ? err.message : 'Failed to publish workflow',
-        type: 'error',
-      });
+      showToast(
+        "error",
+        err instanceof Error ? err.message : "Failed to publish workflow",
+      );
     }
   };
 
@@ -136,20 +143,20 @@ export function WorkflowEditor() {
 
     try {
       const json = await workflowDesignerApi.exportWorkflow(id);
-      const blob = new Blob([json], { type: 'application/json' });
+      const blob = new Blob([json], { type: "application/json" });
       const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
+      const link = document.createElement("a");
       link.href = url;
-      link.download = `${workflow.name.replace(/[^a-z0-9]/gi, '_')}_v${workflow.version}.json`;
+      link.download = `${workflow.name.replace(/[^a-z0-9]/gi, "_")}_v${workflow.version}.json`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
     } catch (err) {
-      setToast({
-        message: err instanceof Error ? err.message : 'Failed to export workflow',
-        type: 'error',
-      });
+      showToast(
+        "error",
+        err instanceof Error ? err.message : "Failed to export workflow",
+      );
     }
   };
 
@@ -166,8 +173,10 @@ export function WorkflowEditor() {
       <div className="h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="text-red-500 text-5xl mb-4">⚠️</div>
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">Failed to Load Workflow</h2>
-          <p className="text-gray-600 mb-4">{error || 'Workflow not found'}</p>
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">
+            Failed to Load Workflow
+          </h2>
+          <p className="text-gray-600 mb-4">{error || "Workflow not found"}</p>
           <Link
             to="/workflow"
             className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
@@ -189,7 +198,11 @@ export function WorkflowEditor() {
             className="text-gray-600 hover:text-gray-900"
             onClick={(e) => {
               if (hasUnsavedChanges) {
-                if (!window.confirm('You have unsaved changes. Are you sure you want to leave?')) {
+                if (
+                  !window.confirm(
+                    "You have unsaved changes. Are you sure you want to leave?",
+                  )
+                ) {
                   e.preventDefault();
                 }
               }
@@ -199,7 +212,9 @@ export function WorkflowEditor() {
           </Link>
           <div className="border-l border-gray-300 pl-4">
             <div className="flex items-center gap-2">
-              <h1 className="text-lg font-semibold text-gray-900">{workflow.name}</h1>
+              <h1 className="text-lg font-semibold text-gray-900">
+                {workflow.name}
+              </h1>
               <span className="text-sm text-gray-500">v{workflow.version}</span>
               {workflow.isDraft ? (
                 <span className="px-2 py-0.5 text-xs rounded-full bg-yellow-100 text-yellow-800">
@@ -211,7 +226,9 @@ export function WorkflowEditor() {
                 </span>
               )}
               {hasUnsavedChanges && (
-                <span className="text-sm text-orange-500">• Unsaved changes</span>
+                <span className="text-sm text-orange-500">
+                  • Unsaved changes
+                </span>
               )}
             </div>
             {workflow.description && (
@@ -232,7 +249,7 @@ export function WorkflowEditor() {
             disabled={saving || !hasUnsavedChanges}
             className="px-4 py-1.5 text-sm bg-gray-100 text-gray-700 hover:bg-gray-200 rounded disabled:opacity-50"
           >
-            {saving ? 'Saving...' : 'Save'}
+            {saving ? "Saving..." : "Save"}
           </button>
           {workflow.isDraft && (
             <button
@@ -255,15 +272,6 @@ export function WorkflowEditor() {
           onSave={handleSave}
         />
       </div>
-
-      {/* Toast notifications */}
-      {toast && (
-        <Toast
-          message={toast.message}
-          type={toast.type}
-          onClose={() => setToast(null)}
-        />
-      )}
     </div>
   );
 }

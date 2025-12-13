@@ -7,60 +7,64 @@
 // AUDIT LOG TYPES
 // ============================================
 
-export enum AuditAction {
+export const AuditAction = {
   // View actions
-  VIEW = 'VIEW',
-  VIEW_LIST = 'VIEW_LIST',
-  VIEW_DETAIL = 'VIEW_DETAIL',
-  EXPORT = 'EXPORT',
-  PRINT = 'PRINT',
+  VIEW: "VIEW",
+  VIEW_LIST: "VIEW_LIST",
+  VIEW_DETAIL: "VIEW_DETAIL",
+  EXPORT: "EXPORT",
+  PRINT: "PRINT",
 
   // Create/Update/Delete actions
-  CREATE = 'CREATE',
-  UPDATE = 'UPDATE',
-  DELETE = 'DELETE',
+  CREATE: "CREATE",
+  UPDATE: "UPDATE",
+  DELETE: "DELETE",
 
   // Authentication actions
-  LOGIN = 'LOGIN',
-  LOGOUT = 'LOGOUT',
-  LOGIN_FAILED = 'LOGIN_FAILED',
-  PASSWORD_CHANGE = 'PASSWORD_CHANGE',
+  LOGIN: "LOGIN",
+  LOGOUT: "LOGOUT",
+  LOGIN_FAILED: "LOGIN_FAILED",
+  PASSWORD_CHANGE: "PASSWORD_CHANGE",
 
   // Access control
-  ACCESS_DENIED = 'ACCESS_DENIED',
-  PERMISSION_CHANGE = 'PERMISSION_CHANGE',
+  ACCESS_DENIED: "ACCESS_DENIED",
+  PERMISSION_CHANGE: "PERMISSION_CHANGE",
 
   // Data operations
-  SEARCH = 'SEARCH',
-  DOWNLOAD = 'DOWNLOAD',
-  UPLOAD = 'UPLOAD',
-  SIGN = 'SIGN',
-}
+  SEARCH: "SEARCH",
+  DOWNLOAD: "DOWNLOAD",
+  UPLOAD: "UPLOAD",
+  SIGN: "SIGN",
+} as const;
+export type AuditAction = (typeof AuditAction)[keyof typeof AuditAction];
 
-export enum AuditResourceType {
-  PATIENT = 'PATIENT',
-  APPOINTMENT = 'APPOINTMENT',
-  ENCOUNTER = 'ENCOUNTER',
-  AUDIOGRAM = 'AUDIOGRAM',
-  HEARING_AID = 'HEARING_AID',
-  CONSENT_FORM = 'CONSENT_FORM',
-  ATTACHMENT = 'ATTACHMENT',
-  PRESCRIPTION = 'PRESCRIPTION',
-  LAB_RESULT = 'LAB_RESULT',
-  RADIOLOGY = 'RADIOLOGY',
-  INVOICE = 'INVOICE',
-  EMPLOYEE = 'EMPLOYEE',
-  INVENTORY = 'INVENTORY',
-  USER = 'USER',
-  SYSTEM = 'SYSTEM',
-}
+export const AuditResourceType = {
+  PATIENT: "PATIENT",
+  APPOINTMENT: "APPOINTMENT",
+  ENCOUNTER: "ENCOUNTER",
+  AUDIOGRAM: "AUDIOGRAM",
+  HEARING_AID: "HEARING_AID",
+  CONSENT_FORM: "CONSENT_FORM",
+  ATTACHMENT: "ATTACHMENT",
+  PRESCRIPTION: "PRESCRIPTION",
+  LAB_RESULT: "LAB_RESULT",
+  RADIOLOGY: "RADIOLOGY",
+  INVOICE: "INVOICE",
+  EMPLOYEE: "EMPLOYEE",
+  INVENTORY: "INVENTORY",
+  USER: "USER",
+  SYSTEM: "SYSTEM",
+} as const;
+export type AuditResourceType =
+  (typeof AuditResourceType)[keyof typeof AuditResourceType];
 
-export enum AuditSeverity {
-  INFO = 'INFO',
-  WARNING = 'WARNING',
-  ERROR = 'ERROR',
-  CRITICAL = 'CRITICAL',
-}
+export const AuditSeverity = {
+  INFO: "INFO",
+  WARNING: "WARNING",
+  ERROR: "ERROR",
+  CRITICAL: "CRITICAL",
+} as const;
+export type AuditSeverity = (typeof AuditSeverity)[keyof typeof AuditSeverity];
 
 export interface AuditLogEntry {
   id: string;
@@ -104,15 +108,15 @@ class AuditLogService {
   private flushInterval: number = 5000; // 5 seconds
   private maxQueueSize: number = 100;
   private intervalId: ReturnType<typeof setInterval> | null = null;
-  private apiEndpoint: string = '/api/audit-logs';
+  private apiEndpoint: string = "/api/audit-logs";
 
   constructor() {
     // Start the flush interval when service is created
     this.startFlushInterval();
 
     // Flush on page unload
-    if (typeof window !== 'undefined') {
-      window.addEventListener('beforeunload', () => this.flush());
+    if (typeof window !== "undefined") {
+      window.addEventListener("beforeunload", () => this.flush());
     }
   }
 
@@ -149,28 +153,35 @@ class AuditLogService {
    */
   private getCurrentUser(): { id: number; name: string; role: string } {
     try {
-      const userStr = localStorage.getItem('user');
+      const userStr = localStorage.getItem("user");
       if (userStr) {
         const user = JSON.parse(userStr);
         return {
           id: user.id || 0,
-          name: user.fullName || user.username || 'Unknown',
-          role: Array.isArray(user.roles) ? user.roles.join(', ') : user.role || 'Unknown',
+          name: user.fullName || user.username || "Unknown",
+          role: Array.isArray(user.roles)
+            ? user.roles.join(", ")
+            : user.role || "Unknown",
         };
       }
     } catch {
       // Ignore parse errors
     }
-    return { id: 0, name: 'Anonymous', role: 'None' };
+    return { id: 0, name: "Anonymous", role: "None" };
   }
 
   /**
    * Get session info
    */
-  private getSessionInfo(): { sessionId?: string; ipAddress?: string; userAgent?: string } {
+  private getSessionInfo(): {
+    sessionId?: string;
+    ipAddress?: string;
+    userAgent?: string;
+  } {
     return {
-      sessionId: sessionStorage.getItem('sessionId') || undefined,
-      userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : undefined,
+      sessionId: sessionStorage.getItem("sessionId") || undefined,
+      userAgent:
+        typeof navigator !== "undefined" ? navigator.userAgent : undefined,
     };
   }
 
@@ -189,7 +200,7 @@ class AuditLogService {
       success?: boolean;
       errorMessage?: string;
       severity?: AuditSeverity;
-    } = {}
+    } = {},
   ): void {
     const user = this.getCurrentUser();
     const session = this.getSessionInfo();
@@ -207,7 +218,9 @@ class AuditLogService {
       ipAddress: session.ipAddress,
       userAgent: session.userAgent,
       sessionId: session.sessionId,
-      severity: options.severity || this.getSeverityForAction(action, options.success ?? true),
+      severity:
+        options.severity ||
+        this.getSeverityForAction(action, options.success ?? true),
       details: options.details,
       previousValue: options.previousValue,
       newValue: options.newValue,
@@ -218,8 +231,8 @@ class AuditLogService {
     this.queue.push(entry);
 
     // Also log to console in development
-    if (process.env.NODE_ENV === 'development') {
-      console.log('[Audit]', entry);
+    if (import.meta.env.DEV) {
+      console.log("[Audit]", entry);
     }
 
     // Flush if queue is full
@@ -231,7 +244,10 @@ class AuditLogService {
   /**
    * Determine severity based on action type
    */
-  private getSeverityForAction(action: AuditAction, success: boolean): AuditSeverity {
+  private getSeverityForAction(
+    action: AuditAction,
+    success: boolean,
+  ): AuditSeverity {
     if (!success) {
       return AuditSeverity.ERROR;
     }
@@ -261,11 +277,11 @@ class AuditLogService {
     this.queue = [];
 
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem("token");
       const response = await fetch(this.apiEndpoint, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify({ logs: logsToSend }),
@@ -274,12 +290,12 @@ class AuditLogService {
       if (!response.ok) {
         // Re-queue failed logs
         this.queue = [...logsToSend, ...this.queue];
-        console.error('[Audit] Failed to flush logs:', response.statusText);
+        console.error("[Audit] Failed to flush logs:", response.statusText);
       }
     } catch (error) {
       // Re-queue failed logs
       this.queue = [...logsToSend, ...this.queue];
-      console.error('[Audit] Failed to flush logs:', error);
+      console.error("[Audit] Failed to flush logs:", error);
     }
   }
 
@@ -293,7 +309,7 @@ class AuditLogService {
   public logPatientAccess(
     patientId: number,
     patientName: string,
-    action: AuditAction = AuditAction.VIEW_DETAIL
+    action: AuditAction = AuditAction.VIEW_DETAIL,
   ): void {
     this.log(action, AuditResourceType.PATIENT, {
       resourceId: patientId,
@@ -307,17 +323,17 @@ class AuditLogService {
   public logPatientModification(
     patientId: number,
     patientName: string,
-    changes: Record<string, { old: unknown; new: unknown }>
+    changes: Record<string, { old: unknown; new: unknown }>,
   ): void {
     this.log(AuditAction.UPDATE, AuditResourceType.PATIENT, {
       resourceId: patientId,
       resourceDescription: `Patient: ${patientName}`,
       details: { fields: Object.keys(changes) },
       previousValue: Object.fromEntries(
-        Object.entries(changes).map(([k, v]) => [k, v.old])
+        Object.entries(changes).map(([k, v]) => [k, v.old]),
       ),
       newValue: Object.fromEntries(
-        Object.entries(changes).map(([k, v]) => [k, v.new])
+        Object.entries(changes).map(([k, v]) => [k, v.new]),
       ),
     });
   }
@@ -328,7 +344,7 @@ class AuditLogService {
   public logAudiogramAccess(
     audiogramId: number,
     patientName: string,
-    action: AuditAction = AuditAction.VIEW_DETAIL
+    action: AuditAction = AuditAction.VIEW_DETAIL,
   ): void {
     this.log(action, AuditResourceType.AUDIOGRAM, {
       resourceId: audiogramId,
@@ -342,7 +358,7 @@ class AuditLogService {
   public logEncounterAccess(
     encounterId: number,
     patientName: string,
-    encounterType: string
+    encounterType: string,
   ): void {
     this.log(AuditAction.VIEW_DETAIL, AuditResourceType.ENCOUNTER, {
       resourceId: encounterId,
@@ -356,7 +372,7 @@ class AuditLogService {
   public logHearingAidAccess(
     hearingAidId: number,
     serialNumber: string,
-    patientName: string
+    patientName: string,
   ): void {
     this.log(AuditAction.VIEW_DETAIL, AuditResourceType.HEARING_AID, {
       resourceId: hearingAidId,
@@ -370,7 +386,7 @@ class AuditLogService {
   public logConsentFormSigned(
     consentId: number,
     patientName: string,
-    formType: string
+    formType: string,
   ): void {
     this.log(AuditAction.SIGN, AuditResourceType.CONSENT_FORM, {
       resourceId: consentId,
@@ -385,7 +401,7 @@ class AuditLogService {
   public logFileDownload(
     attachmentId: number,
     fileName: string,
-    patientId?: number
+    patientId?: number,
   ): void {
     this.log(AuditAction.DOWNLOAD, AuditResourceType.ATTACHMENT, {
       resourceId: attachmentId,
@@ -401,7 +417,7 @@ class AuditLogService {
     resourceType: AuditResourceType,
     format: string,
     recordCount: number,
-    filters?: Record<string, unknown>
+    filters?: Record<string, unknown>,
   ): void {
     this.log(AuditAction.EXPORT, resourceType, {
       resourceDescription: `Exported ${recordCount} records as ${format}`,
@@ -413,7 +429,11 @@ class AuditLogService {
   /**
    * Log authentication events
    */
-  public logLogin(success: boolean, username: string, errorMessage?: string): void {
+  public logLogin(
+    success: boolean,
+    username: string,
+    errorMessage?: string,
+  ): void {
     this.log(
       success ? AuditAction.LOGIN : AuditAction.LOGIN_FAILED,
       AuditResourceType.USER,
@@ -422,7 +442,7 @@ class AuditLogService {
         success,
         errorMessage,
         severity: success ? AuditSeverity.INFO : AuditSeverity.WARNING,
-      }
+      },
     );
   }
 
@@ -438,7 +458,7 @@ class AuditLogService {
   public logAccessDenied(
     resourceType: AuditResourceType,
     resourceId?: string | number,
-    requiredRole?: string
+    requiredRole?: string,
   ): void {
     this.log(AuditAction.ACCESS_DENIED, resourceType, {
       resourceId,
@@ -454,7 +474,7 @@ class AuditLogService {
   public logSearch(
     resourceType: AuditResourceType,
     searchTerms: Record<string, unknown>,
-    resultCount: number
+    resultCount: number,
   ): void {
     this.log(AuditAction.SEARCH, resourceType, {
       details: { searchTerms, resultCount },

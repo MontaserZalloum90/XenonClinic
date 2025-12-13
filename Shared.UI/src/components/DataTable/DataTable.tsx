@@ -1,6 +1,6 @@
-import React from 'react';
-import { LoadingSkeleton } from '../LoadingSkeleton/LoadingSkeleton';
-import { EmptyState } from '../EmptyState/EmptyState';
+import React from "react";
+import { LoadingSkeleton } from "../LoadingSkeleton/LoadingSkeleton";
+import { EmptyState } from "../EmptyState/EmptyState";
 
 export interface Column<T> {
   key: string;
@@ -8,10 +8,10 @@ export interface Column<T> {
   render?: (item: T, index: number) => React.ReactNode;
   sortable?: boolean;
   width?: string;
-  align?: 'left' | 'center' | 'right';
+  align?: "left" | "center" | "right";
 }
 
-export type SortDirection = 'asc' | 'desc' | null;
+export type SortDirection = "asc" | "desc" | null;
 
 export interface SortState {
   column: string | null;
@@ -43,7 +43,7 @@ export function DataTable<T>({
   columns,
   keyExtractor,
   isLoading = false,
-  emptyTitle = 'No data available',
+  emptyTitle = "No data available",
   emptyDescription,
   emptyAction,
   sortState,
@@ -52,15 +52,21 @@ export function DataTable<T>({
   selectedRows,
   onSelectRow,
   onSelectAll,
-  className = '',
+  className = "",
 }: DataTableProps<T>) {
   const showCheckboxes = onSelectRow !== undefined;
-  const allSelected = selectedRows && data.length > 0 && data.every((item) => selectedRows.has(keyExtractor(item)));
-  const someSelected = selectedRows && data.some((item) => selectedRows.has(keyExtractor(item)));
+  const allSelected =
+    selectedRows &&
+    data.length > 0 &&
+    data.every((item) => selectedRows.has(keyExtractor(item)));
+  const someSelected =
+    selectedRows && data.some((item) => selectedRows.has(keyExtractor(item)));
 
   if (isLoading) {
     return (
-      <div className={`border border-gray-200 rounded-lg overflow-hidden ${className}`}>
+      <div
+        className={`border border-gray-200 rounded-lg overflow-hidden ${className}`}
+      >
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
@@ -80,7 +86,11 @@ export function DataTable<T>({
               <tr key={rowIndex}>
                 {showCheckboxes && (
                   <td className="px-4 py-4">
-                    <LoadingSkeleton variant="rectangular" width="16px" height="16px" />
+                    <LoadingSkeleton
+                      variant="rectangular"
+                      width="16px"
+                      height="16px"
+                    />
                   </td>
                 )}
                 {columns.map((column) => (
@@ -109,7 +119,9 @@ export function DataTable<T>({
   }
 
   return (
-    <div className={`border border-gray-200 rounded-lg overflow-hidden ${className}`}>
+    <div
+      className={`border border-gray-200 rounded-lg overflow-hidden ${className}`}
+    >
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
@@ -120,7 +132,8 @@ export function DataTable<T>({
                     type="checkbox"
                     checked={allSelected}
                     ref={(el) => {
-                      if (el) el.indeterminate = someSelected && !allSelected;
+                      if (el)
+                        el.indeterminate = !!(someSelected && !allSelected);
                     }}
                     onChange={onSelectAll}
                     className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
@@ -131,8 +144,12 @@ export function DataTable<T>({
                 <th
                   key={column.key}
                   className={`px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider ${
-                    column.align === 'center' ? 'text-center' : column.align === 'right' ? 'text-right' : 'text-left'
-                  } ${column.sortable && onSort ? 'cursor-pointer hover:bg-gray-100 select-none' : ''}`}
+                    column.align === "center"
+                      ? "text-center"
+                      : column.align === "right"
+                        ? "text-right"
+                        : "text-left"
+                  } ${column.sortable && onSort ? "cursor-pointer hover:bg-gray-100 select-none" : ""}`}
                   style={{ width: column.width }}
                   onClick={() => column.sortable && onSort?.(column.key)}
                 >
@@ -140,7 +157,7 @@ export function DataTable<T>({
                     {column.header}
                     {column.sortable && sortState?.column === column.key && (
                       <span className="text-primary-600">
-                        {sortState.direction === 'asc' ? '↑' : '↓'}
+                        {sortState.direction === "asc" ? "↑" : "↓"}
                       </span>
                     )}
                   </div>
@@ -157,13 +174,16 @@ export function DataTable<T>({
                 <tr
                   key={key}
                   className={`
-                    ${onRowClick ? 'cursor-pointer hover:bg-gray-50' : ''}
-                    ${isSelected ? 'bg-primary-50' : ''}
+                    ${onRowClick ? "cursor-pointer hover:bg-gray-50" : ""}
+                    ${isSelected ? "bg-primary-50" : ""}
                   `}
                   onClick={() => onRowClick?.(item)}
                 >
                   {showCheckboxes && (
-                    <td className="px-4 py-4" onClick={(e) => e.stopPropagation()}>
+                    <td
+                      className="px-4 py-4"
+                      onClick={(e) => e.stopPropagation()}
+                    >
                       <input
                         type="checkbox"
                         checked={isSelected}
@@ -176,12 +196,18 @@ export function DataTable<T>({
                     <td
                       key={column.key}
                       className={`px-4 py-4 text-sm text-gray-900 ${
-                        column.align === 'center' ? 'text-center' : column.align === 'right' ? 'text-right' : 'text-left'
+                        column.align === "center"
+                          ? "text-center"
+                          : column.align === "right"
+                            ? "text-right"
+                            : "text-left"
                       }`}
                     >
                       {column.render
                         ? column.render(item, index)
-                        : (item as Record<string, unknown>)[column.key]?.toString()}
+                        : (item as Record<string, unknown>)[
+                            column.key
+                          ]?.toString()}
                     </td>
                   ))}
                 </tr>
@@ -200,20 +226,22 @@ export function useDataTable<T>(
   options: {
     initialSort?: SortState;
     sortFn?: (data: T[], sort: SortState) => T[];
-  } = {}
+  } = {},
 ) {
   const [sortState, setSortState] = React.useState<SortState>(
-    options.initialSort || { column: null, direction: null }
+    options.initialSort || { column: null, direction: null },
   );
-  const [selectedRows, setSelectedRows] = React.useState<Set<string | number>>(new Set());
+  const [selectedRows, setSelectedRows] = React.useState<Set<string | number>>(
+    new Set(),
+  );
 
   const handleSort = (column: string) => {
     setSortState((prev) => {
       if (prev.column !== column) {
-        return { column, direction: 'asc' };
+        return { column, direction: "asc" };
       }
-      if (prev.direction === 'asc') {
-        return { column, direction: 'desc' };
+      if (prev.direction === "asc") {
+        return { column, direction: "desc" };
       }
       return { column: null, direction: null };
     });
@@ -252,7 +280,7 @@ export function useDataTable<T>(
       const aVal = (a as Record<string, unknown>)[sortState.column!];
       const bVal = (b as Record<string, unknown>)[sortState.column!];
       const comparison = String(aVal).localeCompare(String(bVal));
-      return sortState.direction === 'asc' ? comparison : -comparison;
+      return sortState.direction === "asc" ? comparison : -comparison;
     });
   }, [initialData, sortState, options.sortFn]);
 

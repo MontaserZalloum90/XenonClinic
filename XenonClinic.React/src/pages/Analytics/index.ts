@@ -1,2 +1,5 @@
-export { AnalyticsDashboardPage } from './AnalyticsDashboard';
-export { ReportsList } from './ReportsList';
+export {
+  AnalyticsDashboardPage,
+  AnalyticsDashboardPage as AnalyticsDashboard,
+} from "./AnalyticsDashboard";
+export { ReportsList } from "./ReportsList";

@@ -14,7 +14,8 @@ export const AuditActionType = {
   Failed: 10,
 } as const;
 
-export type AuditActionType = (typeof AuditActionType)[keyof typeof AuditActionType];
+export type AuditActionType =
+  (typeof AuditActionType)[keyof typeof AuditActionType];
 
 export const SecurityAlertSeverity = {
   Low: 0,
@@ -23,7 +24,8 @@ export const SecurityAlertSeverity = {
   Critical: 3,
 } as const;
 
-export type SecurityAlertSeverity = (typeof SecurityAlertSeverity)[keyof typeof SecurityAlertSeverity];
+export type SecurityAlertSeverity =
+  (typeof SecurityAlertSeverity)[keyof typeof SecurityAlertSeverity];
 
 export interface AuditLog {
   id: number;
@@ -55,9 +57,9 @@ export interface UserAccessReview {
   permissions: Permission[];
   lastLogin?: string;
   lastPasswordChange?: string;
-  accountStatus: 'active' | 'inactive' | 'locked' | 'expired';
+  accountStatus: "active" | "inactive" | "locked" | "expired";
   mfaEnabled: boolean;
-  reviewStatus: 'pending' | 'approved' | 'revoked' | 'modified';
+  reviewStatus: "pending" | "approved" | "revoked" | "modified";
   reviewedBy?: string;
   reviewedAt?: string;
   reviewNotes?: string;
@@ -99,7 +101,7 @@ export interface SecurityIncident {
   title: string;
   description: string;
   severity: SecurityAlertSeverity;
-  status: 'open' | 'investigating' | 'resolved' | 'closed';
+  status: "open" | "investigating" | "resolved" | "closed";
   type: string;
   affectedUsers?: string[];
   affectedSystems?: string[];
@@ -115,9 +117,9 @@ export interface SecurityIncident {
 export interface ComplianceReport {
   id: number;
   reportName: string;
-  reportType: 'HIPAA' | 'GDPR' | 'SOC2' | 'ISO27001' | 'Custom';
+  reportType: "HIPAA" | "GDPR" | "SOC2" | "ISO27001" | "Custom";
   period: string;
-  status: 'draft' | 'pending' | 'approved' | 'published';
+  status: "draft" | "pending" | "approved" | "published";
   complianceScore: number;
   findings: ComplianceFinding[];
   generatedAt: string;
@@ -130,11 +132,11 @@ export interface ComplianceFinding {
   id: number;
   category: string;
   requirement: string;
-  status: 'compliant' | 'non-compliant' | 'partial' | 'not-applicable';
+  status: "compliant" | "non-compliant" | "partial" | "not-applicable";
   evidence?: string;
   remediation?: string;
   dueDate?: string;
-  priority: 'low' | 'medium' | 'high' | 'critical';
+  priority: "low" | "medium" | "high" | "critical";
 }
 
 export interface SecurityStatistics {
@@ -162,7 +164,7 @@ export interface LoginAttempt {
 }
 
 export interface Session {
-  id: string visually;
+  id: string;
   userId: number;
   username: string;
   ipAddress: string;

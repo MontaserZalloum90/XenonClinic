@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link } from "react-router-dom";
 import {
   ArrowRight,
   Users,
@@ -14,79 +14,90 @@ import {
   Settings,
   Ear,
   Megaphone,
-} from 'lucide-react';
+} from "lucide-react";
 
 const modules = [
   {
     icon: Users,
-    name: 'Patient Management',
-    description: 'Complete patient records, medical history, documents, and demographics.',
+    name: "Patient Management",
+    description:
+      "Complete patient records, medical history, documents, and demographics.",
   },
   {
     icon: Calendar,
-    name: 'Appointments',
-    description: 'Scheduling, calendar views, status tracking, and automated reminders.',
+    name: "Appointments",
+    description:
+      "Scheduling, calendar views, status tracking, and automated reminders.",
   },
   {
     icon: Beaker,
-    name: 'Laboratory',
-    description: 'Lab orders, specimen tracking, results entry, and external lab integration.',
+    name: "Laboratory",
+    description:
+      "Lab orders, specimen tracking, results entry, and external lab integration.",
   },
   {
     icon: Ear,
-    name: 'Audiology',
-    description: 'Audiograms, hearing device management, and clinical documentation.',
+    name: "Audiology",
+    description:
+      "Audiograms, hearing device management, and clinical documentation.",
   },
   {
     icon: Pill,
-    name: 'Pharmacy',
-    description: 'Prescription management, dispensing, and inventory tracking.',
+    name: "Pharmacy",
+    description: "Prescription management, dispensing, and inventory tracking.",
   },
   {
     icon: DollarSign,
-    name: 'Financial',
-    description: 'Invoicing, payments, accounts, expenses, and financial reporting.',
+    name: "Financial",
+    description:
+      "Invoicing, payments, accounts, expenses, and financial reporting.",
   },
   {
     icon: Package,
-    name: 'Inventory',
-    description: 'Stock management, goods receipt, transactions, and reorder alerts.',
+    name: "Inventory",
+    description:
+      "Stock management, goods receipt, transactions, and reorder alerts.",
   },
   {
     icon: UserCog,
-    name: 'HR Management',
-    description: 'Employees, attendance, leave management, and payroll.',
+    name: "HR Management",
+    description: "Employees, attendance, leave management, and payroll.",
   },
   {
     icon: Megaphone,
-    name: 'Marketing',
-    description: 'Campaign management, lead tracking, patient outreach, and marketing analytics.',
-    link: '/features/marketing',
+    name: "Marketing",
+    description:
+      "Campaign management, lead tracking, patient outreach, and marketing analytics.",
+    link: "/features/marketing",
   },
 ];
 
-import { FileText } from 'lucide-react';
+import { FileText } from "lucide-react";
 
 const platformFeatures = [
   {
     icon: Building2,
-    name: 'Multi-Branch',
-    description: 'Manage multiple locations with branch-specific settings and consolidated reporting.',
+    name: "Multi-Branch",
+    description:
+      "Manage multiple locations with branch-specific settings and consolidated reporting.",
   },
   {
     icon: Shield,
-    name: 'Enterprise Security',
-    description: 'Role-based access control, audit logging, data encryption, and HIPAA compliance.',
+    name: "Enterprise Security",
+    description:
+      "Role-based access control, audit logging, data encryption, and HIPAA compliance.",
   },
   {
     icon: BarChart3,
-    name: 'Analytics & Reports',
-    description: 'Real-time dashboards, custom reports, and data export capabilities.',
+    name: "Analytics & Reports",
+    description:
+      "Real-time dashboards, custom reports, and data export capabilities.",
   },
   {
     icon: Settings,
-    name: 'Configurable',
-    description: 'Custom fields, workflows, terminology, and branding per tenant.',
+    name: "Configurable",
+    description:
+      "Custom fields, workflows, terminology, and branding per tenant.",
   },
 ];
 
@@ -102,8 +113,8 @@ export default function FeaturesPage() {
               Everything you need in one platform
             </h1>
             <p className="text-lg md:text-xl text-gray-600">
-              A complete suite of modules designed for healthcare clinics and trading companies,
-              with enterprise-grade features at every tier.
+              A complete suite of modules designed for healthcare clinics and
+              trading companies, with enterprise-grade features at every tier.
             </p>
           </div>
         </div>
@@ -115,7 +126,8 @@ export default function FeaturesPage() {
           <div className="text-center mb-12">
             <h2 className="heading-2 text-gray-900 mb-4">Core Modules</h2>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Comprehensive modules covering every aspect of your business operations.
+              Comprehensive modules covering every aspect of your business
+              operations.
             </p>
           </div>
 
@@ -126,9 +138,11 @@ export default function FeaturesPage() {
                   <div className="h-12 w-12 rounded-xl bg-primary-100 text-primary-600 flex items-center justify-center mb-4">
                     <module.icon className="h-6 w-6" />
                   </div>
-                  <h3 className="font-semibold text-gray-900 mb-2">{module.name}</h3>
+                  <h3 className="font-semibold text-gray-900 mb-2">
+                    {module.name}
+                  </h3>
                   <p className="text-sm text-gray-600">{module.description}</p>
-                  {'link' in module && (
+                  {"link" in module && (
                     <div className="mt-4 text-primary-600 text-sm font-medium flex items-center">
                       Learn more
                       <ArrowRight className="ml-1 h-4 w-4" />
@@ -137,9 +151,13 @@ export default function FeaturesPage() {
                 </>
               );
 
-              if ('link' in module) {
+              if ("link" in module && module.link) {
                 return (
-                  <Link key={module.name} to={module.link} className="card card-hover block">
+                  <Link
+                    key={module.name}
+                    to={module.link}
+                    className="card card-hover block"
+                  >
                     {CardContent}
                   </Link>
                 );
@@ -173,8 +191,12 @@ export default function FeaturesPage() {
                     <feature.icon className="h-6 w-6" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-gray-900 mb-2">{feature.name}</h3>
-                    <p className="text-sm text-gray-600">{feature.description}</p>
+                    <h3 className="font-semibold text-gray-900 mb-2">
+                      {feature.name}
+                    </h3>
+                    <p className="text-sm text-gray-600">
+                      {feature.description}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -193,10 +215,13 @@ export default function FeaturesPage() {
                   <FileText className="h-8 w-8" />
                 </div>
                 <div className="flex-1 text-center md:text-left">
-                  <h3 className="text-xl font-semibold text-gray-900 mb-2">Module User Journeys</h3>
+                  <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                    Module User Journeys
+                  </h3>
                   <p className="text-gray-600">
-                    Explore detailed documentation of all user journeys across 25+ modules,
-                    including step-by-step workflows and role assignments.
+                    Explore detailed documentation of all user journeys across
+                    25+ modules, including step-by-step workflows and role
+                    assignments.
                   </p>
                 </div>
                 <Link
@@ -220,11 +245,17 @@ export default function FeaturesPage() {
             Start your free trial and explore all features with your own data.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/demo" className="btn bg-white text-primary-600 hover:bg-gray-100 btn-lg">
+            <Link
+              to="/demo"
+              className="btn bg-white text-primary-600 hover:bg-gray-100 btn-lg"
+            >
               Start Free Trial
               <ArrowRight className="ml-2 h-5 w-5" />
             </Link>
-            <Link to="/pricing" className="btn bg-primary-700 text-white hover:bg-primary-800 btn-lg">
+            <Link
+              to="/pricing"
+              className="btn bg-primary-700 text-white hover:bg-primary-800 btn-lg"
+            >
               View Pricing
             </Link>
           </div>
