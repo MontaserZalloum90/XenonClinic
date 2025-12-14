@@ -23,17 +23,20 @@ public class PatientPortalService : IPatientPortalService
     private readonly ILogger<PatientPortalService> _logger;
     private readonly IPaymentGatewayService _paymentGatewayService;
     private readonly IEmailService _emailService;
+    private readonly IFileStorageService _fileStorageService;
 
     public PatientPortalService(
         ClinicDbContext context,
         ILogger<PatientPortalService> logger,
         IPaymentGatewayService paymentGatewayService,
-        IEmailService emailService)
+        IEmailService emailService,
+        IFileStorageService fileStorageService)
     {
         _context = context;
         _logger = logger;
         _paymentGatewayService = paymentGatewayService;
         _emailService = emailService;
+        _fileStorageService = fileStorageService;
     }
 
     #region Authentication
@@ -518,13 +521,18 @@ public class PatientPortalService : IPatientPortalService
                 (i.Status == "Pending" || i.Status == "Overdue"))
             .CountAsync();
 
+        var pendingPrescriptions = await _context.PrescriptionItems
+            .Where(pi => pi.Prescription!.PatientId == patientId &&
+                (pi.Status == "Pending" || pi.Status == "Processing" || pi.Status == "Awaiting Pickup"))
+            .CountAsync();
+
         var notifications = await GetNotificationsAsync(patientId, true);
 
         return new PatientPortalDashboardDto
         {
             Profile = profile,
             UpcomingAppointments = upcomingAppointments.Count(),
-            PendingPrescriptions = 0, // TODO: Implement pending prescription count
+            PendingPrescriptions = pendingPrescriptions,
             UnreadMessages = unreadMessages,
             PendingInvoices = pendingInvoices,
             OutstandingBalance = outstandingBalance,
@@ -599,16 +607,31 @@ public class PatientPortalService : IPatientPortalService
         // Generate secure unique file name (no user input in final name)
         var uniqueFileName = $"profile_{patientId}_{Guid.NewGuid():N}{extension}";
 
-        // TODO: Upload to storage service (Azure Blob, S3, etc.)
-        var photoUrl = $"/uploads/profiles/{uniqueFileName}";
+        // Determine content type from extension
+        var contentType = extension.ToLowerInvariant() switch
+        {
+            ".jpg" or ".jpeg" => "image/jpeg",
+            ".png" => "image/png",
+            ".gif" => "image/gif",
+            ".webp" => "image/webp",
+            _ => "application/octet-stream"
+        };
 
-        patient.ProfilePhotoUrl = photoUrl;
+        // Upload to cloud storage service
+        using var stream = new MemoryStream(photoData);
+        var uploadResult = await _fileStorageService.UploadAsync(
+            stream,
+            uniqueFileName,
+            contentType,
+            "profiles");
+
+        patient.ProfilePhotoUrl = uploadResult.Url;
         patient.UpdatedAt = DateTime.UtcNow;
         await _context.SaveChangesAsync();
 
-        _logger.LogInformation("Profile photo uploaded for patient {PatientId}", patientId);
+        _logger.LogInformation("Profile photo uploaded for patient {PatientId}: {FileId}", patientId, uploadResult.FileId);
 
-        return photoUrl;
+        return uploadResult.Url;
     }
 
     /// <summary>

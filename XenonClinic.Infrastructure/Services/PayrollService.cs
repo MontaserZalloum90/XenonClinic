@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Text;
 using ClosedXML.Excel;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
@@ -19,11 +20,13 @@ public class PayrollService : IPayrollService
 {
     private readonly ClinicDbContext _context;
     private readonly IEmailService _emailService;
+    private readonly ILogger<PayrollService> _logger;
 
-    public PayrollService(ClinicDbContext context, IEmailService emailService)
+    public PayrollService(ClinicDbContext context, IEmailService emailService, ILogger<PayrollService> logger)
     {
         _context = context;
         _emailService = emailService;
+        _logger = logger;
     }
 
     #region Payroll Period Management
@@ -179,7 +182,7 @@ public class PayrollService : IPayrollService
         var payslip = await CreateOrUpdatePayslipAsync(period, employee, true, true);
         await _context.SaveChangesAsync();
 
-        return await GetPayslipByIdAsync(payslip.Id) ?? throw new Exception("Failed to retrieve payslip");
+        return await GetPayslipByIdAsync(payslip.Id) ?? throw new InvalidOperationException("Failed to retrieve payslip after creation");
     }
 
     public async Task<PayrollPeriodDto> ApprovePayrollAsync(ApprovePayrollRequestDto request)
@@ -569,8 +572,9 @@ public class PayrollService : IPayrollService
             await _emailService.SendAsync(emailMessage);
             return true;
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "Failed to email payslip {PayslipId}", payslipId);
             return false;
         }
     }
@@ -592,9 +596,9 @@ public class PayrollService : IPayrollService
                 if (result)
                     successCount++;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                // Continue with next payslip even if one fails
+                _logger.LogWarning(ex, "Failed to email payslip {PayslipId}, continuing with next", payslip.Id);
             }
         }
 

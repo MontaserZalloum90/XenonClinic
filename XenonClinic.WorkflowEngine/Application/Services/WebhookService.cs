@@ -582,9 +582,9 @@ public class WebhookService : IWebhookService
                     variables[variableName] = value;
                 }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                // Skip invalid paths
+                _logger.LogDebug(ex, "Could not extract value at path {Path}, skipping", mapping.SourcePath);
             }
         }
 

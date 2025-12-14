@@ -353,16 +353,74 @@ public class PushNotificationService : IPushNotificationService
                 }
             };
 
-            // TODO: Make actual FCM API call
-            _logger.LogInformation("Sending notification to topic: {Topic}", topic);
+            // Get FCM configuration
+            var fcmConfig = await _context.PushConfigurations
+                .FirstOrDefaultAsync(c => c.Provider == "FCM" && c.IsActive);
 
-            await LogNotificationAsync(request, 0, 1, topic);
+            if (fcmConfig == null)
+            {
+                _logger.LogWarning("FCM configuration not found for topic notification");
+                return new PushNotificationResponseDto
+                {
+                    Success = false,
+                    Error = "FCM configuration not found"
+                };
+            }
 
+            var projectId = fcmConfig.GetConfigValue("ProjectId");
+            var clientEmail = fcmConfig.GetConfigValue("ClientEmail");
+            var privateKey = fcmConfig.GetConfigValue("PrivateKey");
+
+            if (string.IsNullOrEmpty(projectId) || string.IsNullOrEmpty(clientEmail) || string.IsNullOrEmpty(privateKey))
+            {
+                _logger.LogWarning("FCM configuration is incomplete for topic notification");
+                return new PushNotificationResponseDto
+                {
+                    Success = false,
+                    Error = "FCM configuration is incomplete"
+                };
+            }
+
+            // Generate OAuth 2.0 access token
+            var accessToken = await GenerateFcmAccessTokenAsync(clientEmail, privateKey);
+            var fcmUrl = $"https://fcm.googleapis.com/v1/projects/{projectId}/messages:send";
+
+            var jsonPayload = JsonSerializer.Serialize(payload, new JsonSerializerOptions
+            {
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
+            });
+
+            using var httpRequest = new HttpRequestMessage(HttpMethod.Post, fcmUrl);
+            httpRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+            httpRequest.Content = new StringContent(jsonPayload, Encoding.UTF8, "application/json");
+
+            var response = await _httpClient.SendAsync(httpRequest);
+            var responseContent = await response.Content.ReadAsStringAsync();
+
+            if (response.IsSuccessStatusCode)
+            {
+                var fcmResponse = JsonSerializer.Deserialize<JsonElement>(responseContent);
+                var messageId = fcmResponse.TryGetProperty("name", out var nameProp)
+                    ? nameProp.GetString()
+                    : Guid.NewGuid().ToString();
+
+                _logger.LogInformation("Topic notification sent successfully to {Topic}: {MessageId}", topic, messageId);
+                await LogNotificationAsync(request, 0, 1, topic);
+
+                return new PushNotificationResponseDto
+                {
+                    Success = true,
+                    MessageId = messageId,
+                    SuccessCount = 1
+                };
+            }
+
+            _logger.LogWarning("FCM topic send failed for {Topic}: {Response}", topic, responseContent);
             return new PushNotificationResponseDto
             {
-                Success = true,
-                MessageId = Guid.NewGuid().ToString(),
-                SuccessCount = 1
+                Success = false,
+                Error = $"FCM API error: {responseContent}"
             };
         }
         catch (Exception ex)
