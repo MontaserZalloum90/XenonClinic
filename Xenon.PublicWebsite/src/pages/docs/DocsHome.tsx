@@ -11,6 +11,7 @@ import {
   ArrowRight,
   CheckCircle,
 } from 'lucide-react';
+import { docsStatistics } from '../../lib/docs/docsData';
 
 const quickLinks = [
   {
@@ -30,7 +31,7 @@ const quickLinks = [
   {
     icon: LayoutGrid,
     title: 'Product Modules',
-    description: 'Explore all 17+ product modules',
+    description: 'Explore all 15 product modules',
     path: '/docs/modules',
     color: 'bg-purple-100 text-purple-600',
   },
@@ -70,11 +71,12 @@ const resources = [
   },
 ];
 
-const highlights = [
-  '17+ integrated modules for healthcare and business operations',
-  '16 user personas with role-specific documentation',
-  '98 documented user journeys with 765+ steps',
-  '52+ granular permissions with RBAC',
+// Dynamic highlights using actual statistics
+const getHighlights = () => [
+  `${docsStatistics.totalModules} integrated modules for healthcare and business operations`,
+  `${docsStatistics.totalPersonas} user personas with role-specific documentation`,
+  `${docsStatistics.totalJourneys} documented user journeys with ${docsStatistics.totalSteps}+ steps`,
+  `${docsStatistics.totalFeatures}+ features across all modules`,
   'HIPAA-ready security and audit logging',
   'Multi-tenant, multi-branch architecture',
 ];
@@ -120,7 +122,7 @@ export default function DocsHome() {
       <div className="bg-gradient-to-br from-primary-50 to-blue-50 rounded-2xl p-8">
         <h2 className="text-2xl font-bold text-gray-900 mb-6">Platform Highlights</h2>
         <div className="grid sm:grid-cols-2 gap-4">
-          {highlights.map((highlight, index) => (
+          {getHighlights().map((highlight, index) => (
             <div key={index} className="flex items-start gap-3">
               <CheckCircle className="h-5 w-5 text-primary-600 flex-shrink-0 mt-0.5" />
               <span className="text-gray-700">{highlight}</span>
@@ -134,20 +136,26 @@ export default function DocsHome() {
         <h2 className="text-2xl font-bold text-gray-900 mb-6">Popular Modules</h2>
         <div className="grid sm:grid-cols-3 gap-4">
           {[
-            { name: 'Patient Management', path: '/docs/modules/patient-management', count: '5 journeys' },
-            { name: 'Appointments', path: '/docs/modules/appointments', count: '6 journeys' },
-            { name: 'Clinical Visits', path: '/docs/modules/clinical-visits', count: '7 journeys' },
-            { name: 'Laboratory', path: '/docs/modules/laboratory', count: '6 journeys' },
-            { name: 'Pharmacy', path: '/docs/modules/pharmacy', count: '6 journeys' },
-            { name: 'Financial', path: '/docs/modules/financial', count: '6 journeys' },
+            { name: 'Patient Management', path: '/docs/modules/patient-management', count: '6 features', category: 'Core' },
+            { name: 'Appointments', path: '/docs/modules/appointments', count: '7 features', category: 'Core' },
+            { name: 'Clinical Visits', path: '/docs/modules/clinical-visits', count: '7 features', category: 'Clinical' },
+            { name: 'Laboratory', path: '/docs/modules/laboratory', count: '7 features', category: 'Clinical' },
+            { name: 'Pharmacy', path: '/docs/modules/pharmacy', count: '6 features', category: 'Clinical' },
+            { name: 'Financial', path: '/docs/modules/financial', count: '6 features', category: 'Business' },
+            { name: 'Procurement', path: '/docs/modules/procurement', count: '6 features', category: 'Business' },
+            { name: 'HR Management', path: '/docs/modules/hr-management', count: '6 features', category: 'Business' },
+            { name: 'Marketing & CRM', path: '/docs/modules/marketing', count: '6 features', category: 'Business' },
           ].map((module) => (
             <Link
               key={module.path}
               to={module.path}
               className="p-4 bg-white border border-gray-200 rounded-lg hover:border-primary-300 hover:shadow transition-all"
             >
-              <h3 className="font-medium text-gray-900">{module.name}</h3>
-              <p className="text-sm text-gray-500 mt-1">{module.count}</p>
+              <div className="flex items-center justify-between mb-1">
+                <h3 className="font-medium text-gray-900">{module.name}</h3>
+                <span className="text-xs px-2 py-0.5 bg-gray-100 text-gray-600 rounded">{module.category}</span>
+              </div>
+              <p className="text-sm text-gray-500">{module.count}</p>
             </Link>
           ))}
         </div>
