@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using XenonClinic.Core.DTOs;
 using XenonClinic.Core.Entities;
 using XenonClinic.Core.Interfaces;
@@ -13,12 +14,14 @@ namespace XenonClinic.Infrastructure.Services;
 public class FhirService : IFhirService
 {
     private readonly ClinicDbContext _context;
+    private readonly ILogger<FhirService> _logger;
     private const string FhirVersion = "4.0.1";
     private const string SystemUrl = "http://xenonclinic.com/fhir";
 
-    public FhirService(ClinicDbContext context)
+    public FhirService(ClinicDbContext context, ILogger<FhirService> logger)
     {
         _context = context;
+        _logger = logger;
     }
 
     #region Patient Resource
@@ -96,8 +99,19 @@ public class FhirService : IFhirService
             response.Success = true;
             response.CreatedId = patient.Id;
         }
+        catch (DbUpdateException ex)
+        {
+            _logger.LogError(ex, "Database error importing FHIR patient");
+            response.Errors.Add($"Database error during import: {ex.InnerException?.Message ?? ex.Message}");
+        }
+        catch (FormatException ex)
+        {
+            _logger.LogWarning(ex, "Invalid data format in FHIR patient import");
+            response.Errors.Add($"Invalid data format: {ex.Message}");
+        }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "Unexpected error importing FHIR patient");
             response.Errors.Add($"Import failed: {ex.Message}");
         }
 
@@ -211,8 +225,14 @@ public class FhirService : IFhirService
             response.Success = true;
             response.CreatedId = doctor.Id;
         }
+        catch (DbUpdateException ex)
+        {
+            _logger.LogError(ex, "Database error importing FHIR practitioner");
+            response.Errors.Add($"Database error during import: {ex.InnerException?.Message ?? ex.Message}");
+        }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "Unexpected error importing FHIR practitioner");
             response.Errors.Add($"Import failed: {ex.Message}");
         }
 
@@ -313,8 +333,14 @@ public class FhirService : IFhirService
             response.Success = true;
             response.CreatedId = visit.Id;
         }
+        catch (DbUpdateException ex)
+        {
+            _logger.LogError(ex, "Database error importing FHIR encounter");
+            response.Errors.Add($"Database error during import: {ex.InnerException?.Message ?? ex.Message}");
+        }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "Unexpected error importing FHIR encounter");
             response.Errors.Add($"Import failed: {ex.Message}");
         }
 
@@ -471,8 +497,14 @@ public class FhirService : IFhirService
                 response.Warnings.Add("Only vital-signs observations are currently supported for import");
             }
         }
+        catch (DbUpdateException ex)
+        {
+            _logger.LogError(ex, "Database error importing FHIR observation");
+            response.Errors.Add($"Database error during import: {ex.InnerException?.Message ?? ex.Message}");
+        }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "Unexpected error importing FHIR observation");
             response.Errors.Add($"Import failed: {ex.Message}");
         }
 
@@ -560,8 +592,14 @@ public class FhirService : IFhirService
             response.Success = true;
             response.CreatedId = diagnosis.Id;
         }
+        catch (DbUpdateException ex)
+        {
+            _logger.LogError(ex, "Database error importing FHIR condition");
+            response.Errors.Add($"Database error during import: {ex.InnerException?.Message ?? ex.Message}");
+        }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "Unexpected error importing FHIR condition");
             response.Errors.Add($"Import failed: {ex.Message}");
         }
 
@@ -660,8 +698,14 @@ public class FhirService : IFhirService
             response.Success = true;
             response.CreatedId = procedure.Id;
         }
+        catch (DbUpdateException ex)
+        {
+            _logger.LogError(ex, "Database error importing FHIR procedure");
+            response.Errors.Add($"Database error during import: {ex.InnerException?.Message ?? ex.Message}");
+        }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "Unexpected error importing FHIR procedure");
             response.Errors.Add($"Import failed: {ex.Message}");
         }
 
@@ -773,8 +817,14 @@ public class FhirService : IFhirService
             response.Success = true;
             response.CreatedId = prescription.Id;
         }
+        catch (DbUpdateException ex)
+        {
+            _logger.LogError(ex, "Database error importing FHIR medication request");
+            response.Errors.Add($"Database error during import: {ex.InnerException?.Message ?? ex.Message}");
+        }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "Unexpected error importing FHIR medication request");
             response.Errors.Add($"Import failed: {ex.Message}");
         }
 
@@ -872,8 +922,14 @@ public class FhirService : IFhirService
                 response.Errors.AddRange(importResult.Errors);
                 response.Warnings.AddRange(importResult.Warnings);
             }
+            catch (JsonException ex)
+            {
+                _logger.LogWarning(ex, "Invalid JSON in FHIR bundle entry");
+                response.Errors.Add($"Invalid JSON format in entry: {ex.Message}");
+            }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error importing FHIR bundle entry");
                 response.Errors.Add($"Failed to import entry: {ex.Message}");
             }
         }

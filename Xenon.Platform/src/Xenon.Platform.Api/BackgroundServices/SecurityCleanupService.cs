@@ -20,7 +20,8 @@ public class SecurityCleanupService : BackgroundService
         _serviceProvider = serviceProvider;
         _logger = logger;
 
-        var intervalHours = int.Parse(configuration["BackgroundServices:SecurityCleanupIntervalHours"] ?? "6");
+        var configValue = configuration["BackgroundServices:SecurityCleanupIntervalHours"];
+        var intervalHours = int.TryParse(configValue, out var parsed) ? parsed : 6;
         _cleanupInterval = TimeSpan.FromHours(intervalHours);
     }
 

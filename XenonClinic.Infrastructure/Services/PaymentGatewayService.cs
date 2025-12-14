@@ -624,7 +624,12 @@ public class PaymentGatewayService : IPaymentGatewayService
 
         for (int i = cardNumber.Length - 1; i >= 0; i--)
         {
-            int digit = int.Parse(cardNumber[i].ToString());
+            char c = cardNumber[i];
+            if (!char.IsDigit(c))
+            {
+                return false; // Invalid character in card number
+            }
+            int digit = c - '0'; // Safe conversion for digit characters
 
             if (alternate)
             {

@@ -26,23 +26,49 @@ public class RedisCacheService : ICacheService
     private readonly IDistributedCache _cache;
     private readonly ILogger<RedisCacheService> _logger;
     private readonly JsonSerializerOptions _jsonOptions;
+    private readonly CacheExpirationSettings _expirationSettings;
 
-    // Default cache durations
-    public static readonly TimeSpan DefaultExpiration = TimeSpan.FromMinutes(30);
-    public static readonly TimeSpan ShortExpiration = TimeSpan.FromMinutes(5);
-    public static readonly TimeSpan LongExpiration = TimeSpan.FromHours(2);
-    public static readonly TimeSpan VeryLongExpiration = TimeSpan.FromHours(24);
+    // Static accessors for backward compatibility - use instance properties when possible
+    public static TimeSpan DefaultExpiration => TimeSpan.FromMinutes(30);
+    public static TimeSpan ShortExpiration => TimeSpan.FromMinutes(5);
+    public static TimeSpan LongExpiration => TimeSpan.FromHours(2);
+    public static TimeSpan VeryLongExpiration => TimeSpan.FromHours(24);
 
-    public RedisCacheService(IDistributedCache cache, ILogger<RedisCacheService> logger)
+    public RedisCacheService(
+        IDistributedCache cache,
+        ILogger<RedisCacheService> logger,
+        CacheExpirationSettings? expirationSettings = null)
     {
         _cache = cache;
         _logger = logger;
+        _expirationSettings = expirationSettings ?? new CacheExpirationSettings();
         _jsonOptions = new JsonSerializerOptions
         {
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
             WriteIndented = false
         };
     }
+
+    /// <summary>
+    /// Gets the configured default expiration time.
+    /// </summary>
+    public TimeSpan ConfiguredDefaultExpiration => _expirationSettings.DefaultExpirationMinutes > 0
+        ? TimeSpan.FromMinutes(_expirationSettings.DefaultExpirationMinutes)
+        : DefaultExpiration;
+
+    /// <summary>
+    /// Gets the configured short expiration time.
+    /// </summary>
+    public TimeSpan ConfiguredShortExpiration => _expirationSettings.ShortExpirationMinutes > 0
+        ? TimeSpan.FromMinutes(_expirationSettings.ShortExpirationMinutes)
+        : ShortExpiration;
+
+    /// <summary>
+    /// Gets the configured long expiration time.
+    /// </summary>
+    public TimeSpan ConfiguredLongExpiration => _expirationSettings.LongExpirationHours > 0
+        ? TimeSpan.FromHours(_expirationSettings.LongExpirationHours)
+        : LongExpiration;
 
     /// <summary>
     /// Get a cached item by key
@@ -258,15 +284,63 @@ public static class CacheKeys
 }
 
 /// <summary>
-/// Redis configuration options
+/// Redis configuration options.
+/// ConnectionString must be configured in appsettings - no default provided for security.
 /// </summary>
 public class RedisCacheOptions
 {
-    public string ConnectionString { get; set; } = "localhost:6379";
+    /// <summary>
+    /// Redis connection string. Must be configured via appsettings.json.
+    /// Example: "localhost:6379" for development, "redis-server:6379,password=xxx" for production.
+    /// </summary>
+    public string ConnectionString { get; set; } = string.Empty;
     public string InstanceName { get; set; } = "XenonClinic_";
     public bool Enabled { get; set; } = true;
     public int DefaultExpirationMinutes { get; set; } = 30;
     public int ConnectTimeout { get; set; } = 5000;
     public int SyncTimeout { get; set; } = 5000;
     public bool AbortOnConnectFail { get; set; } = false;
+
+    /// <summary>
+    /// Validates the configuration options.
+    /// </summary>
+    public void Validate()
+    {
+        if (Enabled && string.IsNullOrWhiteSpace(ConnectionString))
+        {
+            throw new InvalidOperationException(
+                "Redis ConnectionString must be configured when Redis caching is enabled. " +
+                "Set 'Redis:ConnectionString' in appsettings.json or disable Redis with 'Redis:Enabled': false.");
+        }
+    }
+}
+
+/// <summary>
+/// Configurable cache expiration settings.
+/// All durations can be configured via appsettings.json under "Cache:Expiration".
+/// </summary>
+public class CacheExpirationSettings
+{
+    /// <summary>
+    /// Default cache expiration in minutes. Default: 30 minutes.
+    /// </summary>
+    public int DefaultExpirationMinutes { get; set; } = 30;
+
+    /// <summary>
+    /// Short cache expiration in minutes. Default: 5 minutes.
+    /// Used for frequently changing data.
+    /// </summary>
+    public int ShortExpirationMinutes { get; set; } = 5;
+
+    /// <summary>
+    /// Long cache expiration in hours. Default: 2 hours.
+    /// Used for relatively static data.
+    /// </summary>
+    public int LongExpirationHours { get; set; } = 2;
+
+    /// <summary>
+    /// Very long cache expiration in hours. Default: 24 hours.
+    /// Used for rarely changing configuration data.
+    /// </summary>
+    public int VeryLongExpirationHours { get; set; } = 24;
 }
