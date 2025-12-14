@@ -600,6 +600,84 @@ export const dermatologyApi = {
 };
 
 // ============================================
+// PHYSIOTHERAPY API ENDPOINTS
+// ============================================
+
+export const physiotherapyApi = {
+  // Therapy Sessions
+  getSessionsByPatient: (patientId: number) => api.get(`/api/ClinicalVisitsApi/physiotherapy/sessions/patient/${patientId}`),
+  getAllSessions: () => api.get('/api/ClinicalVisitsApi/physiotherapy/sessions'),
+  createSession: (data: Record<string, unknown>) => api.post('/api/ClinicalVisitsApi/physiotherapy/sessions', data),
+  updateSession: (id: number, data: Record<string, unknown>) => api.put(`/api/ClinicalVisitsApi/physiotherapy/sessions/${id}`, data),
+  deleteSession: (id: number) => api.delete(`/api/ClinicalVisitsApi/physiotherapy/sessions/${id}`),
+
+  // Statistics
+  getStatistics: () => api.get('/api/ClinicalVisitsApi/physiotherapy/statistics'),
+};
+
+// ============================================
+// DIALYSIS API ENDPOINTS
+// ============================================
+
+export const dialysisApi = {
+  // Dialysis Sessions
+  getSessionsByPatient: (patientId: number) => api.get(`/api/ClinicalVisitsApi/dialysis/sessions/patient/${patientId}`),
+  getAllSessions: () => api.get('/api/ClinicalVisitsApi/dialysis/sessions'),
+  createSession: (data: Record<string, unknown>) => api.post('/api/ClinicalVisitsApi/dialysis/sessions', data),
+  updateSession: (id: number, data: Record<string, unknown>) => api.put(`/api/ClinicalVisitsApi/dialysis/sessions/${id}`, data),
+  deleteSession: (id: number) => api.delete(`/api/ClinicalVisitsApi/dialysis/sessions/${id}`),
+
+  // Statistics
+  getStatistics: () => api.get('/api/ClinicalVisitsApi/dialysis/statistics'),
+};
+
+// ============================================
+// OBGYN API ENDPOINTS
+// ============================================
+
+export const obgynApi = {
+  // Prenatal Visits
+  getPrenatalVisitsByPatient: (patientId: number) => api.get(`/api/ClinicalVisitsApi/obgyn/prenatal/patient/${patientId}`),
+  getAllPrenatalVisits: () => api.get('/api/ClinicalVisitsApi/obgyn/prenatal'),
+  createPrenatalVisit: (data: Record<string, unknown>) => api.post('/api/ClinicalVisitsApi/obgyn/prenatal', data),
+  updatePrenatalVisit: (id: number, data: Record<string, unknown>) => api.put(`/api/ClinicalVisitsApi/obgyn/prenatal/${id}`, data),
+  deletePrenatalVisit: (id: number) => api.delete(`/api/ClinicalVisitsApi/obgyn/prenatal/${id}`),
+
+  // Ultrasounds
+  getUltrasoundsByPatient: (patientId: number) => api.get(`/api/ClinicalVisitsApi/obgyn/ultrasounds/patient/${patientId}`),
+  getAllUltrasounds: () => api.get('/api/ClinicalVisitsApi/obgyn/ultrasounds'),
+  createUltrasound: (data: Record<string, unknown>) => api.post('/api/ClinicalVisitsApi/obgyn/ultrasounds', data),
+  updateUltrasound: (id: number, data: Record<string, unknown>) => api.put(`/api/ClinicalVisitsApi/obgyn/ultrasounds/${id}`, data),
+  deleteUltrasound: (id: number) => api.delete(`/api/ClinicalVisitsApi/obgyn/ultrasounds/${id}`),
+
+  // Statistics
+  getStatistics: () => api.get('/api/ClinicalVisitsApi/obgyn/statistics'),
+};
+
+// ============================================
+// ONCOLOGY API ENDPOINTS
+// ============================================
+
+export const oncologyApi = {
+  // Treatment Plans
+  getTreatmentPlansByPatient: (patientId: number) => api.get(`/api/ClinicalVisitsApi/oncology/treatment-plans/patient/${patientId}`),
+  getAllTreatmentPlans: () => api.get('/api/ClinicalVisitsApi/oncology/treatment-plans'),
+  createTreatmentPlan: (data: Record<string, unknown>) => api.post('/api/ClinicalVisitsApi/oncology/treatment-plans', data),
+  updateTreatmentPlan: (id: number, data: Record<string, unknown>) => api.put(`/api/ClinicalVisitsApi/oncology/treatment-plans/${id}`, data),
+  deleteTreatmentPlan: (id: number) => api.delete(`/api/ClinicalVisitsApi/oncology/treatment-plans/${id}`),
+
+  // Diagnoses
+  getDiagnosesByPatient: (patientId: number) => api.get(`/api/ClinicalVisitsApi/oncology/diagnoses/patient/${patientId}`),
+  getAllDiagnoses: () => api.get('/api/ClinicalVisitsApi/oncology/diagnoses'),
+  createDiagnosis: (data: Record<string, unknown>) => api.post('/api/ClinicalVisitsApi/oncology/diagnoses', data),
+  updateDiagnosis: (id: number, data: Record<string, unknown>) => api.put(`/api/ClinicalVisitsApi/oncology/diagnoses/${id}`, data),
+  deleteDiagnosis: (id: number) => api.delete(`/api/ClinicalVisitsApi/oncology/diagnoses/${id}`),
+
+  // Statistics
+  getStatistics: () => api.get('/api/ClinicalVisitsApi/oncology/statistics'),
+};
+
+// ============================================
 // WORKFLOW API ENDPOINTS
 // ============================================
 
