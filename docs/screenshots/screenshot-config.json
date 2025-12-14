@@ -1,0 +1,212 @@
+{
+  "version": "1.0",
+  "outputDir": "docs/screenshots/output",
+  "defaultViewport": {
+    "width": 1280,
+    "height": 800
+  },
+  "mobileViewport": {
+    "width": 375,
+    "height": 667
+  },
+  "baseUrls": {
+    "admin": "http://localhost:5173",
+    "public": "http://localhost:5174"
+  },
+  "screenshots": [
+    {
+      "id": "dashboard-overview",
+      "module": "analytics",
+      "description": "Main dashboard with key metrics",
+      "url": "/dashboard",
+      "app": "admin",
+      "selector": "main",
+      "delay": 1000
+    },
+    {
+      "id": "patient-list",
+      "module": "patient-management",
+      "description": "Patient listing view with search",
+      "url": "/patients",
+      "app": "admin",
+      "selector": "main",
+      "delay": 1000
+    },
+    {
+      "id": "patient-detail",
+      "module": "patient-management",
+      "description": "Patient detail view",
+      "url": "/patients/{patientId}",
+      "app": "admin",
+      "selector": "main",
+      "delay": 1000,
+      "requiresTestData": true
+    },
+    {
+      "id": "appointment-calendar",
+      "module": "appointments",
+      "description": "Appointment calendar view",
+      "url": "/appointments",
+      "app": "admin",
+      "selector": "main",
+      "delay": 1500
+    },
+    {
+      "id": "appointment-booking",
+      "module": "appointments",
+      "description": "Appointment booking modal",
+      "url": "/appointments",
+      "app": "admin",
+      "action": "click:[data-testid='new-appointment']",
+      "selector": "[role='dialog']",
+      "delay": 500
+    },
+    {
+      "id": "clinical-visit",
+      "module": "clinical-visits",
+      "description": "Clinical visit documentation",
+      "url": "/visits/{visitId}",
+      "app": "admin",
+      "selector": "main",
+      "delay": 1000,
+      "requiresTestData": true
+    },
+    {
+      "id": "lab-orders",
+      "module": "laboratory",
+      "description": "Lab orders queue",
+      "url": "/laboratory",
+      "app": "admin",
+      "selector": "main",
+      "delay": 1000
+    },
+    {
+      "id": "lab-results-entry",
+      "module": "laboratory",
+      "description": "Lab results entry form",
+      "url": "/laboratory/results/{labOrderId}",
+      "app": "admin",
+      "selector": "main",
+      "delay": 1000,
+      "requiresTestData": true
+    },
+    {
+      "id": "pharmacy-dispensing",
+      "module": "pharmacy",
+      "description": "Pharmacy dispensing view",
+      "url": "/pharmacy",
+      "app": "admin",
+      "selector": "main",
+      "delay": 1000
+    },
+    {
+      "id": "inventory-list",
+      "module": "inventory",
+      "description": "Inventory management view",
+      "url": "/inventory",
+      "app": "admin",
+      "selector": "main",
+      "delay": 1000
+    },
+    {
+      "id": "financial-invoices",
+      "module": "financial",
+      "description": "Invoice listing",
+      "url": "/financial/invoices",
+      "app": "admin",
+      "selector": "main",
+      "delay": 1000
+    },
+    {
+      "id": "hr-employees",
+      "module": "hr-management",
+      "description": "Employee management",
+      "url": "/hr/employees",
+      "app": "admin",
+      "selector": "main",
+      "delay": 1000
+    },
+    {
+      "id": "user-management",
+      "module": "security-audit",
+      "description": "User management screen",
+      "url": "/admin/users",
+      "app": "admin",
+      "selector": "main",
+      "delay": 1000
+    },
+    {
+      "id": "role-permissions",
+      "module": "security-audit",
+      "description": "Role and permissions configuration",
+      "url": "/admin/roles",
+      "app": "admin",
+      "selector": "main",
+      "delay": 1000
+    },
+    {
+      "id": "audit-logs",
+      "module": "security-audit",
+      "description": "Audit log viewer",
+      "url": "/admin/audit-logs",
+      "app": "admin",
+      "selector": "main",
+      "delay": 1000
+    },
+    {
+      "id": "patient-portal-home",
+      "module": "patient-portal",
+      "description": "Patient portal dashboard",
+      "url": "/portal/dashboard",
+      "app": "public",
+      "selector": "main",
+      "delay": 1000
+    },
+    {
+      "id": "patient-portal-appointments",
+      "module": "patient-portal",
+      "description": "Patient portal appointments",
+      "url": "/portal/appointments",
+      "app": "public",
+      "selector": "main",
+      "delay": 1000
+    },
+    {
+      "id": "analytics-dashboard",
+      "module": "analytics",
+      "description": "Analytics dashboard with charts",
+      "url": "/analytics",
+      "app": "admin",
+      "selector": "main",
+      "delay": 2000
+    },
+    {
+      "id": "workflow-builder",
+      "module": "workflow-engine",
+      "description": "Workflow automation builder",
+      "url": "/workflows",
+      "app": "admin",
+      "selector": "main",
+      "delay": 1000
+    }
+  ],
+  "journeyScreenshots": [
+    {
+      "journeyId": "patient-registration",
+      "steps": [
+        { "stepId": 1, "url": "/patients/new", "description": "Patient registration form" },
+        { "stepId": 2, "action": "fill-form", "description": "Form with demographics" },
+        { "stepId": 3, "action": "submit", "description": "Confirmation screen" }
+      ]
+    },
+    {
+      "journeyId": "appointment-booking",
+      "steps": [
+        { "stepId": 1, "url": "/appointments", "description": "Calendar view" },
+        { "stepId": 2, "action": "click:[data-testid='new-appointment']", "description": "Booking modal" },
+        { "stepId": 3, "action": "select-slot", "description": "Time slot selection" },
+        { "stepId": 4, "action": "confirm", "description": "Confirmation" }
+      ]
+    }
+  ]
+}

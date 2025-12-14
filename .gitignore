@@ -37,3 +37,5 @@ package-lock.json
 ## Playwright
 playwright-report/
 test-results/
+docs/screenshots/output/*.png
+docs/screenshots/output/manifest.json
