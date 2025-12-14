@@ -7,6 +7,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using XenonClinic.Core.Interfaces;
 using XenonClinic.Infrastructure.Data;
+using System.Net.Http;
 
 namespace XenonClinic.Infrastructure.Services;
 
@@ -121,6 +122,7 @@ public class BackupService : IBackupService
     private readonly IEncryptionService _encryptionService;
     private readonly IAuditService _auditService;
     private readonly ILogger<BackupService> _logger;
+    private readonly IHttpClientFactory _httpClientFactory;
     private readonly BackupConfiguration _config;
     private static readonly SemaphoreSlim _backupSemaphore = new(1, 1);
 
@@ -129,11 +131,13 @@ public class BackupService : IBackupService
         IEncryptionService encryptionService,
         IAuditService auditService,
         IConfiguration configuration,
+        IHttpClientFactory httpClientFactory,
         ILogger<BackupService> logger)
     {
         _context = context;
         _encryptionService = encryptionService;
         _auditService = auditService;
+        _httpClientFactory = httpClientFactory;
         _logger = logger;
         _config = configuration.GetSection("Backup").Get<BackupConfiguration>() ?? new BackupConfiguration();
     }
@@ -620,7 +624,7 @@ public class BackupService : IBackupService
         var blobName = Path.GetFileName(backup.FilePath);
         var url = $"https://{provider.Endpoint}.blob.core.windows.net/{provider.Container}/{blobName}";
 
-        using var httpClient = new HttpClient();
+        using var httpClient = _httpClientFactory.CreateClient("BackupStorage");
         var content = new ByteArrayContent(await File.ReadAllBytesAsync(backup.FilePath!));
         content.Headers.Add("x-ms-blob-type", "BlockBlob");
         content.Headers.Add("x-ms-version", "2021-06-08");
@@ -681,7 +685,7 @@ public class BackupService : IBackupService
         var fileName = Path.GetFileName(backup.FilePath);
         var url = $"https://{provider.Endpoint}/{provider.Container}/{fileName}";
 
-        using var httpClient = new HttpClient();
+        using var httpClient = _httpClientFactory.CreateClient("BackupStorage");
         using var content = new ByteArrayContent(await File.ReadAllBytesAsync(backup.FilePath!));
 
         var response = await httpClient.PutAsync(url, content);
@@ -693,7 +697,7 @@ public class BackupService : IBackupService
 
     private async Task DownloadFromAzureBlobAsync(BackupRecord backup, StorageProviderInfo provider, string localPath)
     {
-        using var httpClient = new HttpClient();
+        using var httpClient = _httpClientFactory.CreateClient("BackupStorage");
         var response = await httpClient.GetAsync(backup.RemoteStorageUrl);
         response.EnsureSuccessStatusCode();
 
@@ -703,7 +707,7 @@ public class BackupService : IBackupService
 
     private async Task DownloadFromS3Async(BackupRecord backup, StorageProviderInfo provider, string localPath)
     {
-        using var httpClient = new HttpClient();
+        using var httpClient = _httpClientFactory.CreateClient("BackupStorage");
         var response = await httpClient.GetAsync(backup.RemoteStorageUrl);
         response.EnsureSuccessStatusCode();
 
@@ -713,7 +717,7 @@ public class BackupService : IBackupService
 
     private async Task DownloadFromGcsAsync(BackupRecord backup, StorageProviderInfo provider, string localPath)
     {
-        using var httpClient = new HttpClient();
+        using var httpClient = _httpClientFactory.CreateClient("BackupStorage");
         var response = await httpClient.GetAsync(backup.RemoteStorageUrl);
         response.EnsureSuccessStatusCode();
 
@@ -723,7 +727,7 @@ public class BackupService : IBackupService
 
     private async Task DownloadViaHttpAsync(BackupRecord backup, StorageProviderInfo provider, string localPath)
     {
-        using var httpClient = new HttpClient();
+        using var httpClient = _httpClientFactory.CreateClient("BackupStorage");
         var response = await httpClient.GetAsync(backup.RemoteStorageUrl);
         response.EnsureSuccessStatusCode();
 

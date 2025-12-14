@@ -60,6 +60,13 @@ public static class ServiceCollectionExtensions
         // Patient Consent Management
         services.AddScoped<IConsentService, ConsentService>();
 
+        // HttpClient for backup storage operations
+        services.AddHttpClient("BackupStorage", client =>
+        {
+            client.Timeout = TimeSpan.FromMinutes(30); // Long timeout for large file transfers
+            client.DefaultRequestHeaders.Add("User-Agent", "XenonClinic-BackupService/1.0");
+        });
+
         // Backup and Disaster Recovery
         services.AddScoped<IBackupService, BackupService>();
 
