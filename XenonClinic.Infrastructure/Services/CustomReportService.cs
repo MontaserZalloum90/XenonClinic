@@ -22,6 +22,7 @@ public class CustomReportService : ICustomReportService
 {
     private readonly ClinicDbContext _context;
     private readonly ILogger<CustomReportService> _logger;
+    private readonly IEmailService _emailService;
 
     // Mapping of data source names to entity types
     private static readonly Dictionary<string, Type> DataSourceEntityMap = new()
@@ -42,10 +43,12 @@ public class CustomReportService : ICustomReportService
 
     public CustomReportService(
         ClinicDbContext context,
-        ILogger<CustomReportService> logger)
+        ILogger<CustomReportService> logger,
+        IEmailService emailService)
     {
         _context = context;
         _logger = logger;
+        _emailService = emailService;
     }
 
     #region Report Definitions
@@ -682,7 +685,75 @@ public class CustomReportService : ICustomReportService
 
                 // Send to recipients
                 var recipients = JsonSerializer.Deserialize<List<ReportRecipientDto>>(schedule.RecipientsJson ?? "[]");
-                // TODO: Implement email sending
+
+                if (recipients != null && recipients.Any() && result.Content != null)
+                {
+                    var contentType = schedule.OutputFormat?.ToLower() switch
+                    {
+                        "pdf" => "application/pdf",
+                        "excel" => "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                        "csv" => "text/csv",
+                        _ => "application/octet-stream"
+                    };
+
+                    var extension = schedule.OutputFormat?.ToLower() switch
+                    {
+                        "pdf" => ".pdf",
+                        "excel" => ".xlsx",
+                        "csv" => ".csv",
+                        _ => ".dat"
+                    };
+
+                    var fileName = $"{report?.Name ?? "Report"}_{now:yyyyMMdd}{extension}";
+
+                    foreach (var recipient in recipients.Where(r => !string.IsNullOrEmpty(r.Email)))
+                    {
+                        try
+                        {
+                            var emailMessage = new EmailMessage
+                            {
+                                To = recipient.Email!,
+                                Subject = $"Scheduled Report: {report?.Name ?? "Report"} - {now:MMMM dd, yyyy}",
+                                Body = $@"
+                                    <html>
+                                    <body>
+                                    <h2>Scheduled Report</h2>
+                                    <p>Please find attached the scheduled report: <strong>{report?.Name}</strong></p>
+                                    <p><strong>Report Details:</strong></p>
+                                    <ul>
+                                        <li>Generated: {now:MMMM dd, yyyy hh:mm tt}</li>
+                                        <li>Schedule: {schedule.Frequency}</li>
+                                        <li>Format: {schedule.OutputFormat?.ToUpper()}</li>
+                                    </ul>
+                                    <p>This is an automated email. Please do not reply.</p>
+                                    <hr/>
+                                    <p style='font-size: 11px; color: #666;'>XenonClinic Reporting System</p>
+                                    </body>
+                                    </html>",
+                                IsHtml = true,
+                                Attachments = new List<EmailAttachment>
+                                {
+                                    new EmailAttachment
+                                    {
+                                        FileName = fileName,
+                                        Content = result.Content,
+                                        ContentType = contentType
+                                    }
+                                }
+                            };
+
+                            await _emailService.SendAsync(emailMessage);
+
+                            _logger.LogInformation("Scheduled report {ReportId} sent to {Email}",
+                                schedule.ReportId, recipient.Email);
+                        }
+                        catch (Exception emailEx)
+                        {
+                            _logger.LogWarning(emailEx, "Failed to send scheduled report {ReportId} to {Email}",
+                                schedule.ReportId, recipient.Email);
+                        }
+                    }
+                }
 
                 schedule.LastRunAt = now;
                 schedule.LastRunStatus = "Success";

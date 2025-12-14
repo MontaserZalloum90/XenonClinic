@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Text;
+using ClosedXML.Excel;
 using Microsoft.EntityFrameworkCore;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
@@ -17,10 +18,12 @@ namespace XenonClinic.Infrastructure.Services;
 public class PayrollService : IPayrollService
 {
     private readonly ClinicDbContext _context;
+    private readonly IEmailService _emailService;
 
-    public PayrollService(ClinicDbContext context)
+    public PayrollService(ClinicDbContext context, IEmailService emailService)
     {
         _context = context;
+        _emailService = emailService;
     }
 
     #region Payroll Period Management
@@ -503,10 +506,73 @@ public class PayrollService : IPayrollService
         return $"****{accountNumber[^4..]}";
     }
 
-    public Task<bool> EmailPayslipAsync(int payslipId, string? emailOverride = null)
+    public async Task<bool> EmailPayslipAsync(int payslipId, string? emailOverride = null)
     {
-        // Placeholder - would integrate with email service
-        return Task.FromResult(true);
+        var payslip = await _context.Payslips
+            .Include(p => p.Employee)
+            .ThenInclude(e => e.Branch)
+            .Include(p => p.PayrollPeriod)
+            .FirstOrDefaultAsync(p => p.Id == payslipId);
+
+        if (payslip == null)
+            return false;
+
+        var recipientEmail = emailOverride ?? payslip.Employee?.Email;
+        if (string.IsNullOrEmpty(recipientEmail))
+            return false;
+
+        try
+        {
+            // Generate payslip PDF
+            var pdfContent = await GeneratePayslipPdfAsync(payslipId);
+            if (pdfContent.Length == 0)
+                return false;
+
+            var periodLabel = payslip.PayrollPeriod != null
+                ? $"{payslip.PayrollPeriod.StartDate:MMM dd} - {payslip.PayrollPeriod.EndDate:MMM dd, yyyy}"
+                : $"Pay Date: {payslip.PayDate:MMMM dd, yyyy}";
+
+            var emailMessage = new EmailMessage
+            {
+                To = recipientEmail,
+                Subject = $"Your Payslip - {periodLabel}",
+                Body = $@"
+                    <html>
+                    <body style='font-family: Arial, sans-serif;'>
+                    <h2>Payslip Notification</h2>
+                    <p>Dear {payslip.Employee?.FirstName ?? "Employee"},</p>
+                    <p>Your payslip for the period <strong>{periodLabel}</strong> is now available.</p>
+                    <p><strong>Summary:</strong></p>
+                    <table style='border-collapse: collapse; margin: 15px 0;'>
+                        <tr><td style='padding: 5px 15px 5px 0;'>Gross Pay:</td><td style='text-align: right;'>{payslip.GrossSalary:C}</td></tr>
+                        <tr><td style='padding: 5px 15px 5px 0;'>Total Deductions:</td><td style='text-align: right;'>-{(payslip.IncomeTax + payslip.SocialInsurance + payslip.HealthInsurance + payslip.PensionContribution + payslip.LoanDeduction + payslip.OtherDeductions):C}</td></tr>
+                        <tr style='font-weight: bold; border-top: 1px solid #ccc;'><td style='padding: 8px 15px 5px 0;'>Net Pay:</td><td style='text-align: right; padding-top: 8px;'>{payslip.NetSalary:C}</td></tr>
+                    </table>
+                    <p>Please find your detailed payslip attached to this email.</p>
+                    <p style='color: #666; font-size: 12px;'>This is an automated message. For questions about your pay, please contact HR.</p>
+                    <hr/>
+                    <p style='font-size: 11px; color: #888;'>{payslip.Employee?.Branch?.Name ?? "XenonClinic"} - HR Department</p>
+                    </body>
+                    </html>",
+                IsHtml = true,
+                Attachments = new List<EmailAttachment>
+                {
+                    new EmailAttachment
+                    {
+                        FileName = $"Payslip_{payslip.Employee?.EmployeeId ?? payslipId.ToString()}_{payslip.PayDate:yyyyMMdd}.pdf",
+                        Content = pdfContent,
+                        ContentType = "application/pdf"
+                    }
+                }
+            };
+
+            await _emailService.SendAsync(emailMessage);
+            return true;
+        }
+        catch (Exception)
+        {
+            return false;
+        }
     }
 
     public async Task<int> BulkEmailPayslipsAsync(int periodId)
@@ -516,8 +582,23 @@ public class PayrollService : IPayrollService
             .Where(p => p.PayrollPeriodId == periodId && !string.IsNullOrEmpty(p.Employee.Email))
             .ToListAsync();
 
-        // Placeholder - would send emails asynchronously
-        return payslips.Count;
+        var successCount = 0;
+
+        foreach (var payslip in payslips)
+        {
+            try
+            {
+                var result = await EmailPayslipAsync(payslip.Id);
+                if (result)
+                    successCount++;
+            }
+            catch (Exception)
+            {
+                // Continue with next payslip even if one fails
+            }
+        }
+
+        return successCount;
     }
 
     #endregion
@@ -1070,10 +1151,263 @@ public class PayrollService : IPayrollService
         return report;
     }
 
-    public Task<byte[]> ExportReportAsync(PayrollReportRequestDto request)
+    public async Task<byte[]> ExportReportAsync(PayrollReportRequestDto request)
     {
-        // Placeholder - would export to PDF, Excel, or CSV based on format
-        return Task.FromResult(Array.Empty<byte>());
+        // Fetch payroll data based on request
+        var query = _context.Payslips
+            .Include(p => p.Employee)
+            .ThenInclude(e => e.Branch)
+            .Include(p => p.PayrollPeriod)
+            .Where(p => p.Employee.BranchId == request.BranchId);
+
+        if (request.PayrollPeriodId.HasValue)
+            query = query.Where(p => p.PayrollPeriodId == request.PayrollPeriodId);
+
+        if (request.StartDate.HasValue)
+            query = query.Where(p => p.PayDate >= request.StartDate.Value);
+
+        if (request.EndDate.HasValue)
+            query = query.Where(p => p.PayDate <= request.EndDate.Value);
+
+        if (request.DepartmentId.HasValue)
+            query = query.Where(p => p.Employee.DepartmentId == request.DepartmentId);
+
+        if (request.EmployeeIds != null && request.EmployeeIds.Any())
+            query = query.Where(p => request.EmployeeIds.Contains(p.EmployeeId));
+
+        var payslips = await query.OrderBy(p => p.Employee.LastName).ThenBy(p => p.Employee.FirstName).ToListAsync();
+
+        return request.Format?.ToLower() switch
+        {
+            "excel" => GeneratePayrollExcel(payslips, request),
+            "csv" => GeneratePayrollCsv(payslips, request),
+            _ => GeneratePayrollPdf(payslips, request)
+        };
+    }
+
+    private byte[] GeneratePayrollPdf(List<Payslip> payslips, PayrollReportRequestDto request)
+    {
+        QuestPDF.Settings.License = LicenseType.Community;
+
+        var document = Document.Create(container =>
+        {
+            container.Page(page =>
+            {
+                page.Size(PageSizes.A4.Landscape());
+                page.Margin(30);
+                page.DefaultTextStyle(x => x.FontSize(9));
+
+                // Header
+                page.Header().Column(header =>
+                {
+                    header.Item().Text($"PAYROLL REPORT - {request.ReportType}").FontSize(16).Bold().FontColor(Colors.Blue.Darken2);
+                    header.Item().Text($"Generated: {DateTime.Now:MMMM dd, yyyy}").FontSize(9);
+                    if (request.StartDate.HasValue && request.EndDate.HasValue)
+                        header.Item().Text($"Period: {request.StartDate:MMM dd, yyyy} - {request.EndDate:MMM dd, yyyy}").FontSize(9);
+                    header.Item().PaddingVertical(10).LineHorizontal(2).LineColor(Colors.Blue.Darken2);
+                });
+
+                // Content
+                page.Content().PaddingVertical(10).Table(table =>
+                {
+                    table.ColumnsDefinition(columns =>
+                    {
+                        columns.RelativeColumn(2); // Employee
+                        columns.RelativeColumn(1); // Employee ID
+                        columns.RelativeColumn(1.5f); // Department
+                        columns.RelativeColumn(1.5f); // Basic
+                        columns.RelativeColumn(1.5f); // Allowances
+                        columns.RelativeColumn(1.5f); // Gross
+                        columns.RelativeColumn(1.5f); // Deductions
+                        columns.RelativeColumn(1.5f); // Net
+                    });
+
+                    // Header
+                    table.Header(header =>
+                    {
+                        header.Cell().Background(Colors.Blue.Darken2).Padding(5).Text("Employee").FontColor(Colors.White).Bold();
+                        header.Cell().Background(Colors.Blue.Darken2).Padding(5).Text("ID").FontColor(Colors.White).Bold();
+                        header.Cell().Background(Colors.Blue.Darken2).Padding(5).Text("Department").FontColor(Colors.White).Bold();
+                        header.Cell().Background(Colors.Blue.Darken2).Padding(5).AlignRight().Text("Basic").FontColor(Colors.White).Bold();
+                        header.Cell().Background(Colors.Blue.Darken2).Padding(5).AlignRight().Text("Allowances").FontColor(Colors.White).Bold();
+                        header.Cell().Background(Colors.Blue.Darken2).Padding(5).AlignRight().Text("Gross").FontColor(Colors.White).Bold();
+                        header.Cell().Background(Colors.Blue.Darken2).Padding(5).AlignRight().Text("Deductions").FontColor(Colors.White).Bold();
+                        header.Cell().Background(Colors.Blue.Darken2).Padding(5).AlignRight().Text("Net Pay").FontColor(Colors.White).Bold();
+                    });
+
+                    var rowIndex = 0;
+                    foreach (var payslip in payslips)
+                    {
+                        var bgColor = rowIndex++ % 2 == 0 ? Colors.White : Colors.Grey.Lighten4;
+                        var allowances = payslip.HousingAllowance + payslip.TransportAllowance + payslip.OtherAllowances;
+                        var deductions = payslip.IncomeTax + payslip.SocialInsurance + payslip.HealthInsurance +
+                            payslip.PensionContribution + payslip.LoanDeduction + payslip.OtherDeductions;
+
+                        table.Cell().Background(bgColor).Padding(4).Text($"{payslip.Employee?.FirstName} {payslip.Employee?.LastName}");
+                        table.Cell().Background(bgColor).Padding(4).Text(payslip.Employee?.EmployeeId ?? "");
+                        table.Cell().Background(bgColor).Padding(4).Text(payslip.Employee?.Department ?? "");
+                        table.Cell().Background(bgColor).Padding(4).AlignRight().Text($"{payslip.BasicSalary:N2}");
+                        table.Cell().Background(bgColor).Padding(4).AlignRight().Text($"{allowances:N2}");
+                        table.Cell().Background(bgColor).Padding(4).AlignRight().Text($"{payslip.GrossSalary:N2}").FontColor(Colors.Green.Darken2);
+                        table.Cell().Background(bgColor).Padding(4).AlignRight().Text($"{deductions:N2}").FontColor(Colors.Red.Darken2);
+                        table.Cell().Background(bgColor).Padding(4).AlignRight().Text($"{payslip.NetSalary:N2}").Bold();
+                    }
+
+                    // Totals row
+                    var totalBasic = payslips.Sum(p => p.BasicSalary);
+                    var totalAllowances = payslips.Sum(p => p.HousingAllowance + p.TransportAllowance + p.OtherAllowances);
+                    var totalGross = payslips.Sum(p => p.GrossSalary);
+                    var totalDeductions = payslips.Sum(p => p.IncomeTax + p.SocialInsurance + p.HealthInsurance +
+                        p.PensionContribution + p.LoanDeduction + p.OtherDeductions);
+                    var totalNet = payslips.Sum(p => p.NetSalary);
+
+                    table.Cell().BorderTop(2).Padding(5).Text("TOTALS").Bold();
+                    table.Cell().BorderTop(2).Padding(5).Text($"{payslips.Count} employees").Italic();
+                    table.Cell().BorderTop(2).Padding(5);
+                    table.Cell().BorderTop(2).Padding(5).AlignRight().Text($"{totalBasic:N2}").Bold();
+                    table.Cell().BorderTop(2).Padding(5).AlignRight().Text($"{totalAllowances:N2}").Bold();
+                    table.Cell().BorderTop(2).Padding(5).AlignRight().Text($"{totalGross:N2}").Bold().FontColor(Colors.Green.Darken2);
+                    table.Cell().BorderTop(2).Padding(5).AlignRight().Text($"{totalDeductions:N2}").Bold().FontColor(Colors.Red.Darken2);
+                    table.Cell().BorderTop(2).Padding(5).AlignRight().Text($"{totalNet:N2}").Bold().FontSize(11);
+                });
+
+                // Footer
+                page.Footer().AlignCenter().Text(text =>
+                {
+                    text.Span("Page ");
+                    text.CurrentPageNumber();
+                    text.Span(" of ");
+                    text.TotalPages();
+                }).FontSize(8);
+            });
+        });
+
+        using var stream = new MemoryStream();
+        document.GeneratePdf(stream);
+        return stream.ToArray();
+    }
+
+    private byte[] GeneratePayrollExcel(List<Payslip> payslips, PayrollReportRequestDto request)
+    {
+        using var workbook = new XLWorkbook();
+        var worksheet = workbook.Worksheets.Add("Payroll Report");
+
+        // Title
+        worksheet.Cell(1, 1).Value = $"Payroll Report - {request.ReportType}";
+        worksheet.Cell(1, 1).Style.Font.Bold = true;
+        worksheet.Cell(1, 1).Style.Font.FontSize = 14;
+        worksheet.Range(1, 1, 1, 10).Merge();
+
+        worksheet.Cell(2, 1).Value = $"Generated: {DateTime.Now:yyyy-MM-dd HH:mm}";
+        if (request.StartDate.HasValue && request.EndDate.HasValue)
+            worksheet.Cell(2, 5).Value = $"Period: {request.StartDate:yyyy-MM-dd} - {request.EndDate:yyyy-MM-dd}";
+
+        // Headers
+        var headers = new[] { "Employee Name", "Employee ID", "Department", "Basic Salary", "Housing", "Transport",
+            "Other Allow.", "Gross", "Tax", "Insurance", "Pension", "Other Ded.", "Net Pay" };
+        for (int i = 0; i < headers.Length; i++)
+        {
+            var cell = worksheet.Cell(4, i + 1);
+            cell.Value = headers[i];
+            cell.Style.Font.Bold = true;
+            cell.Style.Fill.BackgroundColor = XLColor.FromHtml("#1F6FEB");
+            cell.Style.Font.FontColor = XLColor.White;
+        }
+
+        // Data
+        var row = 5;
+        foreach (var payslip in payslips)
+        {
+            worksheet.Cell(row, 1).Value = $"{payslip.Employee?.FirstName} {payslip.Employee?.LastName}";
+            worksheet.Cell(row, 2).Value = payslip.Employee?.EmployeeId ?? "";
+            worksheet.Cell(row, 3).Value = payslip.Employee?.Department ?? "";
+            worksheet.Cell(row, 4).Value = payslip.BasicSalary;
+            worksheet.Cell(row, 5).Value = payslip.HousingAllowance;
+            worksheet.Cell(row, 6).Value = payslip.TransportAllowance;
+            worksheet.Cell(row, 7).Value = payslip.OtherAllowances;
+            worksheet.Cell(row, 8).Value = payslip.GrossSalary;
+            worksheet.Cell(row, 9).Value = payslip.IncomeTax;
+            worksheet.Cell(row, 10).Value = payslip.SocialInsurance + payslip.HealthInsurance;
+            worksheet.Cell(row, 11).Value = payslip.PensionContribution;
+            worksheet.Cell(row, 12).Value = payslip.LoanDeduction + payslip.OtherDeductions;
+            worksheet.Cell(row, 13).Value = payslip.NetSalary;
+
+            // Format currency columns
+            for (int col = 4; col <= 13; col++)
+            {
+                worksheet.Cell(row, col).Style.NumberFormat.Format = "#,##0.00";
+            }
+            row++;
+        }
+
+        // Totals
+        worksheet.Cell(row, 1).Value = "TOTALS";
+        worksheet.Cell(row, 1).Style.Font.Bold = true;
+        for (int col = 4; col <= 13; col++)
+        {
+            worksheet.Cell(row, col).FormulaA1 = $"SUM({worksheet.Cell(5, col).Address}:{worksheet.Cell(row - 1, col).Address})";
+            worksheet.Cell(row, col).Style.Font.Bold = true;
+            worksheet.Cell(row, col).Style.NumberFormat.Format = "#,##0.00";
+        }
+
+        worksheet.Columns().AdjustToContents();
+
+        using var stream = new MemoryStream();
+        workbook.SaveAs(stream);
+        return stream.ToArray();
+    }
+
+    private byte[] GeneratePayrollCsv(List<Payslip> payslips, PayrollReportRequestDto request)
+    {
+        var sb = new StringBuilder();
+
+        // Header
+        sb.AppendLine($"Payroll Report - {request.ReportType}");
+        sb.AppendLine($"Generated,{DateTime.Now:yyyy-MM-dd HH:mm}");
+        sb.AppendLine();
+
+        // Column headers
+        sb.AppendLine("Employee Name,Employee ID,Department,Basic Salary,Housing,Transport,Other Allowances,Gross,Tax,Insurance,Pension,Other Deductions,Net Pay");
+
+        // Data
+        foreach (var payslip in payslips)
+        {
+            var name = $"{payslip.Employee?.FirstName} {payslip.Employee?.LastName}".Replace(",", " ");
+            sb.AppendLine(string.Join(",",
+                name,
+                payslip.Employee?.EmployeeId ?? "",
+                (payslip.Employee?.Department ?? "").Replace(",", " "),
+                payslip.BasicSalary,
+                payslip.HousingAllowance,
+                payslip.TransportAllowance,
+                payslip.OtherAllowances,
+                payslip.GrossSalary,
+                payslip.IncomeTax,
+                payslip.SocialInsurance + payslip.HealthInsurance,
+                payslip.PensionContribution,
+                payslip.LoanDeduction + payslip.OtherDeductions,
+                payslip.NetSalary
+            ));
+        }
+
+        // Totals
+        sb.AppendLine(string.Join(",",
+            "TOTALS",
+            payslips.Count + " employees",
+            "",
+            payslips.Sum(p => p.BasicSalary),
+            payslips.Sum(p => p.HousingAllowance),
+            payslips.Sum(p => p.TransportAllowance),
+            payslips.Sum(p => p.OtherAllowances),
+            payslips.Sum(p => p.GrossSalary),
+            payslips.Sum(p => p.IncomeTax),
+            payslips.Sum(p => p.SocialInsurance + p.HealthInsurance),
+            payslips.Sum(p => p.PensionContribution),
+            payslips.Sum(p => p.LoanDeduction + p.OtherDeductions),
+            payslips.Sum(p => p.NetSalary)
+        ));
+
+        return Encoding.UTF8.GetBytes(sb.ToString());
     }
 
     #endregion
