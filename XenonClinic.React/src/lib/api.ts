@@ -460,6 +460,140 @@ export const clinicalVisitsApi = {
     api.post(`/api/ClinicalVisitsApi/visits/${id}/status`, { status }),
   getStatistics: (startDate?: string, endDate?: string) =>
     api.get('/api/ClinicalVisitsApi/statistics', { params: { startDate, endDate } }),
+  getStatisticsBySpecialty: (fromDate?: string, toDate?: string) =>
+    api.get('/api/ClinicalVisitsApi/statistics/by-specialty', { params: { fromDate, toDate } }),
+};
+
+// ============================================
+// CARDIOLOGY API ENDPOINTS
+// ============================================
+
+export const cardiologyApi = {
+  // Cardiology visits
+  getVisitById: (id: number) => api.get(`/api/ClinicalVisitsApi/cardiology/${id}`),
+  getVisitsByPatient: (patientId: number) => api.get(`/api/ClinicalVisitsApi/cardiology/patient/${patientId}`),
+  createVisit: (data: Record<string, unknown>) => api.post('/api/ClinicalVisitsApi/cardiology', data),
+
+  // ECG Records
+  getECGsByPatient: (patientId: number) => api.get(`/api/ClinicalVisitsApi/cardiology/ecg/patient/${patientId}`),
+  createECG: (data: Record<string, unknown>) => api.post('/api/ClinicalVisitsApi/cardiology/ecg', data),
+  updateECG: (id: number, data: Record<string, unknown>) => api.put(`/api/ClinicalVisitsApi/cardiology/ecg/${id}`, data),
+  deleteECG: (id: number) => api.delete(`/api/ClinicalVisitsApi/cardiology/ecg/${id}`),
+
+  // Echo Records
+  getEchosByPatient: (patientId: number) => api.get(`/api/ClinicalVisitsApi/cardiology/echo/patient/${patientId}`),
+  createEcho: (data: Record<string, unknown>) => api.post('/api/ClinicalVisitsApi/cardiology/echo', data),
+  updateEcho: (id: number, data: Record<string, unknown>) => api.put(`/api/ClinicalVisitsApi/cardiology/echo/${id}`, data),
+  deleteEcho: (id: number) => api.delete(`/api/ClinicalVisitsApi/cardiology/echo/${id}`),
+
+  // Stress Tests
+  getStressTestsByPatient: (patientId: number) => api.get(`/api/ClinicalVisitsApi/cardiology/stress-test/patient/${patientId}`),
+  createStressTest: (data: Record<string, unknown>) => api.post('/api/ClinicalVisitsApi/cardiology/stress-test', data),
+  updateStressTest: (id: number, data: Record<string, unknown>) => api.put(`/api/ClinicalVisitsApi/cardiology/stress-test/${id}`, data),
+  deleteStressTest: (id: number) => api.delete(`/api/ClinicalVisitsApi/cardiology/stress-test/${id}`),
+
+  // Cath Lab Procedures
+  getCathProceduresByPatient: (patientId: number) => api.get(`/api/ClinicalVisitsApi/cardiology/cath/patient/${patientId}`),
+  createCathProcedure: (data: Record<string, unknown>) => api.post('/api/ClinicalVisitsApi/cardiology/cath', data),
+  updateCathProcedure: (id: number, data: Record<string, unknown>) => api.put(`/api/ClinicalVisitsApi/cardiology/cath/${id}`, data),
+  deleteCathProcedure: (id: number) => api.delete(`/api/ClinicalVisitsApi/cardiology/cath/${id}`),
+};
+
+// ============================================
+// NEUROLOGY API ENDPOINTS
+// ============================================
+
+export const neurologyApi = {
+  // Neurology visits
+  getVisitById: (id: number) => api.get(`/api/ClinicalVisitsApi/neurology/${id}`),
+  getVisitsByPatient: (patientId: number) => api.get(`/api/ClinicalVisitsApi/neurology/patient/${patientId}`),
+  createVisit: (data: Record<string, unknown>) => api.post('/api/ClinicalVisitsApi/neurology', data),
+  deleteVisit: (id: number) => api.delete(`/api/ClinicalVisitsApi/neurology/${id}`),
+
+  // Neurological Exams
+  getExamsByPatient: (patientId: number) => api.get(`/api/ClinicalVisitsApi/neurology/exams/patient/${patientId}`),
+  createExam: (data: Record<string, unknown>) => api.post('/api/ClinicalVisitsApi/neurology/exams', data),
+  updateExam: (id: number, data: Record<string, unknown>) => api.put(`/api/ClinicalVisitsApi/neurology/exams/${id}`, data),
+  deleteExam: (id: number) => api.delete(`/api/ClinicalVisitsApi/neurology/exams/${id}`),
+
+  // EEG Records
+  getEEGsByPatient: (patientId: number) => api.get(`/api/ClinicalVisitsApi/neurology/eeg/patient/${patientId}`),
+  createEEG: (data: Record<string, unknown>) => api.post('/api/ClinicalVisitsApi/neurology/eeg', data),
+  updateEEG: (id: number, data: Record<string, unknown>) => api.put(`/api/ClinicalVisitsApi/neurology/eeg/${id}`, data),
+  deleteEEG: (id: number) => api.delete(`/api/ClinicalVisitsApi/neurology/eeg/${id}`),
+
+  // EMG Studies
+  getEMGsByPatient: (patientId: number) => api.get(`/api/ClinicalVisitsApi/neurology/emg/patient/${patientId}`),
+  createEMG: (data: Record<string, unknown>) => api.post('/api/ClinicalVisitsApi/neurology/emg', data),
+  updateEMG: (id: number, data: Record<string, unknown>) => api.put(`/api/ClinicalVisitsApi/neurology/emg/${id}`, data),
+  deleteEMG: (id: number) => api.delete(`/api/ClinicalVisitsApi/neurology/emg/${id}`),
+};
+
+// ============================================
+// PEDIATRICS API ENDPOINTS
+// ============================================
+
+export const pediatricsApi = {
+  // Pediatric visits
+  getVisitById: (id: number) => api.get(`/api/ClinicalVisitsApi/pediatrics/${id}`),
+  getVisitsByPatient: (patientId: number) => api.get(`/api/ClinicalVisitsApi/pediatrics/patient/${patientId}`),
+  createVisit: (data: Record<string, unknown>) => api.post('/api/ClinicalVisitsApi/pediatrics', data),
+  deleteVisit: (id: number) => api.delete(`/api/ClinicalVisitsApi/pediatrics/${id}`),
+
+  // Vaccinations
+  getVaccinationsByPatient: (patientId: number) => api.get(`/api/ClinicalVisitsApi/pediatrics/vaccinations/patient/${patientId}`),
+  createVaccination: (data: Record<string, unknown>) => api.post('/api/ClinicalVisitsApi/pediatrics/vaccinations', data),
+  updateVaccination: (id: number, data: Record<string, unknown>) => api.put(`/api/ClinicalVisitsApi/pediatrics/vaccinations/${id}`, data),
+  deleteVaccination: (id: number) => api.delete(`/api/ClinicalVisitsApi/pediatrics/vaccinations/${id}`),
+
+  // Developmental Milestones
+  getMilestonesByPatient: (patientId: number) => api.get(`/api/ClinicalVisitsApi/pediatrics/milestones/patient/${patientId}`),
+  createMilestone: (data: Record<string, unknown>) => api.post('/api/ClinicalVisitsApi/pediatrics/milestones', data),
+  updateMilestone: (id: number, data: Record<string, unknown>) => api.put(`/api/ClinicalVisitsApi/pediatrics/milestones/${id}`, data),
+  deleteMilestone: (id: number) => api.delete(`/api/ClinicalVisitsApi/pediatrics/milestones/${id}`),
+
+  // Growth Records
+  getGrowthRecordsByPatient: (patientId: number) => api.get(`/api/ClinicalVisitsApi/pediatrics/growth/patient/${patientId}`),
+  createGrowthRecord: (data: Record<string, unknown>) => api.post('/api/ClinicalVisitsApi/pediatrics/growth', data),
+  updateGrowthRecord: (id: number, data: Record<string, unknown>) => api.put(`/api/ClinicalVisitsApi/pediatrics/growth/${id}`, data),
+  deleteGrowthRecord: (id: number) => api.delete(`/api/ClinicalVisitsApi/pediatrics/growth/${id}`),
+};
+
+// ============================================
+// DERMATOLOGY API ENDPOINTS
+// ============================================
+
+export const dermatologyApi = {
+  // Dermatology visits
+  getVisitById: (id: number) => api.get(`/api/ClinicalVisitsApi/dermatology/${id}`),
+  getVisitsByPatient: (patientId: number) => api.get(`/api/ClinicalVisitsApi/dermatology/patient/${patientId}`),
+  createVisit: (data: Record<string, unknown>) => api.post('/api/ClinicalVisitsApi/dermatology', data),
+  deleteVisit: (id: number) => api.delete(`/api/ClinicalVisitsApi/dermatology/${id}`),
+
+  // Skin Exams
+  getSkinExamsByPatient: (patientId: number) => api.get(`/api/ClinicalVisitsApi/dermatology/skin-exams/patient/${patientId}`),
+  createSkinExam: (data: Record<string, unknown>) => api.post('/api/ClinicalVisitsApi/dermatology/skin-exams', data),
+  updateSkinExam: (id: number, data: Record<string, unknown>) => api.put(`/api/ClinicalVisitsApi/dermatology/skin-exams/${id}`, data),
+  deleteSkinExam: (id: number) => api.delete(`/api/ClinicalVisitsApi/dermatology/skin-exams/${id}`),
+
+  // Mole Mappings
+  getMoleMappingsByPatient: (patientId: number) => api.get(`/api/ClinicalVisitsApi/dermatology/mole-mappings/patient/${patientId}`),
+  createMoleMapping: (data: Record<string, unknown>) => api.post('/api/ClinicalVisitsApi/dermatology/mole-mappings', data),
+  updateMoleMapping: (id: number, data: Record<string, unknown>) => api.put(`/api/ClinicalVisitsApi/dermatology/mole-mappings/${id}`, data),
+  deleteMoleMapping: (id: number) => api.delete(`/api/ClinicalVisitsApi/dermatology/mole-mappings/${id}`),
+
+  // Biopsies
+  getBiopsiesByPatient: (patientId: number) => api.get(`/api/ClinicalVisitsApi/dermatology/biopsies/patient/${patientId}`),
+  createBiopsy: (data: Record<string, unknown>) => api.post('/api/ClinicalVisitsApi/dermatology/biopsies', data),
+  updateBiopsy: (id: number, data: Record<string, unknown>) => api.put(`/api/ClinicalVisitsApi/dermatology/biopsies/${id}`, data),
+  deleteBiopsy: (id: number) => api.delete(`/api/ClinicalVisitsApi/dermatology/biopsies/${id}`),
+
+  // Skin Photos
+  getSkinPhotosByPatient: (patientId: number) => api.get(`/api/ClinicalVisitsApi/dermatology/photos/patient/${patientId}`),
+  uploadSkinPhoto: (data: FormData) => api.post('/api/ClinicalVisitsApi/dermatology/photos', data, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  }),
+  deleteSkinPhoto: (id: number) => api.delete(`/api/ClinicalVisitsApi/dermatology/photos/${id}`),
 };
 
 // ============================================

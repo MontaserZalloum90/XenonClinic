@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Dialog } from "@headlessui/react";
 import {
   MagnifyingGlassIcon,
@@ -11,8 +11,14 @@ import {
 import { format } from "date-fns";
 import type { EEGRecord, CreateEEGRequest } from "../../types/neurology";
 import { EEGStatus, EEGFinding } from "../../types/neurology";
+import { neurologyApi } from "../../lib/api";
 
-export const EEGRecords = () => {
+interface EEGRecordsProps {
+  patientId?: number;
+}
+
+export const EEGRecords = ({ patientId }: EEGRecordsProps = {}) => {
+  const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("");
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -20,58 +26,34 @@ export const EEGRecords = () => {
     undefined,
   );
 
+  // Fetch EEG records from API
   const { data: records, isLoading } = useQuery<EEGRecord[]>({
-    queryKey: ["eeg-records"],
+    queryKey: ["eeg-records", patientId],
     queryFn: async () => {
-      return [
-        {
-          id: 1,
-          patientId: 3001,
-          patientName: "James Wilson",
-          recordDate: new Date().toISOString(),
-          duration: 30,
-          findings: EEGFinding.Normal,
-          interpretation: "Normal awake and sleep EEG",
-          performedBy: "Tech. Anderson",
-          interpretedBy: "Dr. Martinez",
-          status: EEGStatus.Interpreted,
-          createdAt: new Date().toISOString(),
-        },
-        {
-          id: 2,
-          patientId: 3002,
-          patientName: "Linda Garcia",
-          recordDate: new Date().toISOString(),
-          duration: 45,
-          findings: EEGFinding.EpilepticActivity,
-          interpretation:
-            "Intermittent spike and wave discharges in left temporal region",
-          abnormalities: ["Left temporal spikes", "Focal slowing"],
-          performedBy: "Tech. Thompson",
-          status: EEGStatus.Completed,
-          createdAt: new Date().toISOString(),
-        },
-        {
-          id: 3,
-          patientId: 3003,
-          patientName: "Robert Martinez",
-          recordDate: new Date().toISOString(),
-          duration: 60,
-          findings: EEGFinding.Slowing,
-          interpretation:
-            "Diffuse background slowing, suggestive of encephalopathy",
-          abnormalities: [
-            "Generalized slowing",
-            "Absence of normal alpha rhythm",
-          ],
-          performedBy: "Tech. Davis",
-          interpretedBy: "Dr. Chen",
-          status: EEGStatus.Interpreted,
-          createdAt: new Date().toISOString(),
-        },
-      ];
+      if (patientId) {
+        const response = await neurologyApi.getEEGsByPatient(patientId);
+        return response.data?.data ?? response.data ?? [];
+      }
+      return [];
     },
   });
+
+  // Mutations
+  const createMutation = useMutation({
+    mutationFn: (data: CreateEEGRequest) => neurologyApi.createEEG(data),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["eeg-records"] }),
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: number; data: Partial<CreateEEGRequest> }) =>
+      neurologyApi.updateEEG(id, data),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["eeg-records"] }),
+  });
+
+  void createMutation;
+  void updateMutation;
+  void EEGStatus;
+  void EEGFinding;
 
   const filteredRecords = records?.filter((record) => {
     const matchesSearch =

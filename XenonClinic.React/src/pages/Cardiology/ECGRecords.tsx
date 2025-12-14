@@ -10,67 +10,55 @@ import {
 import { format } from 'date-fns';
 import type { ECGRecord, CreateECGRequest } from '../../types/cardiology';
 import { ECGStatus, HeartRhythm } from '../../types/cardiology';
+import { cardiologyApi } from '../../lib/api';
 
-export const ECGRecords = () => {
+interface ECGRecordsProps {
+  patientId?: number;
+}
+
+export const ECGRecords = ({ patientId }: ECGRecordsProps = {}) => {
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState<ECGRecord | undefined>(undefined);
 
-  // Mock data - Replace with actual API calls
+  // Fetch ECG records from API
   const { data: records, isLoading } = useQuery<ECGRecord[]>({
-    queryKey: ['ecg-records'],
+    queryKey: ['ecg-records', patientId],
     queryFn: async () => {
-      // Mock implementation
-      return [
-        {
-          id: 1,
-          patientId: 1001,
-          patientName: 'John Smith',
-          recordDate: new Date().toISOString(),
-          heartRate: 72,
-          rhythm: HeartRhythm.Sinus,
-          interpretation: 'Normal sinus rhythm',
-          abnormalities: [],
-          performedBy: 'Dr. Johnson',
-          status: ECGStatus.Completed,
-          prInterval: 160,
-          qrsDuration: 90,
-          qtInterval: 380,
-          qtcInterval: 410,
-          createdAt: new Date().toISOString(),
-        },
-        {
-          id: 2,
-          patientId: 1002,
-          patientName: 'Mary Williams',
-          recordDate: new Date().toISOString(),
-          heartRate: 105,
-          rhythm: HeartRhythm.AFib,
-          interpretation: 'Atrial fibrillation with rapid ventricular response',
-          abnormalities: ['Irregular rhythm', 'Absent P waves'],
-          performedBy: 'Dr. Brown',
-          status: ECGStatus.Reviewed,
-          reviewedBy: 'Dr. Johnson',
-          createdAt: new Date().toISOString(),
-        },
-        {
-          id: 3,
-          patientId: 1003,
-          patientName: 'Robert Davis',
-          recordDate: new Date().toISOString(),
-          heartRate: 58,
-          rhythm: HeartRhythm.Bradycardia,
-          interpretation: 'Sinus bradycardia',
-          abnormalities: ['Low heart rate'],
-          performedBy: 'Dr. Williams',
-          status: ECGStatus.Pending,
-          prInterval: 170,
-          qrsDuration: 85,
-          createdAt: new Date().toISOString(),
-        },
-      ];
+      if (patientId) {
+        const response = await cardiologyApi.getECGsByPatient(patientId);
+        return response.data?.data ?? response.data ?? [];
+      }
+      // Return empty array when no patient selected - in production,
+      // you might want to show a patient selector or fetch recent records
+      return [];
+    },
+  });
+
+  // Create mutation
+  const createMutation = useMutation({
+    mutationFn: (data: CreateECGRequest) => cardiologyApi.createECG(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['ecg-records'] });
+    },
+  });
+
+  // Update mutation
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: number; data: Partial<CreateECGRequest> }) =>
+      cardiologyApi.updateECG(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['ecg-records'] });
+    },
+  });
+
+  // Delete mutation
+  const deleteMutation = useMutation({
+    mutationFn: (id: number) => cardiologyApi.deleteECG(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['ecg-records'] });
     },
   });
 
@@ -301,12 +289,30 @@ const ECGRecordModal = ({ isOpen, onClose, record }: ECGRecordModalProps) => {
     notes: record?.notes,
   });
 
+  const createMutation = useMutation({
+    mutationFn: (data: CreateECGRequest) => cardiologyApi.createECG(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['ecg-records'] });
+      onClose();
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: number; data: Partial<CreateECGRequest> }) =>
+      cardiologyApi.updateECG(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['ecg-records'] });
+      onClose();
+    },
+  });
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Implement actual API call to save ECG record
-    void formData;
-    queryClient.invalidateQueries({ queryKey: ['ecg-records'] });
-    onClose();
+    if (record?.id) {
+      updateMutation.mutate({ id: record.id, data: formData });
+    } else {
+      createMutation.mutate(formData as CreateECGRequest);
+    }
   };
 
   const handleChange = (

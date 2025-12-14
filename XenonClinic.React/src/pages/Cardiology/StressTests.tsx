@@ -10,86 +10,60 @@ import {
 import { format } from 'date-fns';
 import type { StressTest, CreateStressTestRequest } from '../../types/cardiology';
 import { StressTestType, StressTestProtocol, StressTestResult } from '../../types/cardiology';
+import { cardiologyApi } from '../../lib/api';
 
-export const StressTests = () => {
+interface StressTestsProps {
+  patientId?: number;
+}
+
+export const StressTests = ({ patientId }: StressTestsProps = {}) => {
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [resultFilter, setResultFilter] = useState<string>('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedTest, setSelectedTest] = useState<StressTest | undefined>(undefined);
 
-  // Mock data - Replace with actual API calls
+  // Fetch Stress Tests from API
   const { data: tests, isLoading } = useQuery<StressTest[]>({
-    queryKey: ['stress-tests'],
+    queryKey: ['stress-tests', patientId],
     queryFn: async () => {
-      // Mock implementation
-      return [
-        {
-          id: 1,
-          patientId: 1001,
-          patientName: 'John Smith',
-          testType: StressTestType.Exercise,
-          protocol: StressTestProtocol.Bruce,
-          date: new Date().toISOString(),
-          duration: 12,
-          maxHeartRate: 165,
-          targetHeartRate: 160,
-          percentTargetAchieved: 103,
-          bloodPressure: { systolic: 130, diastolic: 80 },
-          peakBloodPressure: { systolic: 180, diastolic: 90 },
-          symptoms: [],
-          ecgChanges: 'None',
-          testResult: StressTestResult.Negative,
-          conclusion: 'Negative stress test. Good exercise capacity.',
-          performedBy: 'Dr. Johnson',
-          interpretedBy: 'Dr. Williams',
-          createdAt: new Date().toISOString(),
-        },
-        {
-          id: 2,
-          patientId: 1002,
-          patientName: 'Mary Williams',
-          testType: StressTestType.Pharmacological,
-          protocol: StressTestProtocol.Dobutamine,
-          date: new Date().toISOString(),
-          duration: 15,
-          maxHeartRate: 145,
-          targetHeartRate: 140,
-          percentTargetAchieved: 104,
-          bloodPressure: { systolic: 140, diastolic: 85 },
-          peakBloodPressure: { systolic: 170, diastolic: 88 },
-          symptoms: ['Chest discomfort'],
-          ecgChanges: 'ST segment depression in leads V4-V6',
-          stSegmentChanges: '2mm horizontal ST depression in V4-V6',
-          testResult: StressTestResult.Positive,
-          conclusion: 'Positive stress test with inducible ischemia. Recommend coronary angiography.',
-          recommendations: 'Coronary angiography, Medical optimization',
-          performedBy: 'Dr. Brown',
-          interpretedBy: 'Dr. Johnson',
-          createdAt: new Date().toISOString(),
-        },
-        {
-          id: 3,
-          patientId: 1003,
-          patientName: 'Robert Davis',
-          testType: StressTestType.Exercise,
-          protocol: StressTestProtocol.ModifiedBruce,
-          date: new Date().toISOString(),
-          duration: 8,
-          maxHeartRate: 120,
-          targetHeartRate: 150,
-          percentTargetAchieved: 80,
-          bloodPressure: { systolic: 135, diastolic: 82 },
-          symptoms: ['Dyspnea', 'Fatigue'],
-          testResult: StressTestResult.Equivocal,
-          conclusion: 'Equivocal stress test due to submaximal heart rate achievement.',
-          recommendations: 'Consider pharmacological stress test',
-          performedBy: 'Dr. Williams',
-          createdAt: new Date().toISOString(),
-        },
-      ];
+      if (patientId) {
+        const response = await cardiologyApi.getStressTestsByPatient(patientId);
+        return response.data?.data ?? response.data ?? [];
+      }
+      return [];
     },
   });
+
+  // Create mutation
+  const createMutation = useMutation({
+    mutationFn: (data: CreateStressTestRequest) => cardiologyApi.createStressTest(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['stress-tests'] });
+    },
+  });
+
+  // Update mutation
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: number; data: Partial<CreateStressTestRequest> }) =>
+      cardiologyApi.updateStressTest(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['stress-tests'] });
+    },
+  });
+
+  // Delete mutation
+  const deleteMutation = useMutation({
+    mutationFn: (id: number) => cardiologyApi.deleteStressTest(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['stress-tests'] });
+    },
+  });
+
+  // Keep these variables available for future use
+  void createMutation;
+  void updateMutation;
+  void deleteMutation;
 
   const filteredTests = tests?.filter((test) => {
     const matchesSearch =
@@ -342,12 +316,30 @@ const StressTestModal = ({ isOpen, onClose, test }: StressTestModalProps) => {
     notes: test?.notes || '',
   });
 
+  const createMutation = useMutation({
+    mutationFn: (data: CreateStressTestRequest) => cardiologyApi.createStressTest(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['stress-tests'] });
+      onClose();
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: number; data: Partial<CreateStressTestRequest> }) =>
+      cardiologyApi.updateStressTest(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['stress-tests'] });
+      onClose();
+    },
+  });
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Implement actual API call to save stress test
-    void formData;
-    queryClient.invalidateQueries({ queryKey: ['stress-tests'] });
-    onClose();
+    if (test?.id) {
+      updateMutation.mutate({ id: test.id, data: formData });
+    } else {
+      createMutation.mutate(formData as CreateStressTestRequest);
+    }
   };
 
   const handleChange = (
