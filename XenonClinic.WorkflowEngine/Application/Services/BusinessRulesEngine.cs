@@ -233,6 +233,191 @@ public class BusinessRulesEngine : IBusinessRulesEngine
         return Task.FromResult<IList<RuleSetDto>>(query.ToList());
     }
 
+    public Task<RuleSet> CreateRuleSetAsync(
+        CreateRuleSetRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var now = DateTime.UtcNow;
+        var ruleSet = new RuleSet
+        {
+            Id = Guid.NewGuid().ToString(),
+            Key = request.Key,
+            Name = request.Name,
+            Description = request.Description,
+            Category = request.Category,
+            Rules = request.Rules ?? new List<RuleDefinition>(),
+            CreatedAt = now,
+            UpdatedAt = now
+        };
+
+        // Also store as RuleSetDto for compatibility
+        _ruleSets[ruleSet.Key] = new RuleSetDto
+        {
+            Id = ruleSet.Id,
+            Name = ruleSet.Name,
+            Description = ruleSet.Description,
+            Category = ruleSet.Category,
+            IsActive = ruleSet.IsActive,
+            Version = ruleSet.Version,
+            CreatedAt = now,
+            UpdatedAt = now
+        };
+
+        _logger.LogInformation("Created rule set '{Key}'", request.Key);
+        return Task.FromResult(ruleSet);
+    }
+
+    public Task<RuleSet> UpdateRuleSetAsync(
+        string key,
+        UpdateRuleSetRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var now = DateTime.UtcNow;
+
+        // Get existing or create new
+        if (!_ruleSets.TryGetValue(key, out var existing))
+        {
+            throw new InvalidOperationException($"Rule set '{key}' not found");
+        }
+
+        var ruleSet = new RuleSet
+        {
+            Id = existing.Id,
+            Key = key,
+            Name = request.Name ?? existing.Name,
+            Description = request.Description ?? existing.Description,
+            Category = request.Category ?? existing.Category,
+            IsActive = request.IsActive ?? existing.IsActive,
+            Rules = request.Rules ?? new List<RuleDefinition>(),
+            Version = existing.Version + 1,
+            CreatedAt = existing.CreatedAt,
+            UpdatedAt = now
+        };
+
+        // Update the stored RuleSetDto
+        existing.Name = ruleSet.Name;
+        existing.Description = ruleSet.Description;
+        existing.Category = ruleSet.Category;
+        existing.IsActive = ruleSet.IsActive;
+        existing.Version = ruleSet.Version;
+        existing.UpdatedAt = now;
+
+        _logger.LogInformation("Updated rule set '{Key}' to version {Version}", key, ruleSet.Version);
+        return Task.FromResult(ruleSet);
+    }
+
+    public Task<RuleSet?> GetRuleSetAsync(
+        string key,
+        CancellationToken cancellationToken = default)
+    {
+        if (_ruleSets.TryGetValue(key, out var dto))
+        {
+            return Task.FromResult<RuleSet?>(new RuleSet
+            {
+                Id = dto.Id,
+                Key = key,
+                Name = dto.Name,
+                Description = dto.Description,
+                Category = dto.Category,
+                IsActive = dto.IsActive,
+                Version = dto.Version,
+                CreatedAt = dto.CreatedAt,
+                UpdatedAt = dto.UpdatedAt
+            });
+        }
+
+        return Task.FromResult<RuleSet?>(null);
+    }
+
+    public Task DeleteRuleSetAsync(
+        string key,
+        CancellationToken cancellationToken = default)
+    {
+        _ruleSets.TryRemove(key, out _);
+        _cache.Remove($"ruleset:{key}");
+        _logger.LogInformation("Deleted rule set '{Key}'", key);
+        return Task.CompletedTask;
+    }
+
+    public Task<IList<RuleSet>> ListRuleSetsAsync(
+        string? tenantId,
+        CancellationToken cancellationToken = default)
+    {
+        var ruleSets = _ruleSets.Values.Select(dto => new RuleSet
+        {
+            Id = dto.Id,
+            Name = dto.Name,
+            Description = dto.Description,
+            Category = dto.Category,
+            IsActive = dto.IsActive,
+            Version = dto.Version,
+            CreatedAt = dto.CreatedAt,
+            UpdatedAt = dto.UpdatedAt
+        }).ToList();
+
+        return Task.FromResult<IList<RuleSet>>(ruleSets);
+    }
+
+    public Task<RuleValidationResult> ValidateRuleSetAsync(
+        string key,
+        CancellationToken cancellationToken = default)
+    {
+        var result = new RuleValidationResult { IsValid = true };
+
+        if (!_ruleSets.TryGetValue(key, out var ruleSet))
+        {
+            result.IsValid = false;
+            result.Issues.Add(new RuleValidationIssue
+            {
+                Code = "NOT_FOUND",
+                Message = $"Rule set '{key}' not found",
+                Severity = ValidationIssueSeverity.Error
+            });
+            return Task.FromResult(result);
+        }
+
+        // Validate each rule
+        foreach (var rule in ruleSet.Rules ?? Enumerable.Empty<RuleDto>())
+        {
+            if (string.IsNullOrWhiteSpace(rule.Condition))
+            {
+                result.Issues.Add(new RuleValidationIssue
+                {
+                    RuleId = rule.Id,
+                    Code = "EMPTY_CONDITION",
+                    Message = $"Rule '{rule.Name}' has no condition",
+                    Severity = ValidationIssueSeverity.Warning
+                });
+            }
+        }
+
+        return Task.FromResult(result);
+    }
+
+    public async Task<RuleEvaluationResult> EvaluateAsync(
+        RuleEvaluationContext context,
+        CancellationToken cancellationToken = default)
+    {
+        return await EvaluateAsync(context.RuleSetKey, context.Facts, cancellationToken);
+    }
+
+    public Task<RuleStatistics> GetStatisticsAsync(
+        string? tenantId,
+        CancellationToken cancellationToken = default)
+    {
+        var stats = new RuleStatistics
+        {
+            TotalRuleSets = _ruleSets.Count,
+            TotalRules = _ruleSets.Values.Sum(r => r.Rules?.Count ?? 0),
+            TotalEvaluations = 0,
+            SuccessfulEvaluations = 0,
+            FailedEvaluations = 0,
+            AverageEvaluationTimeMs = 0
+        };
+
+        return Task.FromResult(stats);
+    }
+
     #region Private Methods
 
     private async Task ExecuteActionAsync(
