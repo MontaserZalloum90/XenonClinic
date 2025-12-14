@@ -1,3 +1,5 @@
+name: xenonclinic
+
 services:
   # PostgreSQL Database
   db:
