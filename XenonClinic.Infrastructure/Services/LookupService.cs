@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using XenonClinic.Core.Entities;
 using XenonClinic.Core.Interfaces;
 using XenonClinic.Infrastructure.Data;
@@ -8,14 +9,27 @@ namespace XenonClinic.Infrastructure.Services;
 public class LookupService : ILookupService
 {
     private readonly ClinicDbContext _context;
+    private readonly ICacheService _cacheService;
+    private readonly ILogger<LookupService> _logger;
+    private static readonly TimeSpan CacheExpiration = TimeSpan.FromMinutes(30);
 
-    public LookupService(ClinicDbContext context)
+    public LookupService(ClinicDbContext context, ICacheService cacheService, ILogger<LookupService> logger)
     {
         _context = context;
+        _cacheService = cacheService;
+        _logger = logger;
     }
 
     public async Task<List<T>> GetLookupsAsync<T>(int? tenantId = null, bool includeInactive = false) where T : SystemLookup
     {
+        var cacheKey = $"lookups:{typeof(T).Name}:tenant:{tenantId ?? 0}:inactive:{includeInactive}";
+
+        var cached = await _cacheService.GetAsync<List<T>>(cacheKey);
+        if (cached != null)
+        {
+            return cached;
+        }
+
         var query = _context.Set<T>().AsQueryable();
 
         if (tenantId.HasValue)
@@ -28,10 +42,13 @@ public class LookupService : ILookupService
             query = query.Where(l => l.IsActive);
         }
 
-        return await query
+        var result = await query
             .OrderBy(l => l.DisplayOrder)
             .ThenBy(l => l.Name)
             .ToListAsync();
+
+        await _cacheService.SetAsync(cacheKey, result, CacheExpiration);
+        return result;
     }
 
     public async Task<T?> GetLookupByIdAsync<T>(int id) where T : SystemLookup
@@ -56,6 +73,10 @@ public class LookupService : ILookupService
         lookup.CreatedAt = DateTime.UtcNow;
         _context.Set<T>().Add(lookup);
         await _context.SaveChangesAsync();
+
+        // Invalidate cache for this lookup type
+        await InvalidateLookupCacheAsync<T>();
+
         return lookup;
     }
 
@@ -64,6 +85,10 @@ public class LookupService : ILookupService
         lookup.UpdatedAt = DateTime.UtcNow;
         _context.Set<T>().Update(lookup);
         await _context.SaveChangesAsync();
+
+        // Invalidate cache for this lookup type
+        await InvalidateLookupCacheAsync<T>();
+
         return lookup;
     }
 
@@ -82,6 +107,16 @@ public class LookupService : ILookupService
 
         _context.Set<T>().Remove(lookup);
         await _context.SaveChangesAsync();
+
+        // Invalidate cache for this lookup type
+        await InvalidateLookupCacheAsync<T>();
+    }
+
+    private async Task InvalidateLookupCacheAsync<T>() where T : SystemLookup
+    {
+        var pattern = $"lookups:{typeof(T).Name}:*";
+        await _cacheService.RemoveByPatternAsync(pattern);
+        _logger.LogDebug("Invalidated cache for lookup type: {Type}", typeof(T).Name);
     }
 
     public async Task<bool> CanDeleteLookupAsync<T>(int id) where T : SystemLookup

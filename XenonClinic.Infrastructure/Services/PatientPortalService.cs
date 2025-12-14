@@ -24,19 +24,23 @@ public class PatientPortalService : IPatientPortalService
     private readonly IPaymentGatewayService _paymentGatewayService;
     private readonly IEmailService _emailService;
     private readonly IFileStorageService _fileStorageService;
+    private readonly ICacheService _cacheService;
+    private static readonly TimeSpan DashboardCacheExpiration = TimeSpan.FromMinutes(2);
 
     public PatientPortalService(
         ClinicDbContext context,
         ILogger<PatientPortalService> logger,
         IPaymentGatewayService paymentGatewayService,
         IEmailService emailService,
-        IFileStorageService fileStorageService)
+        IFileStorageService fileStorageService,
+        ICacheService cacheService)
     {
         _context = context;
         _logger = logger;
         _paymentGatewayService = paymentGatewayService;
         _emailService = emailService;
         _fileStorageService = fileStorageService;
+        _cacheService = cacheService;
     }
 
     #region Authentication
@@ -510,6 +514,16 @@ public class PatientPortalService : IPatientPortalService
 
     public async Task<PatientPortalDashboardDto> GetDashboardAsync(int patientId)
     {
+        var cacheKey = $"portal:dashboard:{patientId}";
+
+        // Try to get from cache first
+        var cached = await _cacheService.GetAsync<PatientPortalDashboardDto>(cacheKey);
+        if (cached != null)
+        {
+            _logger.LogDebug("Dashboard cache hit for patient {PatientId}", patientId);
+            return cached;
+        }
+
         var profile = await GetProfileAsync(patientId);
         var upcomingAppointments = await GetUpcomingAppointmentsAsync(patientId);
         var activeMedications = await GetActiveMedicationsAsync(patientId);
@@ -528,7 +542,7 @@ public class PatientPortalService : IPatientPortalService
 
         var notifications = await GetNotificationsAsync(patientId, true);
 
-        return new PatientPortalDashboardDto
+        var dashboard = new PatientPortalDashboardDto
         {
             Profile = profile,
             UpcomingAppointments = upcomingAppointments.Count(),
@@ -540,6 +554,22 @@ public class PatientPortalService : IPatientPortalService
             ActiveMedications = activeMedications.Take(5).ToList(),
             RecentNotifications = notifications.Take(5).ToList()
         };
+
+        // Cache for short duration since dashboard data changes frequently
+        await _cacheService.SetAsync(cacheKey, dashboard, DashboardCacheExpiration);
+
+        return dashboard;
+    }
+
+    /// <summary>
+    /// Invalidates the dashboard cache for a specific patient.
+    /// Call this when patient data changes (appointments, prescriptions, payments, etc.)
+    /// </summary>
+    public async Task InvalidateDashboardCacheAsync(int patientId)
+    {
+        var cacheKey = $"portal:dashboard:{patientId}";
+        await _cacheService.RemoveAsync(cacheKey);
+        _logger.LogDebug("Dashboard cache invalidated for patient {PatientId}", patientId);
     }
 
     // File upload security constants
