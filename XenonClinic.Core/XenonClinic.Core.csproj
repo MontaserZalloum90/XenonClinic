@@ -4,5 +4,9 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FluentValidation" Version="11.9.0" />
+  </ItemGroup>
   <!-- Note: Identity dependency removed - ApplicationUser moved to Infrastructure -->
 </Project>
