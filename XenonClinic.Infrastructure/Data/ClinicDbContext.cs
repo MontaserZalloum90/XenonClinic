@@ -2070,6 +2070,41 @@ public class ClinicDbContext : IdentityDbContext<Entities.ApplicationUser>
             .HasMaxLength(100);
 
         // ========================================
+        // Payroll Configuration
+        // ========================================
+
+        builder.Entity<PayrollPeriod>()
+            .HasIndex(p => p.BranchId);
+
+        builder.Entity<PayrollPeriod>()
+            .HasIndex(p => p.Status);
+
+        builder.Entity<PayrollPeriod>()
+            .HasIndex(p => new { p.BranchId, p.StartDate, p.EndDate });
+
+        builder.Entity<Payslip>()
+            .HasIndex(p => p.PayrollPeriodId);
+
+        builder.Entity<Payslip>()
+            .HasIndex(p => p.EmployeeId);
+
+        builder.Entity<Payslip>()
+            .HasIndex(p => new { p.PayrollPeriodId, p.EmployeeId })
+            .IsUnique();
+
+        builder.Entity<Payslip>()
+            .Property(p => p.GrossSalary)
+            .HasPrecision(18, 2);
+
+        builder.Entity<Payslip>()
+            .Property(p => p.NetSalary)
+            .HasPrecision(18, 2);
+
+        builder.Entity<Payslip>()
+            .Property(p => p.Deductions)
+            .HasPrecision(18, 2);
+
+        // ========================================
         // OAuth Linked Accounts Configuration
         // ========================================
 

@@ -362,6 +362,64 @@ public class BackgroundJobService : IBackgroundJobService
         );
     }
 
+    public IEnumerable<JobDetails> GetAllJobs(JobState? stateFilter = null)
+    {
+        var jobs = _jobs.Values.AsEnumerable();
+
+        if (stateFilter.HasValue)
+        {
+            jobs = jobs.Where(j => j.State == stateFilter.Value);
+        }
+
+        return jobs
+            .OrderByDescending(j => j.CreatedAt)
+            .Select(j => new JobDetails(
+                j.JobId,
+                j.State,
+                j.JobType,
+                j.CreatedAt,
+                j.StartedAt,
+                j.CompletedAt,
+                j.Exception,
+                j.RetryCount
+            ))
+            .ToList();
+    }
+
+    public IEnumerable<RecurringJobDetails> GetRecurringJobs()
+    {
+        return _recurringJobs.Values
+            .OrderBy(j => j.JobId)
+            .Select(j => new RecurringJobDetails(
+                j.JobId,
+                j.CronExpression,
+                j.JobType,
+                j.CreatedAt,
+                j.LastExecution,
+                null // NextExecution would require cron parsing
+            ))
+            .ToList();
+    }
+
+    public JobStatistics GetStatistics()
+    {
+        var jobs = _jobs.Values.ToList();
+
+        return new JobStatistics(
+            TotalJobs: jobs.Count,
+            EnqueuedCount: jobs.Count(j => j.State == JobState.Enqueued),
+            ProcessingCount: jobs.Count(j => j.State == JobState.Processing),
+            SucceededCount: jobs.Count(j => j.State == JobState.Succeeded),
+            FailedCount: jobs.Count(j => j.State == JobState.Failed),
+            ScheduledCount: jobs.Count(j => j.State == JobState.Scheduled),
+            RecurringJobsCount: _recurringJobs.Count,
+            OldestJobCreatedAt: jobs.OrderBy(j => j.CreatedAt).FirstOrDefault()?.CreatedAt,
+            LastCompletedAt: jobs.Where(j => j.CompletedAt.HasValue)
+                .OrderByDescending(j => j.CompletedAt)
+                .FirstOrDefault()?.CompletedAt
+        );
+    }
+
     #region Private Methods
 
     private static string GenerateJobId() => Guid.NewGuid().ToString("N")[..12];

@@ -159,13 +159,13 @@ export const MarketingList = () => {
     return matchesSearch && matchesStatus;
   });
 
-  const handleNewCampaign = (data: any) => {
-    console.log('Creating campaign:', data);
+  const handleNewCampaign = (data: unknown) => {
+    // TODO: Implement API call to create campaign
     setShowNewCampaign(false);
   };
 
-  const handleNewLead = (data: any) => {
-    console.log('Creating lead:', data);
+  const handleNewLead = (data: unknown) => {
+    // TODO: Implement API call to create lead
     setShowNewLead(false);
   };
 

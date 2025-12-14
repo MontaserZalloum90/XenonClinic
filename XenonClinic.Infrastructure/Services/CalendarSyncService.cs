@@ -1193,8 +1193,105 @@ public class CalendarSyncService : ICalendarSyncService
 
     private async Task<string> RefreshAccessTokenIfNeededAsync(CalendarConnection connection)
     {
-        // TODO: Check token expiry and refresh if needed
-        return _secretEncryptionService.Decrypt(connection.AccessToken);
+        var accessToken = _secretEncryptionService.Decrypt(connection.AccessToken);
+
+        // Check if token is still valid (with 5 minute buffer)
+        if (connection.TokenExpiresAt.HasValue &&
+            connection.TokenExpiresAt.Value > DateTime.UtcNow.AddMinutes(5))
+        {
+            return accessToken;
+        }
+
+        // Token expired or expiring soon - refresh it
+        var refreshToken = _secretEncryptionService.DecryptIfNotEmpty(connection.RefreshToken);
+        if (string.IsNullOrEmpty(refreshToken))
+        {
+            _logger.LogWarning("Cannot refresh token for ConnectionId {ConnectionId}: no refresh token available",
+                connection.Id);
+            return accessToken; // Return existing token and hope for the best
+        }
+
+        try
+        {
+            var config = await GetOAuthConfigAsync(connection.Provider);
+            if (config == null)
+            {
+                _logger.LogError("OAuth config not found for provider {Provider}", connection.Provider);
+                return accessToken;
+            }
+
+            var tokenEndpoint = connection.Provider.ToLower() switch
+            {
+                "google" => GoogleTokenEndpoint,
+                "outlook" or "microsoft" => MicrosoftTokenEndpoint,
+                _ => null
+            };
+
+            if (tokenEndpoint == null)
+            {
+                _logger.LogError("Unknown provider: {Provider}", connection.Provider);
+                return accessToken;
+            }
+
+            var requestBody = new Dictionary<string, string>
+            {
+                ["client_id"] = config.ClientId,
+                ["client_secret"] = config.ClientSecret,
+                ["refresh_token"] = refreshToken,
+                ["grant_type"] = "refresh_token"
+            };
+
+            var response = await _httpClient.PostAsync(tokenEndpoint,
+                new FormUrlEncodedContent(requestBody));
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                _logger.LogError("Failed to refresh token for ConnectionId {ConnectionId}: {Error}",
+                    connection.Id, error);
+
+                // Mark connection as needing re-authentication if refresh failed permanently
+                if (response.StatusCode == System.Net.HttpStatusCode.BadRequest ||
+                    response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+                {
+                    connection.LastSyncStatus = "RefreshTokenExpired";
+                    await _context.SaveChangesAsync();
+                }
+
+                return accessToken;
+            }
+
+            var tokenResponse = await response.Content.ReadFromJsonAsync<JsonElement>();
+            var newAccessToken = tokenResponse.GetProperty("access_token").GetString()!;
+            var expiresIn = tokenResponse.TryGetProperty("expires_in", out var exp) ? exp.GetInt32() : 3600;
+
+            // Update connection with new tokens
+            connection.AccessToken = _secretEncryptionService.Encrypt(newAccessToken);
+            connection.TokenExpiresAt = DateTime.UtcNow.AddSeconds(expiresIn);
+
+            // Some providers issue new refresh tokens
+            if (tokenResponse.TryGetProperty("refresh_token", out var newRefreshToken))
+            {
+                var newRefreshTokenStr = newRefreshToken.GetString();
+                if (!string.IsNullOrEmpty(newRefreshTokenStr))
+                {
+                    connection.RefreshToken = _secretEncryptionService.Encrypt(newRefreshTokenStr);
+                }
+            }
+
+            connection.UpdatedAt = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
+
+            _logger.LogInformation("Successfully refreshed OAuth token for ConnectionId {ConnectionId}, Provider {Provider}",
+                connection.Id, connection.Provider);
+
+            return newAccessToken;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error refreshing OAuth token for ConnectionId {ConnectionId}", connection.Id);
+            return accessToken;
+        }
     }
 
     private async Task RevokeTokensAsync(CalendarConnection connection)

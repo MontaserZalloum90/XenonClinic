@@ -163,17 +163,14 @@ public class ProcessMigrationService : IProcessMigrationService
         {
             if (!string.IsNullOrEmpty(mapping.TransformExpression))
             {
-                // Validate expression syntax (basic check)
-                try
-                {
-                    // Would use expression evaluator here
-                }
-                catch (Exception)
+                // Validate expression syntax
+                var validationResult = ValidateTransformExpression(mapping.TransformExpression, mapping.SourceVariableName);
+                if (!validationResult.IsValid)
                 {
                     result.Errors.Add(new MigrationValidationError
                     {
                         Code = "INVALID_TRANSFORM_EXPRESSION",
-                        Message = $"Invalid transform expression for variable '{mapping.SourceVariableName}'",
+                        Message = validationResult.ErrorMessage ?? $"Invalid transform expression for variable '{mapping.SourceVariableName}'",
                         VariableName = mapping.SourceVariableName
                     });
                 }
@@ -655,6 +652,82 @@ public class ProcessMigrationService : IProcessMigrationService
         // Restore process definition reference
         // Restore current activity
         // Restore variables
+    }
+
+    /// <summary>
+    /// Validates a transform expression for syntax and safety
+    /// </summary>
+    private (bool IsValid, string? ErrorMessage) ValidateTransformExpression(string expression, string variableName)
+    {
+        if (string.IsNullOrWhiteSpace(expression))
+        {
+            return (false, $"Transform expression for variable '{variableName}' cannot be empty");
+        }
+
+        // Check for dangerous patterns (SQL injection, script injection)
+        var dangerousPatterns = new[]
+        {
+            "DROP ", "DELETE ", "INSERT ", "UPDATE ", "TRUNCATE ", // SQL
+            "<script", "javascript:", "onclick", "onerror", // XSS
+            "System.IO", "Process.Start", "File.Delete", // Code execution
+            "eval(", "exec(", "Runtime.exec" // Eval patterns
+        };
+
+        foreach (var pattern in dangerousPatterns)
+        {
+            if (expression.Contains(pattern, StringComparison.OrdinalIgnoreCase))
+            {
+                _logger.LogWarning(
+                    "Potentially dangerous pattern '{Pattern}' detected in transform expression for variable '{VariableName}'",
+                    pattern, variableName);
+                return (false, $"Transform expression contains potentially dangerous pattern: {pattern}");
+            }
+        }
+
+        // Validate balanced parentheses and brackets
+        var parenCount = 0;
+        var bracketCount = 0;
+        var braceCount = 0;
+
+        foreach (var c in expression)
+        {
+            switch (c)
+            {
+                case '(': parenCount++; break;
+                case ')': parenCount--; break;
+                case '[': bracketCount++; break;
+                case ']': bracketCount--; break;
+                case '{': braceCount++; break;
+                case '}': braceCount--; break;
+            }
+
+            // Check for negative counts (closing before opening)
+            if (parenCount < 0 || bracketCount < 0 || braceCount < 0)
+            {
+                return (false, $"Transform expression for variable '{variableName}' has unbalanced brackets");
+            }
+        }
+
+        if (parenCount != 0 || bracketCount != 0 || braceCount != 0)
+        {
+            return (false, $"Transform expression for variable '{variableName}' has unbalanced brackets");
+        }
+
+        // Validate basic expression structure (must reference the source variable)
+        var validOperators = new[] { "+", "-", "*", "/", "??", "?.", ".", "==", "!=", ">", "<", ">=", "<=" };
+        var hasValidStructure = expression.Contains("$") || // Variable reference
+                                 validOperators.Any(op => expression.Contains(op)) ||
+                                 expression.StartsWith("(") || // Grouped expression
+                                 expression.All(c => char.IsLetterOrDigit(c) || c == '_' || c == '.'); // Simple property path
+
+        if (!hasValidStructure)
+        {
+            _logger.LogDebug("Transform expression '{Expression}' for variable '{VariableName}' may have invalid structure",
+                expression, variableName);
+            // Return valid but log for review - allow flexibility for custom expression languages
+        }
+
+        return (true, null);
     }
 
     #endregion

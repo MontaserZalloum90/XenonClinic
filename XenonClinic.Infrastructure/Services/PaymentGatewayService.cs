@@ -1,7 +1,9 @@
+using System.Net.Http.Headers;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using XenonClinic.Core.DTOs;
 using XenonClinic.Core.Entities;
 using XenonClinic.Core.Enums;
@@ -19,17 +21,25 @@ public class PaymentGatewayService : IPaymentGatewayService
     private readonly ISecretEncryptionService _encryptionService;
     private readonly ISequenceGenerator _sequenceGenerator;
     private readonly HttpClient _httpClient;
+    private readonly ILogger<PaymentGatewayService> _logger;
+
+    // PayPal OAuth token cache
+    private static string? _paypalAccessToken;
+    private static DateTime _paypalTokenExpiry = DateTime.MinValue;
+    private static readonly SemaphoreSlim _paypalTokenLock = new(1, 1);
 
     public PaymentGatewayService(
         ClinicDbContext context,
         ISecretEncryptionService encryptionService,
         ISequenceGenerator sequenceGenerator,
-        IHttpClientFactory httpClientFactory)
+        IHttpClientFactory httpClientFactory,
+        ILogger<PaymentGatewayService> logger)
     {
         _context = context;
         _encryptionService = encryptionService;
         _sequenceGenerator = sequenceGenerator;
         _httpClient = httpClientFactory.CreateClient("PaymentGateway");
+        _logger = logger;
     }
 
     #region Gateway Configuration
@@ -721,19 +731,37 @@ public class PaymentGatewayService : IPaymentGatewayService
         };
     }
 
-    // Provider-specific implementations (simplified)
+    // Stripe API Implementation
     private async Task<bool> TestStripeConnectionAsync(PaymentGatewayConfig config)
     {
-        // In production, this would make an API call to Stripe
-        await Task.Delay(100);
-        return !string.IsNullOrEmpty(config.ApiKey);
+        try
+        {
+            var apiKey = _encryptionService.Decrypt(config.ApiKey!);
+            using var request = new HttpRequestMessage(HttpMethod.Get, "https://api.stripe.com/v1/balance");
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
+
+            var response = await _httpClient.SendAsync(request);
+            return response.IsSuccessStatusCode;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to test Stripe connection");
+            return false;
+        }
     }
 
     private async Task<bool> TestPayPalConnectionAsync(PaymentGatewayConfig config)
     {
-        // In production, this would make an API call to PayPal
-        await Task.Delay(100);
-        return !string.IsNullOrEmpty(config.ApiKey) && !string.IsNullOrEmpty(config.ApiSecret);
+        try
+        {
+            var accessToken = await GetPayPalAccessTokenAsync(config);
+            return !string.IsNullOrEmpty(accessToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to test PayPal connection");
+            return false;
+        }
     }
 
     private async Task<PaymentIntentResponseDto> CreateStripePaymentIntentAsync(
@@ -741,19 +769,57 @@ public class PaymentGatewayService : IPaymentGatewayService
         PaymentGatewayTransaction transaction,
         CreatePaymentIntentDto dto)
     {
-        // In production, this would create a real Stripe PaymentIntent
-        await Task.Delay(100);
+        var apiKey = _encryptionService.Decrypt(config.ApiKey!);
+        var stripeUrl = "https://api.stripe.com/v1/payment_intents";
 
-        var clientSecret = $"pi_{Guid.NewGuid():N}_secret_{Guid.NewGuid():N}";
-        transaction.GatewayPaymentIntentId = $"pi_{Guid.NewGuid():N}";
+        var formData = new Dictionary<string, string>
+        {
+            ["amount"] = transaction.AmountInSmallestUnit.ToString(),
+            ["currency"] = transaction.Currency.ToLower(),
+            ["automatic_payment_methods[enabled]"] = "true",
+            ["metadata[transaction_reference]"] = transaction.TransactionReference,
+        };
+
+        if (!string.IsNullOrEmpty(dto.CustomerEmail))
+        {
+            formData["receipt_email"] = dto.CustomerEmail;
+        }
+
+        if (!string.IsNullOrEmpty(dto.Description))
+        {
+            formData["description"] = dto.Description;
+        }
+
+        using var request = new HttpRequestMessage(HttpMethod.Post, stripeUrl);
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
+        request.Content = new FormUrlEncodedContent(formData);
+
+        var response = await _httpClient.SendAsync(request);
+        var responseContent = await response.Content.ReadAsStringAsync();
+
+        if (!response.IsSuccessStatusCode)
+        {
+            _logger.LogError("Stripe PaymentIntent creation failed: {Response}", responseContent);
+            throw new InvalidOperationException($"Stripe API error: {responseContent}");
+        }
+
+        var stripeResponse = JsonSerializer.Deserialize<JsonElement>(responseContent);
+        var paymentIntentId = stripeResponse.GetProperty("id").GetString()!;
+        var clientSecret = stripeResponse.GetProperty("client_secret").GetString()!;
+        var status = stripeResponse.GetProperty("status").GetString();
+
+        transaction.GatewayPaymentIntentId = paymentIntentId;
+        transaction.Status = MapStripeStatus(status);
+
+        _logger.LogInformation("Created Stripe PaymentIntent: {PaymentIntentId}", paymentIntentId);
 
         return new PaymentIntentResponseDto
         {
             TransactionReference = transaction.TransactionReference,
-            GatewayPaymentIntentId = transaction.GatewayPaymentIntentId,
+            GatewayPaymentIntentId = paymentIntentId,
             Provider = PaymentGatewayProvider.Stripe,
             ClientSecret = clientSecret,
-            Status = PaymentGatewayStatus.Pending,
+            Status = transaction.Status,
             Amount = transaction.Amount,
             Currency = transaction.Currency,
             ExpiresAt = DateTime.UtcNow.AddHours(24)
@@ -765,23 +831,91 @@ public class PaymentGatewayService : IPaymentGatewayService
         PaymentGatewayTransaction transaction,
         CreatePaymentIntentDto dto)
     {
-        // In production, this would create a real PayPal Order
-        await Task.Delay(100);
-
-        var orderId = Guid.NewGuid().ToString("N")[..17].ToUpper();
-        transaction.GatewayPaymentIntentId = orderId;
-
+        var accessToken = await GetPayPalAccessTokenAsync(config);
         var baseUrl = config.IsSandbox
-            ? "https://www.sandbox.paypal.com"
-            : "https://www.paypal.com";
+            ? "https://api-m.sandbox.paypal.com"
+            : "https://api-m.paypal.com";
+
+        var orderPayload = new
+        {
+            intent = "CAPTURE",
+            purchase_units = new[]
+            {
+                new
+                {
+                    reference_id = transaction.TransactionReference,
+                    description = dto.Description ?? "Payment",
+                    amount = new
+                    {
+                        currency_code = transaction.Currency.ToUpper(),
+                        value = transaction.Amount.ToString("F2")
+                    }
+                }
+            },
+            payment_source = new
+            {
+                paypal = new
+                {
+                    experience_context = new
+                    {
+                        payment_method_preference = "IMMEDIATE_PAYMENT_REQUIRED",
+                        user_action = "PAY_NOW",
+                        return_url = dto.ReturnUrl ?? "https://example.com/return",
+                        cancel_url = dto.CancelUrl ?? "https://example.com/cancel"
+                    }
+                }
+            }
+        };
+
+        var jsonPayload = JsonSerializer.Serialize(orderPayload, new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower
+        });
+
+        using var request = new HttpRequestMessage(HttpMethod.Post, $"{baseUrl}/v2/checkout/orders");
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+        request.Headers.TryAddWithoutValidation("PayPal-Request-Id", Guid.NewGuid().ToString());
+        request.Content = new StringContent(jsonPayload, Encoding.UTF8, "application/json");
+
+        var response = await _httpClient.SendAsync(request);
+        var responseContent = await response.Content.ReadAsStringAsync();
+
+        if (!response.IsSuccessStatusCode)
+        {
+            _logger.LogError("PayPal Order creation failed: {Response}", responseContent);
+            throw new InvalidOperationException($"PayPal API error: {responseContent}");
+        }
+
+        var paypalResponse = JsonSerializer.Deserialize<JsonElement>(responseContent);
+        var orderId = paypalResponse.GetProperty("id").GetString()!;
+        var status = paypalResponse.GetProperty("status").GetString();
+
+        // Get approval link
+        string? paymentUrl = null;
+        if (paypalResponse.TryGetProperty("links", out var links))
+        {
+            foreach (var link in links.EnumerateArray())
+            {
+                if (link.GetProperty("rel").GetString() == "payer-action")
+                {
+                    paymentUrl = link.GetProperty("href").GetString();
+                    break;
+                }
+            }
+        }
+
+        transaction.GatewayPaymentIntentId = orderId;
+        transaction.Status = MapPayPalStatus(status);
+
+        _logger.LogInformation("Created PayPal Order: {OrderId}", orderId);
 
         return new PaymentIntentResponseDto
         {
             TransactionReference = transaction.TransactionReference,
             GatewayPaymentIntentId = orderId,
             Provider = PaymentGatewayProvider.PayPal,
-            PaymentUrl = $"{baseUrl}/checkoutnow?token={orderId}",
-            Status = PaymentGatewayStatus.Pending,
+            PaymentUrl = paymentUrl,
+            Status = transaction.Status,
             Amount = transaction.Amount,
             Currency = transaction.Currency,
             ExpiresAt = DateTime.UtcNow.AddHours(3)
@@ -792,43 +926,225 @@ public class PaymentGatewayService : IPaymentGatewayService
         PaymentGatewayTransaction transaction,
         ConfirmPaymentDto dto)
     {
-        // In production, this would confirm the Stripe PaymentIntent
-        await Task.Delay(100);
+        var config = transaction.GatewayConfig!;
+        var apiKey = _encryptionService.Decrypt(config.ApiKey!);
+        var stripeUrl = $"https://api.stripe.com/v1/payment_intents/{transaction.GatewayPaymentIntentId}/confirm";
 
-        transaction.Status = PaymentGatewayStatus.Succeeded;
-        transaction.GatewayTransactionId = $"ch_{Guid.NewGuid():N}";
-        transaction.ProcessedAt = DateTime.UtcNow;
-        transaction.CompletedAt = DateTime.UtcNow;
+        var formData = new Dictionary<string, string>();
+        if (!string.IsNullOrEmpty(dto.PaymentMethodId))
+        {
+            formData["payment_method"] = dto.PaymentMethodId;
+        }
+
+        using var request = new HttpRequestMessage(HttpMethod.Post, stripeUrl);
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
+        if (formData.Count > 0)
+        {
+            request.Content = new FormUrlEncodedContent(formData);
+        }
+
+        var response = await _httpClient.SendAsync(request);
+        var responseContent = await response.Content.ReadAsStringAsync();
+
+        if (!response.IsSuccessStatusCode)
+        {
+            _logger.LogError("Stripe payment confirmation failed: {Response}", responseContent);
+            transaction.Status = PaymentGatewayStatus.Failed;
+            transaction.FailureReason = responseContent;
+            transaction.UpdatedAt = DateTime.UtcNow;
+            return transaction;
+        }
+
+        var stripeResponse = JsonSerializer.Deserialize<JsonElement>(responseContent);
+        var status = stripeResponse.GetProperty("status").GetString();
+
+        transaction.Status = MapStripeStatus(status);
         transaction.UpdatedAt = DateTime.UtcNow;
+
+        if (transaction.Status == PaymentGatewayStatus.Succeeded)
+        {
+            if (stripeResponse.TryGetProperty("latest_charge", out var chargeId))
+            {
+                transaction.GatewayTransactionId = chargeId.GetString();
+            }
+            transaction.ProcessedAt = DateTime.UtcNow;
+            transaction.CompletedAt = DateTime.UtcNow;
+        }
+
+        _logger.LogInformation("Stripe payment confirmed: {PaymentIntentId}, Status: {Status}",
+            transaction.GatewayPaymentIntentId, status);
 
         return transaction;
     }
 
     private async Task<PaymentGatewayTransaction> CapturePayPalOrderAsync(PaymentGatewayTransaction transaction)
     {
-        // In production, this would capture the PayPal Order
-        await Task.Delay(100);
+        var config = transaction.GatewayConfig!;
+        var accessToken = await GetPayPalAccessTokenAsync(config);
+        var baseUrl = config.IsSandbox
+            ? "https://api-m.sandbox.paypal.com"
+            : "https://api-m.paypal.com";
 
-        transaction.Status = PaymentGatewayStatus.Succeeded;
-        transaction.GatewayTransactionId = $"PAY-{Guid.NewGuid():N}"[..24].ToUpper();
-        transaction.ProcessedAt = DateTime.UtcNow;
-        transaction.CompletedAt = DateTime.UtcNow;
+        var captureUrl = $"{baseUrl}/v2/checkout/orders/{transaction.GatewayPaymentIntentId}/capture";
+
+        using var request = new HttpRequestMessage(HttpMethod.Post, captureUrl);
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+        request.Headers.TryAddWithoutValidation("PayPal-Request-Id", Guid.NewGuid().ToString());
+        request.Content = new StringContent("{}", Encoding.UTF8, "application/json");
+
+        var response = await _httpClient.SendAsync(request);
+        var responseContent = await response.Content.ReadAsStringAsync();
+
+        if (!response.IsSuccessStatusCode)
+        {
+            _logger.LogError("PayPal capture failed: {Response}", responseContent);
+            transaction.Status = PaymentGatewayStatus.Failed;
+            transaction.FailureReason = responseContent;
+            transaction.UpdatedAt = DateTime.UtcNow;
+            return transaction;
+        }
+
+        var paypalResponse = JsonSerializer.Deserialize<JsonElement>(responseContent);
+        var status = paypalResponse.GetProperty("status").GetString();
+
+        transaction.Status = MapPayPalStatus(status);
         transaction.UpdatedAt = DateTime.UtcNow;
+
+        if (transaction.Status == PaymentGatewayStatus.Succeeded)
+        {
+            // Extract capture ID
+            if (paypalResponse.TryGetProperty("purchase_units", out var units) &&
+                units.GetArrayLength() > 0 &&
+                units[0].TryGetProperty("payments", out var payments) &&
+                payments.TryGetProperty("captures", out var captures) &&
+                captures.GetArrayLength() > 0)
+            {
+                transaction.GatewayTransactionId = captures[0].GetProperty("id").GetString();
+            }
+            transaction.ProcessedAt = DateTime.UtcNow;
+            transaction.CompletedAt = DateTime.UtcNow;
+        }
+
+        _logger.LogInformation("PayPal order captured: {OrderId}, Status: {Status}",
+            transaction.GatewayPaymentIntentId, status);
 
         return transaction;
     }
 
+    private async Task<string> GetPayPalAccessTokenAsync(PaymentGatewayConfig config)
+    {
+        await _paypalTokenLock.WaitAsync();
+        try
+        {
+            // Return cached token if still valid
+            if (!string.IsNullOrEmpty(_paypalAccessToken) && DateTime.UtcNow < _paypalTokenExpiry.AddMinutes(-5))
+            {
+                return _paypalAccessToken;
+            }
+
+            var clientId = _encryptionService.Decrypt(config.ApiKey!);
+            var clientSecret = _encryptionService.Decrypt(config.ApiSecret!);
+            var baseUrl = config.IsSandbox
+                ? "https://api-m.sandbox.paypal.com"
+                : "https://api-m.paypal.com";
+
+            var credentials = Convert.ToBase64String(Encoding.ASCII.GetBytes($"{clientId}:{clientSecret}"));
+
+            using var request = new HttpRequestMessage(HttpMethod.Post, $"{baseUrl}/v1/oauth2/token");
+            request.Headers.Authorization = new AuthenticationHeaderValue("Basic", credentials);
+            request.Content = new FormUrlEncodedContent(new Dictionary<string, string>
+            {
+                ["grant_type"] = "client_credentials"
+            });
+
+            var response = await _httpClient.SendAsync(request);
+            var responseContent = await response.Content.ReadAsStringAsync();
+
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new InvalidOperationException($"Failed to get PayPal access token: {responseContent}");
+            }
+
+            var tokenResponse = JsonSerializer.Deserialize<JsonElement>(responseContent);
+            _paypalAccessToken = tokenResponse.GetProperty("access_token").GetString()!;
+            var expiresIn = tokenResponse.GetProperty("expires_in").GetInt32();
+            _paypalTokenExpiry = DateTime.UtcNow.AddSeconds(expiresIn);
+
+            return _paypalAccessToken;
+        }
+        finally
+        {
+            _paypalTokenLock.Release();
+        }
+    }
+
     private bool VerifyStripeWebhookSignature(string payload, string signature, PaymentGatewayConfig config)
     {
-        // In production, this would verify the Stripe webhook signature
-        return !string.IsNullOrEmpty(config.WebhookSecret);
+        try
+        {
+            if (string.IsNullOrEmpty(config.WebhookSecret))
+                return false;
+
+            var secret = _encryptionService.Decrypt(config.WebhookSecret);
+
+            // Parse signature header (format: t=timestamp,v1=signature)
+            var parts = signature.Split(',')
+                .Select(p => p.Split('='))
+                .Where(p => p.Length == 2)
+                .ToDictionary(p => p[0], p => p[1]);
+
+            if (!parts.TryGetValue("t", out var timestamp) || !parts.TryGetValue("v1", out var expectedSig))
+                return false;
+
+            // Verify timestamp is within tolerance (5 minutes)
+            if (long.TryParse(timestamp, out var ts))
+            {
+                var eventTime = DateTimeOffset.FromUnixTimeSeconds(ts);
+                if (Math.Abs((DateTimeOffset.UtcNow - eventTime).TotalMinutes) > 5)
+                    return false;
+            }
+
+            // Compute expected signature
+            var signedPayload = $"{timestamp}.{payload}";
+            using var hmac = new HMACSHA256(Encoding.UTF8.GetBytes(secret));
+            var hash = hmac.ComputeHash(Encoding.UTF8.GetBytes(signedPayload));
+            var computedSig = Convert.ToHexString(hash).ToLower();
+
+            return computedSig == expectedSig;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to verify Stripe webhook signature");
+            return false;
+        }
     }
 
     private bool VerifyPayPalWebhookSignature(string payload, string signature, PaymentGatewayConfig config)
     {
-        // In production, this would verify the PayPal webhook signature
+        // PayPal webhook verification requires calling their API
+        // For simplicity, we verify the webhook secret is configured
+        // In production, implement full verification via PayPal API
         return !string.IsNullOrEmpty(config.WebhookSecret);
     }
+
+    private static PaymentGatewayStatus MapStripeStatus(string? status) => status switch
+    {
+        "succeeded" => PaymentGatewayStatus.Succeeded,
+        "processing" => PaymentGatewayStatus.Processing,
+        "requires_payment_method" or "requires_confirmation" or "requires_action" => PaymentGatewayStatus.RequiresAction,
+        "requires_capture" => PaymentGatewayStatus.RequiresCapture,
+        "canceled" => PaymentGatewayStatus.Cancelled,
+        _ => PaymentGatewayStatus.Pending
+    };
+
+    private static PaymentGatewayStatus MapPayPalStatus(string? status) => status switch
+    {
+        "COMPLETED" => PaymentGatewayStatus.Succeeded,
+        "APPROVED" => PaymentGatewayStatus.RequiresCapture,
+        "VOIDED" => PaymentGatewayStatus.Cancelled,
+        "PAYER_ACTION_REQUIRED" => PaymentGatewayStatus.RequiresAction,
+        _ => PaymentGatewayStatus.Pending
+    };
 
     #endregion
 }

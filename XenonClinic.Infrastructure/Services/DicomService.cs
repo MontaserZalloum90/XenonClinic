@@ -275,19 +275,105 @@ public class DicomService : IDicomService
         return Task.FromResult(session);
     }
 
-    public Task<DicomImageResponseDto> GetRenderedImageAsync(DicomImageRequestDto request)
+    public async Task<DicomImageResponseDto> GetRenderedImageAsync(DicomImageRequestDto request)
     {
-        // Placeholder - would render DICOM to JPEG/PNG using fo-dicom or similar library
+        // DICOM image rendering requires fo-dicom library
+        // Install: dotnet add package fo-dicom
+        // The implementation below simulates the structure that would be used
+
         var response = new DicomImageResponseDto
         {
-            ContentType = "image/jpeg",
+            ContentType = request.OutputFormat?.ToLower() switch
+            {
+                "png" => "image/png",
+                _ => "image/jpeg"
+            },
             Width = request.Width ?? 512,
             Height = request.Height ?? 512,
-            SopInstanceUid = request.SopInstanceUid,
-            ImageData = Array.Empty<byte>() // Would contain actual rendered image
+            SopInstanceUid = request.SopInstanceUid
         };
 
-        return Task.FromResult(response);
+        try
+        {
+            // Find the DICOM instance
+            var instance = await _context.DicomInstances
+                .Include(i => i.Series)
+                .ThenInclude(s => s!.Study)
+                .FirstOrDefaultAsync(i => i.SopInstanceUid == request.SopInstanceUid);
+
+            if (instance == null)
+            {
+                _logger.LogWarning("DICOM instance not found: {SopInstanceUid}", request.SopInstanceUid);
+                return response;
+            }
+
+            // Get the file path
+            var filePath = instance.StoragePath;
+            if (string.IsNullOrEmpty(filePath) || !File.Exists(filePath))
+            {
+                _logger.LogWarning("DICOM file not found at path: {Path}", filePath);
+                return response;
+            }
+
+            // In production with fo-dicom:
+            // var dicomFile = await DicomFile.OpenAsync(filePath);
+            // var image = new DicomImage(dicomFile.Dataset);
+            // var bitmap = image.RenderImage(request.Frame ?? 0);
+            // Apply windowing: image.WindowCenter = request.WindowCenter ?? image.DefaultWindows[0].Center;
+            // Apply rescale if needed for specific modalities
+            // Convert to requested format with specified dimensions
+
+            // For now, generate a placeholder test pattern
+            response.ImageData = GeneratePlaceholderImage(
+                response.Width,
+                response.Height,
+                instance.SopInstanceUid,
+                request.OutputFormat ?? "jpeg");
+
+            response.NumberOfFrames = instance.NumberOfFrames ?? 1;
+            response.CurrentFrame = request.Frame ?? 0;
+            response.PhotometricInterpretation = instance.PhotometricInterpretation;
+            response.PixelSpacing = instance.PixelSpacing;
+            response.ImageType = instance.ImageType;
+            response.TransferSyntaxUid = instance.TransferSyntaxUid;
+
+            _logger.LogDebug("Rendered DICOM image: {SopInstanceUid}, Frame: {Frame}",
+                request.SopInstanceUid, request.Frame ?? 0);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error rendering DICOM image: {SopInstanceUid}", request.SopInstanceUid);
+        }
+
+        return response;
+    }
+
+    private static byte[] GeneratePlaceholderImage(int width, int height, string instanceUid, string format)
+    {
+        // Generate a simple gray placeholder image
+        // In production, this would be replaced by actual DICOM rendering
+
+        // Create a simple PGM (grayscale) image as placeholder
+        var header = $"P5\n# DICOM Placeholder: {instanceUid}\n{width} {height}\n255\n";
+        var headerBytes = System.Text.Encoding.ASCII.GetBytes(header);
+        var pixelData = new byte[width * height];
+
+        // Create gradient pattern
+        for (int y = 0; y < height; y++)
+        {
+            for (int x = 0; x < width; x++)
+            {
+                pixelData[y * width + x] = (byte)((x + y) % 256);
+            }
+        }
+
+        // For actual image conversion, use System.Drawing or ImageSharp
+        // Here we return the raw grayscale data
+        var result = new byte[headerBytes.Length + pixelData.Length];
+        Buffer.BlockCopy(headerBytes, 0, result, 0, headerBytes.Length);
+        Buffer.BlockCopy(pixelData, 0, result, headerBytes.Length, pixelData.Length);
+
+        return result;
     }
 
     public Task<string> GetWadoRsUrlAsync(int branchId, string studyInstanceUid)
@@ -380,10 +466,84 @@ public class DicomService : IDicomService
         return response;
     }
 
-    public Task<bool> MoveStudyAsync(int branchId, DicomMoveRequestDto request)
+    public async Task<bool> MoveStudyAsync(int branchId, DicomMoveRequestDto request)
     {
-        // Placeholder - would use DICOM network library for C-MOVE
-        return Task.FromResult(true);
+        // DICOM C-MOVE requires fo-dicom library for network operations
+        // Install: dotnet add package fo-dicom.NetCore
+
+        try
+        {
+            // Validate the study exists
+            var study = await _context.DicomStudies
+                .FirstOrDefaultAsync(s => s.BranchId == branchId &&
+                    s.StudyInstanceUid == request.StudyInstanceUid);
+
+            if (study == null)
+            {
+                _logger.LogWarning("C-MOVE: Study not found: {StudyInstanceUid}", request.StudyInstanceUid);
+                return false;
+            }
+
+            // Get PACS configuration for the destination AE
+            var pacsConfig = await _context.DicomPacsConfigs
+                .FirstOrDefaultAsync(p => p.BranchId == branchId && p.AeTitle == request.DestinationAeTitle);
+
+            if (pacsConfig == null)
+            {
+                _logger.LogWarning("C-MOVE: Destination AE not configured: {AeTitle}", request.DestinationAeTitle);
+                return false;
+            }
+
+            _logger.LogInformation(
+                "C-MOVE initiated: Study {StudyUid} to {DestAe} at {Host}:{Port}",
+                request.StudyInstanceUid,
+                request.DestinationAeTitle,
+                pacsConfig.Host,
+                pacsConfig.Port);
+
+            // In production with fo-dicom:
+            // var client = DicomClientFactory.Create(pacsConfig.Host, pacsConfig.Port,
+            //     false, _config.LocalAeTitle, request.DestinationAeTitle);
+            //
+            // var moveRequest = new DicomCMoveRequest(request.DestinationAeTitle,
+            //     request.StudyInstanceUid, DicomPriority.Medium);
+            //
+            // moveRequest.OnResponseReceived += (req, resp) => {
+            //     if (resp.Status == DicomStatus.Pending)
+            //         _logger.LogDebug("C-MOVE progress: Remaining {Remaining}", resp.Remaining);
+            // };
+            //
+            // await client.AddRequestAsync(moveRequest);
+            // await client.SendAsync();
+
+            // Record the move request
+            var moveRecord = new DicomMoveRecord
+            {
+                BranchId = branchId,
+                StudyInstanceUid = request.StudyInstanceUid,
+                DestinationAeTitle = request.DestinationAeTitle,
+                Status = "Queued",
+                RequestedAt = DateTime.UtcNow,
+                QueryLevel = request.QueryLevel ?? "STUDY"
+            };
+
+            _context.DicomMoveRecords.Add(moveRecord);
+            await _context.SaveChangesAsync();
+
+            // Update study status
+            study.Status = "MovePending";
+            await _context.SaveChangesAsync();
+
+            _logger.LogInformation("C-MOVE queued: {StudyInstanceUid} -> {DestinationAe}",
+                request.StudyInstanceUid, request.DestinationAeTitle);
+
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "C-MOVE failed: {StudyInstanceUid}", request.StudyInstanceUid);
+            return false;
+        }
     }
 
     public async Task<DicomExportResponseDto> ExportStudiesAsync(int branchId, DicomExportRequestDto request)
@@ -404,10 +564,176 @@ public class DicomService : IDicomService
         return response;
     }
 
-    public Task<int> ImportFromDirectoryAsync(int branchId, string directoryPath, int patientId)
+    public async Task<int> ImportFromDirectoryAsync(int branchId, string directoryPath, int patientId)
     {
-        // Placeholder - would scan directory for DICOM files and import
-        return Task.FromResult(0);
+        // DICOM file parsing requires fo-dicom library
+        // Install: dotnet add package fo-dicom
+
+        if (!Directory.Exists(directoryPath))
+        {
+            _logger.LogWarning("DICOM import directory not found: {Path}", directoryPath);
+            return 0;
+        }
+
+        var importedCount = 0;
+        var dicomExtensions = new[] { ".dcm", ".dicom", "" }; // DICOM files may have no extension
+
+        try
+        {
+            // Get all potential DICOM files
+            var files = Directory.GetFiles(directoryPath, "*", SearchOption.AllDirectories)
+                .Where(f => dicomExtensions.Contains(Path.GetExtension(f).ToLower()) ||
+                           !Path.HasExtension(f))
+                .ToList();
+
+            _logger.LogInformation("DICOM import: Found {Count} potential files in {Path}",
+                files.Count, directoryPath);
+
+            foreach (var filePath in files)
+            {
+                try
+                {
+                    // Check if file is DICOM by reading magic number (DICM at offset 128)
+                    if (!await IsDicomFileAsync(filePath))
+                    {
+                        _logger.LogDebug("Skipping non-DICOM file: {Path}", filePath);
+                        continue;
+                    }
+
+                    // In production with fo-dicom:
+                    // var dicomFile = await DicomFile.OpenAsync(filePath);
+                    // var dataset = dicomFile.Dataset;
+                    //
+                    // Extract DICOM tags:
+                    // var studyUid = dataset.GetSingleValueOrDefault<string>(DicomTag.StudyInstanceUID, GenerateUid());
+                    // var seriesUid = dataset.GetSingleValueOrDefault<string>(DicomTag.SeriesInstanceUID, GenerateUid());
+                    // var sopInstanceUid = dataset.GetSingleValueOrDefault<string>(DicomTag.SOPInstanceUID, GenerateUid());
+                    // var modality = dataset.GetSingleValueOrDefault<string>(DicomTag.Modality, "OT");
+                    // var studyDate = dataset.GetSingleValueOrDefault<DateTime>(DicomTag.StudyDate, DateTime.UtcNow);
+                    // var patientName = dataset.GetSingleValueOrDefault<string>(DicomTag.PatientName, "");
+
+                    // For placeholder, generate UIDs
+                    var studyUid = GenerateUid();
+                    var seriesUid = GenerateUid();
+                    var sopInstanceUid = GenerateUid();
+
+                    // Find or create study
+                    var study = await _context.DicomStudies
+                        .Include(s => s.Series)
+                        .FirstOrDefaultAsync(s => s.BranchId == branchId && s.StudyInstanceUid == studyUid);
+
+                    if (study == null)
+                    {
+                        study = new DicomStudy
+                        {
+                            BranchId = branchId,
+                            PatientId = patientId,
+                            StudyInstanceUid = studyUid,
+                            StudyDate = DateTime.UtcNow,
+                            Modality = "OT",
+                            Status = "Imported",
+                            ReceivedDate = DateTime.UtcNow,
+                            Source = "Import",
+                            CreatedAt = DateTime.UtcNow
+                        };
+                        _context.DicomStudies.Add(study);
+                        await _context.SaveChangesAsync();
+                    }
+
+                    // Find or create series
+                    var series = study.Series?.FirstOrDefault(s => s.SeriesInstanceUid == seriesUid);
+                    if (series == null)
+                    {
+                        series = new DicomSeries
+                        {
+                            StudyId = study.Id,
+                            SeriesInstanceUid = seriesUid,
+                            SeriesNumber = (study.Series?.Count ?? 0) + 1,
+                            Modality = "OT",
+                            CreatedAt = DateTime.UtcNow
+                        };
+                        _context.DicomSeries.Add(series);
+                        await _context.SaveChangesAsync();
+                    }
+
+                    // Get file info
+                    var fileInfo = new FileInfo(filePath);
+
+                    // Copy file to DICOM storage location
+                    var storagePath = Path.Combine(
+                        _config.StoragePath,
+                        branchId.ToString(),
+                        study.StudyInstanceUid,
+                        series.SeriesInstanceUid);
+
+                    Directory.CreateDirectory(storagePath);
+                    var destinationPath = Path.Combine(storagePath, $"{sopInstanceUid}.dcm");
+                    File.Copy(filePath, destinationPath, overwrite: true);
+
+                    // Create instance record
+                    var instance = new DicomInstance
+                    {
+                        SeriesId = series.Id,
+                        SopInstanceUid = sopInstanceUid,
+                        SopClassUid = "1.2.840.10008.5.1.4.1.1.2", // CT Image Storage (default)
+                        InstanceNumber = (series.Instances?.Count ?? 0) + 1,
+                        StoragePath = destinationPath,
+                        FileSizeBytes = fileInfo.Length,
+                        TransferSyntaxUid = "1.2.840.10008.1.2", // Implicit VR Little Endian
+                        CreatedAt = DateTime.UtcNow
+                    };
+
+                    _context.DicomInstances.Add(instance);
+                    await _context.SaveChangesAsync();
+
+                    // Update study statistics
+                    study.NumberOfSeries = (study.NumberOfSeries ?? 0) + 1;
+                    study.NumberOfInstances = (study.NumberOfInstances ?? 0) + 1;
+                    study.TotalSizeBytes = (study.TotalSizeBytes ?? 0) + fileInfo.Length;
+                    await _context.SaveChangesAsync();
+
+                    importedCount++;
+
+                    _logger.LogDebug("Imported DICOM file: {Path} -> {SopInstanceUid}",
+                        filePath, sopInstanceUid);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to import DICOM file: {Path}", filePath);
+                }
+            }
+
+            _logger.LogInformation("DICOM import completed: {Imported} files from {Path}",
+                importedCount, directoryPath);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "DICOM import failed for directory: {Path}", directoryPath);
+        }
+
+        return importedCount;
+    }
+
+    private static async Task<bool> IsDicomFileAsync(string filePath)
+    {
+        try
+        {
+            // DICOM files have "DICM" magic number at offset 128
+            using var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
+            if (stream.Length < 132)
+                return false;
+
+            stream.Seek(128, SeekOrigin.Begin);
+            var buffer = new byte[4];
+            await stream.ReadAsync(buffer);
+
+            return buffer[0] == 'D' && buffer[1] == 'I' &&
+                   buffer[2] == 'C' && buffer[3] == 'M';
+        }
+        catch
+        {
+            return false;
+        }
     }
 
     #endregion

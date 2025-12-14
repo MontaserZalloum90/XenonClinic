@@ -323,7 +323,8 @@ const EchoRecordModal = ({ isOpen, onClose, record }: EchoRecordModalProps) => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Saving echo record:', formData);
+    // TODO: Implement actual API call to save echo record
+    void formData;
     queryClient.invalidateQueries({ queryKey: ['echo-records'] });
     onClose();
   };

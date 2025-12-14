@@ -1,7 +1,9 @@
 using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
+using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using XenonClinic.Core.DTOs;
 using XenonClinic.Core.Interfaces;
 using XenonClinic.Core.Utilities;
@@ -114,6 +116,7 @@ public class PatientPortalController : BaseApiController
     /// </summary>
     [HttpPost("register")]
     [AllowAnonymous]
+    [EnableRateLimiting("auth")]
     [ProducesResponseType(typeof(ApiResponse<PortalRegistrationResponseDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<ApiResponse<PortalRegistrationResponseDto>>> Register(
@@ -145,6 +148,7 @@ public class PatientPortalController : BaseApiController
     /// </summary>
     [HttpPost("login")]
     [AllowAnonymous]
+    [EnableRateLimiting("auth")]
     [ProducesResponseType(typeof(ApiResponse<PortalLoginResponseDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status401Unauthorized)]
     public async Task<ActionResult<ApiResponse<PortalLoginResponseDto>>> Login([FromBody] PortalLoginDto request)
@@ -180,6 +184,7 @@ public class PatientPortalController : BaseApiController
     /// </summary>
     [HttpPost("verify-email")]
     [AllowAnonymous]
+    [EnableRateLimiting("auth")]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<ApiResponse>> VerifyEmail(
@@ -201,13 +206,13 @@ public class PatientPortalController : BaseApiController
     /// </summary>
     [HttpPost("forgot-password")]
     [AllowAnonymous]
+    [EnableRateLimiting("auth")]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status200OK)]
     public async Task<ActionResult<ApiResponse>> ForgotPassword([FromBody] ForgotPasswordRequest request)
     {
         if (!ModelState.IsValid)
             return ApiBadRequestFromModelState();
 
-        // Rate limiting should be implemented at middleware level
         await _portalService.RequestPasswordResetAsync(request.Email);
 
         // Always return success to prevent email enumeration
@@ -219,6 +224,7 @@ public class PatientPortalController : BaseApiController
     /// </summary>
     [HttpPost("reset-password")]
     [AllowAnonymous]
+    [EnableRateLimiting("auth")]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<ApiResponse>> ResetPassword([FromBody] ResetPasswordRequest request)
@@ -265,6 +271,7 @@ public class PatientPortalController : BaseApiController
     /// </summary>
     [HttpPost("refresh-token")]
     [AllowAnonymous]
+    [EnableRateLimiting("auth")]
     [ProducesResponseType(typeof(ApiResponse<PortalLoginResponseDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status401Unauthorized)]
     public async Task<ActionResult<ApiResponse<PortalLoginResponseDto>>> RefreshToken([FromBody] RefreshTokenRequest request)

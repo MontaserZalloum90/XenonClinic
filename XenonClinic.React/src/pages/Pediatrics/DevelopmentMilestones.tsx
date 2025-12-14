@@ -522,7 +522,8 @@ const MilestoneModal = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Saving milestone:", formData);
+    // TODO: Implement actual API call to save milestone
+    void formData;
     onClose();
   };
 

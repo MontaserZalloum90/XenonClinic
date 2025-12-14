@@ -17,17 +17,18 @@ const moleMappingsApi = {
   },
   create: async (data: CreateMoleMappingRequest) => {
     // TODO: Implement actual API call
-    console.log('Creating mole mapping:', data);
+    void data;
     return { data: { id: Date.now(), ...data, createdAt: new Date().toISOString() } };
   },
   update: async (id: number, data: Partial<MoleMapping>) => {
     // TODO: Implement actual API call
-    console.log('Updating mole mapping:', id, data);
+    void id;
+    void data;
     return { data: { id, ...data } };
   },
   delete: async (id: number) => {
     // TODO: Implement actual API call
-    console.log('Deleting mole mapping:', id);
+    void id;
     return { data: { success: true } };
   },
 };

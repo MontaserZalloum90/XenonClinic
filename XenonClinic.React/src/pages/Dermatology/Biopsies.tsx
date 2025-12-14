@@ -18,17 +18,14 @@ const biopsiesApi = {
   },
   create: async (data: CreateSkinBiopsyRequest) => {
     // TODO: Implement actual API call
-    console.log('Creating biopsy:', data);
     return { data: { id: Date.now(), ...data, createdAt: new Date().toISOString() } };
   },
   updateResult: async (data: UpdateBiopsyResultRequest) => {
     // TODO: Implement actual API call
-    console.log('Updating biopsy result:', data);
     return { data: { id: data.biopsyId, ...data } };
   },
   delete: async (id: number) => {
     // TODO: Implement actual API call
-    console.log('Deleting biopsy:', id);
     return { data: { success: true } };
   },
 };

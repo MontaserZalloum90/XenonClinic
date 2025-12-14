@@ -26,7 +26,7 @@ public static class SwaggerConfiguration
             {
                 Title = title,
                 Version = version,
-                Description = description ?? "XenonClinic Healthcare Management System API",
+                Description = description ?? GetDefaultDescription(),
                 Contact = new OpenApiContact
                 {
                     Name = "XenonClinic Support",
@@ -85,15 +85,85 @@ public static class SwaggerConfiguration
             // Custom operation filters
             options.EnableAnnotations();
 
-            // Group by controller/tag
-            options.TagActionsBy(api => new[] { api.GroupName ?? api.ActionDescriptor.RouteValues["controller"] });
+            // Group by controller/tag with friendly names
+            options.TagActionsBy(api =>
+            {
+                var controller = api.ActionDescriptor.RouteValues["controller"];
+                return new[] { GetFriendlyTagName(controller) };
+            });
 
             // Order by tag name
             options.OrderActionsBy(api => api.RelativePath);
+
+            // Add operation ID based on controller and action
+            options.CustomOperationIds(api =>
+                $"{api.ActionDescriptor.RouteValues["controller"]}_{api.ActionDescriptor.RouteValues["action"]}");
         });
 
         return services;
     }
+
+    private static string GetDefaultDescription() => @"# XenonClinic Healthcare Management System API
+
+## Overview
+Complete API for managing healthcare clinic operations including patients, appointments,
+clinical visits, laboratory, radiology, pharmacy, inventory, HR, and financial operations.
+
+## Authentication
+All endpoints (except public ones) require JWT Bearer token authentication:
+```
+Authorization: Bearer <your-token>
+```
+
+## Rate Limiting
+| Endpoint Type | Limit |
+|---------------|-------|
+| Authentication | 10 requests/minute |
+| General API | 100 requests/minute |
+| Sensitive Operations | 5 requests/minute |
+
+## Response Format
+```json
+{
+  ""success"": true,
+  ""data"": { },
+  ""message"": ""Optional message"",
+  ""timestamp"": ""2025-01-01T00:00:00Z""
+}
+```
+
+## Error Codes
+| Code | Description |
+|------|-------------|
+| 400 | Validation errors |
+| 401 | Authentication required |
+| 403 | Insufficient permissions |
+| 404 | Resource not found |
+| 429 | Rate limit exceeded |
+| 500 | Server error |
+";
+
+    private static string GetFriendlyTagName(string? controller) => controller switch
+    {
+        "Patient" => "Patients - Patient management and records",
+        "PatientPortal" => "Patient Portal - Self-service patient access",
+        "Appointments" => "Appointments - Scheduling and calendar",
+        "ClinicalVisits" => "Clinical Visits - Patient encounters",
+        "Laboratory" => "Laboratory - Lab orders and results",
+        "Radiology" => "Radiology - Imaging studies",
+        "Inventory" => "Inventory - Stock and supplies",
+        "Financial" => "Financial - Billing and payments",
+        "Sales" => "Sales - Point of sale operations",
+        "HR" => "HR - Human resources",
+        "Backup" => "Backup - Disaster recovery",
+        "Audit" => "Audit - Activity logging",
+        "Security" => "Security - Access control",
+        "Analytics" => "Analytics - Reports and insights",
+        "Workflows" => "Workflows - Business processes",
+        "Consent" => "Consent - Patient consents",
+        "ClinicalDecisionSupport" => "Clinical Decision Support - Alerts and recommendations",
+        _ => controller ?? "Other"
+    };
 
     /// <summary>
     /// Configures Swagger UI middleware.

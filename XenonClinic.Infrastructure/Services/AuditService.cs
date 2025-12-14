@@ -236,7 +236,7 @@ public class AuditService : IAuditService
     public async Task<PatientAccessHistoryDto> GetPatientAccessHistoryAsync(int patientId, DateTime startDate, DateTime endDate)
     {
         var patient = await _context.Patients.FindAsync(patientId);
-        var logs = await _context.Set<AuditLog>().Where(a => a.PatientId == patientId && a.Timestamp >= startDate && a.Timestamp <= endDate).OrderByDescending(a => a.Timestamp).ToListAsync();
+        var logs = await _context.Set<AuditLog>().AsNoTracking().Where(a => a.PatientId == patientId && a.Timestamp >= startDate && a.Timestamp <= endDate).OrderByDescending(a => a.Timestamp).ToListAsync();
 
         return new PatientAccessHistoryDto
         {
@@ -248,7 +248,7 @@ public class AuditService : IAuditService
 
     public async Task<List<PHIAccessByUserDto>> GetUserActivitySummaryAsync(DateTime startDate, DateTime endDate, int? branchId = null)
     {
-        var q = _context.Set<AuditLog>().Where(a => a.Timestamp >= startDate && a.Timestamp <= endDate && a.UserId.HasValue);
+        var q = _context.Set<AuditLog>().AsNoTracking().Where(a => a.Timestamp >= startDate && a.Timestamp <= endDate && a.UserId.HasValue);
         if (branchId.HasValue) q = q.Where(a => a.BranchId == branchId.Value);
         var logs = await q.ToListAsync();
         return logs.GroupBy(l => l.UserId!.Value).Select(g => new PHIAccessByUserDto { UserId = g.Key, UserName = g.First().UserName ?? "", AccessCount = g.Count(), LastAccess = g.Max(l => l.Timestamp) }).ToList();

@@ -407,7 +407,7 @@ const EEGRecordModal = ({ isOpen, onClose, record }: EEGRecordModalProps) => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Saving EEG record:", formData);
+    // TODO: Implement API call to save EEG record
     onClose();
   };
 

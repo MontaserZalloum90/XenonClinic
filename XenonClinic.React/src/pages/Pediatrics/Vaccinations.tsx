@@ -449,7 +449,7 @@ const VaccinationModal = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Saving vaccination record:", formData);
+    // TODO: Implement API call to save vaccination record
     onClose();
   };
 

@@ -349,7 +349,8 @@ const CathLabModal = ({ isOpen, onClose, cath }: CathLabModalProps) => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Saving cath procedure:', formData);
+    // TODO: Implement actual API call to save cath procedure
+    void formData;
     queryClient.invalidateQueries({ queryKey: ['cath-procedures'] });
     onClose();
   };

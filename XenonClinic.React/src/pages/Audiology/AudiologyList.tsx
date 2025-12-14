@@ -126,8 +126,7 @@ export const AudiologyList = () => {
     data: CreateEncounterRequest,
     tasks: CreateEncounterTaskRequest[],
   ) => {
-    // In real app, this would call the API
-    console.log("Creating encounter:", data, tasks);
+    // TODO: Implement API call to create encounter
     setShowNewEncounter(false);
   };
 

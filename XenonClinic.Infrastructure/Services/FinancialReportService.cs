@@ -1,4 +1,10 @@
+using System.Text;
+using System.Text.Json;
+using ClosedXML.Excel;
 using Microsoft.EntityFrameworkCore;
+using QuestPDF.Fluent;
+using QuestPDF.Helpers;
+using QuestPDF.Infrastructure;
 using XenonClinic.Core.DTOs;
 using XenonClinic.Core.Enums;
 using XenonClinic.Core.Interfaces;
@@ -729,23 +735,523 @@ public class FinancialReportService : IFinancialReportService
 
     public async Task<byte[]> ExportToPdfAsync<T>(T report, string reportType) where T : class
     {
-        // In production, use a PDF library like iTextSharp, QuestPDF, or similar
         await Task.CompletedTask;
-        return Array.Empty<byte>();
+        QuestPDF.Settings.License = LicenseType.Community;
+
+        var document = Document.Create(container =>
+        {
+            container.Page(page =>
+            {
+                page.Size(PageSizes.A4);
+                page.Margin(40);
+                page.DefaultTextStyle(x => x.FontSize(10));
+
+                // Header
+                page.Header().Column(header =>
+                {
+                    header.Item().Text($"FINANCIAL REPORT: {reportType}").FontSize(16).Bold().FontColor(Colors.Blue.Darken2);
+                    header.Item().Text($"Generated: {DateTime.Now:MMMM dd, yyyy hh:mm tt}").FontSize(9).FontColor(Colors.Grey.Medium);
+                    header.Item().PaddingVertical(10).LineHorizontal(2).LineColor(Colors.Blue.Darken2);
+                });
+
+                // Content - Dynamic based on report type
+                page.Content().PaddingVertical(10).Column(col =>
+                {
+                    if (report is IncomeStatementDto incomeStatement)
+                    {
+                        RenderIncomeStatement(col, incomeStatement);
+                    }
+                    else if (report is BalanceSheetDto balanceSheet)
+                    {
+                        RenderBalanceSheet(col, balanceSheet);
+                    }
+                    else if (report is CashFlowStatementDto cashFlow)
+                    {
+                        RenderCashFlowStatement(col, cashFlow);
+                    }
+                    else if (report is RevenueReportDto revenueReport)
+                    {
+                        RenderRevenueReport(col, revenueReport);
+                    }
+                    else
+                    {
+                        // Generic rendering for other report types
+                        col.Item().Text("Report Data").Bold().FontSize(12);
+                        col.Item().PaddingTop(10).Text(JsonSerializer.Serialize(report, new JsonSerializerOptions { WriteIndented = true }))
+                            .FontSize(9);
+                    }
+                });
+
+                // Footer
+                page.Footer().Column(footer =>
+                {
+                    footer.Item().LineHorizontal(1).LineColor(Colors.Grey.Lighten2);
+                    footer.Item().PaddingTop(5).Row(row =>
+                    {
+                        row.RelativeItem().Text("Confidential - For Internal Use Only").FontSize(8).FontColor(Colors.Grey.Medium);
+                        row.ConstantItem(100).AlignRight().Text(text =>
+                        {
+                            text.Span("Page ");
+                            text.CurrentPageNumber();
+                            text.Span(" of ");
+                            text.TotalPages();
+                        }).FontSize(8);
+                    });
+                });
+            });
+        });
+
+        using var stream = new MemoryStream();
+        document.GeneratePdf(stream);
+        return stream.ToArray();
+    }
+
+    private static void RenderIncomeStatement(ColumnDescriptor col, IncomeStatementDto report)
+    {
+        col.Item().Text($"Income Statement - {report.PeriodStart:MMM dd, yyyy} to {report.PeriodEnd:MMM dd, yyyy}").Bold().FontSize(14);
+
+        // Revenue Section
+        col.Item().PaddingTop(15).Text("REVENUE").Bold().FontSize(12).FontColor(Colors.Blue.Darken2);
+        col.Item().Table(table =>
+        {
+            table.ColumnsDefinition(columns =>
+            {
+                columns.RelativeColumn(3);
+                columns.RelativeColumn(2);
+            });
+            foreach (var item in report.RevenueItems ?? Enumerable.Empty<IncomeStatementLineDto>())
+            {
+                table.Cell().Padding(3).Text(item.Description);
+                table.Cell().Padding(3).AlignRight().Text($"{item.Amount:C}");
+            }
+            table.Cell().BorderTop(1).Padding(3).Text("Total Revenue").Bold();
+            table.Cell().BorderTop(1).Padding(3).AlignRight().Text($"{report.TotalRevenue:C}").Bold().FontColor(Colors.Green.Darken2);
+        });
+
+        // Expenses Section
+        col.Item().PaddingTop(15).Text("EXPENSES").Bold().FontSize(12).FontColor(Colors.Red.Darken2);
+        col.Item().Table(table =>
+        {
+            table.ColumnsDefinition(columns =>
+            {
+                columns.RelativeColumn(3);
+                columns.RelativeColumn(2);
+            });
+            foreach (var item in report.ExpenseItems ?? Enumerable.Empty<IncomeStatementLineDto>())
+            {
+                table.Cell().Padding(3).Text(item.Description);
+                table.Cell().Padding(3).AlignRight().Text($"{item.Amount:C}");
+            }
+            table.Cell().BorderTop(1).Padding(3).Text("Total Expenses").Bold();
+            table.Cell().BorderTop(1).Padding(3).AlignRight().Text($"{report.TotalExpenses:C}").Bold().FontColor(Colors.Red.Darken2);
+        });
+
+        // Net Income
+        var netColor = report.NetIncome >= 0 ? Colors.Green.Darken2 : Colors.Red.Darken2;
+        col.Item().PaddingTop(15).Background(Colors.Grey.Lighten3).Padding(10).Row(row =>
+        {
+            row.RelativeItem().Text("NET INCOME").FontSize(14).Bold();
+            row.ConstantItem(150).AlignRight().Text($"{report.NetIncome:C}").FontSize(16).Bold().FontColor(netColor);
+        });
+    }
+
+    private static void RenderBalanceSheet(ColumnDescriptor col, BalanceSheetDto report)
+    {
+        col.Item().Text($"Balance Sheet - As of {report.AsOfDate:MMMM dd, yyyy}").Bold().FontSize(14);
+
+        // Assets
+        col.Item().PaddingTop(15).Text("ASSETS").Bold().FontSize(12).FontColor(Colors.Blue.Darken2);
+        RenderAccountSection(col, "Current Assets", report.CurrentAssets, report.TotalCurrentAssets);
+        RenderAccountSection(col, "Non-Current Assets", report.NonCurrentAssets, report.TotalNonCurrentAssets);
+        col.Item().Background(Colors.Blue.Lighten4).Padding(5).Row(row =>
+        {
+            row.RelativeItem().Text("TOTAL ASSETS").Bold();
+            row.ConstantItem(150).AlignRight().Text($"{report.TotalAssets:C}").Bold();
+        });
+
+        // Liabilities
+        col.Item().PaddingTop(20).Text("LIABILITIES").Bold().FontSize(12).FontColor(Colors.Red.Darken2);
+        RenderAccountSection(col, "Current Liabilities", report.CurrentLiabilities, report.TotalCurrentLiabilities);
+        RenderAccountSection(col, "Non-Current Liabilities", report.NonCurrentLiabilities, report.TotalNonCurrentLiabilities);
+        col.Item().Background(Colors.Red.Lighten4).Padding(5).Row(row =>
+        {
+            row.RelativeItem().Text("TOTAL LIABILITIES").Bold();
+            row.ConstantItem(150).AlignRight().Text($"{report.TotalLiabilities:C}").Bold();
+        });
+
+        // Equity
+        col.Item().PaddingTop(20).Text("EQUITY").Bold().FontSize(12).FontColor(Colors.Green.Darken2);
+        col.Item().Background(Colors.Green.Lighten4).Padding(5).Row(row =>
+        {
+            row.RelativeItem().Text("TOTAL EQUITY").Bold();
+            row.ConstantItem(150).AlignRight().Text($"{report.TotalEquity:C}").Bold();
+        });
+    }
+
+    private static void RenderAccountSection(ColumnDescriptor col, string title, IEnumerable<BalanceSheetLineDto>? items, decimal total)
+    {
+        col.Item().PaddingTop(10).Text(title).Bold().FontSize(11);
+        if (items != null && items.Any())
+        {
+            col.Item().Table(table =>
+            {
+                table.ColumnsDefinition(columns =>
+                {
+                    columns.RelativeColumn(3);
+                    columns.RelativeColumn(2);
+                });
+                foreach (var item in items)
+                {
+                    table.Cell().Padding(2).PaddingLeft(15).Text(item.AccountName);
+                    table.Cell().Padding(2).AlignRight().Text($"{item.Balance:C}");
+                }
+                table.Cell().BorderTop(1).Padding(2).Text($"Total {title}").Italic();
+                table.Cell().BorderTop(1).Padding(2).AlignRight().Text($"{total:C}").Italic();
+            });
+        }
+    }
+
+    private static void RenderCashFlowStatement(ColumnDescriptor col, CashFlowStatementDto report)
+    {
+        col.Item().Text($"Cash Flow Statement - {report.PeriodStart:MMM dd, yyyy} to {report.PeriodEnd:MMM dd, yyyy}").Bold().FontSize(14);
+
+        RenderCashFlowSection(col, "Operating Activities", report.OperatingActivities, report.NetCashFromOperating, Colors.Blue.Darken2);
+        RenderCashFlowSection(col, "Investing Activities", report.InvestingActivities, report.NetCashFromInvesting, Colors.Orange.Darken2);
+        RenderCashFlowSection(col, "Financing Activities", report.FinancingActivities, report.NetCashFromFinancing, Colors.Purple.Darken2);
+
+        col.Item().PaddingTop(15).Background(Colors.Grey.Lighten3).Padding(10).Column(summary =>
+        {
+            summary.Item().Row(r =>
+            {
+                r.RelativeItem().Text("Net Change in Cash");
+                r.ConstantItem(150).AlignRight().Text($"{report.NetChangeInCash:C}").FontColor(report.NetChangeInCash >= 0 ? Colors.Green.Darken2 : Colors.Red.Darken2);
+            });
+            summary.Item().Row(r =>
+            {
+                r.RelativeItem().Text("Beginning Cash Balance");
+                r.ConstantItem(150).AlignRight().Text($"{report.BeginningCashBalance:C}");
+            });
+            summary.Item().Row(r =>
+            {
+                r.RelativeItem().Text("Ending Cash Balance").Bold();
+                r.ConstantItem(150).AlignRight().Text($"{report.EndingCashBalance:C}").Bold();
+            });
+        });
+    }
+
+    private static void RenderCashFlowSection(ColumnDescriptor col, string title, IEnumerable<CashFlowLineDto>? items, decimal netAmount, string color)
+    {
+        col.Item().PaddingTop(15).Text(title).Bold().FontSize(12).FontColor(color);
+        if (items != null)
+        {
+            col.Item().Table(table =>
+            {
+                table.ColumnsDefinition(columns =>
+                {
+                    columns.RelativeColumn(3);
+                    columns.RelativeColumn(2);
+                });
+                foreach (var item in items)
+                {
+                    table.Cell().Padding(2).PaddingLeft(15).Text(item.Description);
+                    table.Cell().Padding(2).AlignRight().Text($"{item.Amount:C}");
+                }
+                table.Cell().BorderTop(1).Padding(2).Text($"Net from {title}").Bold();
+                table.Cell().BorderTop(1).Padding(2).AlignRight().Text($"{netAmount:C}").Bold();
+            });
+        }
+    }
+
+    private static void RenderRevenueReport(ColumnDescriptor col, RevenueReportDto report)
+    {
+        col.Item().Text($"Revenue Report - {report.PeriodStart:MMM dd, yyyy} to {report.PeriodEnd:MMM dd, yyyy}").Bold().FontSize(14);
+
+        col.Item().PaddingTop(15).Background(Colors.Blue.Lighten4).Padding(10).Row(row =>
+        {
+            row.RelativeItem().Text("TOTAL REVENUE").FontSize(14).Bold();
+            row.ConstantItem(150).AlignRight().Text($"{report.TotalRevenue:C}").FontSize(18).Bold().FontColor(Colors.Blue.Darken2);
+        });
+
+        if (report.RevenueByCategory != null && report.RevenueByCategory.Any())
+        {
+            col.Item().PaddingTop(15).Text("Revenue by Category").Bold().FontSize(12);
+            col.Item().Table(table =>
+            {
+                table.ColumnsDefinition(columns =>
+                {
+                    columns.RelativeColumn(3);
+                    columns.RelativeColumn(2);
+                    columns.RelativeColumn(1);
+                });
+                table.Header(header =>
+                {
+                    header.Cell().Background(Colors.Blue.Darken2).Padding(5).Text("Category").FontColor(Colors.White).Bold();
+                    header.Cell().Background(Colors.Blue.Darken2).Padding(5).AlignRight().Text("Amount").FontColor(Colors.White).Bold();
+                    header.Cell().Background(Colors.Blue.Darken2).Padding(5).AlignRight().Text("%").FontColor(Colors.White).Bold();
+                });
+                foreach (var cat in report.RevenueByCategory)
+                {
+                    var pct = report.TotalRevenue > 0 ? (cat.Amount / report.TotalRevenue) * 100 : 0;
+                    table.Cell().Padding(5).Text(cat.Category);
+                    table.Cell().Padding(5).AlignRight().Text($"{cat.Amount:C}");
+                    table.Cell().Padding(5).AlignRight().Text($"{pct:F1}%");
+                }
+            });
+        }
     }
 
     public async Task<byte[]> ExportToExcelAsync<T>(T report, string reportType) where T : class
     {
-        // In production, use a library like EPPlus or ClosedXML
         await Task.CompletedTask;
-        return Array.Empty<byte>();
+        using var workbook = new XLWorkbook();
+        var worksheet = workbook.Worksheets.Add(reportType.Length > 31 ? reportType[..31] : reportType);
+
+        // Title
+        worksheet.Cell(1, 1).Value = $"Financial Report: {reportType}";
+        worksheet.Cell(1, 1).Style.Font.Bold = true;
+        worksheet.Cell(1, 1).Style.Font.FontSize = 14;
+        worksheet.Cell(2, 1).Value = $"Generated: {DateTime.Now:MMMM dd, yyyy hh:mm tt}";
+
+        var row = 4;
+        if (report is IncomeStatementDto income)
+        {
+            row = WriteIncomeStatementToExcel(worksheet, income, row);
+        }
+        else if (report is BalanceSheetDto balance)
+        {
+            row = WriteBalanceSheetToExcel(worksheet, balance, row);
+        }
+        else if (report is RevenueReportDto revenue)
+        {
+            row = WriteRevenueReportToExcel(worksheet, revenue, row);
+        }
+        else
+        {
+            // Generic JSON export
+            worksheet.Cell(row, 1).Value = "Report Data (JSON)";
+            worksheet.Cell(row + 1, 1).Value = JsonSerializer.Serialize(report, new JsonSerializerOptions { WriteIndented = true });
+        }
+
+        worksheet.Columns().AdjustToContents();
+
+        using var stream = new MemoryStream();
+        workbook.SaveAs(stream);
+        return stream.ToArray();
+    }
+
+    private static int WriteIncomeStatementToExcel(IXLWorksheet worksheet, IncomeStatementDto report, int startRow)
+    {
+        var row = startRow;
+        worksheet.Cell(row, 1).Value = $"Income Statement: {report.PeriodStart:MMM dd, yyyy} - {report.PeriodEnd:MMM dd, yyyy}";
+        worksheet.Cell(row, 1).Style.Font.Bold = true;
+        row += 2;
+
+        worksheet.Cell(row, 1).Value = "REVENUE";
+        worksheet.Cell(row, 1).Style.Font.Bold = true;
+        row++;
+
+        foreach (var item in report.RevenueItems ?? Enumerable.Empty<IncomeStatementLineDto>())
+        {
+            worksheet.Cell(row, 1).Value = item.Description;
+            worksheet.Cell(row, 2).Value = item.Amount;
+            worksheet.Cell(row, 2).Style.NumberFormat.Format = "$#,##0.00";
+            row++;
+        }
+        worksheet.Cell(row, 1).Value = "Total Revenue";
+        worksheet.Cell(row, 1).Style.Font.Bold = true;
+        worksheet.Cell(row, 2).Value = report.TotalRevenue;
+        worksheet.Cell(row, 2).Style.NumberFormat.Format = "$#,##0.00";
+        worksheet.Cell(row, 2).Style.Font.Bold = true;
+        row += 2;
+
+        worksheet.Cell(row, 1).Value = "EXPENSES";
+        worksheet.Cell(row, 1).Style.Font.Bold = true;
+        row++;
+
+        foreach (var item in report.ExpenseItems ?? Enumerable.Empty<IncomeStatementLineDto>())
+        {
+            worksheet.Cell(row, 1).Value = item.Description;
+            worksheet.Cell(row, 2).Value = item.Amount;
+            worksheet.Cell(row, 2).Style.NumberFormat.Format = "$#,##0.00";
+            row++;
+        }
+        worksheet.Cell(row, 1).Value = "Total Expenses";
+        worksheet.Cell(row, 1).Style.Font.Bold = true;
+        worksheet.Cell(row, 2).Value = report.TotalExpenses;
+        worksheet.Cell(row, 2).Style.NumberFormat.Format = "$#,##0.00";
+        worksheet.Cell(row, 2).Style.Font.Bold = true;
+        row += 2;
+
+        worksheet.Cell(row, 1).Value = "NET INCOME";
+        worksheet.Cell(row, 1).Style.Font.Bold = true;
+        worksheet.Cell(row, 2).Value = report.NetIncome;
+        worksheet.Cell(row, 2).Style.NumberFormat.Format = "$#,##0.00";
+        worksheet.Cell(row, 2).Style.Font.Bold = true;
+        worksheet.Cell(row, 2).Style.Font.FontColor = report.NetIncome >= 0 ? XLColor.Green : XLColor.Red;
+
+        return row + 2;
+    }
+
+    private static int WriteBalanceSheetToExcel(IXLWorksheet worksheet, BalanceSheetDto report, int startRow)
+    {
+        var row = startRow;
+        worksheet.Cell(row, 1).Value = $"Balance Sheet: As of {report.AsOfDate:MMMM dd, yyyy}";
+        worksheet.Cell(row, 1).Style.Font.Bold = true;
+        row += 2;
+
+        worksheet.Cell(row, 1).Value = "ASSETS";
+        worksheet.Cell(row, 1).Style.Font.Bold = true;
+        row++;
+
+        foreach (var item in report.CurrentAssets?.Concat(report.NonCurrentAssets ?? Enumerable.Empty<BalanceSheetLineDto>()) ?? Enumerable.Empty<BalanceSheetLineDto>())
+        {
+            worksheet.Cell(row, 1).Value = item.AccountName;
+            worksheet.Cell(row, 2).Value = item.Balance;
+            worksheet.Cell(row, 2).Style.NumberFormat.Format = "$#,##0.00";
+            row++;
+        }
+        worksheet.Cell(row, 1).Value = "Total Assets";
+        worksheet.Cell(row, 1).Style.Font.Bold = true;
+        worksheet.Cell(row, 2).Value = report.TotalAssets;
+        worksheet.Cell(row, 2).Style.NumberFormat.Format = "$#,##0.00";
+        worksheet.Cell(row, 2).Style.Font.Bold = true;
+        row += 2;
+
+        worksheet.Cell(row, 1).Value = "LIABILITIES";
+        worksheet.Cell(row, 1).Style.Font.Bold = true;
+        row++;
+
+        foreach (var item in report.CurrentLiabilities?.Concat(report.NonCurrentLiabilities ?? Enumerable.Empty<BalanceSheetLineDto>()) ?? Enumerable.Empty<BalanceSheetLineDto>())
+        {
+            worksheet.Cell(row, 1).Value = item.AccountName;
+            worksheet.Cell(row, 2).Value = item.Balance;
+            worksheet.Cell(row, 2).Style.NumberFormat.Format = "$#,##0.00";
+            row++;
+        }
+        worksheet.Cell(row, 1).Value = "Total Liabilities";
+        worksheet.Cell(row, 1).Style.Font.Bold = true;
+        worksheet.Cell(row, 2).Value = report.TotalLiabilities;
+        worksheet.Cell(row, 2).Style.NumberFormat.Format = "$#,##0.00";
+        worksheet.Cell(row, 2).Style.Font.Bold = true;
+        row += 2;
+
+        worksheet.Cell(row, 1).Value = "Total Equity";
+        worksheet.Cell(row, 1).Style.Font.Bold = true;
+        worksheet.Cell(row, 2).Value = report.TotalEquity;
+        worksheet.Cell(row, 2).Style.NumberFormat.Format = "$#,##0.00";
+        worksheet.Cell(row, 2).Style.Font.Bold = true;
+
+        return row + 2;
+    }
+
+    private static int WriteRevenueReportToExcel(IXLWorksheet worksheet, RevenueReportDto report, int startRow)
+    {
+        var row = startRow;
+        worksheet.Cell(row, 1).Value = $"Revenue Report: {report.PeriodStart:MMM dd, yyyy} - {report.PeriodEnd:MMM dd, yyyy}";
+        worksheet.Cell(row, 1).Style.Font.Bold = true;
+        row += 2;
+
+        worksheet.Cell(row, 1).Value = "Total Revenue";
+        worksheet.Cell(row, 2).Value = report.TotalRevenue;
+        worksheet.Cell(row, 2).Style.NumberFormat.Format = "$#,##0.00";
+        worksheet.Cell(row, 2).Style.Font.Bold = true;
+        row += 2;
+
+        if (report.RevenueByCategory != null)
+        {
+            worksheet.Cell(row, 1).Value = "Category";
+            worksheet.Cell(row, 2).Value = "Amount";
+            worksheet.Cell(row, 3).Value = "Percentage";
+            worksheet.Range(row, 1, row, 3).Style.Font.Bold = true;
+            row++;
+
+            foreach (var cat in report.RevenueByCategory)
+            {
+                var pct = report.TotalRevenue > 0 ? (cat.Amount / report.TotalRevenue) * 100 : 0;
+                worksheet.Cell(row, 1).Value = cat.Category;
+                worksheet.Cell(row, 2).Value = cat.Amount;
+                worksheet.Cell(row, 2).Style.NumberFormat.Format = "$#,##0.00";
+                worksheet.Cell(row, 3).Value = pct / 100;
+                worksheet.Cell(row, 3).Style.NumberFormat.Format = "0.0%";
+                row++;
+            }
+        }
+
+        return row + 2;
     }
 
     public async Task<byte[]> ExportToCsvAsync<T>(T report, string reportType) where T : class
     {
-        // Export to CSV format
         await Task.CompletedTask;
-        return Array.Empty<byte>();
+        var sb = new StringBuilder();
+        sb.AppendLine($"Financial Report: {reportType}");
+        sb.AppendLine($"Generated: {DateTime.Now:yyyy-MM-dd HH:mm:ss}");
+        sb.AppendLine();
+
+        if (report is IncomeStatementDto income)
+        {
+            sb.AppendLine($"Income Statement,{income.PeriodStart:yyyy-MM-dd},{income.PeriodEnd:yyyy-MM-dd}");
+            sb.AppendLine("Description,Amount");
+            sb.AppendLine("REVENUE,");
+            foreach (var item in income.RevenueItems ?? Enumerable.Empty<IncomeStatementLineDto>())
+            {
+                sb.AppendLine($"{EscapeCsv(item.Description)},{item.Amount}");
+            }
+            sb.AppendLine($"Total Revenue,{income.TotalRevenue}");
+            sb.AppendLine("EXPENSES,");
+            foreach (var item in income.ExpenseItems ?? Enumerable.Empty<IncomeStatementLineDto>())
+            {
+                sb.AppendLine($"{EscapeCsv(item.Description)},{item.Amount}");
+            }
+            sb.AppendLine($"Total Expenses,{income.TotalExpenses}");
+            sb.AppendLine($"NET INCOME,{income.NetIncome}");
+        }
+        else if (report is BalanceSheetDto balance)
+        {
+            sb.AppendLine($"Balance Sheet,{balance.AsOfDate:yyyy-MM-dd}");
+            sb.AppendLine("Account,Balance");
+            sb.AppendLine("ASSETS,");
+            foreach (var item in balance.CurrentAssets?.Concat(balance.NonCurrentAssets ?? Enumerable.Empty<BalanceSheetLineDto>()) ?? Enumerable.Empty<BalanceSheetLineDto>())
+            {
+                sb.AppendLine($"{EscapeCsv(item.AccountName)},{item.Balance}");
+            }
+            sb.AppendLine($"Total Assets,{balance.TotalAssets}");
+            sb.AppendLine("LIABILITIES,");
+            foreach (var item in balance.CurrentLiabilities?.Concat(balance.NonCurrentLiabilities ?? Enumerable.Empty<BalanceSheetLineDto>()) ?? Enumerable.Empty<BalanceSheetLineDto>())
+            {
+                sb.AppendLine($"{EscapeCsv(item.AccountName)},{item.Balance}");
+            }
+            sb.AppendLine($"Total Liabilities,{balance.TotalLiabilities}");
+            sb.AppendLine($"Total Equity,{balance.TotalEquity}");
+        }
+        else if (report is RevenueReportDto revenue)
+        {
+            sb.AppendLine($"Revenue Report,{revenue.PeriodStart:yyyy-MM-dd},{revenue.PeriodEnd:yyyy-MM-dd}");
+            sb.AppendLine($"Total Revenue,{revenue.TotalRevenue}");
+            sb.AppendLine();
+            sb.AppendLine("Category,Amount,Percentage");
+            foreach (var cat in revenue.RevenueByCategory ?? Enumerable.Empty<RevenueByCategoryDto>())
+            {
+                var pct = revenue.TotalRevenue > 0 ? (cat.Amount / revenue.TotalRevenue) * 100 : 0;
+                sb.AppendLine($"{EscapeCsv(cat.Category)},{cat.Amount},{pct:F1}%");
+            }
+        }
+        else
+        {
+            sb.AppendLine(JsonSerializer.Serialize(report, new JsonSerializerOptions { WriteIndented = true }));
+        }
+
+        return Encoding.UTF8.GetBytes(sb.ToString());
+    }
+
+    private static string EscapeCsv(string? value)
+    {
+        if (string.IsNullOrEmpty(value)) return "";
+        if (value.Contains(',') || value.Contains('"') || value.Contains('\n'))
+        {
+            return $"\"{value.Replace("\"", "\"\"")}\"";
+        }
+        return value;
     }
 
     #endregion

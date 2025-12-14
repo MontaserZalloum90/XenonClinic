@@ -66,7 +66,49 @@ public interface IBackgroundJobService
     /// Get job details.
     /// </summary>
     JobDetails? GetJobDetails(string jobId);
+
+    /// <summary>
+    /// Get all jobs with optional state filter.
+    /// </summary>
+    IEnumerable<JobDetails> GetAllJobs(JobState? stateFilter = null);
+
+    /// <summary>
+    /// Get all recurring jobs.
+    /// </summary>
+    IEnumerable<RecurringJobDetails> GetRecurringJobs();
+
+    /// <summary>
+    /// Get job statistics summary.
+    /// </summary>
+    JobStatistics GetStatistics();
 }
+
+/// <summary>
+/// Recurring job details.
+/// </summary>
+public record RecurringJobDetails(
+    string JobId,
+    string CronExpression,
+    string? JobType,
+    DateTime CreatedAt,
+    DateTime? LastExecution,
+    DateTime? NextExecution
+);
+
+/// <summary>
+/// Job statistics summary.
+/// </summary>
+public record JobStatistics(
+    int TotalJobs,
+    int EnqueuedCount,
+    int ProcessingCount,
+    int SucceededCount,
+    int FailedCount,
+    int ScheduledCount,
+    int RecurringJobsCount,
+    DateTime? OldestJobCreatedAt,
+    DateTime? LastCompletedAt
+);
 
 /// <summary>
 /// Job details.

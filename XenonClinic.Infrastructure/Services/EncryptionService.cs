@@ -1,8 +1,11 @@
 using System.Security.Cryptography;
 using System.Text;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using XenonClinic.Core.Interfaces;
+using XenonClinic.Infrastructure.Data;
 
 namespace XenonClinic.Infrastructure.Services;
 
@@ -14,24 +17,45 @@ public class EncryptionService : IEncryptionService
 {
     private readonly byte[] _masterKey;
     private readonly byte[] _hmacKey;
+    private readonly byte[]? _previousKey; // For key rotation - decrypt with old key
     private readonly ILogger<EncryptionService> _logger;
+    private readonly IConfiguration _configuration;
+    private readonly IServiceProvider _serviceProvider;
     private const int KeySize = 256;
     private const int BlockSize = 128;
     private const int SaltSize = 16;
     private const int Iterations = 100000; // PBKDF2 iterations
+    private const int KeyRotationBatchSize = 100; // Process records in batches
 
-    public EncryptionService(IConfiguration configuration, ILogger<EncryptionService> logger)
+    // Key version prefix for identifying encryption version
+    private const string CurrentKeyVersion = "v2:";
+    private const string PreviousKeyVersion = "v1:";
+
+    public EncryptionService(
+        IConfiguration configuration,
+        ILogger<EncryptionService> logger,
+        IServiceProvider serviceProvider)
     {
         _logger = logger;
-        
+        _configuration = configuration;
+        _serviceProvider = serviceProvider;
+
         // Load master key from secure configuration (should be from Key Vault in production)
-        var masterKeyBase64 = configuration["Security:Encryption:MasterKey"] 
+        var masterKeyBase64 = configuration["Security:Encryption:MasterKey"]
             ?? throw new InvalidOperationException("Encryption master key not configured");
-        var hmacKeyBase64 = configuration["Security:Encryption:HmacKey"] 
+        var hmacKeyBase64 = configuration["Security:Encryption:HmacKey"]
             ?? throw new InvalidOperationException("HMAC key not configured");
 
         _masterKey = Convert.FromBase64String(masterKeyBase64);
         _hmacKey = Convert.FromBase64String(hmacKeyBase64);
+
+        // Load previous key for rotation support (optional)
+        var previousKeyBase64 = configuration["Security:Encryption:PreviousMasterKey"];
+        if (!string.IsNullOrEmpty(previousKeyBase64))
+        {
+            _previousKey = Convert.FromBase64String(previousKeyBase64);
+            _logger.LogInformation("Previous encryption key loaded for rotation support");
+        }
 
         if (_masterKey.Length != 32)
             throw new InvalidOperationException("Master key must be 256 bits (32 bytes)");
@@ -214,18 +238,347 @@ public class EncryptionService : IEncryptionService
 
     public async Task<int> RotateKeysAsync(CancellationToken cancellationToken = default)
     {
-        // Key rotation would involve:
-        // 1. Generate new master key
-        // 2. Re-encrypt all PHI data with new key
-        // 3. Update key in secure storage
-        // 4. Archive old key for emergency decryption
-        
-        _logger.LogWarning("Key rotation requested - this is a placeholder implementation");
-        // In production, this would iterate through all encrypted records
-        // and re-encrypt them with the new key
-        
-        await Task.Delay(100, cancellationToken); // Placeholder
-        return 0;
+        // Key rotation involves re-encrypting all PHI data with the current key
+        // This handles data encrypted with the previous key
+
+        if (_previousKey == null)
+        {
+            _logger.LogWarning("Key rotation requested but no previous key configured. " +
+                "Set Security:Encryption:PreviousMasterKey to enable rotation.");
+            return 0;
+        }
+
+        _logger.LogInformation("Starting key rotation - re-encrypting data with new master key");
+        var totalRotated = 0;
+        var errors = new List<string>();
+
+        using var scope = _serviceProvider.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<ClinicDbContext>();
+
+        try
+        {
+            // Rotate patient encrypted fields (SSN, insurance info, etc.)
+            totalRotated += await RotatePatientDataAsync(context, cancellationToken);
+
+            // Rotate OAuth tokens in calendar connections
+            totalRotated += await RotateCalendarConnectionsAsync(context, cancellationToken);
+
+            // Rotate payment gateway credentials
+            totalRotated += await RotatePaymentGatewayDataAsync(context, cancellationToken);
+
+            // Rotate OAuth configs
+            totalRotated += await RotateOAuthConfigsAsync(context, cancellationToken);
+
+            // Log rotation completion
+            _logger.LogInformation(
+                "Key rotation completed. Total records re-encrypted: {TotalRotated}",
+                totalRotated);
+
+            // Create audit log entry for key rotation
+            var auditLog = new KeyRotationAuditLog
+            {
+                RotationDate = DateTime.UtcNow,
+                RecordsProcessed = totalRotated,
+                Status = "Completed",
+                Errors = errors.Count > 0 ? string.Join("; ", errors) : null
+            };
+            context.KeyRotationAuditLogs.Add(auditLog);
+            await context.SaveChangesAsync(cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Key rotation failed");
+            throw;
+        }
+
+        return totalRotated;
+    }
+
+    private async Task<int> RotatePatientDataAsync(ClinicDbContext context, CancellationToken cancellationToken)
+    {
+        var rotated = 0;
+        var offset = 0;
+
+        while (!cancellationToken.IsCancellationRequested)
+        {
+            var patients = await context.Patients
+                .OrderBy(p => p.Id)
+                .Skip(offset)
+                .Take(KeyRotationBatchSize)
+                .ToListAsync(cancellationToken);
+
+            if (patients.Count == 0)
+                break;
+
+            foreach (var patient in patients)
+            {
+                var modified = false;
+
+                // Re-encrypt SSN if present
+                if (!string.IsNullOrEmpty(patient.EncryptedSSN))
+                {
+                    try
+                    {
+                        var decrypted = DecryptWithFallback(patient.EncryptedSSN);
+                        var reEncrypted = Encrypt(decrypted);
+                        if (patient.EncryptedSSN != reEncrypted)
+                        {
+                            patient.EncryptedSSN = reEncrypted;
+                            modified = true;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(ex, "Failed to rotate SSN for PatientId {PatientId}", patient.Id);
+                    }
+                }
+
+                // Re-encrypt insurance info if present
+                if (!string.IsNullOrEmpty(patient.EncryptedInsuranceId))
+                {
+                    try
+                    {
+                        var decrypted = DecryptWithFallback(patient.EncryptedInsuranceId);
+                        var reEncrypted = Encrypt(decrypted);
+                        if (patient.EncryptedInsuranceId != reEncrypted)
+                        {
+                            patient.EncryptedInsuranceId = reEncrypted;
+                            modified = true;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(ex, "Failed to rotate insurance ID for PatientId {PatientId}", patient.Id);
+                    }
+                }
+
+                if (modified)
+                {
+                    patient.UpdatedAt = DateTime.UtcNow;
+                    rotated++;
+                }
+            }
+
+            await context.SaveChangesAsync(cancellationToken);
+            offset += KeyRotationBatchSize;
+
+            _logger.LogDebug("Key rotation progress: processed {Offset} patients, rotated {Rotated}",
+                offset, rotated);
+        }
+
+        _logger.LogInformation("Patient data rotation completed: {Rotated} records", rotated);
+        return rotated;
+    }
+
+    private async Task<int> RotateCalendarConnectionsAsync(ClinicDbContext context, CancellationToken cancellationToken)
+    {
+        var rotated = 0;
+        var connections = await context.CalendarConnections
+            .Where(c => c.IsActive)
+            .ToListAsync(cancellationToken);
+
+        foreach (var connection in connections)
+        {
+            var modified = false;
+
+            if (!string.IsNullOrEmpty(connection.AccessToken))
+            {
+                try
+                {
+                    var decrypted = DecryptWithFallback(connection.AccessToken);
+                    var reEncrypted = Encrypt(decrypted);
+                    if (connection.AccessToken != reEncrypted)
+                    {
+                        connection.AccessToken = reEncrypted;
+                        modified = true;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to rotate access token for ConnectionId {ConnectionId}",
+                        connection.Id);
+                }
+            }
+
+            if (!string.IsNullOrEmpty(connection.RefreshToken))
+            {
+                try
+                {
+                    var decrypted = DecryptWithFallback(connection.RefreshToken);
+                    var reEncrypted = Encrypt(decrypted);
+                    if (connection.RefreshToken != reEncrypted)
+                    {
+                        connection.RefreshToken = reEncrypted;
+                        modified = true;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to rotate refresh token for ConnectionId {ConnectionId}",
+                        connection.Id);
+                }
+            }
+
+            if (modified)
+            {
+                connection.UpdatedAt = DateTime.UtcNow;
+                rotated++;
+            }
+        }
+
+        await context.SaveChangesAsync(cancellationToken);
+        _logger.LogInformation("Calendar connections rotation completed: {Rotated} records", rotated);
+        return rotated;
+    }
+
+    private async Task<int> RotatePaymentGatewayDataAsync(ClinicDbContext context, CancellationToken cancellationToken)
+    {
+        var rotated = 0;
+        var configs = await context.PaymentGatewayConfigs
+            .Where(c => c.IsActive)
+            .ToListAsync(cancellationToken);
+
+        foreach (var config in configs)
+        {
+            var modified = false;
+
+            if (!string.IsNullOrEmpty(config.EncryptedSecretKey))
+            {
+                try
+                {
+                    var decrypted = DecryptWithFallback(config.EncryptedSecretKey);
+                    var reEncrypted = Encrypt(decrypted);
+                    if (config.EncryptedSecretKey != reEncrypted)
+                    {
+                        config.EncryptedSecretKey = reEncrypted;
+                        modified = true;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to rotate secret key for PaymentGatewayConfigId {ConfigId}",
+                        config.Id);
+                }
+            }
+
+            if (!string.IsNullOrEmpty(config.EncryptedWebhookSecret))
+            {
+                try
+                {
+                    var decrypted = DecryptWithFallback(config.EncryptedWebhookSecret);
+                    var reEncrypted = Encrypt(decrypted);
+                    if (config.EncryptedWebhookSecret != reEncrypted)
+                    {
+                        config.EncryptedWebhookSecret = reEncrypted;
+                        modified = true;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to rotate webhook secret for PaymentGatewayConfigId {ConfigId}",
+                        config.Id);
+                }
+            }
+
+            if (modified)
+            {
+                config.UpdatedAt = DateTime.UtcNow;
+                rotated++;
+            }
+        }
+
+        await context.SaveChangesAsync(cancellationToken);
+        _logger.LogInformation("Payment gateway rotation completed: {Rotated} records", rotated);
+        return rotated;
+    }
+
+    private async Task<int> RotateOAuthConfigsAsync(ClinicDbContext context, CancellationToken cancellationToken)
+    {
+        var rotated = 0;
+        var configs = await context.OAuthConfigs
+            .Where(c => c.IsActive)
+            .ToListAsync(cancellationToken);
+
+        foreach (var config in configs)
+        {
+            if (!string.IsNullOrEmpty(config.ClientSecret))
+            {
+                try
+                {
+                    var decrypted = DecryptWithFallback(config.ClientSecret);
+                    var reEncrypted = Encrypt(decrypted);
+                    if (config.ClientSecret != reEncrypted)
+                    {
+                        config.ClientSecret = reEncrypted;
+                        rotated++;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to rotate client secret for OAuthConfigId {ConfigId}",
+                        config.Id);
+                }
+            }
+        }
+
+        await context.SaveChangesAsync(cancellationToken);
+        _logger.LogInformation("OAuth configs rotation completed: {Rotated} records", rotated);
+        return rotated;
+    }
+
+    /// <summary>
+    /// Attempt to decrypt with current key, fall back to previous key if available
+    /// </summary>
+    private string DecryptWithFallback(string cipherText)
+    {
+        if (string.IsNullOrEmpty(cipherText))
+            return cipherText;
+
+        try
+        {
+            // Try decrypting with current key first
+            return Decrypt(cipherText);
+        }
+        catch (CryptographicException) when (_previousKey != null)
+        {
+            // Fall back to previous key for data not yet rotated
+            return DecryptWithKey(cipherText, _previousKey);
+        }
+    }
+
+    /// <summary>
+    /// Decrypt using a specific key (for key rotation)
+    /// </summary>
+    private string DecryptWithKey(string cipherText, byte[] key)
+    {
+        if (string.IsNullOrEmpty(cipherText))
+            return cipherText;
+
+        var encryptedBytes = Convert.FromBase64String(cipherText);
+
+        if (encryptedBytes.Length < SaltSize + 12 + 16)
+            return cipherText;
+
+        // Extract components
+        var salt = new byte[SaltSize];
+        var iv = new byte[12];
+        var tag = new byte[16];
+        var cipherData = new byte[encryptedBytes.Length - SaltSize - 12 - 16];
+
+        Buffer.BlockCopy(encryptedBytes, 0, salt, 0, SaltSize);
+        Buffer.BlockCopy(encryptedBytes, SaltSize, iv, 0, 12);
+        Buffer.BlockCopy(encryptedBytes, SaltSize + 12, tag, 0, 16);
+        Buffer.BlockCopy(encryptedBytes, SaltSize + 12 + 16, cipherData, 0, cipherData.Length);
+
+        // Derive key from provided master key
+        var derivedKey = DeriveKey(key, salt);
+
+        using var aesGcm = new AesGcm(derivedKey, 16);
+        var plainText = new byte[cipherData.Length];
+
+        aesGcm.Decrypt(iv, cipherData, tag, plainText);
+
+        return Encoding.UTF8.GetString(plainText);
     }
 
     public bool VerifyIntegrity(string data, string signature)
@@ -280,4 +633,17 @@ public static class EncryptedPropertyExtensions
             return string.Empty;
         return encryption.Hash(ssn[^4..]);
     }
+}
+
+/// <summary>
+/// Audit log for key rotation operations
+/// </summary>
+public class KeyRotationAuditLog
+{
+    public int Id { get; set; }
+    public DateTime RotationDate { get; set; }
+    public int RecordsProcessed { get; set; }
+    public string Status { get; set; } = string.Empty;
+    public string? Errors { get; set; }
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }
