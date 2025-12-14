@@ -2,28 +2,29 @@
 FROM node:20-alpine AS base
 WORKDIR /app
 
-# Install dependencies for shared library
-FROM base AS shared-deps
-COPY Shared.UI/package*.json ./Shared.UI/
-RUN cd Shared.UI && npm ci
+# Install dependencies using npm workspaces
+FROM base AS deps
+# Copy root package files for workspace support
+COPY package.json package-lock.json ./
+# Copy workspace package.json files
+COPY Shared.UI/package.json ./Shared.UI/
+COPY Xenon.PublicWebsite/package.json ./Xenon.PublicWebsite/
+# Create dummy directory for admin workspace (required by npm workspaces)
+RUN mkdir -p XenonClinic.React && echo '{"name":"xenonclinic-react","version":"0.0.0"}' > XenonClinic.React/package.json
+# Install all workspace dependencies
+RUN npm ci --workspace=Shared.UI --workspace=Xenon.PublicWebsite
 
 # Build shared library
-FROM shared-deps AS shared-build
+FROM deps AS shared-build
 COPY Shared.UI ./Shared.UI
-RUN cd Shared.UI && npm run build || true
-
-# Install public website dependencies
-FROM base AS public-deps
-COPY --from=shared-build /app/Shared.UI ./Shared.UI
-COPY Xenon.PublicWebsite/package*.json ./Xenon.PublicWebsite/
-RUN cd Xenon.PublicWebsite && npm ci
+RUN npm run build -w Shared.UI || true
 
 # Build public website
-FROM public-deps AS public-build
+FROM shared-build AS public-build
 COPY Xenon.PublicWebsite ./Xenon.PublicWebsite
 ARG VITE_API_URL=https://api.xenonclinic.com
 ENV VITE_API_URL=$VITE_API_URL
-RUN cd Xenon.PublicWebsite && npm run build
+RUN npm run build -w Xenon.PublicWebsite
 
 # Production image with nginx
 FROM nginx:alpine AS production
