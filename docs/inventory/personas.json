@@ -1,0 +1,770 @@
+{
+  "version": "1.0",
+  "lastUpdated": "2024-12-14",
+  "personas": [
+    {
+      "id": "system-admin",
+      "name": "System Administrator",
+      "category": "platform",
+      "description": "Platform-level administrator responsible for multi-tenant management, system configuration, and technical operations across all organizations.",
+      "responsibilities": [
+        "Manage tenant provisioning and configuration",
+        "Configure system-wide settings and integrations",
+        "Monitor system health and performance",
+        "Manage platform security policies",
+        "Handle system updates and maintenance"
+      ],
+      "accessScope": {
+        "level": "platform",
+        "dataAccess": "All tenants",
+        "roleType": "SYSTEM_ADMIN"
+      },
+      "permissions": [
+        "admin:system",
+        "admin:tenants",
+        "admin:users",
+        "admin:roles",
+        "admin:settings",
+        "admin:audit_logs",
+        "admin:security"
+      ],
+      "primaryModules": ["multi-tenancy", "security-audit", "analytics"],
+      "coreJourneys": [
+        "tenant-provisioning",
+        "user-access-review",
+        "security-incident-response",
+        "system-monitoring"
+      ],
+      "entryPoints": ["/admin", "/security", "/analytics"],
+      "commonTasks": [
+        "Create new tenant organizations",
+        "Configure global security policies",
+        "Review system audit logs",
+        "Manage API integrations",
+        "Monitor system performance"
+      ],
+      "tips": [
+        "Use the monitoring dashboard for real-time system health",
+        "Schedule regular security audits",
+        "Document all configuration changes in audit logs"
+      ]
+    },
+    {
+      "id": "tenant-admin",
+      "name": "Tenant Administrator",
+      "category": "platform",
+      "description": "Organization-level administrator managing company settings, branches, users, and feature configuration for their tenant.",
+      "responsibilities": [
+        "Configure company settings and branding",
+        "Manage branches and locations",
+        "Create and manage users",
+        "Assign roles and permissions",
+        "Configure tenant-specific features"
+      ],
+      "accessScope": {
+        "level": "tenant",
+        "dataAccess": "Own tenant only",
+        "roleType": "CLINIC_ADMIN"
+      },
+      "permissions": [
+        "admin:users",
+        "admin:roles",
+        "admin:settings",
+        "admin:audit_logs"
+      ],
+      "primaryModules": ["multi-tenancy", "hr-management", "analytics"],
+      "coreJourneys": [
+        "company-setup",
+        "branch-configuration",
+        "user-management",
+        "subscription-management"
+      ],
+      "entryPoints": ["/admin", "/hr", "/settings"],
+      "commonTasks": [
+        "Add new branches/locations",
+        "Create user accounts",
+        "Configure operating hours",
+        "Manage feature enablement",
+        "Review tenant-level reports"
+      ],
+      "tips": [
+        "Use branch-level settings for location-specific configurations",
+        "Regularly review user access and deactivate unused accounts",
+        "Enable only needed features to simplify the interface"
+      ]
+    },
+    {
+      "id": "doctor",
+      "name": "Doctor / Physician",
+      "category": "clinical",
+      "description": "Licensed medical practitioner responsible for patient examinations, diagnoses, treatment plans, prescriptions, and clinical documentation.",
+      "responsibilities": [
+        "Conduct patient examinations",
+        "Diagnose conditions using clinical findings",
+        "Prescribe medications and treatments",
+        "Order laboratory and imaging tests",
+        "Create and manage treatment plans",
+        "Refer patients to specialists",
+        "Document clinical encounters"
+      ],
+      "accessScope": {
+        "level": "clinical",
+        "dataAccess": "Patient medical records, appointments",
+        "roleType": "PHYSICIAN"
+      },
+      "permissions": [
+        "patients:view",
+        "patients:update",
+        "appointments:view",
+        "appointments:create",
+        "clinical_visits:view",
+        "clinical_visits:create",
+        "clinical_visits:update",
+        "prescriptions:create",
+        "lab:view",
+        "lab:create",
+        "radiology:view",
+        "radiology:create"
+      ],
+      "primaryModules": ["clinical-visits", "patient-management", "appointments", "laboratory", "pharmacy"],
+      "coreJourneys": [
+        "clinical-examination",
+        "diagnosis-entry",
+        "prescription-management",
+        "lab-order-creation",
+        "referral-management"
+      ],
+      "entryPoints": ["/", "/appointments", "/patients", "/clinical-visits"],
+      "commonTasks": [
+        "Review patient history before visits",
+        "Document examination findings",
+        "Enter diagnoses with ICD-10 codes",
+        "Prescribe medications with interaction checking",
+        "Order labs and imaging studies",
+        "Create follow-up appointments"
+      ],
+      "tips": [
+        "Use the clinical decision support alerts for drug interactions",
+        "Review prior visit notes before each encounter",
+        "Sign and lock visits promptly for billing"
+      ]
+    },
+    {
+      "id": "nurse",
+      "name": "Nurse",
+      "category": "clinical",
+      "description": "Clinical staff member responsible for patient intake, vital signs recording, assisting physicians, medication administration, and patient education.",
+      "responsibilities": [
+        "Record patient vital signs",
+        "Assist with patient intake",
+        "Administer medications",
+        "Support clinical procedures",
+        "Provide patient education",
+        "Update patient records"
+      ],
+      "accessScope": {
+        "level": "clinical",
+        "dataAccess": "Patient records (limited), vital signs, medications",
+        "roleType": "NURSE"
+      },
+      "permissions": [
+        "patients:view",
+        "patients:update",
+        "appointments:view",
+        "appointments:create",
+        "appointments:update",
+        "clinical_visits:view",
+        "clinical_visits:create",
+        "lab:view",
+        "lab:create",
+        "inventory:view"
+      ],
+      "primaryModules": ["clinical-visits", "appointments", "patient-management", "laboratory"],
+      "coreJourneys": [
+        "patient-intake-vitals",
+        "medication-administration",
+        "specimen-collection",
+        "patient-education"
+      ],
+      "entryPoints": ["/", "/appointments", "/patients"],
+      "commonTasks": [
+        "Take and record vital signs",
+        "Call patients from waiting room",
+        "Document chief complaints",
+        "Collect specimens for lab tests",
+        "Administer vaccines and medications",
+        "Prepare patients for examination"
+      ],
+      "tips": [
+        "Always verify patient identity before any procedure",
+        "Double-check vital signs entries for accuracy",
+        "Document any patient concerns in visit notes"
+      ]
+    },
+    {
+      "id": "receptionist",
+      "name": "Receptionist",
+      "category": "front-office",
+      "description": "Front desk staff responsible for patient registration, appointment scheduling, check-in/check-out, and initial patient contact.",
+      "responsibilities": [
+        "Register new patients",
+        "Schedule appointments",
+        "Check in arriving patients",
+        "Verify patient information",
+        "Collect co-payments",
+        "Manage phone inquiries",
+        "Handle appointment changes"
+      ],
+      "accessScope": {
+        "level": "front-office",
+        "dataAccess": "Patient demographics, appointments, basic billing",
+        "roleType": "RECEPTIONIST"
+      },
+      "permissions": [
+        "patients:view",
+        "patients:create",
+        "patients:update",
+        "appointments:view",
+        "appointments:create",
+        "appointments:update",
+        "appointments:delete",
+        "appointments:reschedule",
+        "financial:view"
+      ],
+      "primaryModules": ["patient-management", "appointments", "financial"],
+      "coreJourneys": [
+        "patient-registration",
+        "appointment-booking",
+        "appointment-rescheduling",
+        "patient-checkin"
+      ],
+      "entryPoints": ["/", "/appointments", "/patients"],
+      "commonTasks": [
+        "Register new patients with complete information",
+        "Book and confirm appointments",
+        "Check in patients on arrival",
+        "Update patient contact information",
+        "Handle appointment cancellations",
+        "Collect and record co-payments"
+      ],
+      "tips": [
+        "Verify insurance information at each visit",
+        "Confirm contact details are current",
+        "Use the waitlist for patients seeking earlier appointments"
+      ]
+    },
+    {
+      "id": "lab-technician",
+      "name": "Lab Technician",
+      "category": "clinical",
+      "description": "Laboratory staff responsible for specimen collection, processing, testing, result entry, and quality control procedures.",
+      "responsibilities": [
+        "Collect patient specimens",
+        "Process and prepare specimens",
+        "Perform laboratory tests",
+        "Enter and validate results",
+        "Maintain quality control",
+        "Manage laboratory equipment"
+      ],
+      "accessScope": {
+        "level": "laboratory",
+        "dataAccess": "Lab orders, specimens, results",
+        "roleType": "LAB_TECHNICIAN"
+      },
+      "permissions": [
+        "patients:view",
+        "lab:view",
+        "lab:create",
+        "lab:update"
+      ],
+      "primaryModules": ["laboratory"],
+      "coreJourneys": [
+        "specimen-collection",
+        "specimen-processing",
+        "result-entry-validation",
+        "quality-control"
+      ],
+      "entryPoints": ["/laboratory"],
+      "commonTasks": [
+        "Review pending lab orders",
+        "Collect and label specimens",
+        "Run daily QC procedures",
+        "Enter test results",
+        "Flag abnormal values",
+        "Troubleshoot equipment issues"
+      ],
+      "tips": [
+        "Always run QC before patient samples",
+        "Verify patient identity at specimen collection",
+        "Document any collection difficulties"
+      ]
+    },
+    {
+      "id": "pharmacist",
+      "name": "Pharmacist",
+      "category": "clinical",
+      "description": "Licensed pharmacist responsible for prescription verification, medication dispensing, patient counseling, and controlled substance management.",
+      "responsibilities": [
+        "Verify prescriptions for safety",
+        "Check drug interactions",
+        "Dispense medications accurately",
+        "Counsel patients on medications",
+        "Manage controlled substances",
+        "Oversee pharmacy inventory"
+      ],
+      "accessScope": {
+        "level": "pharmacy",
+        "dataAccess": "Prescriptions, medications, inventory",
+        "roleType": "PHARMACIST"
+      },
+      "permissions": [
+        "patients:view",
+        "pharmacy:view",
+        "pharmacy:dispense",
+        "pharmacy:manage",
+        "inventory:view",
+        "inventory:create",
+        "inventory:update",
+        "inventory:order"
+      ],
+      "primaryModules": ["pharmacy", "inventory"],
+      "coreJourneys": [
+        "prescription-verification",
+        "medication-dispensing",
+        "patient-counseling",
+        "controlled-substance-management"
+      ],
+      "entryPoints": ["/pharmacy", "/inventory"],
+      "commonTasks": [
+        "Review incoming prescriptions",
+        "Check for drug interactions and allergies",
+        "Verify dosage appropriateness",
+        "Dispense with final verification",
+        "Counsel patients on medication use",
+        "Maintain controlled substance logs"
+      ],
+      "tips": [
+        "Always verify prescriber credentials for controlled substances",
+        "Document all patient counseling sessions",
+        "Check PDMP database as required"
+      ]
+    },
+    {
+      "id": "radiologist",
+      "name": "Radiologist",
+      "category": "clinical",
+      "description": "Medical specialist responsible for interpreting medical images, dictating radiology reports, and communicating critical findings.",
+      "responsibilities": [
+        "Review medical images in DICOM viewer",
+        "Interpret imaging findings",
+        "Dictate structured reports",
+        "Communicate critical findings",
+        "Consult with referring physicians",
+        "Perform image-guided procedures"
+      ],
+      "accessScope": {
+        "level": "radiology",
+        "dataAccess": "Radiology orders, images, reports",
+        "roleType": "RADIOLOGIST"
+      },
+      "permissions": [
+        "patients:view",
+        "radiology:view",
+        "radiology:create",
+        "radiology:report"
+      ],
+      "primaryModules": ["radiology"],
+      "coreJourneys": [
+        "image-interpretation",
+        "report-generation",
+        "critical-finding-alert"
+      ],
+      "entryPoints": ["/radiology"],
+      "commonTasks": [
+        "Review study worklist",
+        "Open studies in DICOM viewer",
+        "Compare with prior studies",
+        "Dictate findings and impressions",
+        "Sign and release reports",
+        "Call critical findings to ordering physician"
+      ],
+      "tips": [
+        "Always compare with prior studies when available",
+        "Document critical finding communications",
+        "Use structured reporting templates for consistency"
+      ]
+    },
+    {
+      "id": "audiologist",
+      "name": "Audiologist",
+      "category": "specialty",
+      "description": "Hearing healthcare specialist responsible for audiometric testing, hearing aid fitting, and auditory rehabilitation.",
+      "responsibilities": [
+        "Conduct audiometric evaluations",
+        "Interpret audiograms",
+        "Fit and program hearing aids",
+        "Provide auditory rehabilitation",
+        "Counsel patients on hearing health",
+        "Manage hearing aid inventory"
+      ],
+      "accessScope": {
+        "level": "specialty",
+        "dataAccess": "Audiology records, audiograms, hearing devices",
+        "roleType": "AUDIOLOGIST"
+      },
+      "permissions": [
+        "patients:view",
+        "patients:update",
+        "appointments:view",
+        "appointments:create",
+        "audiograms:view",
+        "audiograms:create",
+        "audiograms:update",
+        "hearing_aids:view",
+        "hearing_aids:create",
+        "hearing_aids:fit",
+        "hearing_aids:adjust"
+      ],
+      "primaryModules": ["specialty-modules"],
+      "coreJourneys": [
+        "audiometry-testing",
+        "hearing-aid-fitting",
+        "auditory-rehabilitation"
+      ],
+      "entryPoints": ["/audiology"],
+      "commonTasks": [
+        "Conduct pure-tone audiometry",
+        "Perform speech audiometry",
+        "Plot and interpret audiograms",
+        "Select and fit hearing aids",
+        "Program hearing aid settings",
+        "Provide counseling and follow-up"
+      ],
+      "tips": [
+        "Ensure proper booth calibration before testing",
+        "Document patient preferences for hearing aid features",
+        "Schedule follow-up adjustments within 2 weeks"
+      ]
+    },
+    {
+      "id": "hr-manager",
+      "name": "HR Manager",
+      "category": "business",
+      "description": "Human resources manager responsible for employee lifecycle management, performance reviews, training programs, and HR policy enforcement.",
+      "responsibilities": [
+        "Oversee employee onboarding",
+        "Manage leave approvals",
+        "Conduct performance evaluations",
+        "Coordinate training programs",
+        "Handle employee relations",
+        "Ensure compliance with labor laws"
+      ],
+      "accessScope": {
+        "level": "hr",
+        "dataAccess": "Employee records, attendance, performance",
+        "roleType": "HR_MANAGER"
+      },
+      "permissions": [
+        "hr:view",
+        "hr:create",
+        "hr:update",
+        "hr:delete",
+        "hr:payroll",
+        "admin:users"
+      ],
+      "primaryModules": ["hr-management", "payroll"],
+      "coreJourneys": [
+        "employee-onboarding",
+        "leave-management",
+        "performance-evaluation",
+        "training-management"
+      ],
+      "entryPoints": ["/hr", "/hr/employees", "/hr/payroll"],
+      "commonTasks": [
+        "Process new hire paperwork",
+        "Review and approve leave requests",
+        "Schedule performance reviews",
+        "Plan training sessions",
+        "Address employee concerns",
+        "Generate HR reports"
+      ],
+      "tips": [
+        "Complete onboarding checklist for all new hires",
+        "Document all performance discussions",
+        "Maintain confidentiality of employee records"
+      ]
+    },
+    {
+      "id": "accountant",
+      "name": "Accountant",
+      "category": "business",
+      "description": "Financial staff responsible for invoicing, payment processing, expense tracking, financial reporting, and accounts management.",
+      "responsibilities": [
+        "Generate patient invoices",
+        "Process payments",
+        "Track accounts receivable",
+        "Record expenses",
+        "Prepare financial reports",
+        "Manage general ledger"
+      ],
+      "accessScope": {
+        "level": "financial",
+        "dataAccess": "Financial transactions, invoices, reports",
+        "roleType": "ACCOUNTANT"
+      },
+      "permissions": [
+        "financial:view",
+        "financial:create",
+        "financial:update",
+        "financial:approve",
+        "financial:reports",
+        "inventory:view"
+      ],
+      "primaryModules": ["financial", "inventory"],
+      "coreJourneys": [
+        "invoice-generation",
+        "payment-processing",
+        "expense-recording",
+        "financial-reporting"
+      ],
+      "entryPoints": ["/financial", "/financial/invoices"],
+      "commonTasks": [
+        "Generate invoices for services",
+        "Record incoming payments",
+        "Reconcile accounts",
+        "Track unpaid invoices",
+        "Record vendor expenses",
+        "Prepare monthly reports"
+      ],
+      "tips": [
+        "Verify procedure codes before invoicing",
+        "Follow up on aging receivables weekly",
+        "Attach receipts to all expense entries"
+      ]
+    },
+    {
+      "id": "marketing-manager",
+      "name": "Marketing Manager",
+      "category": "business",
+      "description": "Marketing leader responsible for campaign strategy, lead generation, promotional programs, and marketing analytics.",
+      "responsibilities": [
+        "Plan marketing campaigns",
+        "Manage lead pipeline",
+        "Design promotions",
+        "Analyze marketing performance",
+        "Coordinate referral programs",
+        "Oversee marketing budget"
+      ],
+      "accessScope": {
+        "level": "marketing",
+        "dataAccess": "Campaigns, leads, marketing analytics",
+        "roleType": "MARKETING_MANAGER"
+      },
+      "permissions": [
+        "marketing:view",
+        "marketing:create",
+        "marketing:update",
+        "marketing:reports"
+      ],
+      "primaryModules": ["marketing", "analytics"],
+      "coreJourneys": [
+        "campaign-creation",
+        "lead-management",
+        "promotion-setup",
+        "marketing-analytics"
+      ],
+      "entryPoints": ["/marketing", "/analytics"],
+      "commonTasks": [
+        "Create and launch campaigns",
+        "Review lead sources",
+        "Set up promotional offers",
+        "Track campaign performance",
+        "Measure conversion rates",
+        "Report on marketing ROI"
+      ],
+      "tips": [
+        "Define clear campaign objectives and KPIs",
+        "Track leads through the full conversion funnel",
+        "A/B test marketing messages"
+      ]
+    },
+    {
+      "id": "billing-staff",
+      "name": "Billing Staff",
+      "category": "business",
+      "description": "Billing specialist handling insurance claims, patient billing, collections, and payment posting.",
+      "responsibilities": [
+        "Submit insurance claims",
+        "Post payments",
+        "Follow up on denials",
+        "Manage patient collections",
+        "Generate billing reports",
+        "Verify insurance eligibility"
+      ],
+      "accessScope": {
+        "level": "billing",
+        "dataAccess": "Invoices, claims, payments",
+        "roleType": "BILLING_STAFF"
+      },
+      "permissions": [
+        "financial:view",
+        "financial:create",
+        "financial:update"
+      ],
+      "primaryModules": ["financial"],
+      "coreJourneys": [
+        "insurance-claim-submission",
+        "payment-processing",
+        "accounts-receivable-management"
+      ],
+      "entryPoints": ["/financial", "/financial/claims"],
+      "commonTasks": [
+        "Submit claims electronically",
+        "Post ERA payments",
+        "Work denial queues",
+        "Call patients for balances",
+        "Set up payment plans",
+        "Generate aging reports"
+      ],
+      "tips": [
+        "Verify eligibility before service",
+        "Appeal denials within timely filing limits",
+        "Document all patient collection contacts"
+      ]
+    },
+    {
+      "id": "warehouse-staff",
+      "name": "Warehouse Staff",
+      "category": "business",
+      "description": "Warehouse personnel responsible for receiving goods, stock management, inventory counts, and order fulfillment.",
+      "responsibilities": [
+        "Receive incoming shipments",
+        "Store inventory properly",
+        "Conduct stock counts",
+        "Process stock transfers",
+        "Manage warehouse organization",
+        "Handle damaged goods"
+      ],
+      "accessScope": {
+        "level": "inventory",
+        "dataAccess": "Inventory items, stock transactions",
+        "roleType": "WAREHOUSE_STAFF"
+      },
+      "permissions": [
+        "inventory:view",
+        "inventory:create",
+        "inventory:update"
+      ],
+      "primaryModules": ["inventory"],
+      "coreJourneys": [
+        "stock-receipt",
+        "stock-transfer",
+        "stock-adjustment",
+        "inventory-audit"
+      ],
+      "entryPoints": ["/inventory"],
+      "commonTasks": [
+        "Receive and verify deliveries",
+        "Put away stock in proper locations",
+        "Pick items for transfers",
+        "Count inventory during audits",
+        "Report stock discrepancies",
+        "Check expiration dates"
+      ],
+      "tips": [
+        "Always verify against purchase orders on receipt",
+        "Check expiration dates before stocking",
+        "Use FIFO for perishable items"
+      ]
+    },
+    {
+      "id": "patient",
+      "name": "Patient",
+      "category": "portal",
+      "description": "Healthcare consumer using the patient portal for appointment booking, medical records access, prescription refills, and bill payments.",
+      "responsibilities": [
+        "Manage personal health information",
+        "Book and manage appointments",
+        "Request prescription refills",
+        "Communicate with providers",
+        "Pay medical bills",
+        "Access test results"
+      ],
+      "accessScope": {
+        "level": "portal",
+        "dataAccess": "Own medical records only",
+        "roleType": "PATIENT"
+      },
+      "permissions": [
+        "portal:access"
+      ],
+      "primaryModules": ["patient-portal"],
+      "coreJourneys": [
+        "portal-registration",
+        "online-appointment-booking",
+        "view-medical-records",
+        "prescription-refill-request",
+        "online-bill-payment"
+      ],
+      "entryPoints": ["/portal", "/portal/dashboard"],
+      "commonTasks": [
+        "Book appointments online",
+        "View upcoming appointments",
+        "Check lab results",
+        "Request prescription refills",
+        "Message healthcare team",
+        "Pay outstanding balances"
+      ],
+      "tips": [
+        "Keep your contact information updated",
+        "Check the portal for test results before calling",
+        "Use secure messaging for non-urgent questions"
+      ]
+    },
+    {
+      "id": "security-admin",
+      "name": "Security Administrator",
+      "category": "platform",
+      "description": "Security specialist responsible for access control, security policies, incident response, and compliance management.",
+      "responsibilities": [
+        "Manage access permissions",
+        "Configure security policies",
+        "Investigate security incidents",
+        "Conduct access reviews",
+        "Ensure regulatory compliance",
+        "Monitor security alerts"
+      ],
+      "accessScope": {
+        "level": "security",
+        "dataAccess": "Audit logs, security configurations",
+        "roleType": "SECURITY_ADMIN"
+      },
+      "permissions": [
+        "admin:security",
+        "admin:roles",
+        "admin:audit_logs"
+      ],
+      "primaryModules": ["security-audit"],
+      "coreJourneys": [
+        "user-access-review",
+        "password-policy-management",
+        "security-incident-response",
+        "compliance-reporting"
+      ],
+      "entryPoints": ["/security", "/security/audit"],
+      "commonTasks": [
+        "Review user access periodically",
+        "Update password policies",
+        "Investigate suspicious activities",
+        "Generate compliance reports",
+        "Respond to security alerts",
+        "Manage role permissions"
+      ],
+      "tips": [
+        "Schedule quarterly access reviews",
+        "Document all security incidents",
+        "Test password policies annually"
+      ]
+    }
+  ]
+}

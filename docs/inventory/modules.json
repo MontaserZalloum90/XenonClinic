@@ -1,0 +1,761 @@
+{
+  "version": "1.0",
+  "lastUpdated": "2024-12-14",
+  "modules": [
+    {
+      "id": "patient-management",
+      "name": "Patient Management",
+      "category": "core",
+      "description": "Comprehensive patient registration, profile management, medical history, and document handling for healthcare organizations.",
+      "route": "/patients",
+      "icon": "Users",
+      "businessValue": "Centralizes patient data for efficient care coordination, reduces duplicate records, and ensures regulatory compliance with healthcare data standards.",
+      "personas": ["receptionist", "nurse", "doctor", "admin"],
+      "features": [
+        {
+          "id": "patient-registration",
+          "name": "Patient Registration",
+          "description": "Register new patients with personal, contact, and emergency information"
+        },
+        {
+          "id": "patient-search",
+          "name": "Patient Search & Lookup",
+          "description": "Search patients by name, ID, phone, or Emirates ID"
+        },
+        {
+          "id": "medical-history",
+          "name": "Medical History Management",
+          "description": "Track allergies, chronic conditions, surgeries, and family history"
+        },
+        {
+          "id": "document-management",
+          "name": "Document Management",
+          "description": "Upload, categorize, and manage patient documents (ID, insurance, referrals)"
+        },
+        {
+          "id": "insurance-management",
+          "name": "Insurance Information",
+          "description": "Manage insurance provider details, policy numbers, and coverage verification"
+        }
+      ],
+      "permissions": ["patients:view", "patients:create", "patients:update", "patients:delete", "patients:export"],
+      "apiEndpoints": ["/api/patient"],
+      "journeyCount": 5
+    },
+    {
+      "id": "appointments",
+      "name": "Appointments",
+      "category": "core",
+      "description": "Complete appointment scheduling system with booking, rescheduling, cancellation, check-in, waitlist, and recurring appointment management.",
+      "route": "/appointments",
+      "icon": "Calendar",
+      "businessValue": "Optimizes provider utilization, reduces no-shows with automated reminders, and improves patient satisfaction through seamless scheduling.",
+      "personas": ["receptionist", "nurse", "doctor", "patient", "admin"],
+      "features": [
+        {
+          "id": "appointment-booking",
+          "name": "Appointment Booking",
+          "description": "Schedule appointments with provider, specialty, and time slot selection"
+        },
+        {
+          "id": "appointment-rescheduling",
+          "name": "Appointment Rescheduling",
+          "description": "Modify existing appointment date and time"
+        },
+        {
+          "id": "appointment-cancellation",
+          "name": "Appointment Cancellation",
+          "description": "Cancel appointments with reason tracking"
+        },
+        {
+          "id": "patient-checkin",
+          "name": "Patient Check-in",
+          "description": "Check in patients on arrival and notify providers"
+        },
+        {
+          "id": "waitlist-management",
+          "name": "Waitlist Management",
+          "description": "Manage waitlist for earlier appointments"
+        },
+        {
+          "id": "recurring-appointments",
+          "name": "Recurring Appointments",
+          "description": "Set up recurring appointment schedules"
+        }
+      ],
+      "permissions": ["appointments:view", "appointments:create", "appointments:update", "appointments:delete", "appointments:reschedule"],
+      "apiEndpoints": ["/api/appointments"],
+      "journeyCount": 6
+    },
+    {
+      "id": "clinical-visits",
+      "name": "Clinical Visits",
+      "category": "clinical",
+      "description": "Full clinical encounter management including patient intake, vitals recording, examinations, diagnosis, prescriptions, treatment plans, and referrals.",
+      "route": "/clinical-visits",
+      "icon": "Stethoscope",
+      "businessValue": "Streamlines clinical workflows, ensures complete documentation for billing and compliance, and supports evidence-based care decisions.",
+      "personas": ["nurse", "doctor"],
+      "features": [
+        {
+          "id": "patient-intake",
+          "name": "Patient Intake & Vitals",
+          "description": "Record vital signs (BP, temperature, pulse, weight, height, BMI, O2 sat)"
+        },
+        {
+          "id": "clinical-examination",
+          "name": "Clinical Examination",
+          "description": "Document physical examination findings"
+        },
+        {
+          "id": "diagnosis-entry",
+          "name": "Diagnosis Entry",
+          "description": "ICD-10 coded diagnosis with primary/secondary classification"
+        },
+        {
+          "id": "prescription-management",
+          "name": "Prescription Management",
+          "description": "E-prescribing with drug interaction checking"
+        },
+        {
+          "id": "treatment-plan",
+          "name": "Treatment Plan Creation",
+          "description": "Comprehensive treatment planning with goals and follow-ups"
+        },
+        {
+          "id": "referral-management",
+          "name": "Referral Management",
+          "description": "Create and track specialist referrals"
+        },
+        {
+          "id": "visit-completion",
+          "name": "Visit Completion",
+          "description": "Sign off, generate after-visit summaries"
+        }
+      ],
+      "permissions": ["clinical_visits:view", "clinical_visits:create", "clinical_visits:update", "prescriptions:create"],
+      "apiEndpoints": ["/api/clinicalvisits"],
+      "journeyCount": 7
+    },
+    {
+      "id": "laboratory",
+      "name": "Laboratory",
+      "category": "clinical",
+      "description": "Complete laboratory management including order creation, specimen collection, processing, result entry, validation, and reporting with quality control.",
+      "route": "/laboratory",
+      "icon": "FlaskConical",
+      "businessValue": "Ensures accurate lab results with QC workflows, reduces turnaround time, and integrates seamlessly with clinical workflows for faster diagnosis.",
+      "personas": ["doctor", "nurse", "lab-technician", "pathologist"],
+      "features": [
+        {
+          "id": "lab-order-creation",
+          "name": "Lab Order Creation",
+          "description": "Order lab tests with clinical priority and indications"
+        },
+        {
+          "id": "specimen-collection",
+          "name": "Specimen Collection",
+          "description": "Record specimen collection with barcode labeling"
+        },
+        {
+          "id": "specimen-processing",
+          "name": "Specimen Processing",
+          "description": "Track specimen processing workflow"
+        },
+        {
+          "id": "result-entry",
+          "name": "Result Entry & Validation",
+          "description": "Enter results with reference ranges and abnormal flagging"
+        },
+        {
+          "id": "result-reporting",
+          "name": "Result Reporting",
+          "description": "Generate and distribute lab reports"
+        },
+        {
+          "id": "quality-control",
+          "name": "Quality Control",
+          "description": "Daily QC testing and documentation"
+        }
+      ],
+      "permissions": ["lab:view", "lab:create", "lab:update", "lab:approve", "lab:delete"],
+      "apiEndpoints": ["/api/laboratory"],
+      "journeyCount": 6
+    },
+    {
+      "id": "radiology",
+      "name": "Radiology",
+      "category": "clinical",
+      "description": "Medical imaging management with DICOM integration, order management, patient preparation, image acquisition, interpretation, and critical finding alerts.",
+      "route": "/radiology",
+      "icon": "ScanLine",
+      "businessValue": "Streamlines imaging workflows, enables rapid radiologist review with DICOM viewer, and ensures critical findings are communicated immediately.",
+      "personas": ["doctor", "radiologist", "radiology-technician"],
+      "features": [
+        {
+          "id": "imaging-order",
+          "name": "Imaging Order Creation",
+          "description": "Order X-ray, CT, MRI, ultrasound with clinical indications"
+        },
+        {
+          "id": "patient-preparation",
+          "name": "Patient Preparation",
+          "description": "Pre-procedure screening and consent"
+        },
+        {
+          "id": "image-acquisition",
+          "name": "Image Acquisition",
+          "description": "Capture images and upload to PACS"
+        },
+        {
+          "id": "image-interpretation",
+          "name": "Image Interpretation",
+          "description": "DICOM viewer for radiologist review"
+        },
+        {
+          "id": "report-generation",
+          "name": "Report Generation",
+          "description": "Structured radiology reports with findings"
+        },
+        {
+          "id": "critical-findings",
+          "name": "Critical Finding Alerts",
+          "description": "Immediate notification for urgent findings"
+        }
+      ],
+      "permissions": ["radiology:view", "radiology:create", "radiology:report", "radiology:delete"],
+      "apiEndpoints": ["/api/radiology"],
+      "journeyCount": 6
+    },
+    {
+      "id": "pharmacy",
+      "name": "Pharmacy",
+      "category": "clinical",
+      "description": "Complete pharmacy operations including prescription receipt, verification, medication dispensing, patient counseling, and controlled substance management.",
+      "route": "/pharmacy",
+      "icon": "Pill",
+      "businessValue": "Ensures medication safety with interaction checking, manages controlled substances compliantly, and optimizes pharmacy inventory.",
+      "personas": ["pharmacist", "pharmacy-technician", "doctor"],
+      "features": [
+        {
+          "id": "prescription-receipt",
+          "name": "Prescription Receipt",
+          "description": "Receive and validate electronic/paper prescriptions"
+        },
+        {
+          "id": "prescription-verification",
+          "name": "Prescription Verification",
+          "description": "Check interactions, dosage, allergies"
+        },
+        {
+          "id": "medication-dispensing",
+          "name": "Medication Dispensing",
+          "description": "Dispense with verification and labeling"
+        },
+        {
+          "id": "patient-counseling",
+          "name": "Patient Counseling",
+          "description": "Medication education and instructions"
+        },
+        {
+          "id": "controlled-substances",
+          "name": "Controlled Substance Management",
+          "description": "DEA-compliant controlled substance handling"
+        },
+        {
+          "id": "pharmacy-inventory",
+          "name": "Pharmacy Inventory",
+          "description": "Stock management and reordering"
+        }
+      ],
+      "permissions": ["pharmacy:view", "pharmacy:dispense", "pharmacy:manage"],
+      "apiEndpoints": ["/api/pharmacy"],
+      "journeyCount": 6
+    },
+    {
+      "id": "financial",
+      "name": "Financial Management",
+      "category": "business",
+      "description": "Complete financial operations including invoicing, payment processing, insurance claims, accounts receivable, expense management, and financial reporting.",
+      "route": "/financial",
+      "icon": "DollarSign",
+      "businessValue": "Maximizes revenue capture, accelerates payment collection, streamlines insurance billing, and provides financial visibility for decision making.",
+      "personas": ["billing-staff", "accountant", "finance-manager", "admin"],
+      "features": [
+        {
+          "id": "invoice-generation",
+          "name": "Invoice Generation",
+          "description": "Create invoices with procedure codes and taxes"
+        },
+        {
+          "id": "payment-processing",
+          "name": "Payment Processing",
+          "description": "Process cash, card, and insurance payments"
+        },
+        {
+          "id": "insurance-claims",
+          "name": "Insurance Claim Submission",
+          "description": "Electronic claim submission with tracking"
+        },
+        {
+          "id": "accounts-receivable",
+          "name": "Accounts Receivable",
+          "description": "Aging reports and collection management"
+        },
+        {
+          "id": "expense-management",
+          "name": "Expense Recording",
+          "description": "Track and approve business expenses"
+        },
+        {
+          "id": "financial-reporting",
+          "name": "Financial Reporting",
+          "description": "Generate financial statements and reports"
+        }
+      ],
+      "permissions": ["financial:view", "financial:create", "financial:update", "financial:approve", "financial:reports"],
+      "apiEndpoints": ["/api/financial"],
+      "journeyCount": 6
+    },
+    {
+      "id": "inventory",
+      "name": "Inventory Management",
+      "category": "business",
+      "description": "Complete inventory control including stock receipt, transfers, adjustments, purchase orders, and inventory audits across multiple locations.",
+      "route": "/inventory",
+      "icon": "Package",
+      "businessValue": "Prevents stockouts, reduces waste from expiration, optimizes purchasing, and provides visibility across all storage locations.",
+      "personas": ["warehouse-staff", "procurement-staff", "warehouse-manager", "admin"],
+      "features": [
+        {
+          "id": "stock-receipt",
+          "name": "Stock Receipt",
+          "description": "Receive goods against purchase orders"
+        },
+        {
+          "id": "stock-transfer",
+          "name": "Stock Transfer",
+          "description": "Transfer inventory between locations"
+        },
+        {
+          "id": "stock-adjustment",
+          "name": "Stock Adjustment",
+          "description": "Adjust quantities with reason tracking"
+        },
+        {
+          "id": "purchase-orders",
+          "name": "Purchase Order Creation",
+          "description": "Create and approve purchase orders"
+        },
+        {
+          "id": "inventory-audit",
+          "name": "Inventory Audit",
+          "description": "Physical count and variance reconciliation"
+        }
+      ],
+      "permissions": ["inventory:view", "inventory:create", "inventory:update", "inventory:delete", "inventory:order"],
+      "apiEndpoints": ["/api/inventory"],
+      "journeyCount": 5
+    },
+    {
+      "id": "hr-management",
+      "name": "HR Management",
+      "category": "business",
+      "description": "Human resources management including employee onboarding, attendance tracking, leave management, performance evaluations, and training programs.",
+      "route": "/hr",
+      "icon": "Users",
+      "businessValue": "Streamlines HR operations, ensures compliance with labor regulations, tracks employee performance, and manages workforce development.",
+      "personas": ["hr-manager", "hr-staff", "manager", "employee", "admin"],
+      "features": [
+        {
+          "id": "employee-onboarding",
+          "name": "Employee Onboarding",
+          "description": "New hire registration and setup"
+        },
+        {
+          "id": "attendance-management",
+          "name": "Attendance Management",
+          "description": "Clock in/out and time tracking"
+        },
+        {
+          "id": "leave-management",
+          "name": "Leave Request",
+          "description": "Leave application and approval workflow"
+        },
+        {
+          "id": "performance-evaluation",
+          "name": "Performance Evaluation",
+          "description": "Annual reviews and goal setting"
+        },
+        {
+          "id": "training-management",
+          "name": "Training Management",
+          "description": "Training programs and certification tracking"
+        }
+      ],
+      "permissions": ["hr:view", "hr:create", "hr:update", "hr:delete", "hr:payroll"],
+      "apiEndpoints": ["/api/hr"],
+      "journeyCount": 5
+    },
+    {
+      "id": "payroll",
+      "name": "Payroll",
+      "category": "business",
+      "description": "Complete payroll processing including salary configuration, payroll calculation, payslip generation, overtime, and loan management.",
+      "route": "/hr/payroll",
+      "icon": "Wallet",
+      "businessValue": "Automates payroll processing, ensures accurate calculations with tax compliance, and provides employee self-service for payslips.",
+      "personas": ["payroll-admin", "finance-manager", "hr-manager", "employee"],
+      "features": [
+        {
+          "id": "salary-configuration",
+          "name": "Salary Configuration",
+          "description": "Define salary components, allowances, deductions"
+        },
+        {
+          "id": "payroll-processing",
+          "name": "Payroll Processing",
+          "description": "Calculate and approve monthly payroll"
+        },
+        {
+          "id": "payslip-generation",
+          "name": "Payslip Generation",
+          "description": "Generate and distribute payslips"
+        },
+        {
+          "id": "overtime-management",
+          "name": "Overtime Management",
+          "description": "Track and approve overtime hours"
+        },
+        {
+          "id": "loan-management",
+          "name": "Loan Management",
+          "description": "Employee loans with salary deductions"
+        }
+      ],
+      "permissions": ["hr:payroll"],
+      "apiEndpoints": ["/api/hr"],
+      "journeyCount": 5
+    },
+    {
+      "id": "marketing",
+      "name": "Marketing",
+      "category": "business",
+      "description": "Marketing operations including campaign management, lead tracking, promotions, referral programs, email marketing, and analytics.",
+      "route": "/marketing",
+      "icon": "Megaphone",
+      "businessValue": "Drives patient acquisition, tracks marketing ROI, manages referral programs, and provides insights for marketing optimization.",
+      "personas": ["marketing-manager", "marketing-staff", "sales-staff", "admin"],
+      "features": [
+        {
+          "id": "campaign-management",
+          "name": "Campaign Creation",
+          "description": "Create and manage marketing campaigns"
+        },
+        {
+          "id": "lead-management",
+          "name": "Lead Management",
+          "description": "Capture, qualify, and track leads"
+        },
+        {
+          "id": "promotion-setup",
+          "name": "Promotion Setup",
+          "description": "Configure discounts and promotional offers"
+        },
+        {
+          "id": "referral-program",
+          "name": "Referral Program",
+          "description": "Manage patient referral rewards"
+        },
+        {
+          "id": "email-marketing",
+          "name": "Email Marketing",
+          "description": "Email campaigns with tracking"
+        },
+        {
+          "id": "marketing-analytics",
+          "name": "Marketing Analytics",
+          "description": "Campaign performance and ROI analysis"
+        }
+      ],
+      "permissions": ["marketing:view", "marketing:create", "marketing:update", "marketing:reports"],
+      "apiEndpoints": ["/api/marketing"],
+      "journeyCount": 6
+    },
+    {
+      "id": "workflow-engine",
+      "name": "Workflow Engine",
+      "category": "platform",
+      "description": "Business process automation with visual workflow designer, task management, approval workflows, and process monitoring.",
+      "route": "/workflow",
+      "icon": "GitBranch",
+      "businessValue": "Automates routine processes, ensures consistent execution, provides visibility into process status, and enables continuous improvement.",
+      "personas": ["system-admin", "supervisor", "manager"],
+      "features": [
+        {
+          "id": "process-definition",
+          "name": "Process Definition",
+          "description": "Visual workflow designer with drag-and-drop"
+        },
+        {
+          "id": "task-management",
+          "name": "Task Management",
+          "description": "View and complete assigned tasks"
+        },
+        {
+          "id": "approval-workflows",
+          "name": "Approval Workflows",
+          "description": "Multi-level approval processes"
+        },
+        {
+          "id": "workflow-monitoring",
+          "name": "Workflow Monitoring",
+          "description": "Dashboard for active processes"
+        }
+      ],
+      "permissions": ["workflow:view", "workflow:create", "workflow:manage"],
+      "apiEndpoints": ["/api/workflows"],
+      "journeyCount": 4
+    },
+    {
+      "id": "patient-portal",
+      "name": "Patient Portal",
+      "category": "platform",
+      "description": "Patient self-service portal for appointment booking, medical records access, prescription refills, secure messaging, and online payments.",
+      "route": "/portal",
+      "icon": "UserCircle",
+      "businessValue": "Improves patient engagement, reduces staff workload for routine tasks, and provides 24/7 access to health information.",
+      "personas": ["patient"],
+      "features": [
+        {
+          "id": "portal-registration",
+          "name": "Patient Registration",
+          "description": "Self-service portal account creation"
+        },
+        {
+          "id": "online-booking",
+          "name": "Online Appointment Booking",
+          "description": "Book appointments online"
+        },
+        {
+          "id": "view-records",
+          "name": "View Medical Records",
+          "description": "Access visit summaries, lab results, prescriptions"
+        },
+        {
+          "id": "prescription-refill",
+          "name": "Request Prescription Refill",
+          "description": "Request medication refills online"
+        },
+        {
+          "id": "secure-messaging",
+          "name": "Secure Messaging",
+          "description": "Communicate with providers"
+        },
+        {
+          "id": "online-payment",
+          "name": "Online Bill Payment",
+          "description": "View and pay bills online"
+        }
+      ],
+      "permissions": ["portal:access"],
+      "apiEndpoints": ["/api/portal"],
+      "journeyCount": 6
+    },
+    {
+      "id": "multi-tenancy",
+      "name": "Multi-Tenancy",
+      "category": "platform",
+      "description": "Multi-organization platform management including tenant provisioning, company setup, branch configuration, user management, and subscription management.",
+      "route": "/admin",
+      "icon": "Building2",
+      "businessValue": "Enables scalable SaaS deployment, isolates tenant data, allows per-tenant customization, and manages subscriptions.",
+      "personas": ["platform-admin", "tenant-admin", "company-admin", "branch-admin"],
+      "features": [
+        {
+          "id": "tenant-provisioning",
+          "name": "Tenant Provisioning",
+          "description": "Create and configure new tenants"
+        },
+        {
+          "id": "company-setup",
+          "name": "Company Setup",
+          "description": "Configure company settings and branding"
+        },
+        {
+          "id": "branch-configuration",
+          "name": "Branch Configuration",
+          "description": "Set up branches with operating hours"
+        },
+        {
+          "id": "user-management",
+          "name": "User Management",
+          "description": "Create users and assign roles/branches"
+        },
+        {
+          "id": "subscription-management",
+          "name": "Subscription Management",
+          "description": "Manage plans and billing"
+        }
+      ],
+      "permissions": ["admin:tenants", "admin:users", "admin:settings"],
+      "apiEndpoints": ["/api/tenants", "/api/users"],
+      "journeyCount": 5
+    },
+    {
+      "id": "analytics",
+      "name": "Analytics & Reporting",
+      "category": "platform",
+      "description": "Business intelligence with customizable dashboards, custom report builder, scheduled reports, data export, and KPI monitoring.",
+      "route": "/analytics",
+      "icon": "BarChart3",
+      "businessValue": "Provides actionable insights for decision making, tracks KPIs, enables data-driven management, and supports compliance reporting.",
+      "personas": ["manager", "executive", "analyst", "admin"],
+      "features": [
+        {
+          "id": "dashboard-configuration",
+          "name": "Dashboard Configuration",
+          "description": "Customize analytics dashboards"
+        },
+        {
+          "id": "custom-reports",
+          "name": "Custom Report Creation",
+          "description": "Build custom reports with report designer"
+        },
+        {
+          "id": "scheduled-reports",
+          "name": "Scheduled Report Setup",
+          "description": "Automate report generation and delivery"
+        },
+        {
+          "id": "data-export",
+          "name": "Data Export",
+          "description": "Export data to Excel, CSV, PDF"
+        },
+        {
+          "id": "kpi-monitoring",
+          "name": "KPI Monitoring",
+          "description": "Real-time KPI dashboards"
+        }
+      ],
+      "permissions": ["analytics:view", "analytics:create", "analytics:export"],
+      "apiEndpoints": ["/api/analytics"],
+      "journeyCount": 5
+    },
+    {
+      "id": "security-audit",
+      "name": "Security & Audit",
+      "category": "platform",
+      "description": "Security management including user access review, audit logging, password policies, security incident response, and compliance reporting.",
+      "route": "/security",
+      "icon": "Shield",
+      "businessValue": "Ensures HIPAA compliance, tracks all data access, protects against unauthorized access, and provides audit trails for regulators.",
+      "personas": ["security-admin", "auditor", "compliance-officer", "admin"],
+      "features": [
+        {
+          "id": "access-review",
+          "name": "User Access Review",
+          "description": "Periodic review of user permissions"
+        },
+        {
+          "id": "audit-logs",
+          "name": "Audit Log Review",
+          "description": "Search and analyze audit logs"
+        },
+        {
+          "id": "password-policies",
+          "name": "Password Policy Management",
+          "description": "Configure password requirements"
+        },
+        {
+          "id": "security-incidents",
+          "name": "Security Incident Response",
+          "description": "Track and respond to security events"
+        },
+        {
+          "id": "compliance-reporting",
+          "name": "Compliance Reporting",
+          "description": "Generate compliance reports"
+        }
+      ],
+      "permissions": ["admin:security", "admin:audit_logs", "admin:system"],
+      "apiEndpoints": ["/api/security", "/api/audit"],
+      "journeyCount": 5
+    },
+    {
+      "id": "specialty-modules",
+      "name": "Specialty Modules",
+      "category": "specialty",
+      "description": "Specialty-specific clinical modules for audiology, dental, cardiology, ophthalmology, orthopedics, pediatrics, OB/GYN, physiotherapy, oncology, and dialysis.",
+      "route": "/specialties",
+      "icon": "Heart",
+      "businessValue": "Provides specialty-specific workflows and documentation, supports specialized clinical requirements, and enables comprehensive care.",
+      "personas": ["doctor", "specialist", "nurse", "technician"],
+      "subModules": [
+        {
+          "id": "audiology",
+          "name": "Audiology",
+          "route": "/audiology",
+          "description": "Audiometry testing, audiogram charting, hearing aid fitting"
+        },
+        {
+          "id": "dental",
+          "name": "Dental",
+          "route": "/dental",
+          "description": "Dental charts, tooth records, periodontal exams"
+        },
+        {
+          "id": "cardiology",
+          "name": "Cardiology",
+          "route": "/cardiology",
+          "description": "ECG records, echocardiograms, stress tests, cath lab"
+        },
+        {
+          "id": "ophthalmology",
+          "name": "Ophthalmology",
+          "route": "/ophthalmology",
+          "description": "Visual acuity, refraction, IOP, fundus exams"
+        },
+        {
+          "id": "orthopedics",
+          "name": "Orthopedics",
+          "route": "/orthopedics",
+          "description": "Fracture management, joint assessments, surgery tracking"
+        },
+        {
+          "id": "pediatrics",
+          "name": "Pediatrics",
+          "route": "/pediatrics",
+          "description": "Growth charts, vaccinations, developmental milestones"
+        },
+        {
+          "id": "obgyn",
+          "name": "OB/GYN",
+          "route": "/obgyn",
+          "description": "Prenatal care, pregnancy tracking, ultrasounds"
+        },
+        {
+          "id": "physiotherapy",
+          "name": "Physiotherapy",
+          "route": "/physiotherapy",
+          "description": "Therapy sessions, exercise programs, progress tracking"
+        },
+        {
+          "id": "oncology",
+          "name": "Oncology",
+          "route": "/oncology",
+          "description": "Cancer diagnoses, chemotherapy sessions, treatment plans"
+        },
+        {
+          "id": "dialysis",
+          "name": "Dialysis",
+          "route": "/dialysis",
+          "description": "Hemodialysis sessions, vascular access, fluid balance"
+        }
+      ],
+      "permissions": ["specialty:access"],
+      "apiEndpoints": [],
+      "journeyCount": 10
+    }
+  ]
+}
