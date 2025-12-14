@@ -37,10 +37,9 @@ interface SidebarItemProps {
     icon?: string;
     children?: { id: string; title: string; path: string }[];
   };
-  depth?: number;
 }
 
-function SidebarItem({ section, depth = 0 }: SidebarItemProps) {
+function SidebarItem({ section }: SidebarItemProps) {
   const location = useLocation();
   const [isOpen, setIsOpen] = useState(() => {
     // Auto-expand if current path is in children

@@ -30,7 +30,7 @@ export function DocsLayout() {
     const breadcrumbs = [{ label: 'Home', path: '/' }];
 
     let currentPath = '';
-    paths.forEach((segment, index) => {
+    paths.forEach((segment) => {
       currentPath += `/${segment}`;
       const label = segment
         .split('-')
