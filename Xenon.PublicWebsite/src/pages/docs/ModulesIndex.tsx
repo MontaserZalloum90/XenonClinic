@@ -59,7 +59,7 @@ export default function ModulesIndex() {
       <div>
         <h1 className="text-3xl font-bold text-gray-900 mb-4">Product Modules</h1>
         <p className="text-lg text-gray-600">
-          XenonClinic includes 17+ integrated modules covering healthcare operations,
+          XenonClinic includes 38+ integrated modules covering healthcare operations,
           business management, and platform administration. Each module is designed
           to work seamlessly with others.
         </p>
@@ -68,7 +68,7 @@ export default function ModulesIndex() {
       {/* Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <div className="bg-white border border-gray-200 rounded-lg p-4 text-center">
-          <div className="text-3xl font-bold text-primary-600">17+</div>
+          <div className="text-3xl font-bold text-primary-600">38+</div>
           <div className="text-sm text-gray-500">Modules</div>
         </div>
         <div className="bg-white border border-gray-200 rounded-lg p-4 text-center">
