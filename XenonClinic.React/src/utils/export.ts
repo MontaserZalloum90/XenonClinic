@@ -5,14 +5,14 @@
 export interface ExportColumn {
   key: string;
   label: string;
-  format?: (value: any) => string;
+  format?: (value: unknown) => string;
 }
 
 /**
  * Export data to CSV format
  */
 export const exportToCSV = (
-  data: any[],
+  data: Record<string, unknown>[],
   columns: ExportColumn[],
   filename: string
 ) => {
@@ -55,7 +55,7 @@ export const exportToCSV = (
  * Export data to Excel format (using HTML table format that Excel can read)
  */
 export const exportToExcel = (
-  data: any[],
+  data: Record<string, unknown>[],
   columns: ExportColumn[],
   filename: string
 ) => {
@@ -96,7 +96,7 @@ export const exportToExcel = (
  * Export data to JSON format
  */
 export const exportToJSON = (
-  data: any[],
+  data: Record<string, unknown>[],
   filename: string
 ) => {
   if (!data || data.length === 0) {
@@ -111,7 +111,7 @@ export const exportToJSON = (
  * Print data in a formatted table
  */
 export const printTable = (
-  data: any[],
+  data: Record<string, unknown>[],
   columns: ExportColumn[],
   title?: string
 ) => {
@@ -201,21 +201,21 @@ const downloadFile = (content: string, filename: string, mimeType: string) => {
  * Format helpers for common data types
  */
 export const formatters = {
-  date: (value: any) => {
+  date: (value: unknown) => {
     if (!value) return '';
-    const date = new Date(value);
+    const date = new Date(value as string | number | Date);
     return date.toLocaleDateString();
   },
-  datetime: (value: any) => {
+  datetime: (value: unknown) => {
     if (!value) return '';
-    const date = new Date(value);
+    const date = new Date(value as string | number | Date);
     return date.toLocaleString();
   },
-  currency: (value: any, currency = 'AED') => {
+  currency: (value: unknown, currency = 'AED') => {
     if (value === null || value === undefined) return '';
     return `${Number(value).toFixed(2)} ${currency}`;
   },
-  boolean: (value: any) => {
+  boolean: (value: unknown) => {
     return value ? 'Yes' : 'No';
   },
 };

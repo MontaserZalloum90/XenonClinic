@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   MegaphoneIcon,
   UserGroupIcon,
@@ -90,6 +90,7 @@ const getLeadSourceLabel = (source: LeadSource): string => {
 type TabType = 'campaigns' | 'leads';
 
 export const MarketingList = () => {
+  const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<TabType>('campaigns');
   const [showNewCampaign, setShowNewCampaign] = useState(false);
   const [showNewLead, setShowNewLead] = useState(false);
@@ -159,14 +160,30 @@ export const MarketingList = () => {
     return matchesSearch && matchesStatus;
   });
 
+  const createCampaignMutation = useMutation({
+    mutationFn: (data: Record<string, unknown>) => campaignApi.create(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['campaigns'] });
+      queryClient.invalidateQueries({ queryKey: ['marketing-stats'] });
+      setShowNewCampaign(false);
+    },
+  });
+
+  const createLeadMutation = useMutation({
+    mutationFn: (data: Record<string, unknown>) => leadApi.create(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['leads'] });
+      queryClient.invalidateQueries({ queryKey: ['marketing-stats'] });
+      setShowNewLead(false);
+    },
+  });
+
   const handleNewCampaign = (data: unknown) => {
-    // TODO: Implement API call to create campaign
-    setShowNewCampaign(false);
+    createCampaignMutation.mutate(data as Record<string, unknown>);
   };
 
   const handleNewLead = (data: unknown) => {
-    // TODO: Implement API call to create lead
-    setShowNewLead(false);
+    createLeadMutation.mutate(data as Record<string, unknown>);
   };
 
   return (

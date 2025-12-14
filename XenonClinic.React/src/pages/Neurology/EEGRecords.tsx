@@ -38,22 +38,7 @@ export const EEGRecords = ({ patientId }: EEGRecordsProps = {}) => {
     },
   });
 
-  // Mutations
-  const createMutation = useMutation({
-    mutationFn: (data: CreateEEGRequest) => neurologyApi.createEEG(data),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["eeg-records"] }),
-  });
-
-  const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: number; data: Partial<CreateEEGRequest> }) =>
-      neurologyApi.updateEEG(id, data),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["eeg-records"] }),
-  });
-
-  void createMutation;
-  void updateMutation;
   void EEGStatus;
-  void EEGFinding;
 
   const filteredRecords = records?.filter((record) => {
     const matchesSearch =
@@ -376,6 +361,7 @@ interface EEGRecordModalProps {
 }
 
 const EEGRecordModal = ({ isOpen, onClose, record }: EEGRecordModalProps) => {
+  const queryClient = useQueryClient();
   const [formData, setFormData] = useState<Partial<CreateEEGRequest>>({
     patientId: record?.patientId || 0,
     recordDate: record?.recordDate || new Date().toISOString().split("T")[0],
@@ -387,11 +373,33 @@ const EEGRecordModal = ({ isOpen, onClose, record }: EEGRecordModalProps) => {
     notes: record?.notes || "",
   });
 
+  const createMutation = useMutation({
+    mutationFn: (data: CreateEEGRequest) => neurologyApi.createEEG(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["eeg-records"] });
+      onClose();
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: number; data: Partial<CreateEEGRequest> }) =>
+      neurologyApi.updateEEG(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["eeg-records"] });
+      onClose();
+    },
+  });
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Implement API call to save EEG record
-    onClose();
+    if (record?.id) {
+      updateMutation.mutate({ id: record.id, data: formData });
+    } else {
+      createMutation.mutate(formData as CreateEEGRequest);
+    }
   };
+
+  const isSubmitting = createMutation.isPending || updateMutation.isPending;
 
   const handleChange = (
     e: React.ChangeEvent<
@@ -531,8 +539,8 @@ const EEGRecordModal = ({ isOpen, onClose, record }: EEGRecordModalProps) => {
                 >
                   Cancel
                 </button>
-                <button type="submit" className="btn btn-primary">
-                  {record ? "Update" : "Create"} Record
+                <button type="submit" disabled={isSubmitting} className="btn btn-primary">
+                  {isSubmitting ? "Saving..." : record ? "Update Record" : "Create Record"}
                 </button>
               </div>
             </form>

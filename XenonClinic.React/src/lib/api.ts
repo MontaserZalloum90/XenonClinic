@@ -594,6 +594,9 @@ export const dermatologyApi = {
     headers: { 'Content-Type': 'multipart/form-data' },
   }),
   deleteSkinPhoto: (id: number) => api.delete(`/api/ClinicalVisitsApi/dermatology/photos/${id}`),
+
+  // Statistics
+  getStatistics: () => api.get('/api/ClinicalVisitsApi/dermatology/statistics'),
 };
 
 // ============================================

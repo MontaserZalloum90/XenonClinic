@@ -451,6 +451,7 @@ const MilestoneModal = ({
   onClose,
   milestone,
 }: MilestoneModalProps) => {
+  const queryClient = useQueryClient();
   const [formData, setFormData] = useState({
     patientId: milestone?.patientId || 0,
     milestoneCategory: milestone?.milestoneCategory || "",
@@ -461,12 +462,33 @@ const MilestoneModal = ({
     notes: milestone?.notes || "",
   });
 
+  const createMutation = useMutation({
+    mutationFn: (data: CreateMilestoneRequest) => pediatricsApi.createMilestone(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["development-milestones"] });
+      onClose();
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: number; data: Partial<CreateMilestoneRequest> }) =>
+      pediatricsApi.updateMilestone(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["development-milestones"] });
+      onClose();
+    },
+  });
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Implement actual API call to save milestone
-    void formData;
-    onClose();
+    if (milestone?.id) {
+      updateMutation.mutate({ id: milestone.id, data: formData });
+    } else {
+      createMutation.mutate(formData as CreateMilestoneRequest);
+    }
   };
+
+  const isSubmitting = createMutation.isPending || updateMutation.isPending;
 
   const handleChange = (
     e: React.ChangeEvent<
@@ -681,8 +703,8 @@ const MilestoneModal = ({
                   >
                     Cancel
                   </button>
-                  <button type="submit" className="btn btn-primary">
-                    Save Milestone
+                  <button type="submit" disabled={isSubmitting} className="btn btn-primary">
+                    {isSubmitting ? "Saving..." : "Save Milestone"}
                   </button>
                 </div>
               </form>

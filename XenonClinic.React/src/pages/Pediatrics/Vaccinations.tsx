@@ -378,6 +378,7 @@ const VaccinationModal = ({
   onClose,
   record,
 }: VaccinationModalProps) => {
+  const queryClient = useQueryClient();
   const [formData, setFormData] = useState({
     patientId: record?.patientId || 0,
     vaccineName: record?.vaccineName || "",
@@ -390,11 +391,33 @@ const VaccinationModal = ({
     notes: record?.notes || "",
   });
 
+  const createMutation = useMutation({
+    mutationFn: (data: CreateVaccinationRequest) => pediatricsApi.createVaccination(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["vaccination-records"] });
+      onClose();
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: number; data: Partial<CreateVaccinationRequest> }) =>
+      pediatricsApi.updateVaccination(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["vaccination-records"] });
+      onClose();
+    },
+  });
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Implement API call to save vaccination record
-    onClose();
+    if (record?.id) {
+      updateMutation.mutate({ id: record.id, data: formData });
+    } else {
+      createMutation.mutate(formData as CreateVaccinationRequest);
+    }
   };
+
+  const isSubmitting = createMutation.isPending || updateMutation.isPending;
 
   const handleChange = (
     e: React.ChangeEvent<
@@ -612,8 +635,8 @@ const VaccinationModal = ({
                   >
                     Cancel
                   </button>
-                  <button type="submit" className="btn btn-primary">
-                    Save Record
+                  <button type="submit" disabled={isSubmitting} className="btn btn-primary">
+                    {isSubmitting ? "Saving..." : "Save Record"}
                   </button>
                 </div>
               </form>

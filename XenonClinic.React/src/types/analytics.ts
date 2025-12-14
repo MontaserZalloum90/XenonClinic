@@ -64,7 +64,7 @@ export interface Report {
   parameters: ReportParameters;
   generatedAt: string;
   generatedBy?: string;
-  data: any;
+  data: Record<string, unknown>;
   status: ReportStatus;
   fileUrl?: string;
   description?: string;
@@ -78,7 +78,7 @@ export interface ReportParameters {
   serviceType?: string;
   includeCharts?: boolean;
   includeDetails?: boolean;
-  [key: string]: any;
+  [key: string]: string | number | boolean | undefined;
 }
 
 export interface ChartData {

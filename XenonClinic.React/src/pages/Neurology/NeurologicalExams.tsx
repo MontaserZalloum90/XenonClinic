@@ -35,21 +35,6 @@ export const NeurologicalExams = ({ patientId }: NeurologicalExamsProps = {}) =>
     },
   });
 
-  // Mutations
-  const createMutation = useMutation({
-    mutationFn: (data: CreateNeurologicalExamRequest) => neurologyApi.createExam(data),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['neurological-exams'] }),
-  });
-
-  const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: number; data: Partial<CreateNeurologicalExamRequest> }) =>
-      neurologyApi.updateExam(id, data),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['neurological-exams'] }),
-  });
-
-  void createMutation;
-  void updateMutation;
-
   const filteredExams = exams?.filter((exam) => {
     const matchesSearch =
       !searchTerm ||
@@ -267,12 +252,33 @@ const NeurologicalExamModal = ({ isOpen, onClose, exam }: NeurologicalExamModalP
     notes: exam?.notes || '',
   });
 
+  const createMutation = useMutation({
+    mutationFn: (data: CreateNeurologicalExamRequest) => neurologyApi.createExam(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['neurological-exams'] });
+      onClose();
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: number; data: Partial<CreateNeurologicalExamRequest> }) =>
+      neurologyApi.updateExam(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['neurological-exams'] });
+      onClose();
+    },
+  });
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Implement API call to save neurological exam
-    queryClient.invalidateQueries({ queryKey: ['neurological-exams'] });
-    onClose();
+    if (exam?.id) {
+      updateMutation.mutate({ id: exam.id, data: formData });
+    } else {
+      createMutation.mutate(formData as CreateNeurologicalExamRequest);
+    }
   };
+
+  const isSubmitting = createMutation.isPending || updateMutation.isPending;
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
@@ -481,8 +487,8 @@ const NeurologicalExamModal = ({ isOpen, onClose, exam }: NeurologicalExamModalP
                 <button type="button" onClick={onClose} className="btn btn-outline">
                   Cancel
                 </button>
-                <button type="submit" className="btn btn-primary">
-                  {exam ? 'Update' : 'Create'} Exam
+                <button type="submit" disabled={isSubmitting} className="btn btn-primary">
+                  {isSubmitting ? 'Saving...' : exam ? 'Update Exam' : 'Create Exam'}
                 </button>
               </div>
             </form>
