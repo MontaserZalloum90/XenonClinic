@@ -31,7 +31,7 @@ const quickLinks = [
   {
     icon: LayoutGrid,
     title: 'Product Modules',
-    description: 'Explore all 15 product modules',
+    description: `Explore all ${docsStatistics.totalModules} product modules`,
     path: '/docs/modules',
     color: 'bg-purple-100 text-purple-600',
   },

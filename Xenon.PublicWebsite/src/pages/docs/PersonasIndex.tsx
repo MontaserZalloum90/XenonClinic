@@ -37,7 +37,7 @@ export default function PersonasIndex() {
       <div>
         <h1 className="text-3xl font-bold text-gray-900 mb-4">User Personas</h1>
         <p className="text-lg text-gray-600">
-          XenonClinic supports 16 distinct user personas across clinical, operational,
+          XenonClinic supports {personasData.length} distinct user personas across clinical, operational,
           and administrative roles. Each persona has specific permissions, access
           scopes, and workflows tailored to their responsibilities.
         </p>
