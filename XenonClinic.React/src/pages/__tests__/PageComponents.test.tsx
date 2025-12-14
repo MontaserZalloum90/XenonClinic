@@ -4,6 +4,63 @@ import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { BrowserRouter } from 'react-router-dom';
 
+// Shared test interfaces
+interface PatientData {
+  id?: number;
+  firstName: string;
+  lastName: string;
+  emiratesId: string;
+  phone: string;
+}
+
+interface AppointmentData {
+  id: number;
+  patientName: string;
+  doctorName: string;
+  date: string;
+  time: string;
+  type: string;
+  status: string;
+}
+
+interface LabResultData {
+  id: number;
+  patientName: string;
+  testName: string;
+  resultDate: string;
+  status: string;
+  abnormal?: boolean;
+}
+
+interface InvoiceData {
+  id: number;
+  patientName: string;
+  totalAmount: number;
+  paidAmount: number;
+  status: string;
+  date: string;
+}
+
+interface InventoryItemData {
+  id: number;
+  name: string;
+  sku: string;
+  category: string;
+  quantity: number;
+  minStock: number;
+  unitPrice: number;
+}
+
+interface EmployeeData {
+  id: number;
+  name: string;
+  department: string;
+  role: string;
+  email: string;
+  phone: string;
+  status: string;
+}
+
 // Mock Dashboard component
 const MockDashboard = ({
   stats = { patients: 0, appointments: 0, revenue: 0, pending: 0 },
@@ -44,11 +101,11 @@ const MockPatientList = ({
   onSearch,
   searchTerm = ''
 }: {
-  patients?: any[];
+  patients?: PatientData[];
   isLoading?: boolean;
   onAdd?: () => void;
-  onEdit?: (patient: any) => void;
-  onDelete?: (patient: any) => void;
+  onEdit?: (patient: PatientData) => void;
+  onDelete?: (patient: PatientData) => void;
   onSearch?: (term: string) => void;
   searchTerm?: string;
 }) => {
@@ -108,11 +165,11 @@ const MockAppointmentsList = ({
   onCheckin,
   selectedDate
 }: {
-  appointments?: any[];
+  appointments?: AppointmentData[];
   isLoading?: boolean;
   onAdd?: () => void;
-  onCancel?: (appointment: any) => void;
-  onCheckin?: (appointment: any) => void;
+  onCancel?: (appointment: AppointmentData) => void;
+  onCheckin?: (appointment: AppointmentData) => void;
   selectedDate?: Date;
 }) => {
   if (isLoading) {
@@ -156,11 +213,11 @@ const MockLabResultsPage = ({
   onVerify,
   filter = 'all'
 }: {
-  results?: any[];
+  results?: LabResultData[];
   isLoading?: boolean;
-  onView?: (result: any) => void;
-  onPrint?: (result: any) => void;
-  onVerify?: (result: any) => void;
+  onView?: (result: LabResultData) => void;
+  onPrint?: (result: LabResultData) => void;
+  onVerify?: (result: LabResultData) => void;
   filter?: string;
 }) => {
   if (isLoading) {
@@ -223,12 +280,12 @@ const MockFinancialPage = ({
   onViewInvoice,
   onRecordPayment
 }: {
-  invoices?: any[];
+  invoices?: InvoiceData[];
   summary?: { total: number; paid: number; pending: number; overdue: number };
   isLoading?: boolean;
   onCreateInvoice?: () => void;
-  onViewInvoice?: (invoice: any) => void;
-  onRecordPayment?: (invoice: any) => void;
+  onViewInvoice?: (invoice: InvoiceData) => void;
+  onRecordPayment?: (invoice: InvoiceData) => void;
 }) => {
   if (isLoading) {
     return <div data-testid="financial-loading">Loading financial data...</div>;
@@ -281,12 +338,12 @@ const MockInventoryPage = ({
   onEditItem,
   onAdjustStock
 }: {
-  items?: any[];
+  items?: InventoryItemData[];
   isLoading?: boolean;
   lowStockCount?: number;
   onAddItem?: () => void;
-  onEditItem?: (item: any) => void;
-  onAdjustStock?: (item: any) => void;
+  onEditItem?: (item: InventoryItemData) => void;
+  onAdjustStock?: (item: InventoryItemData) => void;
 }) => {
   if (isLoading) {
     return <div data-testid="inventory-loading">Loading inventory...</div>;
@@ -334,10 +391,10 @@ const MockHRPage = ({
   onProcessPayroll,
   payrollStatus = 'not_started'
 }: {
-  employees?: any[];
+  employees?: EmployeeData[];
   isLoading?: boolean;
   onAddEmployee?: () => void;
-  onViewEmployee?: (employee: any) => void;
+  onViewEmployee?: (employee: EmployeeData) => void;
   onProcessPayroll?: () => void;
   payrollStatus?: string;
 }) => {

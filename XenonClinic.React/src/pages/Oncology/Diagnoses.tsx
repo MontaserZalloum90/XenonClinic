@@ -169,11 +169,19 @@ const DiagnosisForm = ({
   });
 
   const onSubmit = (data: DiagnosisFormData) => {
-    const payload: any = {
-      ...data,
+    const payload: CreateCancerDiagnosisRequest = {
+      patientId: data.patientId,
+      diagnosisDate: data.diagnosisDate,
+      cancerType: data.cancerType,
+      stage: data.stage,
+      grade: data.grade,
+      primarySite: data.primarySite,
+      metastasis: data.metastasis,
       metastaticSites: data.metastaticSites
         ? data.metastaticSites.split(',').map((s) => s.trim())
         : undefined,
+      histology: data.histology,
+      diagnosedBy: data.diagnosedBy,
       tnmStaging:
         data.tnmT || data.tnmN || data.tnmM
           ? {
@@ -182,12 +190,9 @@ const DiagnosisForm = ({
               m: data.tnmM || '',
             }
           : undefined,
+      biomarkers: data.biomarkers,
+      notes: data.notes,
     };
-
-    // Remove temporary TNM fields
-    delete payload.tnmT;
-    delete payload.tnmN;
-    delete payload.tnmM;
 
     if (isEditing) {
       updateMutation.mutate(data);

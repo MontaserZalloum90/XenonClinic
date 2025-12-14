@@ -62,7 +62,7 @@ export const FractureRecords = () => {
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
-    const data: any = {
+    const data: CreateFractureRecordRequest = {
       patientId: parseInt(formData.get('patientId') as string),
       fractureDate: formData.get('fractureDate') as string,
       boneAffected: formData.get('boneAffected') as string,
@@ -73,7 +73,7 @@ export const FractureRecords = () => {
       castType: formData.get('castType') as string || undefined,
       expectedHealingTime: formData.get('expectedHealingTime') ? parseInt(formData.get('expectedHealingTime') as string) : undefined,
       followUpDate: formData.get('followUpDate') as string || undefined,
-      status: parseInt(formData.get('status') as string),
+      status: parseInt(formData.get('status') as string) as FractureStatus,
       treatedBy: formData.get('treatedBy') as string,
       notes: formData.get('notes') as string || undefined,
     };

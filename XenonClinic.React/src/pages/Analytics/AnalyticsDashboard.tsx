@@ -16,7 +16,7 @@ export const AnalyticsDashboardPage = () => {
   const { data: dashboardData, isLoading } = useQuery<AnalyticsDashboard>({
     queryKey: ['analytics-dashboard', startDate, endDate, selectedDepartment],
     queryFn: async () => {
-      const params: any = { startDate, endDate };
+      const params: { startDate: string; endDate: string; departmentId?: string } = { startDate, endDate };
       if (selectedDepartment !== 'all') {
         params.departmentId = selectedDepartment;
       }

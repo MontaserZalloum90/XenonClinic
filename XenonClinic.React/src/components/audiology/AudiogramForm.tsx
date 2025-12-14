@@ -1,4 +1,4 @@
-import { useForm } from 'react-hook-form';
+import { useForm, UseFormRegister } from 'react-hook-form';
 import type { CreateAudiogramRequest, AudiogramDataPoint, TympanogramResult } from '../../types/audiology';
 import { AUDIOGRAM_FREQUENCIES, EarSide } from '../../types/audiology';
 
@@ -58,8 +58,8 @@ const ThresholdInput = ({
   error,
 }: {
   label: string;
-  register: any;
-  name: string;
+  register: UseFormRegister<FormData>;
+  name: keyof FormData;
   error?: string;
 }) => (
   <div>

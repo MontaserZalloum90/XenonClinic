@@ -3,6 +3,18 @@ import { render, screen, waitFor, fireEvent, within } from '@testing-library/rea
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
+interface PatientFormData {
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  phone?: string;
+  emiratesId?: string;
+  gender?: string;
+  bloodType?: string;
+  address?: string;
+  allergies?: string;
+}
+
 // Mock PatientForm component
 const MockPatientForm = ({
   onSubmit,
@@ -10,9 +22,9 @@ const MockPatientForm = ({
   initialData,
   isLoading
 }: {
-  onSubmit?: (data: any) => void;
+  onSubmit?: (data: PatientFormData) => void;
   onCancel?: () => void;
-  initialData?: any;
+  initialData?: PatientFormData;
   isLoading?: boolean;
 }) => (
   <form onSubmit={(e) => { e.preventDefault(); onSubmit?.({}); }} data-testid="patient-form">
@@ -45,6 +57,18 @@ const MockPatientForm = ({
   </form>
 );
 
+interface SelectOption {
+  id: number;
+  name: string;
+}
+
+interface AppointmentFormData {
+  patientId?: number;
+  doctorId?: number;
+  appointmentType?: string;
+  notes?: string;
+}
+
 // Mock AppointmentForm component
 const MockAppointmentForm = ({
   onSubmit,
@@ -53,11 +77,11 @@ const MockAppointmentForm = ({
   doctors = [],
   initialData
 }: {
-  onSubmit?: (data: any) => void;
+  onSubmit?: (data: AppointmentFormData) => void;
   onCancel?: () => void;
-  patients?: any[];
-  doctors?: any[];
-  initialData?: any;
+  patients?: SelectOption[];
+  doctors?: SelectOption[];
+  initialData?: AppointmentFormData;
 }) => (
   <form onSubmit={(e) => { e.preventDefault(); onSubmit?.({}); }} data-testid="appointment-form">
     <select name="patientId" data-testid="patient-select" defaultValue={initialData?.patientId || ''}>
@@ -84,6 +108,24 @@ const MockAppointmentForm = ({
   </form>
 );
 
+interface LabTest {
+  id: number;
+  name: string;
+  price: number;
+}
+
+interface PatientInfo {
+  id: number;
+  name: string;
+}
+
+interface LabOrderFormData {
+  tests?: number[];
+  priority?: string;
+  sampleType?: string;
+  clinicalNotes?: string;
+}
+
 // Mock LabOrderForm component
 const MockLabOrderForm = ({
   onSubmit,
@@ -91,10 +133,10 @@ const MockLabOrderForm = ({
   tests = [],
   patient
 }: {
-  onSubmit?: (data: any) => void;
+  onSubmit?: (data: LabOrderFormData) => void;
   onCancel?: () => void;
-  tests?: any[];
-  patient?: any;
+  tests?: LabTest[];
+  patient?: PatientInfo;
 }) => (
   <form onSubmit={(e) => { e.preventDefault(); onSubmit?.({}); }} data-testid="lab-order-form">
     <div data-testid="patient-info">{patient?.name || 'No patient selected'}</div>
@@ -124,6 +166,17 @@ const MockLabOrderForm = ({
   </form>
 );
 
+interface InvoiceItem {
+  description: string;
+  quantity: number;
+  price: number;
+}
+
+interface InvoiceFormData {
+  items?: InvoiceItem[];
+  total?: number;
+}
+
 // Mock InvoiceForm component
 const MockInvoiceForm = ({
   onSubmit,
@@ -131,10 +184,10 @@ const MockInvoiceForm = ({
   patient,
   items = []
 }: {
-  onSubmit?: (data: any) => void;
+  onSubmit?: (data: InvoiceFormData) => void;
   onCancel?: () => void;
-  patient?: any;
-  items?: any[];
+  patient?: PatientInfo;
+  items?: InvoiceItem[];
 }) => (
   <form onSubmit={(e) => { e.preventDefault(); onSubmit?.({}); }} data-testid="invoice-form">
     <div data-testid="patient-info">{patient?.name}</div>

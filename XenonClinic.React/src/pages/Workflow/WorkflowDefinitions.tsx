@@ -45,7 +45,7 @@ export const WorkflowDefinitions = () => {
   });
 
   const createMutation = useMutation({
-    mutationFn: (data: any) => workflowDefinitionsApi.create(data),
+    mutationFn: (data: Record<string, unknown>) => workflowDefinitionsApi.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['workflow-definitions'] });
       queryClient.invalidateQueries({ queryKey: ['workflow-statistics'] });

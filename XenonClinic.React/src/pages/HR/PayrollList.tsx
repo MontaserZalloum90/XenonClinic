@@ -9,12 +9,12 @@ const payrollApi = {
   getAll: () => Promise.resolve({ data: [] as PayrollRecord[] }),
   getByPeriod: (period: string) => Promise.resolve({ data: [] as PayrollRecord[] }),
   getById: (id: number) => Promise.resolve({ data: {} as PayrollRecord }),
-  create: (data: any) => Promise.resolve({ data: {} as PayrollRecord }),
-  update: (id: number, data: any) => Promise.resolve({ data: {} as PayrollRecord }),
+  create: (data: Partial<PayrollRecord>) => Promise.resolve({ data: {} as PayrollRecord }),
+  update: (id: number, data: Partial<PayrollRecord>) => Promise.resolve({ data: {} as PayrollRecord }),
   delete: (id: number) => Promise.resolve({ data: {} }),
   process: (id: number) => Promise.resolve({ data: {} as PayrollRecord }),
   approve: (id: number) => Promise.resolve({ data: {} as PayrollRecord }),
-  pay: (id: number, data: any) => Promise.resolve({ data: {} as PayrollRecord }),
+  pay: (id: number, data: { paymentDate: string; paymentMethod: string }) => Promise.resolve({ data: {} as PayrollRecord }),
   cancel: (id: number) => Promise.resolve({ data: {} as PayrollRecord }),
   getStatistics: () => Promise.resolve({
     data: {

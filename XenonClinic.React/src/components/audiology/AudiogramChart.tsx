@@ -10,6 +10,7 @@ import {
   ResponsiveContainer,
   ReferenceLine,
 } from 'recharts';
+import type { TooltipProps } from 'recharts';
 import type { Audiogram, AudiogramDataPoint, AudiogramFrequency } from '../../types/audiology';
 import { AUDIOGRAM_FREQUENCIES, HearingLossGrade } from '../../types/audiology';
 
@@ -18,6 +19,23 @@ interface AudiogramChartProps {
   showBoneConduction?: boolean;
   showNormalRange?: boolean;
   height?: number;
+}
+
+interface ChartDataPoint {
+  frequency: AudiogramFrequency;
+  frequencyLabel: string;
+  rightAir: number | null | undefined;
+  leftAir: number | null | undefined;
+  rightBone: number | null | undefined;
+  leftBone: number | null | undefined;
+  rightAirNoResponse?: boolean;
+  leftAirNoResponse?: boolean;
+}
+
+interface CustomDotProps {
+  cx?: number;
+  cy?: number;
+  payload?: ChartDataPoint;
 }
 
 // Standard audiogram frequency labels
@@ -62,8 +80,9 @@ const transformData = (audiogram: Audiogram) => {
 };
 
 // Custom dot for audiogram symbols
-const RightEarDot = (props: any) => {
+const RightEarDot = (props: CustomDotProps) => {
   const { cx, cy, payload } = props;
+  if (!cx || !cy) return null;
   if (payload?.rightAirNoResponse) {
     // Arrow down for no response
     return (
@@ -77,8 +96,9 @@ const RightEarDot = (props: any) => {
   return <circle cx={cx} cy={cy} r={6} fill="#EF4444" stroke="#EF4444" strokeWidth={2} />;
 };
 
-const LeftEarDot = (props: any) => {
+const LeftEarDot = (props: CustomDotProps) => {
   const { cx, cy, payload } = props;
+  if (!cx || !cy) return null;
   if (payload?.leftAirNoResponse) {
     return (
       <g>
@@ -96,8 +116,9 @@ const LeftEarDot = (props: any) => {
 };
 
 // Bone conduction symbols
-const RightBoneDot = (props: any) => {
+const RightBoneDot = (props: CustomDotProps) => {
   const { cx, cy } = props;
+  if (!cx || !cy) return null;
   // < symbol for right bone
   return (
     <text x={cx} y={cy + 4} textAnchor="middle" fill="#EF4444" fontSize={14}>
@@ -106,8 +127,9 @@ const RightBoneDot = (props: any) => {
   );
 };
 
-const LeftBoneDot = (props: any) => {
+const LeftBoneDot = (props: CustomDotProps) => {
   const { cx, cy } = props;
+  if (!cx || !cy) return null;
   // > symbol for left bone
   return (
     <text x={cx} y={cy + 4} textAnchor="middle" fill="#3B82F6" fontSize={14}>
@@ -116,14 +138,20 @@ const LeftBoneDot = (props: any) => {
   );
 };
 
+interface TooltipPayloadEntry {
+  color: string;
+  name: string;
+  value: number | null;
+}
+
 // Custom tooltip
-const CustomTooltip = ({ active, payload, label }: any) => {
+const CustomTooltip = ({ active, payload, label }: TooltipProps<number, string>) => {
   if (!active || !payload?.length) return null;
 
   return (
     <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
       <p className="font-semibold text-gray-900 mb-2">{label} Hz</p>
-      {payload.map((entry: any, index: number) => (
+      {(payload as TooltipPayloadEntry[]).map((entry, index: number) => (
         <p key={index} style={{ color: entry.color }} className="text-sm">
           {entry.name}: {entry.value !== null ? `${entry.value} dB` : 'No Response'}
         </p>
@@ -330,9 +358,9 @@ export const HearingLossGradeLegend = () => (
 
 // Calculate Pure Tone Average (PTA)
 export const calculatePTA = (dataPoints: AudiogramDataPoint[]): number | undefined => {
-  const frequencies = [500, 1000, 2000, 4000] as const;
+  const ptaFrequencies: readonly AudiogramFrequency[] = [500, 1000, 2000, 4000];
   const relevantPoints = dataPoints.filter(
-    (p) => frequencies.includes(p.frequency as any) && !p.noResponse
+    (p) => ptaFrequencies.includes(p.frequency) && !p.noResponse
   );
 
   if (relevantPoints.length < 3) return undefined;

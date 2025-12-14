@@ -289,7 +289,7 @@ const MoleMappingForm = ({ mapping, onSubmit, onCancel, isSubmitting }: MoleMapp
     setLocations(locations.filter((_, i) => i !== index));
   };
 
-  const handleLocationChange = (index: number, field: keyof MoleLocation, value: any) => {
+  const handleLocationChange = (index: number, field: keyof MoleLocation, value: string | number | boolean) => {
     const newLocations = [...locations];
     newLocations[index] = { ...newLocations[index], [field]: value };
     setLocations(newLocations);
