@@ -46,7 +46,7 @@ public class PayrollService : IPayrollService
         var result = new List<PayrollPeriodDto>();
         foreach (var period in periods)
         {
-            var payslips = await _context.Payslips.Where(s => s.PayrollPeriodId == period.Id).ToListAsync();
+            var payslips = await _context.Payslips.AsNoTracking().Where(s => s.PayrollPeriodId == period.Id).ToListAsync();
             result.Add(MapToPeriodDto(period, payslips));
         }
 
@@ -58,7 +58,7 @@ public class PayrollService : IPayrollService
         var period = await _context.PayrollPeriods.FindAsync(id);
         if (period == null) return null;
 
-        var payslips = await _context.Payslips.Where(s => s.PayrollPeriodId == id).ToListAsync();
+        var payslips = await _context.Payslips.AsNoTracking().Where(s => s.PayrollPeriodId == id).ToListAsync();
         return MapToPeriodDto(period, payslips);
     }
 
@@ -80,7 +80,7 @@ public class PayrollService : IPayrollService
 
         if (period == null) return null;
 
-        var payslips = await _context.Payslips.Where(s => s.PayrollPeriodId == period.Id).ToListAsync();
+        var payslips = await _context.Payslips.AsNoTracking().Where(s => s.PayrollPeriodId == period.Id).ToListAsync();
         return MapToPeriodDto(period, payslips);
     }
 
@@ -117,7 +117,7 @@ public class PayrollService : IPayrollService
 
         await _context.SaveChangesAsync();
 
-        var payslips = await _context.Payslips.Where(s => s.PayrollPeriodId == periodId).ToListAsync();
+        var payslips = await _context.Payslips.AsNoTracking().Where(s => s.PayrollPeriodId == periodId).ToListAsync();
         return MapToPeriodDto(period, payslips);
     }
 
@@ -131,7 +131,7 @@ public class PayrollService : IPayrollService
             ?? throw new KeyNotFoundException($"Payroll period with ID {request.PayrollPeriodId} not found");
 
         // Get employees to process
-        var employeeQuery = _context.Employees
+        var employeeQuery = _context.Employees.AsNoTracking()
             .Where(e => e.BranchId == period.BranchId && e.IsActive);
 
         if (request.EmployeeIds != null && request.EmployeeIds.Any())
