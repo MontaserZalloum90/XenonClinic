@@ -10,85 +10,60 @@ import {
 import { format } from 'date-fns';
 import type { EchocardiogramRecord, CreateEchoRequest } from '../../types/cardiology';
 import { EchoStatus, ValveFinding } from '../../types/cardiology';
+import { cardiologyApi } from '../../lib/api';
 
-export const EchoRecords = () => {
+interface EchoRecordsProps {
+  patientId?: number;
+}
+
+export const EchoRecords = ({ patientId }: EchoRecordsProps = {}) => {
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState<EchocardiogramRecord | undefined>(undefined);
 
-  // Mock data - Replace with actual API calls
+  // Fetch Echo records from API
   const { data: records, isLoading } = useQuery<EchocardiogramRecord[]>({
-    queryKey: ['echo-records'],
+    queryKey: ['echo-records', patientId],
     queryFn: async () => {
-      // Mock implementation
-      return [
-        {
-          id: 1,
-          patientId: 1001,
-          patientName: 'John Smith',
-          date: new Date().toISOString(),
-          ejectionFraction: 55,
-          leftVentricleSize: 'Normal',
-          rightVentricleSize: 'Normal',
-          wallMotion: 'Normal global and regional wall motion',
-          valveFindings: {
-            mitral: ValveFinding.Normal,
-            aortic: ValveFinding.Normal,
-            tricuspid: ValveFinding.Normal,
-            pulmonary: ValveFinding.Normal,
-          },
-          conclusions: 'Normal echocardiogram study',
-          performedBy: 'Dr. Johnson',
-          interpretedBy: 'Dr. Williams',
-          status: EchoStatus.Reported,
-          diastolicFunction: 'Normal',
-          pericardialEffusion: false,
-          createdAt: new Date().toISOString(),
-        },
-        {
-          id: 2,
-          patientId: 1002,
-          patientName: 'Mary Williams',
-          date: new Date().toISOString(),
-          ejectionFraction: 35,
-          leftVentricleSize: 'Dilated',
-          rightVentricleSize: 'Normal',
-          wallMotion: 'Reduced global systolic function with hypokinesis of anterior and anteroseptal walls',
-          valveFindings: {
-            mitral: ValveFinding.Regurgitation,
-            aortic: ValveFinding.Normal,
-            tricuspid: ValveFinding.Normal,
-          },
-          conclusions: 'Reduced left ventricular systolic function with EF 35%. Mild mitral regurgitation.',
-          performedBy: 'Dr. Brown',
-          status: EchoStatus.Completed,
-          diastolicFunction: 'Impaired relaxation',
-          pericardialEffusion: false,
-          estimatedPAP: 35,
-          createdAt: new Date().toISOString(),
-        },
-        {
-          id: 3,
-          patientId: 1003,
-          patientName: 'Robert Davis',
-          date: new Date().toISOString(),
-          ejectionFraction: 62,
-          leftVentricleSize: 'Normal',
-          wallMotion: 'Normal',
-          valveFindings: {
-            mitral: ValveFinding.Normal,
-            aortic: ValveFinding.Stenosis,
-          },
-          conclusions: 'Moderate aortic stenosis. Normal LV systolic function.',
-          performedBy: 'Dr. Johnson',
-          status: EchoStatus.InProgress,
-          createdAt: new Date().toISOString(),
-        },
-      ];
+      if (patientId) {
+        const response = await cardiologyApi.getEchosByPatient(patientId);
+        return response.data?.data ?? response.data ?? [];
+      }
+      return [];
     },
   });
+
+  // Create mutation
+  const createMutation = useMutation({
+    mutationFn: (data: CreateEchoRequest) => cardiologyApi.createEcho(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['echo-records'] });
+    },
+  });
+
+  // Update mutation
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: number; data: Partial<CreateEchoRequest> }) =>
+      cardiologyApi.updateEcho(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['echo-records'] });
+    },
+  });
+
+  // Delete mutation
+  const deleteMutation = useMutation({
+    mutationFn: (id: number) => cardiologyApi.deleteEcho(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['echo-records'] });
+    },
+  });
+
+  // Keep these variables available for future use
+  void createMutation;
+  void updateMutation;
+  void deleteMutation;
 
   const filteredRecords = records?.filter((record) => {
     const matchesSearch =
@@ -321,12 +296,30 @@ const EchoRecordModal = ({ isOpen, onClose, record }: EchoRecordModalProps) => {
     notes: record?.notes,
   });
 
+  const createMutation = useMutation({
+    mutationFn: (data: CreateEchoRequest) => cardiologyApi.createEcho(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['echo-records'] });
+      onClose();
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: number; data: Partial<CreateEchoRequest> }) =>
+      cardiologyApi.updateEcho(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['echo-records'] });
+      onClose();
+    },
+  });
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Implement actual API call to save echo record
-    void formData;
-    queryClient.invalidateQueries({ queryKey: ['echo-records'] });
-    onClose();
+    if (record?.id) {
+      updateMutation.mutate({ id: record.id, data: formData });
+    } else {
+      createMutation.mutate(formData as CreateEchoRequest);
+    }
   };
 
   const handleChange = (

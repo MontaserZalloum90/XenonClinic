@@ -11,68 +11,52 @@ import {
 } from '@heroicons/react/24/outline';
 import { format } from 'date-fns';
 import type { PediatricStatistics } from '../../types/pediatrics';
+import { pediatricsApi } from '../../lib/api';
+
+interface UpcomingVaccination {
+  id: number;
+  patientName: string;
+  activity: string;
+  date: string;
+  details: string;
+  status: string;
+}
 
 export const PediatricsDashboard = () => {
-  // Mock data - In production, replace with actual API calls
   const { data: stats } = useQuery<PediatricStatistics>({
     queryKey: ['pediatric-stats'],
     queryFn: async () => {
-      // Mock implementation
-      return {
-        totalPediatricPatients: 567,
-        newPatientsThisMonth: 42,
-        growthMeasurementsThisMonth: 89,
-        growthMeasurementsToday: 8,
-        milestonesTracked: 234,
-        milestonesDelayed: 12,
-        milestonesAchievedThisMonth: 45,
-        vaccinationsThisMonth: 156,
-        vaccinationsToday: 15,
-        overdueVaccinations: 23,
-        upcomingVaccinations: 67,
+      const response = await pediatricsApi.getStatistics();
+      return response.data?.data ?? response.data ?? {
+        totalPediatricPatients: 0,
+        newPatientsThisMonth: 0,
+        growthMeasurementsThisMonth: 0,
+        growthMeasurementsToday: 0,
+        milestonesTracked: 0,
+        milestonesDelayed: 0,
+        milestonesAchievedThisMonth: 0,
+        vaccinationsThisMonth: 0,
+        vaccinationsToday: 0,
+        overdueVaccinations: 0,
+        upcomingVaccinations: 0,
         ageDistribution: {
-          infants: 123,
-          toddlers: 145,
-          preschool: 98,
-          schoolAge: 156,
-          adolescents: 45,
+          infants: 0,
+          toddlers: 0,
+          preschool: 0,
+          schoolAge: 0,
+          adolescents: 0,
         },
-        growthConcerns: 8,
-        developmentConcerns: 5,
+        growthConcerns: 0,
+        developmentConcerns: 0,
       };
     },
   });
 
-  const { data: recentActivities } = useQuery<any[]>({
-    queryKey: ['recent-activities'],
+  const { data: recentActivities } = useQuery<UpcomingVaccination[]>({
+    queryKey: ['pediatrics-upcoming-vaccinations'],
     queryFn: async () => {
-      // Mock implementation
-      return [
-        {
-          id: 1,
-          patientName: 'Emma Johnson',
-          activity: 'Growth Measurement',
-          date: new Date().toISOString(),
-          details: 'Height: 110cm, Weight: 18kg',
-          status: 'Completed',
-        },
-        {
-          id: 2,
-          patientName: 'Noah Smith',
-          activity: 'Vaccination',
-          date: new Date().toISOString(),
-          details: 'MMR Dose 2',
-          status: 'Completed',
-        },
-        {
-          id: 3,
-          patientName: 'Olivia Davis',
-          activity: 'Milestone Assessment',
-          date: new Date().toISOString(),
-          details: 'Language development review',
-          status: 'In Progress',
-        },
-      ];
+      const response = await pediatricsApi.getUpcomingVaccinations();
+      return response.data?.data ?? response.data ?? [];
     },
   });
 

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Dialog } from "@headlessui/react";
 import {
   MagnifyingGlassIcon,
@@ -9,6 +9,7 @@ import {
   BoltIcon,
 } from "@heroicons/react/24/outline";
 import { format } from "date-fns";
+import { neurologyApi } from "../../lib/api";
 
 // EMG Types
 const EMGStatus = {
@@ -49,7 +50,11 @@ interface EMGStudy {
   createdAt?: string;
 }
 
-export const EMGStudies = () => {
+interface EMGStudiesProps {
+  patientId?: number;
+}
+
+export const EMGStudies = ({ patientId }: EMGStudiesProps = {}) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("");
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -58,54 +63,13 @@ export const EMGStudies = () => {
   );
 
   const { data: studies, isLoading } = useQuery<EMGStudy[]>({
-    queryKey: ["emg-studies"],
+    queryKey: ["emg-studies", patientId],
     queryFn: async () => {
-      return [
-        {
-          id: 1,
-          patientId: 4001,
-          patientName: "Thomas Anderson",
-          studyDate: new Date().toISOString(),
-          referralReason: "Numbness and tingling in bilateral hands",
-          nervesStudied: ["Median", "Ulnar", "Radial"],
-          musclesStudied: ["APB", "ADM", "FDI"],
-          findings: EMGFinding.CarpalTunnel,
-          interpretation: "Bilateral carpal tunnel syndrome, moderate severity",
-          performedBy: "Dr. Martinez",
-          interpretedBy: "Dr. Chen",
-          status: EMGStatus.Interpreted,
-          createdAt: new Date().toISOString(),
-        },
-        {
-          id: 2,
-          patientId: 4002,
-          patientName: "Patricia White",
-          studyDate: new Date().toISOString(),
-          referralReason: "Lower back pain radiating to right leg",
-          nervesStudied: ["Peroneal", "Tibial", "Sural"],
-          musclesStudied: ["Tibialis anterior", "Gastrocnemius", "Paraspinals"],
-          findings: EMGFinding.Radiculopathy,
-          interpretation: "Right L5 radiculopathy, active denervation changes",
-          performedBy: "Dr. Williams",
-          status: EMGStatus.Completed,
-          createdAt: new Date().toISOString(),
-        },
-        {
-          id: 3,
-          patientId: 4003,
-          patientName: "Michael Brown",
-          studyDate: new Date().toISOString(),
-          referralReason: "Progressive weakness in legs",
-          nervesStudied: ["Peroneal", "Tibial", "Femoral"],
-          musclesStudied: ["Quadriceps", "Tibialis anterior", "Gastrocnemius"],
-          findings: EMGFinding.Neuropathy,
-          interpretation: "Length-dependent sensorimotor polyneuropathy",
-          performedBy: "Dr. Martinez",
-          interpretedBy: "Dr. Martinez",
-          status: EMGStatus.Interpreted,
-          createdAt: new Date().toISOString(),
-        },
-      ];
+      if (patientId) {
+        const response = await neurologyApi.getEMGsByPatient(patientId);
+        return response.data?.data ?? response.data ?? [];
+      }
+      return [];
     },
   });
 
@@ -435,6 +399,7 @@ interface EMGStudyModalProps {
 }
 
 const EMGStudyModal = ({ isOpen, onClose, study }: EMGStudyModalProps) => {
+  const queryClient = useQueryClient();
   const [formData, setFormData] = useState({
     patientId: study?.patientId || 0,
     studyDate: study?.studyDate || new Date().toISOString().split("T")[0],
@@ -447,11 +412,38 @@ const EMGStudyModal = ({ isOpen, onClose, study }: EMGStudyModalProps) => {
     notes: study?.notes || "",
   });
 
+  const createMutation = useMutation({
+    mutationFn: (data: Record<string, unknown>) => neurologyApi.createEMG(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["emg-studies"] });
+      onClose();
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: number; data: Record<string, unknown> }) =>
+      neurologyApi.updateEMG(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["emg-studies"] });
+      onClose();
+    },
+  });
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Implement API call to save EMG study
-    onClose();
+    const payload = {
+      ...formData,
+      nervesStudied: formData.nervesStudied.split(",").map((s) => s.trim()).filter(Boolean),
+      musclesStudied: formData.musclesStudied.split(",").map((s) => s.trim()).filter(Boolean),
+    };
+    if (study?.id) {
+      updateMutation.mutate({ id: study.id, data: payload });
+    } else {
+      createMutation.mutate(payload);
+    }
   };
+
+  const isSubmitting = createMutation.isPending || updateMutation.isPending;
 
   const handleChange = (
     e: React.ChangeEvent<
@@ -616,8 +608,8 @@ const EMGStudyModal = ({ isOpen, onClose, study }: EMGStudyModalProps) => {
                 >
                   Cancel
                 </button>
-                <button type="submit" className="btn btn-primary">
-                  {study ? "Update" : "Create"} Study
+                <button type="submit" disabled={isSubmitting} className="btn btn-primary">
+                  {isSubmitting ? "Saving..." : study ? "Update Study" : "Create Study"}
                 </button>
               </div>
             </form>

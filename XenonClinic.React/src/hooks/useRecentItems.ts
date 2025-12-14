@@ -5,7 +5,7 @@ export interface RecentItem {
   type: string;
   label: string;
   timestamp: number;
-  metadata?: any;
+  metadata?: Record<string, unknown>;
 }
 
 const STORAGE_KEY = 'xenon_recent_items';
@@ -30,7 +30,7 @@ export const useRecentItems = (itemType?: string) => {
 
   // Add a new recent item
   const addRecentItem = useCallback(
-    (id: string, type: string, label: string, metadata?: any) => {
+    (id: string, type: string, label: string, metadata?: Record<string, unknown>) => {
       const stored = localStorage.getItem(STORAGE_KEY);
       let allItems: RecentItem[] = stored ? JSON.parse(stored) : [];
 

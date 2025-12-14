@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Dialog } from "@headlessui/react";
 import {
   MagnifyingGlassIcon,
@@ -9,6 +9,7 @@ import {
   CalendarIcon,
 } from "@heroicons/react/24/outline";
 import { format } from "date-fns";
+import { obgynApi } from "../../lib/api";
 
 interface PrenatalVisit {
   id: number;
@@ -33,7 +34,12 @@ interface PrenatalVisit {
   createdAt: string;
 }
 
-export const PrenatalVisits = () => {
+interface PrenatalVisitsProps {
+  patientId?: number;
+}
+
+export const PrenatalVisits = ({ patientId }: PrenatalVisitsProps = {}) => {
+  const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
   const [riskFilter, setRiskFilter] = useState<string>("");
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -42,84 +48,30 @@ export const PrenatalVisits = () => {
   );
 
   const { data: visits, isLoading } = useQuery<PrenatalVisit[]>({
-    queryKey: ["prenatal-visits"],
+    queryKey: ["prenatal-visits", patientId],
     queryFn: async () => {
-      return [
-        {
-          id: 1,
-          patientId: 7001,
-          patientName: "Maria Garcia",
-          visitDate: new Date().toISOString(),
-          gestationalAge: 28,
-          weight: 68.5,
-          bloodPressure: "118/76",
-          fundalHeight: 28,
-          fetalHeartRate: 145,
-          fetalMovement: "Active",
-          urineProtein: "Negative",
-          urineGlucose: "Negative",
-          edema: "None",
-          assessment: "Normal pregnancy progression at 28 weeks",
-          plan: "Continue prenatal vitamins, glucose tolerance test scheduled",
-          nextVisitDate: new Date(
-            Date.now() + 14 * 24 * 60 * 60 * 1000,
-          ).toISOString(),
-          performedBy: "Dr. Sarah Chen",
-          riskLevel: "low",
-          createdAt: new Date().toISOString(),
-        },
-        {
-          id: 2,
-          patientId: 7002,
-          patientName: "Jennifer Wilson",
-          visitDate: new Date().toISOString(),
-          gestationalAge: 32,
-          weight: 75.2,
-          bloodPressure: "142/92",
-          fundalHeight: 31,
-          fetalHeartRate: 152,
-          fetalMovement: "Active",
-          urineProtein: "Trace",
-          urineGlucose: "Negative",
-          edema: "Mild ankle swelling",
-          complaints: "Occasional headaches",
-          assessment: "Elevated blood pressure, monitoring for preeclampsia",
-          plan: "BP monitoring twice daily, repeat labs in 1 week, immediate return if symptoms worsen",
-          nextVisitDate: new Date(
-            Date.now() + 7 * 24 * 60 * 60 * 1000,
-          ).toISOString(),
-          performedBy: "Dr. Michael Williams",
-          riskLevel: "high",
-          createdAt: new Date().toISOString(),
-        },
-        {
-          id: 3,
-          patientId: 7003,
-          patientName: "Lisa Anderson",
-          visitDate: new Date(
-            Date.now() - 7 * 24 * 60 * 60 * 1000,
-          ).toISOString(),
-          gestationalAge: 20,
-          weight: 62.0,
-          bloodPressure: "110/70",
-          fundalHeight: 20,
-          fetalHeartRate: 155,
-          fetalMovement: "Beginning to feel",
-          urineProtein: "Negative",
-          urineGlucose: "Negative",
-          edema: "None",
-          assessment: "Normal 20-week anatomy scan",
-          plan: "Continue routine care",
-          nextVisitDate: new Date(
-            Date.now() + 21 * 24 * 60 * 60 * 1000,
-          ).toISOString(),
-          performedBy: "Dr. Sarah Chen",
-          riskLevel: "low",
-          createdAt: new Date().toISOString(),
-        },
-      ];
+      if (patientId) {
+        const response = await obgynApi.getPrenatalVisitsByPatient(patientId);
+        return response.data?.data ?? response.data ?? [];
+      }
+      const response = await obgynApi.getAllPrenatalVisits();
+      return response.data?.data ?? response.data ?? [];
     },
   });
+
+  const createMutation = useMutation({
+    mutationFn: (data: Record<string, unknown>) => obgynApi.createPrenatalVisit(data),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["prenatal-visits"] }),
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: number; data: Record<string, unknown> }) =>
+      obgynApi.updatePrenatalVisit(id, data),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["prenatal-visits"] }),
+  });
+
+  void createMutation;
+  void updateMutation;
 
   const filteredVisits = visits?.filter((visit) => {
     const matchesSearch =

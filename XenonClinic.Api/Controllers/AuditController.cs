@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using XenonClinic.Api.Middleware;
@@ -165,10 +166,21 @@ public class AuditController : BaseApiController
     [HttpPost("archive")]
     [Authorize(Policy = "SecurityAdmin")]
     [ProducesResponseType(typeof(ApiResponse<int>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> ArchiveOldLogs(
         [FromQuery] DateTime beforeDate,
-        [FromQuery] string archivePath)
+        [FromQuery]
+        [Required(ErrorMessage = "Archive path is required")]
+        [StringLength(500, MinimumLength = 1, ErrorMessage = "Archive path must be between 1 and 500 characters")]
+        [RegularExpression(@"^[a-zA-Z0-9_\-/\\:.]+$", ErrorMessage = "Archive path contains invalid characters")]
+        string archivePath)
     {
+        // Additional validation to prevent path traversal
+        if (archivePath.Contains("..") || archivePath.Contains("~"))
+        {
+            return ApiBadRequest("Archive path cannot contain path traversal sequences");
+        }
+
         var count = await _auditService.ArchiveOldLogsAsync(beforeDate, archivePath);
         return ApiOk(count, $"Archived {count} audit log entries");
     }
@@ -211,9 +223,12 @@ public class AuditController : BaseApiController
     [HttpPost("export")]
     [Authorize(Policy = "AuditLogView")]
     [ProducesResponseType(typeof(FileContentResult), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> ExportLogs(
         [FromBody] AuditLogQueryDto query,
-        [FromQuery] string format = "CSV")
+        [FromQuery]
+        [RegularExpression("^(CSV|JSON|csv|json)$", ErrorMessage = "Format must be 'CSV' or 'JSON'")]
+        string format = "CSV")
     {
         if (!_tenantContext.IsCompanyAdmin)
         {

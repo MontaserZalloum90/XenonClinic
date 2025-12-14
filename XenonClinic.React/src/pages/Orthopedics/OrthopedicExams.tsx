@@ -61,7 +61,7 @@ export const OrthopedicExams = () => {
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
-    const data: any = {
+    const data: CreateOrthopedicExamRequest = {
       patientId: parseInt(formData.get('patientId') as string),
       examDate: formData.get('examDate') as string,
       chiefComplaint: formData.get('chiefComplaint') as string,

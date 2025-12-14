@@ -224,14 +224,14 @@ const MockDataTable = ({
   onSelect
 }: {
   columns?: Array<{ key: string; label: string; sortable?: boolean }>;
-  data?: any[];
-  onRowClick?: (row: any) => void;
+  data?: Record<string, unknown>[];
+  onRowClick?: (row: Record<string, unknown>) => void;
   isLoading?: boolean;
   emptyMessage?: string;
   sortable?: boolean;
   selectable?: boolean;
   onSort?: (key: string, direction: 'asc' | 'desc') => void;
-  onSelect?: (selected: any[]) => void;
+  onSelect?: (selected: Record<string, unknown>[]) => void;
 }) => {
   if (isLoading) {
     return <div data-testid="data-table-loading">Loading...</div>;

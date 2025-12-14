@@ -32,7 +32,9 @@ public class WorkflowSerializer
     }
 
     /// <summary>
-    /// Deserializes JSON to a workflow design model
+    /// Deserializes JSON to a workflow design model.
+    /// Returns null if JSON is empty/whitespace or invalid.
+    /// For stricter parsing with exception details, use <see cref="DeserializeDesignStrict"/>.
     /// </summary>
     public static WorkflowDesignModel? DeserializeDesign(string json)
     {
@@ -45,8 +47,24 @@ public class WorkflowSerializer
         }
         catch (JsonException)
         {
+            // Silent failure for backward compatibility - use DeserializeDesignStrict for exception details
             return null;
         }
+    }
+
+    /// <summary>
+    /// Deserializes JSON to a workflow design model with strict error handling.
+    /// Throws JsonException if JSON is invalid.
+    /// </summary>
+    /// <exception cref="JsonException">Thrown when JSON is malformed or invalid.</exception>
+    /// <exception cref="ArgumentException">Thrown when json is null or whitespace.</exception>
+    public static WorkflowDesignModel DeserializeDesignStrict(string json)
+    {
+        if (string.IsNullOrWhiteSpace(json))
+            throw new ArgumentException("JSON cannot be null or whitespace", nameof(json));
+
+        return JsonSerializer.Deserialize<WorkflowDesignModel>(json, _options)
+            ?? throw new JsonException("Deserialization returned null");
     }
 
     /// <summary>

@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
   BeakerIcon,
@@ -12,62 +11,46 @@ import {
 } from '@heroicons/react/24/outline';
 import { format } from 'date-fns';
 import type { NeurologyStatistics } from '../../types/neurology';
+import { neurologyApi } from '../../lib/api';
+
+interface RecentExam {
+  id: number;
+  patientName: string;
+  examType: string;
+  date: string;
+  status: string;
+  performedBy: string;
+}
 
 export const NeurologyDashboard = () => {
-  // Mock data - In production, replace with actual API calls
   const { data: stats } = useQuery<NeurologyStatistics>({
     queryKey: ['neurology-stats'],
     queryFn: async () => {
-      // Mock implementation
-      return {
-        totalPatients: 287,
-        newPatientsThisMonth: 19,
-        examsToday: 8,
-        examsThisWeek: 34,
-        examsThisMonth: 142,
-        pendingReviews: 12,
-        eegsThisWeek: 15,
-        eegsThisMonth: 58,
-        abnormalEEGs: 23,
-        seizuresThisMonth: 47,
-        epilepsyPatients: 89,
-        strokeAssessmentsThisMonth: 12,
-        acuteStrokes: 3,
-        monthlyRevenue: 98500,
+      const response = await neurologyApi.getStatistics();
+      return response.data?.data ?? response.data ?? {
+        totalPatients: 0,
+        newPatientsThisMonth: 0,
+        examsToday: 0,
+        examsThisWeek: 0,
+        examsThisMonth: 0,
+        pendingReviews: 0,
+        eegsThisWeek: 0,
+        eegsThisMonth: 0,
+        abnormalEEGs: 0,
+        seizuresThisMonth: 0,
+        epilepsyPatients: 0,
+        strokeAssessmentsThisMonth: 0,
+        acuteStrokes: 0,
+        monthlyRevenue: 0,
       };
     },
   });
 
-  const { data: recentExams } = useQuery<any[]>({
-    queryKey: ['recent-neuro-exams'],
+  const { data: recentExams } = useQuery<RecentExam[]>({
+    queryKey: ['neurology-recent-exams'],
     queryFn: async () => {
-      // Mock implementation
-      return [
-        {
-          id: 1,
-          patientName: 'Sarah Johnson',
-          examType: 'Neurological Exam',
-          date: new Date().toISOString(),
-          status: 'Completed',
-          performedBy: 'Dr. Martinez',
-        },
-        {
-          id: 2,
-          patientName: 'Michael Brown',
-          examType: 'EEG',
-          date: new Date().toISOString(),
-          status: 'In Progress',
-          performedBy: 'Dr. Chen',
-        },
-        {
-          id: 3,
-          patientName: 'Emily Davis',
-          examType: 'Stroke Assessment',
-          date: new Date().toISOString(),
-          status: 'Pending Review',
-          performedBy: 'Dr. Williams',
-        },
-      ];
+      const response = await neurologyApi.getRecentProcedures();
+      return response.data?.data ?? response.data ?? [];
     },
   });
 

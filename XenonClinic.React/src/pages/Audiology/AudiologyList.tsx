@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   ChartBarIcon,
   DevicePhoneMobileIcon,
@@ -78,6 +78,7 @@ const getStatusBadge = (status: EncounterStatus) => {
 };
 
 export const AudiologyList = () => {
+  const queryClient = useQueryClient();
   const [showNewEncounter, setShowNewEncounter] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("");
@@ -122,12 +123,21 @@ export const AudiologyList = () => {
     return matchesSearch && matchesStatus && matchesType;
   });
 
+  const createEncounterMutation = useMutation({
+    mutationFn: (payload: { encounter: CreateEncounterRequest; tasks: CreateEncounterTaskRequest[] }) =>
+      encounterApi.create(payload.encounter),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["encounters"] });
+      queryClient.invalidateQueries({ queryKey: ["audiology-stats"] });
+      setShowNewEncounter(false);
+    },
+  });
+
   const handleNewEncounter = (
     data: CreateEncounterRequest,
     tasks: CreateEncounterTaskRequest[],
   ) => {
-    // TODO: Implement API call to create encounter
-    setShowNewEncounter(false);
+    createEncounterMutation.mutate({ encounter: data, tasks });
   };
 
   return (

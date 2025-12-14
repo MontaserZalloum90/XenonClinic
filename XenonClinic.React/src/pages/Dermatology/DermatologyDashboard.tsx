@@ -1,13 +1,14 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import type { DermatologyStatistics } from '../../types/dermatology';
+import { dermatologyApi } from '../../lib/api';
 
-// Mock API - Replace with actual dermatology API
-const dermatologyApi = {
-  getStatistics: async () => {
-    // TODO: Implement actual API call
-    return {
-      data: {
+export const DermatologyDashboard = () => {
+  const { data: stats, isLoading } = useQuery<DermatologyStatistics>({
+    queryKey: ['dermatology-stats'],
+    queryFn: async () => {
+      const response = await dermatologyApi.getStatistics();
+      return response.data?.data ?? response.data ?? {
         totalPatients: 0,
         newPatientsThisMonth: 0,
         examsThisWeek: 0,
@@ -19,17 +20,7 @@ const dermatologyApi = {
         biopsiesThisMonth: 0,
         pendingBiopsies: 0,
         requiresFollowUp: 0,
-      } as DermatologyStatistics,
-    };
-  },
-};
-
-export const DermatologyDashboard = () => {
-  const { data: stats, isLoading } = useQuery<DermatologyStatistics>({
-    queryKey: ['dermatology-stats'],
-    queryFn: async () => {
-      const response = await dermatologyApi.getStatistics();
-      return response.data;
+      };
     },
   });
 

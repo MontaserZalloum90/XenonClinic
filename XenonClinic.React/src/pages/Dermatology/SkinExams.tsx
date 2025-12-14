@@ -3,43 +3,31 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Dialog } from '@headlessui/react';
 import { format } from 'date-fns';
 import type { SkinExam, CreateSkinExamRequest, SkinType } from '../../types/dermatology';
+import { dermatologyApi } from '../../lib/api';
 
-// Mock API - Replace with actual dermatology API
-const skinExamsApi = {
-  getAll: async () => {
-    // TODO: Implement actual API call
-    return { data: [] as SkinExam[] };
-  },
-  create: async (data: CreateSkinExamRequest) => {
-    // TODO: Implement actual API call
-    return { data: { id: Date.now(), ...data, createdAt: new Date().toISOString() } };
-  },
-  update: async (id: number, data: Partial<SkinExam>) => {
-    // TODO: Implement actual API call
-    return { data: { id, ...data } };
-  },
-  delete: async (id: number) => {
-    // TODO: Implement actual API call
-    return { data: { success: true } };
-  },
-};
+interface SkinExamsProps {
+  patientId?: number;
+}
 
-export const SkinExams = () => {
+export const SkinExams = ({ patientId }: SkinExamsProps = {}) => {
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedExam, setSelectedExam] = useState<SkinExam | undefined>(undefined);
 
   const { data: exams, isLoading } = useQuery<SkinExam[]>({
-    queryKey: ['skin-exams'],
+    queryKey: ['skin-exams', patientId],
     queryFn: async () => {
-      const response = await skinExamsApi.getAll();
-      return response.data;
+      if (patientId) {
+        const response = await dermatologyApi.getSkinExamsByPatient(patientId);
+        return response.data?.data ?? response.data ?? [];
+      }
+      return [];
     },
   });
 
   const createMutation = useMutation({
-    mutationFn: (data: CreateSkinExamRequest) => skinExamsApi.create(data),
+    mutationFn: (data: CreateSkinExamRequest) => dermatologyApi.createSkinExam(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['skin-exams'] });
       setIsModalOpen(false);
@@ -49,7 +37,7 @@ export const SkinExams = () => {
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: number; data: Partial<SkinExam> }) =>
-      skinExamsApi.update(id, data),
+      dermatologyApi.updateSkinExam(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['skin-exams'] });
       setIsModalOpen(false);
@@ -58,7 +46,7 @@ export const SkinExams = () => {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: number) => skinExamsApi.delete(id),
+    mutationFn: (id: number) => dermatologyApi.deleteSkinExam(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['skin-exams'] });
     },

@@ -384,11 +384,31 @@ public class FileStorageService : IFileStorageService
 
 /// <summary>
 /// File storage settings.
+/// BaseUrl must be configured in appsettings for production environments.
 /// </summary>
 public class FileStorageSettings
 {
     public string BasePath { get; set; } = "./uploads";
-    public string BaseUrl { get; set; } = "http://localhost:5000";
+
+    /// <summary>
+    /// Base URL for file access. Must be configured via appsettings.json.
+    /// Example: "https://files.xenonclinic.com" for production.
+    /// </summary>
+    public string BaseUrl { get; set; } = string.Empty;
+
     public long MaxFileSizeBytes { get; set; } = 50 * 1024 * 1024; // 50MB
     public string[] AllowedExtensions { get; set; } = { ".jpg", ".jpeg", ".png", ".gif", ".pdf", ".doc", ".docx", ".xls", ".xlsx" };
+
+    /// <summary>
+    /// Validates the configuration options.
+    /// </summary>
+    public void Validate()
+    {
+        if (string.IsNullOrWhiteSpace(BaseUrl))
+        {
+            throw new InvalidOperationException(
+                "FileStorage:BaseUrl must be configured in appsettings.json. " +
+                "Example: 'https://api.xenonclinic.com' or 'http://localhost:5000' for development.");
+        }
+    }
 }

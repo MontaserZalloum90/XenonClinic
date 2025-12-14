@@ -9,28 +9,13 @@ import type {
   BiopsyStatus,
   BiopsyTechnique,
 } from '../../types/dermatology';
+import { dermatologyApi } from '../../lib/api';
 
-// Mock API - Replace with actual dermatology API
-const biopsiesApi = {
-  getAll: async () => {
-    // TODO: Implement actual API call
-    return { data: [] as SkinBiopsy[] };
-  },
-  create: async (data: CreateSkinBiopsyRequest) => {
-    // TODO: Implement actual API call
-    return { data: { id: Date.now(), ...data, createdAt: new Date().toISOString() } };
-  },
-  updateResult: async (data: UpdateBiopsyResultRequest) => {
-    // TODO: Implement actual API call
-    return { data: { id: data.biopsyId, ...data } };
-  },
-  delete: async (id: number) => {
-    // TODO: Implement actual API call
-    return { data: { success: true } };
-  },
-};
+interface BiopsiesProps {
+  patientId?: number;
+}
 
-export const Biopsies = () => {
+export const Biopsies = ({ patientId }: BiopsiesProps = {}) => {
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -39,23 +24,35 @@ export const Biopsies = () => {
   const [selectedBiopsy, setSelectedBiopsy] = useState<SkinBiopsy | undefined>(undefined);
 
   const { data: biopsies, isLoading } = useQuery<SkinBiopsy[]>({
-    queryKey: ['skin-biopsies'],
+    queryKey: ['skin-biopsies', patientId],
     queryFn: async () => {
-      const response = await biopsiesApi.getAll();
-      return response.data;
+      if (patientId) {
+        const response = await dermatologyApi.getBiopsiesByPatient(patientId);
+        return response.data?.data ?? response.data ?? [];
+      }
+      return [];
     },
   });
 
   const createMutation = useMutation({
-    mutationFn: (data: CreateSkinBiopsyRequest) => biopsiesApi.create(data),
+    mutationFn: (data: CreateSkinBiopsyRequest) => dermatologyApi.createBiopsy(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['skin-biopsies'] });
       setIsModalOpen(false);
     },
   });
 
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: number; data: Partial<SkinBiopsy> }) =>
+      dermatologyApi.updateBiopsy(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['skin-biopsies'] });
+      setIsResultModalOpen(false);
+    },
+  });
+
   const updateResultMutation = useMutation({
-    mutationFn: (data: UpdateBiopsyResultRequest) => biopsiesApi.updateResult(data),
+    mutationFn: (data: UpdateBiopsyResultRequest) => dermatologyApi.updateBiopsy(data.biopsyId, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['skin-biopsies'] });
       setIsResultModalOpen(false);
@@ -64,7 +61,7 @@ export const Biopsies = () => {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: number) => biopsiesApi.delete(id),
+    mutationFn: (id: number) => dermatologyApi.deleteBiopsy(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['skin-biopsies'] });
     },

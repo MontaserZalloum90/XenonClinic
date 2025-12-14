@@ -11,80 +11,60 @@ import {
 import { format } from 'date-fns';
 import type { CardiacCatheterization, CreateCathRequest } from '../../types/cardiology';
 import { CathProcedureType, AccessSite } from '../../types/cardiology';
+import { cardiologyApi } from '../../lib/api';
 
-export const CathLab = () => {
+interface CathLabProps {
+  patientId?: number;
+}
+
+export const CathLab = ({ patientId }: CathLabProps = {}) => {
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [procedureFilter, setProcedureFilter] = useState<string>('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedCath, setSelectedCath] = useState<CardiacCatheterization | undefined>(undefined);
 
-  // Mock data - Replace with actual API calls
+  // Fetch Cath Procedures from API
   const { data: procedures, isLoading } = useQuery<CardiacCatheterization[]>({
-    queryKey: ['cath-procedures'],
+    queryKey: ['cath-procedures', patientId],
     queryFn: async () => {
-      // Mock implementation
-      return [
-        {
-          id: 1,
-          patientId: 1001,
-          patientName: 'John Smith',
-          procedure: CathProcedureType.Diagnostic,
-          date: new Date().toISOString(),
-          accessSite: AccessSite.Radial,
-          coronaryFindings: 'Normal coronary arteries',
-          findings: 'No significant stenosis in LAD, LCx, or RCA. LMCA patent.',
-          interventions: [],
-          complications: [],
-          contrast: 150,
-          fluoroscopyTime: 8,
-          conclusions: 'Normal diagnostic coronary angiography',
-          performedBy: 'Dr. Johnson',
-          assistedBy: 'Dr. Williams',
-          createdAt: new Date().toISOString(),
-        },
-        {
-          id: 2,
-          patientId: 1002,
-          patientName: 'Mary Williams',
-          procedure: CathProcedureType.PCI,
-          date: new Date().toISOString(),
-          accessSite: AccessSite.Femoral,
-          coronaryFindings: '90% stenosis in proximal LAD',
-          findings: 'Severe stenosis in proximal LAD. LCx and RCA with mild disease.',
-          interventions: ['Drug-eluting stent placement in LAD'],
-          stentsPlaced: 1,
-          complications: [],
-          contrast: 220,
-          fluoroscopyTime: 25,
-          conclusions: 'Successful PCI to LAD with drug-eluting stent. TIMI 3 flow achieved.',
-          recommendations: 'Dual antiplatelet therapy for 12 months',
-          performedBy: 'Dr. Brown',
-          assistedBy: 'Dr. Johnson',
-          createdAt: new Date().toISOString(),
-        },
-        {
-          id: 3,
-          patientId: 1003,
-          patientName: 'Robert Davis',
-          procedure: CathProcedureType.Stent,
-          date: new Date().toISOString(),
-          accessSite: AccessSite.Radial,
-          coronaryFindings: 'In-stent restenosis in RCA',
-          findings: 'Severe in-stent restenosis in mid RCA.',
-          interventions: ['Balloon angioplasty', 'Drug-eluting stent placement'],
-          stentsPlaced: 1,
-          complications: ['Minor bleeding at access site'],
-          contrast: 180,
-          fluoroscopyTime: 18,
-          conclusions: 'Successful treatment of in-stent restenosis with additional stent.',
-          recommendations: 'Continue dual antiplatelet therapy',
-          performedBy: 'Dr. Williams',
-          createdAt: new Date().toISOString(),
-        },
-      ];
+      if (patientId) {
+        const response = await cardiologyApi.getCathProceduresByPatient(patientId);
+        return response.data?.data ?? response.data ?? [];
+      }
+      return [];
     },
   });
+
+  // Create mutation
+  const createMutation = useMutation({
+    mutationFn: (data: CreateCathRequest) => cardiologyApi.createCathProcedure(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['cath-procedures'] });
+    },
+  });
+
+  // Update mutation
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: number; data: Partial<CreateCathRequest> }) =>
+      cardiologyApi.updateCathProcedure(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['cath-procedures'] });
+    },
+  });
+
+  // Delete mutation
+  const deleteMutation = useMutation({
+    mutationFn: (id: number) => cardiologyApi.deleteCathProcedure(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['cath-procedures'] });
+    },
+  });
+
+  // Keep these variables available for future use
+  void createMutation;
+  void updateMutation;
+  void deleteMutation;
 
   const filteredProcedures = procedures?.filter((proc) => {
     const matchesSearch =
@@ -347,12 +327,30 @@ const CathLabModal = ({ isOpen, onClose, cath }: CathLabModalProps) => {
   const [interventionInput, setInterventionInput] = useState('');
   const [complicationInput, setComplicationInput] = useState('');
 
+  const createMutation = useMutation({
+    mutationFn: (data: CreateCathRequest) => cardiologyApi.createCathProcedure(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['cath-procedures'] });
+      onClose();
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: number; data: Partial<CreateCathRequest> }) =>
+      cardiologyApi.updateCathProcedure(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['cath-procedures'] });
+      onClose();
+    },
+  });
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Implement actual API call to save cath procedure
-    void formData;
-    queryClient.invalidateQueries({ queryKey: ['cath-procedures'] });
-    onClose();
+    if (cath?.id) {
+      updateMutation.mutate({ id: cath.id, data: formData });
+    } else {
+      createMutation.mutate(formData as CreateCathRequest);
+    }
   };
 
   const handleChange = (
