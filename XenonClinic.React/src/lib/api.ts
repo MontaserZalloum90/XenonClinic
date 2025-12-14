@@ -1,5 +1,19 @@
 import axios from 'axios';
 import { configureAxiosInstance, tokenStorage, getAxiosErrorMessage } from '@xenon/ui';
+import type { CreateAppointmentRequest, UpdateAppointmentRequest } from '../types/appointment';
+import type { CreatePatientRequest, UpdatePatientRequest } from '../types/patient';
+import type { CreateLabOrderRequest } from '../types/laboratory';
+import type { EmployeeFormData } from '../types/hr';
+import type { InvoiceFormData } from '../types/financial';
+import type { SaleFormData, SaleItemFormData, PaymentFormData, QuotationFormData, QuotationItemFormData } from '../types/sales';
+import type { InventoryItemFormData } from '../types/inventory';
+import type { CreateWorkflowDefinitionRequest, UpdateWorkflowDefinitionRequest, CreateWorkflowInstanceRequest, UpdateWorkflowInstanceRequest } from '../types/workflow';
+import type { PrescriptionFormData } from '../types/pharmacy';
+import type { RadiologyOrderFormData } from '../types/radiology';
+import type { CreateAudiogramRequest, CreateHearingAidRequest, CreateEncounterRequest, CreateEncounterTaskRequest, CreateConsentRequest, SignConsentRequest } from '../types/audiology';
+import type { CreateCampaignRequest, UpdateCampaignRequest, CreateLeadRequest, UpdateLeadRequest, CreateActivityRequest, UpdateActivityRequest } from '../types/marketing';
+import type { ClinicalVisitFormData } from '../types/clinical-visit';
+import type { CreateReportRequest } from '../types/analytics';
 
 // API Base URL - adjust based on environment
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://localhost:5001';
@@ -41,8 +55,8 @@ export const appointmentsApi = {
   },
   getToday: () => api.get('/api/AppointmentsApi/today'),
   getUpcoming: (days: number = 7) => api.get(`/api/AppointmentsApi/upcoming?days=${days}`),
-  create: (data: any) => api.post('/api/AppointmentsApi', data),
-  update: (id: number, data: any) => api.put(`/api/AppointmentsApi/${id}`, data),
+  create: (data: CreateAppointmentRequest) => api.post('/api/AppointmentsApi', data),
+  update: (id: number, data: UpdateAppointmentRequest) => api.put(`/api/AppointmentsApi/${id}`, data),
   delete: (id: number) => api.delete(`/api/AppointmentsApi/${id}`),
   confirm: (id: number) => api.post(`/api/AppointmentsApi/${id}/confirm`),
   cancel: (id: number, reason?: string) => api.post(`/api/AppointmentsApi/${id}/cancel`, { reason }),
@@ -57,8 +71,8 @@ export const patientsApi = {
   getById: (id: number) => api.get(`/api/PatientsApi/${id}`),
   search: (searchTerm: string) => api.get(`/api/PatientsApi/search?searchTerm=${encodeURIComponent(searchTerm)}`),
   getByEmiratesId: (emiratesId: string) => api.get(`/api/PatientsApi/emirates/${encodeURIComponent(emiratesId)}`),
-  create: (data: any) => api.post('/api/PatientsApi', data),
-  update: (id: number, data: any) => api.put(`/api/PatientsApi/${id}`, data),
+  create: (data: CreatePatientRequest) => api.post('/api/PatientsApi', data),
+  update: (id: number, data: UpdatePatientRequest) => api.put(`/api/PatientsApi/${id}`, data),
   delete: (id: number) => api.delete(`/api/PatientsApi/${id}`),
   getMedicalHistory: (id: number) => api.get(`/api/PatientsApi/${id}/medical-history`),
   getDocuments: (id: number) => api.get(`/api/PatientsApi/${id}/documents`),
@@ -71,8 +85,8 @@ export const laboratoryApi = {
   getPendingOrders: () => api.get('/api/LaboratoryApi/orders/pending'),
   getUrgentOrders: () => api.get('/api/LaboratoryApi/orders/urgent'),
   getOrdersByPatient: (patientId: number) => api.get(`/api/LaboratoryApi/orders/patient/${patientId}`),
-  createOrder: (data: any) => api.post('/api/LaboratoryApi/orders', data),
-  updateOrder: (id: number, data: any) => api.put(`/api/LaboratoryApi/orders/${id}`, data),
+  createOrder: (data: CreateLabOrderRequest) => api.post('/api/LaboratoryApi/orders', data),
+  updateOrder: (id: number, data: Partial<CreateLabOrderRequest>) => api.put(`/api/LaboratoryApi/orders/${id}`, data),
   updateStatus: (id: number, status: number) => api.post(`/api/LaboratoryApi/orders/${id}/status`, { status }),
   deleteOrder: (id: number) => api.delete(`/api/LaboratoryApi/orders/${id}`),
   getAllTests: () => api.get('/api/LaboratoryApi/tests'),
@@ -85,8 +99,8 @@ export const hrApi = {
   search: (searchTerm: string) => api.get(`/api/HRApi/employees/search?searchTerm=${encodeURIComponent(searchTerm)}`),
   getByDepartment: (department: string) => api.get(`/api/HRApi/employees/department/${encodeURIComponent(department)}`),
   getActive: () => api.get('/api/HRApi/employees/active'),
-  create: (data: any) => api.post('/api/HRApi/employees', data),
-  update: (id: number, data: any) => api.put(`/api/HRApi/employees/${id}`, data),
+  create: (data: EmployeeFormData) => api.post('/api/HRApi/employees', data),
+  update: (id: number, data: EmployeeFormData) => api.put(`/api/HRApi/employees/${id}`, data),
   delete: (id: number) => api.delete(`/api/HRApi/employees/${id}`),
   getStatistics: () => api.get('/api/HRApi/statistics'),
 };
@@ -98,8 +112,8 @@ export const financialApi = {
   getUnpaid: () => api.get('/api/FinancialApi/invoices/unpaid'),
   getOverdue: () => api.get('/api/FinancialApi/invoices/overdue'),
   getByPatient: (patientId: number) => api.get(`/api/FinancialApi/invoices/patient/${patientId}`),
-  create: (data: any) => api.post('/api/FinancialApi/invoices', data),
-  update: (id: number, data: any) => api.put(`/api/FinancialApi/invoices/${id}`, data),
+  create: (data: InvoiceFormData) => api.post('/api/FinancialApi/invoices', data),
+  update: (id: number, data: InvoiceFormData) => api.put(`/api/FinancialApi/invoices/${id}`, data),
   delete: (id: number) => api.delete(`/api/FinancialApi/invoices/${id}`),
   recordPayment: (id: number, amount: number, method: number) =>
     api.post(`/api/FinancialApi/invoices/${id}/payment`, { amount, method }),
@@ -122,8 +136,8 @@ export const salesApi = {
   getSalesByDateRange: (startDate: string, endDate: string) =>
     api.get('/api/SalesApi/sales/date-range', { params: { startDate, endDate } }),
   getOverdueSales: () => api.get('/api/SalesApi/sales/overdue'),
-  createSale: (data: any) => api.post('/api/SalesApi/sales', data),
-  updateSale: (id: number, data: any) => api.put(`/api/SalesApi/sales/${id}`, data),
+  createSale: (data: SaleFormData) => api.post('/api/SalesApi/sales', data),
+  updateSale: (id: number, data: SaleFormData) => api.put(`/api/SalesApi/sales/${id}`, data),
   deleteSale: (id: number) => api.delete(`/api/SalesApi/sales/${id}`),
   confirmSale: (id: number) => api.post(`/api/SalesApi/sales/${id}/confirm`),
   completeSale: (id: number) => api.post(`/api/SalesApi/sales/${id}/complete`),
@@ -132,18 +146,18 @@ export const salesApi = {
 
   // Sale Items
   getSaleItems: (saleId: number) => api.get(`/api/SalesApi/sales/${saleId}/items`),
-  addSaleItem: (saleId: number, data: any) => api.post(`/api/SalesApi/sales/${saleId}/items`, data),
-  updateSaleItem: (saleId: number, itemId: number, data: any) =>
+  addSaleItem: (saleId: number, data: SaleItemFormData) => api.post(`/api/SalesApi/sales/${saleId}/items`, data),
+  updateSaleItem: (saleId: number, itemId: number, data: SaleItemFormData) =>
     api.put(`/api/SalesApi/sales/${saleId}/items/${itemId}`, data),
   deleteSaleItem: (saleId: number, itemId: number) =>
     api.delete(`/api/SalesApi/sales/${saleId}/items/${itemId}`),
 
   // Payments
   getPaymentsBySale: (saleId: number) => api.get(`/api/SalesApi/sales/${saleId}/payments`),
-  recordPayment: (saleId: number, data: any) =>
+  recordPayment: (saleId: number, data: PaymentFormData) =>
     api.post(`/api/SalesApi/sales/${saleId}/payments`, data),
   getPaymentById: (id: number) => api.get(`/api/SalesApi/payments/${id}`),
-  updatePayment: (id: number, data: any) => api.put(`/api/SalesApi/payments/${id}`, data),
+  updatePayment: (id: number, data: PaymentFormData) => api.put(`/api/SalesApi/payments/${id}`, data),
   deletePayment: (id: number) => api.delete(`/api/SalesApi/payments/${id}`),
   refundPayment: (id: number, amount: number, reason?: string) =>
     api.post(`/api/SalesApi/payments/${id}/refund`, { amount, reason }),
@@ -163,8 +177,8 @@ export const quotationsApi = {
   getByStatus: (status: number) => api.get(`/api/SalesApi/quotations/status/${status}`),
   getActive: () => api.get('/api/SalesApi/quotations/active'),
   getExpired: () => api.get('/api/SalesApi/quotations/expired'),
-  create: (data: any) => api.post('/api/SalesApi/quotations', data),
-  update: (id: number, data: any) => api.put(`/api/SalesApi/quotations/${id}`, data),
+  create: (data: QuotationFormData) => api.post('/api/SalesApi/quotations', data),
+  update: (id: number, data: QuotationFormData) => api.put(`/api/SalesApi/quotations/${id}`, data),
   delete: (id: number) => api.delete(`/api/SalesApi/quotations/${id}`),
   send: (id: number) => api.post(`/api/SalesApi/quotations/${id}/send`),
   accept: (id: number) => api.post(`/api/SalesApi/quotations/${id}/accept`),
@@ -174,9 +188,9 @@ export const quotationsApi = {
 
   // Quotation Items
   getItems: (quotationId: number) => api.get(`/api/SalesApi/quotations/${quotationId}/items`),
-  addItem: (quotationId: number, data: any) =>
+  addItem: (quotationId: number, data: QuotationItemFormData) =>
     api.post(`/api/SalesApi/quotations/${quotationId}/items`, data),
-  updateItem: (quotationId: number, itemId: number, data: any) =>
+  updateItem: (quotationId: number, itemId: number, data: QuotationItemFormData) =>
     api.put(`/api/SalesApi/quotations/${quotationId}/items/${itemId}`, data),
   deleteItem: (quotationId: number, itemId: number) =>
     api.delete(`/api/SalesApi/quotations/${quotationId}/items/${itemId}`),
@@ -189,8 +203,8 @@ export const inventoryApi = {
   getLowStock: () => api.get('/api/InventoryApi/items/low-stock'),
   getOutOfStock: () => api.get('/api/InventoryApi/items/out-of-stock'),
   getByCategory: (category: number) => api.get(`/api/InventoryApi/items/category/${category}`),
-  create: (data: any) => api.post('/api/InventoryApi/items', data),
-  update: (id: number, data: any) => api.put(`/api/InventoryApi/items/${id}`, data),
+  create: (data: InventoryItemFormData) => api.post('/api/InventoryApi/items', data),
+  update: (id: number, data: InventoryItemFormData) => api.put(`/api/InventoryApi/items/${id}`, data),
   delete: (id: number) => api.delete(`/api/InventoryApi/items/${id}`),
   adjustStock: (id: number, quantity: number, reason: string) =>
     api.post(`/api/InventoryApi/items/${id}/adjust`, { quantity, reason }),
@@ -203,8 +217,8 @@ export const pharmacyApi = {
   search: (searchTerm: string) => api.get(`/api/PharmacyApi/prescriptions/search?searchTerm=${encodeURIComponent(searchTerm)}`),
   getPending: () => api.get('/api/PharmacyApi/prescriptions/pending'),
   getByPatient: (patientId: number) => api.get(`/api/PharmacyApi/prescriptions/patient/${patientId}`),
-  create: (data: any) => api.post('/api/PharmacyApi/prescriptions', data),
-  update: (id: number, data: any) => api.put(`/api/PharmacyApi/prescriptions/${id}`, data),
+  create: (data: PrescriptionFormData) => api.post('/api/PharmacyApi/prescriptions', data),
+  update: (id: number, data: PrescriptionFormData) => api.put(`/api/PharmacyApi/prescriptions/${id}`, data),
   delete: (id: number) => api.delete(`/api/PharmacyApi/prescriptions/${id}`),
   dispense: (id: number, dispensedBy: string) =>
     api.post(`/api/PharmacyApi/prescriptions/${id}/dispense`, { dispensedBy }),
@@ -218,8 +232,8 @@ export const radiologyApi = {
   getPending: () => api.get('/api/RadiologyApi/orders/pending'),
   getScheduled: () => api.get('/api/RadiologyApi/orders/scheduled'),
   getByPatient: (patientId: number) => api.get(`/api/RadiologyApi/orders/patient/${patientId}`),
-  create: (data: any) => api.post('/api/RadiologyApi/orders', data),
-  update: (id: number, data: any) => api.put(`/api/RadiologyApi/orders/${id}`, data),
+  create: (data: RadiologyOrderFormData) => api.post('/api/RadiologyApi/orders', data),
+  update: (id: number, data: RadiologyOrderFormData) => api.put(`/api/RadiologyApi/orders/${id}`, data),
   delete: (id: number) => api.delete(`/api/RadiologyApi/orders/${id}`),
   updateStatus: (id: number, status: number) =>
     api.post(`/api/RadiologyApi/orders/${id}/status`, { status }),
@@ -235,8 +249,8 @@ export const audiogramApi = {
   getById: (id: number) => api.get(`/api/AudiologyApi/audiograms/${id}`),
   getByPatient: (patientId: number) => api.get(`/api/AudiologyApi/audiograms/patient/${patientId}`),
   getLatestByPatient: (patientId: number) => api.get(`/api/AudiologyApi/audiograms/patient/${patientId}/latest`),
-  create: (data: any) => api.post('/api/AudiologyApi/audiograms', data),
-  update: (id: number, data: any) => api.put(`/api/AudiologyApi/audiograms/${id}`, data),
+  create: (data: CreateAudiogramRequest) => api.post('/api/AudiologyApi/audiograms', data),
+  update: (id: number, data: Partial<CreateAudiogramRequest>) => api.put(`/api/AudiologyApi/audiograms/${id}`, data),
   delete: (id: number) => api.delete(`/api/AudiologyApi/audiograms/${id}`),
   compare: (patientId: number, audiogramIds: number[]) =>
     api.post(`/api/AudiologyApi/audiograms/patient/${patientId}/compare`, { audiogramIds }),
@@ -250,22 +264,22 @@ export const hearingAidApi = {
     api.get(`/api/AudiologyApi/hearing-aids/serial/${encodeURIComponent(serialNumber)}`),
   getWarrantyExpiring: (days: number = 30) =>
     api.get(`/api/AudiologyApi/hearing-aids/warranty-expiring?days=${days}`),
-  create: (data: any) => api.post('/api/AudiologyApi/hearing-aids', data),
-  update: (id: number, data: any) => api.put(`/api/AudiologyApi/hearing-aids/${id}`, data),
+  create: (data: CreateHearingAidRequest) => api.post('/api/AudiologyApi/hearing-aids', data),
+  update: (id: number, data: Partial<CreateHearingAidRequest>) => api.put(`/api/AudiologyApi/hearing-aids/${id}`, data),
   delete: (id: number) => api.delete(`/api/AudiologyApi/hearing-aids/${id}`),
   updateStatus: (id: number, status: string) =>
     api.post(`/api/AudiologyApi/hearing-aids/${id}/status`, { status }),
 
   // Fittings
   getFittings: (hearingAidId: number) => api.get(`/api/AudiologyApi/hearing-aids/${hearingAidId}/fittings`),
-  createFitting: (hearingAidId: number, data: any) =>
+  createFitting: (hearingAidId: number, data: Record<string, unknown>) =>
     api.post(`/api/AudiologyApi/hearing-aids/${hearingAidId}/fittings`, data),
-  updateFitting: (hearingAidId: number, fittingId: number, data: any) =>
+  updateFitting: (hearingAidId: number, fittingId: number, data: Record<string, unknown>) =>
     api.put(`/api/AudiologyApi/hearing-aids/${hearingAidId}/fittings/${fittingId}`, data),
 
   // Adjustments
   getAdjustments: (hearingAidId: number) => api.get(`/api/AudiologyApi/hearing-aids/${hearingAidId}/adjustments`),
-  createAdjustment: (hearingAidId: number, data: any) =>
+  createAdjustment: (hearingAidId: number, data: Record<string, unknown>) =>
     api.post(`/api/AudiologyApi/hearing-aids/${hearingAidId}/adjustments`, data),
 };
 
@@ -277,8 +291,8 @@ export const encounterApi = {
   getByDateRange: (startDate: string, endDate: string) =>
     api.get('/api/AudiologyApi/encounters', { params: { startDate, endDate } }),
   getByStatus: (status: string) => api.get(`/api/AudiologyApi/encounters/status/${status}`),
-  create: (data: any) => api.post('/api/AudiologyApi/encounters', data),
-  update: (id: number, data: any) => api.put(`/api/AudiologyApi/encounters/${id}`, data),
+  create: (data: CreateEncounterRequest) => api.post('/api/AudiologyApi/encounters', data),
+  update: (id: number, data: Partial<CreateEncounterRequest>) => api.put(`/api/AudiologyApi/encounters/${id}`, data),
   delete: (id: number) => api.delete(`/api/AudiologyApi/encounters/${id}`),
   updateStatus: (id: number, status: string) =>
     api.post(`/api/AudiologyApi/encounters/${id}/status`, { status }),
@@ -286,9 +300,9 @@ export const encounterApi = {
 
   // Tasks
   getTasks: (encounterId: number) => api.get(`/api/AudiologyApi/encounters/${encounterId}/tasks`),
-  createTask: (encounterId: number, data: any) =>
+  createTask: (encounterId: number, data: CreateEncounterTaskRequest) =>
     api.post(`/api/AudiologyApi/encounters/${encounterId}/tasks`, data),
-  updateTask: (encounterId: number, taskId: number, data: any) =>
+  updateTask: (encounterId: number, taskId: number, data: Partial<CreateEncounterTaskRequest>) =>
     api.put(`/api/AudiologyApi/encounters/${encounterId}/tasks/${taskId}`, data),
   completeTask: (encounterId: number, taskId: number) =>
     api.post(`/api/AudiologyApi/encounters/${encounterId}/tasks/${taskId}/complete`),
@@ -307,8 +321,8 @@ export const consentApi = {
   getById: (id: number) => api.get(`/api/AudiologyApi/consents/${id}`),
   getByPatient: (patientId: number) => api.get(`/api/AudiologyApi/consents/patient/${patientId}`),
   getPending: (patientId: number) => api.get(`/api/AudiologyApi/consents/patient/${patientId}/pending`),
-  create: (data: any) => api.post('/api/AudiologyApi/consents', data),
-  sign: (id: number, data: any) => api.post(`/api/AudiologyApi/consents/${id}/sign`, data),
+  create: (data: CreateConsentRequest) => api.post('/api/AudiologyApi/consents', data),
+  sign: (id: number, data: SignConsentRequest) => api.post(`/api/AudiologyApi/consents/${id}/sign`, data),
   revoke: (id: number, reason: string) =>
     api.post(`/api/AudiologyApi/consents/${id}/revoke`, { reason }),
   delete: (id: number) => api.delete(`/api/AudiologyApi/consents/${id}`),
@@ -327,7 +341,7 @@ export const attachmentApi = {
   download: (id: number) =>
     api.get(`/api/AudiologyApi/attachments/${id}/download`, { responseType: 'blob' }),
   delete: (id: number) => api.delete(`/api/AudiologyApi/attachments/${id}`),
-  updateMetadata: (id: number, data: any) => api.put(`/api/AudiologyApi/attachments/${id}`, data),
+  updateMetadata: (id: number, data: { title?: string; description?: string }) => api.put(`/api/AudiologyApi/attachments/${id}`, data),
 };
 
 export const audiologyStatsApi = {
@@ -350,8 +364,8 @@ export const campaignApi = {
   getByType: (type: string) => api.get(`/api/MarketingApi/campaigns/type/${type}`),
   search: (searchTerm: string) =>
     api.get(`/api/MarketingApi/campaigns/search?searchTerm=${encodeURIComponent(searchTerm)}`),
-  create: (data: any) => api.post('/api/MarketingApi/campaigns', data),
-  update: (id: number, data: any) => api.put(`/api/MarketingApi/campaigns/${id}`, data),
+  create: (data: CreateCampaignRequest) => api.post('/api/MarketingApi/campaigns', data),
+  update: (id: number, data: UpdateCampaignRequest) => api.put(`/api/MarketingApi/campaigns/${id}`, data),
   delete: (id: number) => api.delete(`/api/MarketingApi/campaigns/${id}`),
   updateStatus: (id: number, status: string) =>
     api.post(`/api/MarketingApi/campaigns/${id}/status`, { status }),
@@ -373,12 +387,12 @@ export const leadApi = {
   getOverdueFollowUps: () => api.get('/api/MarketingApi/leads/overdue'),
   search: (searchTerm: string) =>
     api.get(`/api/MarketingApi/leads/search?searchTerm=${encodeURIComponent(searchTerm)}`),
-  create: (data: any) => api.post('/api/MarketingApi/leads', data),
-  update: (id: number, data: any) => api.put(`/api/MarketingApi/leads/${id}`, data),
+  create: (data: CreateLeadRequest) => api.post('/api/MarketingApi/leads', data),
+  update: (id: number, data: UpdateLeadRequest) => api.put(`/api/MarketingApi/leads/${id}`, data),
   delete: (id: number) => api.delete(`/api/MarketingApi/leads/${id}`),
   updateStatus: (id: number, status: string) =>
     api.post(`/api/MarketingApi/leads/${id}/status`, { status }),
-  convert: (id: number, patientData?: any) =>
+  convert: (id: number, patientData?: CreatePatientRequest) =>
     api.post(`/api/MarketingApi/leads/${id}/convert`, patientData),
   markAsLost: (id: number, reason: string) =>
     api.post(`/api/MarketingApi/leads/${id}/lost`, { reason }),
@@ -400,8 +414,8 @@ export const marketingActivityApi = {
   getScheduled: () => api.get('/api/MarketingApi/activities/scheduled'),
   getByDateRange: (startDate: string, endDate: string) =>
     api.get('/api/MarketingApi/activities', { params: { startDate, endDate } }),
-  create: (data: any) => api.post('/api/MarketingApi/activities', data),
-  update: (id: number, data: any) => api.put(`/api/MarketingApi/activities/${id}`, data),
+  create: (data: CreateActivityRequest) => api.post('/api/MarketingApi/activities', data),
+  update: (id: number, data: UpdateActivityRequest) => api.put(`/api/MarketingApi/activities/${id}`, data),
   delete: (id: number) => api.delete(`/api/MarketingApi/activities/${id}`),
   complete: (id: number, outcome?: string) =>
     api.post(`/api/MarketingApi/activities/${id}/complete`, { outcome }),
@@ -439,8 +453,8 @@ export const clinicalVisitsApi = {
     api.get('/api/ClinicalVisitsApi/visits/date-range', { params: { startDate, endDate } }),
   search: (searchTerm: string) =>
     api.get(`/api/ClinicalVisitsApi/visits/search?searchTerm=${encodeURIComponent(searchTerm)}`),
-  create: (data: any) => api.post('/api/ClinicalVisitsApi/visits', data),
-  update: (id: number, data: any) => api.put(`/api/ClinicalVisitsApi/visits/${id}`, data),
+  create: (data: ClinicalVisitFormData) => api.post('/api/ClinicalVisitsApi/visits', data),
+  update: (id: number, data: ClinicalVisitFormData) => api.put(`/api/ClinicalVisitsApi/visits/${id}`, data),
   delete: (id: number) => api.delete(`/api/ClinicalVisitsApi/visits/${id}`),
   updateStatus: (id: number, status: number) =>
     api.post(`/api/ClinicalVisitsApi/visits/${id}/status`, { status }),
@@ -460,8 +474,8 @@ export const workflowDefinitionsApi = {
   getActive: () => api.get('/api/WorkflowApi/definitions/active'),
   getByCategory: (category: string) =>
     api.get(`/api/WorkflowApi/definitions/category/${encodeURIComponent(category)}`),
-  create: (data: any) => api.post('/api/WorkflowApi/definitions', data),
-  update: (id: number, data: any) => api.put(`/api/WorkflowApi/definitions/${id}`, data),
+  create: (data: CreateWorkflowDefinitionRequest) => api.post('/api/WorkflowApi/definitions', data),
+  update: (id: number, data: UpdateWorkflowDefinitionRequest) => api.put(`/api/WorkflowApi/definitions/${id}`, data),
   delete: (id: number) => api.delete(`/api/WorkflowApi/definitions/${id}`),
   toggleActive: (id: number, isActive: boolean) =>
     api.post(`/api/WorkflowApi/definitions/${id}/toggle-active`, { isActive }),
@@ -478,13 +492,13 @@ export const workflowInstancesApi = {
   getByStatus: (status: number) => api.get(`/api/WorkflowApi/instances/status/${status}`),
   getPending: () => api.get('/api/WorkflowApi/instances/pending'),
   getInProgress: () => api.get('/api/WorkflowApi/instances/in-progress'),
-  create: (data: any) => api.post('/api/WorkflowApi/instances', data),
-  update: (id: number, data: any) => api.put(`/api/WorkflowApi/instances/${id}`, data),
+  create: (data: CreateWorkflowInstanceRequest) => api.post('/api/WorkflowApi/instances', data),
+  update: (id: number, data: UpdateWorkflowInstanceRequest) => api.put(`/api/WorkflowApi/instances/${id}`, data),
   cancel: (id: number, reason?: string) =>
     api.post(`/api/WorkflowApi/instances/${id}/cancel`, { reason }),
   complete: (id: number) => api.post(`/api/WorkflowApi/instances/${id}/complete`),
   getHistory: (id: number) => api.get(`/api/WorkflowApi/instances/${id}/history`),
-  addHistoryEntry: (id: number, data: any) =>
+  addHistoryEntry: (id: number, data: { stepId: string; action: string; notes?: string }) =>
     api.post(`/api/WorkflowApi/instances/${id}/history`, data),
   getStatistics: () => api.get('/api/WorkflowApi/instances/statistics'),
 };
@@ -504,8 +518,8 @@ export const analyticsApi = {
   getRecentReports: (limit?: number) => api.get('/api/AnalyticsApi/reports/recent', { params: { limit } }),
   getReportsByType: (type: number) => api.get(`/api/AnalyticsApi/reports/type/${type}`),
   getReportsByStatus: (status: number) => api.get(`/api/AnalyticsApi/reports/status/${status}`),
-  createReport: (data: any) => api.post('/api/AnalyticsApi/reports', data),
-  updateReport: (id: number, data: any) => api.put(`/api/AnalyticsApi/reports/${id}`, data),
+  createReport: (data: CreateReportRequest) => api.post('/api/AnalyticsApi/reports', data),
+  updateReport: (id: number, data: Partial<CreateReportRequest>) => api.put(`/api/AnalyticsApi/reports/${id}`, data),
   deleteReport: (id: number) => api.delete(`/api/AnalyticsApi/reports/${id}`),
   downloadReport: (id: number) =>
     api.get(`/api/AnalyticsApi/reports/${id}/download`, { responseType: 'blob' }),

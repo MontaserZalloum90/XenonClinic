@@ -12,17 +12,14 @@ const skinExamsApi = {
   },
   create: async (data: CreateSkinExamRequest) => {
     // TODO: Implement actual API call
-    console.log('Creating skin exam:', data);
     return { data: { id: Date.now(), ...data, createdAt: new Date().toISOString() } };
   },
   update: async (id: number, data: Partial<SkinExam>) => {
     // TODO: Implement actual API call
-    console.log('Updating skin exam:', id, data);
     return { data: { id, ...data } };
   },
   delete: async (id: number) => {
     // TODO: Implement actual API call
-    console.log('Deleting skin exam:', id);
     return { data: { success: true } };
   },
 };

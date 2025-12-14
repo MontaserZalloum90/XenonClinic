@@ -344,7 +344,8 @@ const StressTestModal = ({ isOpen, onClose, test }: StressTestModalProps) => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Saving stress test:', formData);
+    // TODO: Implement actual API call to save stress test
+    void formData;
     queryClient.invalidateQueries({ queryKey: ['stress-tests'] });
     onClose();
   };

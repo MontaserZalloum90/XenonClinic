@@ -299,8 +299,7 @@ const NeurologicalExamModal = ({ isOpen, onClose, exam }: NeurologicalExamModalP
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // In production, call API to save
-    console.log('Saving neurological exam:', formData);
+    // TODO: Implement API call to save neurological exam
     queryClient.invalidateQueries({ queryKey: ['neurological-exams'] });
     onClose();
   };

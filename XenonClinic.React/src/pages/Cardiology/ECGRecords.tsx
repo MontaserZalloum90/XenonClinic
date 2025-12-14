@@ -303,8 +303,8 @@ const ECGRecordModal = ({ isOpen, onClose, record }: ECGRecordModalProps) => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // In production, call API to save
-    console.log('Saving ECG record:', formData);
+    // TODO: Implement actual API call to save ECG record
+    void formData;
     queryClient.invalidateQueries({ queryKey: ['ecg-records'] });
     onClose();
   };

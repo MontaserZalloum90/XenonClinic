@@ -10,9 +10,8 @@ const skinPhotosApi = {
     // TODO: Implement actual API call
     return { data: [] as SkinPhoto[] };
   },
-  create: async (data: FormData) => {
+  create: async (_data: FormData) => {
     // TODO: Implement actual API call with file upload
-    console.log('Uploading skin photo:', data);
     return {
       data: {
         id: Date.now(),
@@ -21,9 +20,8 @@ const skinPhotosApi = {
       }
     };
   },
-  delete: async (id: number) => {
+  delete: async (_id: number) => {
     // TODO: Implement actual API call
-    console.log('Deleting skin photo:', id);
     return { data: { success: true } };
   },
 };
