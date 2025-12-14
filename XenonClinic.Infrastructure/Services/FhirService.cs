@@ -1706,7 +1706,10 @@ public class FhirService : IFhirService
             if (doc.RootElement.TryGetProperty("resourceType", out var rt))
                 return rt.GetString() ?? "Unknown";
         }
-        catch { }
+        catch (JsonException)
+        {
+            // Invalid JSON format - return default value
+        }
         return "Unknown";
     }
 
