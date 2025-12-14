@@ -8,12 +8,13 @@ using Serilog.Formatting.Compact;
 namespace XenonClinic.Infrastructure.Configuration;
 
 /// <summary>
-/// Serilog structured logging configuration.
+/// Serilog structured logging configuration with enhanced enrichers and filtering.
 /// </summary>
 public static class LoggingConfiguration
 {
     /// <summary>
     /// Configures Serilog with structured logging for the application.
+    /// Includes correlation ID, tenant context, and performance tracking.
     /// </summary>
     public static IHostBuilder UseXenonLogging(this IHostBuilder hostBuilder)
     {
@@ -25,9 +26,34 @@ public static class LoggingConfiguration
                 .Enrich.FromLogContext()
                 .Enrich.WithMachineName()
                 .Enrich.WithEnvironmentName()
+                .Enrich.WithThreadId()
+                .Enrich.WithProcessId()
                 .Enrich.WithProperty("Application", "XenonClinic")
+                .Enrich.WithProperty("Version", GetApplicationVersion())
+                .Filter.ByExcluding(IsHealthCheckRequest)
                 .ConfigureForEnvironment(context.HostingEnvironment);
         });
+    }
+
+    /// <summary>
+    /// Gets the application version from the assembly.
+    /// </summary>
+    private static string GetApplicationVersion()
+    {
+        return typeof(LoggingConfiguration).Assembly.GetName().Version?.ToString() ?? "unknown";
+    }
+
+    /// <summary>
+    /// Filters out health check endpoint requests to reduce log noise.
+    /// </summary>
+    private static bool IsHealthCheckRequest(LogEvent logEvent)
+    {
+        if (logEvent.Properties.TryGetValue("RequestPath", out var requestPath))
+        {
+            var path = requestPath.ToString().Trim('"');
+            return path.StartsWith("/health") || path.StartsWith("/ready") || path.StartsWith("/live");
+        }
+        return false;
     }
 
     /// <summary>
@@ -104,10 +130,31 @@ public static class LoggingConfiguration
                 diagnosticContext.Set("RequestScheme", httpContext.Request.Scheme);
                 diagnosticContext.Set("UserAgent", httpContext.Request.Headers["User-Agent"].ToString());
                 diagnosticContext.Set("ClientIP", httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown");
+                diagnosticContext.Set("RequestContentType", httpContext.Request.ContentType ?? "none");
+                diagnosticContext.Set("RequestContentLength", httpContext.Request.ContentLength ?? 0);
+                diagnosticContext.Set("ResponseContentType", httpContext.Response.ContentType ?? "none");
 
+                // Correlation ID for distributed tracing
+                if (httpContext.Request.Headers.TryGetValue("X-Correlation-ID", out var correlationId))
+                {
+                    diagnosticContext.Set("CorrelationId", correlationId.ToString());
+                }
+                else if (httpContext.Items.TryGetValue("CorrelationId", out var itemCorrelationId))
+                {
+                    diagnosticContext.Set("CorrelationId", itemCorrelationId?.ToString() ?? Guid.NewGuid().ToString());
+                }
+
+                // Tenant context for multi-tenancy tracking
+                if (httpContext.Items.TryGetValue("TenantId", out var tenantId))
+                {
+                    diagnosticContext.Set("TenantId", tenantId?.ToString() ?? "unknown");
+                }
+
+                // User context
                 if (httpContext.User.Identity?.IsAuthenticated == true)
                 {
                     diagnosticContext.Set("UserId", httpContext.User.FindFirst("sub")?.Value ?? "unknown");
+                    diagnosticContext.Set("UserName", httpContext.User.Identity.Name ?? "unknown");
                 }
             };
         });

@@ -151,13 +151,14 @@ public static class ServiceCollectionExtensions
     }
 
     /// <summary>
-    /// Adds health check services with database and API checks.
+    /// Adds health check services with database, API, and cache checks.
     /// </summary>
     public static IServiceCollection AddXenonHealthChecks(this IServiceCollection services)
     {
         services.AddHealthChecks()
             .AddCheck<ApiHealthCheck>("api", tags: new[] { "api", "ready" })
-            .AddCheck<DatabaseHealthCheck>("database", tags: new[] { "db", "ready" });
+            .AddCheck<DatabaseHealthCheck>("database", tags: new[] { "db", "ready" })
+            .AddCheck<CacheHealthCheck>("cache", tags: new[] { "cache", "ready" });
 
         return services;
     }
