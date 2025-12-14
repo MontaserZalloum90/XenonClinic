@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Dialog } from "@headlessui/react";
 import {
   MagnifyingGlassIcon,
@@ -11,10 +11,16 @@ import {
   ExclamationTriangleIcon,
 } from "@heroicons/react/24/outline";
 import { format } from "date-fns";
-import type { DevelopmentMilestone } from "../../types/pediatrics";
+import type { DevelopmentMilestone, CreateMilestoneRequest } from "../../types/pediatrics";
 import { MilestoneCategory, MilestoneStatus } from "../../types/pediatrics";
+import { pediatricsApi } from "../../lib/api";
 
-export const DevelopmentMilestones = () => {
+interface DevelopmentMilestonesProps {
+  patientId?: number;
+}
+
+export const DevelopmentMilestones = ({ patientId }: DevelopmentMilestonesProps = {}) => {
+  const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("");
   const [categoryFilter, setCategoryFilter] = useState<string>("");
@@ -23,99 +29,34 @@ export const DevelopmentMilestones = () => {
     DevelopmentMilestone | undefined
   >(undefined);
 
+  // Fetch milestones from API
   const { data: milestones, isLoading } = useQuery<DevelopmentMilestone[]>({
-    queryKey: ["development-milestones"],
+    queryKey: ["development-milestones", patientId],
     queryFn: async () => {
-      return [
-        {
-          id: 1,
-          patientId: 6001,
-          patientName: "Emma Johnson (6 months)",
-          milestoneCategory: MilestoneCategory.Motor,
-          milestoneName: "Sits without support",
-          expectedAge: 6,
-          achievedDate: new Date().toISOString(),
-          status: MilestoneStatus.Achieved,
-          assessedBy: "Dr. Sarah Chen",
-          createdAt: new Date().toISOString(),
-        },
-        {
-          id: 2,
-          patientId: 6001,
-          patientName: "Emma Johnson (6 months)",
-          milestoneCategory: MilestoneCategory.Social,
-          milestoneName: "Responds to own name",
-          expectedAge: 6,
-          achievedDate: new Date().toISOString(),
-          status: MilestoneStatus.Achieved,
-          assessedBy: "Dr. Sarah Chen",
-          createdAt: new Date().toISOString(),
-        },
-        {
-          id: 3,
-          patientId: 6002,
-          patientName: "Liam Smith (12 months)",
-          milestoneCategory: MilestoneCategory.Language,
-          milestoneName: "Says mama/dada",
-          expectedAge: 12,
-          status: MilestoneStatus.NotYetAchieved,
-          assessedBy: "Dr. Michael Williams",
-          notes: "Babbling present, continue to monitor",
-          createdAt: new Date().toISOString(),
-        },
-        {
-          id: 4,
-          patientId: 6003,
-          patientName: "Sophia Williams (18 months)",
-          milestoneCategory: MilestoneCategory.Gross_Motor,
-          milestoneName: "Walks independently",
-          expectedAge: 15,
-          status: MilestoneStatus.Delayed,
-          assessedBy: "Dr. Sarah Chen",
-          notes: "Referred to PT evaluation",
-          createdAt: new Date().toISOString(),
-        },
-        {
-          id: 5,
-          patientId: 6004,
-          patientName: "Noah Brown (24 months)",
-          milestoneCategory: MilestoneCategory.Cognitive,
-          milestoneName: "Points to named objects",
-          expectedAge: 18,
-          achievedDate: new Date(
-            Date.now() - 60 * 24 * 60 * 60 * 1000,
-          ).toISOString(),
-          status: MilestoneStatus.Achieved,
-          assessedBy: "Dr. Michael Williams",
-          createdAt: new Date().toISOString(),
-        },
-        {
-          id: 6,
-          patientId: 6004,
-          patientName: "Noah Brown (24 months)",
-          milestoneCategory: MilestoneCategory.Language,
-          milestoneName: "Uses 2-word phrases",
-          expectedAge: 24,
-          achievedDate: new Date().toISOString(),
-          status: MilestoneStatus.Achieved,
-          assessedBy: "Dr. Michael Williams",
-          createdAt: new Date().toISOString(),
-        },
-        {
-          id: 7,
-          patientId: 6005,
-          patientName: "Olivia Davis (9 months)",
-          milestoneCategory: MilestoneCategory.Fine_Motor,
-          milestoneName: "Picks up small objects with pincer grasp",
-          expectedAge: 9,
-          status: MilestoneStatus.Concerning,
-          assessedBy: "Dr. Sarah Chen",
-          notes: "Unable to demonstrate pincer grasp, recommend OT evaluation",
-          createdAt: new Date().toISOString(),
-        },
-      ];
+      if (patientId) {
+        const response = await pediatricsApi.getMilestonesByPatient(patientId);
+        return response.data?.data ?? response.data ?? [];
+      }
+      return [];
     },
   });
+
+  // Mutations
+  const createMutation = useMutation({
+    mutationFn: (data: CreateMilestoneRequest) => pediatricsApi.createMilestone(data),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["development-milestones"] }),
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: number; data: Partial<CreateMilestoneRequest> }) =>
+      pediatricsApi.updateMilestone(id, data),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["development-milestones"] }),
+  });
+
+  void createMutation;
+  void updateMutation;
+  void MilestoneCategory;
+  void MilestoneStatus;
 
   const filteredMilestones = milestones?.filter((milestone) => {
     const matchesSearch =

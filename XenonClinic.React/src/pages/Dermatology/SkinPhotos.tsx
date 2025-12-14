@@ -3,45 +3,31 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Dialog } from '@headlessui/react';
 import { format } from 'date-fns';
 import type { SkinPhoto, CreateSkinPhotoRequest } from '../../types/dermatology';
+import { dermatologyApi } from '../../lib/api';
 
-// Mock API - Replace with actual dermatology API
-const skinPhotosApi = {
-  getAll: async () => {
-    // TODO: Implement actual API call
-    return { data: [] as SkinPhoto[] };
-  },
-  create: async (_data: FormData) => {
-    // TODO: Implement actual API call with file upload
-    return {
-      data: {
-        id: Date.now(),
-        photoUrl: '/placeholder-image.jpg',
-        createdAt: new Date().toISOString()
-      }
-    };
-  },
-  delete: async (_id: number) => {
-    // TODO: Implement actual API call
-    return { data: { success: true } };
-  },
-};
+interface SkinPhotosProps {
+  patientId?: number;
+}
 
-export const SkinPhotos = () => {
+export const SkinPhotos = ({ patientId }: SkinPhotosProps = {}) => {
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedPhoto, setSelectedPhoto] = useState<SkinPhoto | undefined>(undefined);
 
   const { data: photos, isLoading } = useQuery<SkinPhoto[]>({
-    queryKey: ['skin-photos'],
+    queryKey: ['skin-photos', patientId],
     queryFn: async () => {
-      const response = await skinPhotosApi.getAll();
-      return response.data;
+      if (patientId) {
+        const response = await dermatologyApi.getSkinPhotosByPatient(patientId);
+        return response.data?.data ?? response.data ?? [];
+      }
+      return [];
     },
   });
 
   const createMutation = useMutation({
-    mutationFn: (data: FormData) => skinPhotosApi.create(data),
+    mutationFn: (data: FormData) => dermatologyApi.uploadSkinPhoto(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['skin-photos'] });
       setIsModalOpen(false);
@@ -49,7 +35,7 @@ export const SkinPhotos = () => {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: number) => skinPhotosApi.delete(id),
+    mutationFn: (id: number) => dermatologyApi.deleteSkinPhoto(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['skin-photos'] });
       setSelectedPhoto(undefined);

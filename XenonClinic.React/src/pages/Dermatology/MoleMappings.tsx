@@ -8,47 +8,31 @@ import type {
   MoleLocation,
   RiskLevel,
 } from '../../types/dermatology';
+import { dermatologyApi } from '../../lib/api';
 
-// Mock API - Replace with actual dermatology API
-const moleMappingsApi = {
-  getAll: async () => {
-    // TODO: Implement actual API call
-    return { data: [] as MoleMapping[] };
-  },
-  create: async (data: CreateMoleMappingRequest) => {
-    // TODO: Implement actual API call
-    void data;
-    return { data: { id: Date.now(), ...data, createdAt: new Date().toISOString() } };
-  },
-  update: async (id: number, data: Partial<MoleMapping>) => {
-    // TODO: Implement actual API call
-    void id;
-    void data;
-    return { data: { id, ...data } };
-  },
-  delete: async (id: number) => {
-    // TODO: Implement actual API call
-    void id;
-    return { data: { success: true } };
-  },
-};
+interface MoleMappingsProps {
+  patientId?: number;
+}
 
-export const MoleMappings = () => {
+export const MoleMappings = ({ patientId }: MoleMappingsProps = {}) => {
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedMapping, setSelectedMapping] = useState<MoleMapping | undefined>(undefined);
 
   const { data: mappings, isLoading } = useQuery<MoleMapping[]>({
-    queryKey: ['mole-mappings'],
+    queryKey: ['mole-mappings', patientId],
     queryFn: async () => {
-      const response = await moleMappingsApi.getAll();
-      return response.data;
+      if (patientId) {
+        const response = await dermatologyApi.getMoleMappingsByPatient(patientId);
+        return response.data?.data ?? response.data ?? [];
+      }
+      return [];
     },
   });
 
   const createMutation = useMutation({
-    mutationFn: (data: CreateMoleMappingRequest) => moleMappingsApi.create(data),
+    mutationFn: (data: CreateMoleMappingRequest) => dermatologyApi.createMoleMapping(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['mole-mappings'] });
       setIsModalOpen(false);
@@ -58,7 +42,7 @@ export const MoleMappings = () => {
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: number; data: Partial<MoleMapping> }) =>
-      moleMappingsApi.update(id, data),
+      dermatologyApi.updateMoleMapping(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['mole-mappings'] });
       setIsModalOpen(false);
@@ -67,7 +51,7 @@ export const MoleMappings = () => {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: number) => moleMappingsApi.delete(id),
+    mutationFn: (id: number) => dermatologyApi.deleteMoleMapping(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['mole-mappings'] });
     },
