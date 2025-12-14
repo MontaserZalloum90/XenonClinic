@@ -20,6 +20,7 @@ public class CalendarSyncService : ICalendarSyncService
     private readonly ClinicDbContext _context;
     private readonly ILogger<CalendarSyncService> _logger;
     private readonly HttpClient _httpClient;
+    private readonly ISecretEncryptionService _secretEncryptionService;
 
     // OAuth endpoints
     private const string GoogleAuthEndpoint = "https://accounts.google.com/o/oauth2/v2/auth";
@@ -33,11 +34,13 @@ public class CalendarSyncService : ICalendarSyncService
     public CalendarSyncService(
         ClinicDbContext context,
         ILogger<CalendarSyncService> logger,
-        IHttpClientFactory httpClientFactory)
+        IHttpClientFactory httpClientFactory,
+        ISecretEncryptionService secretEncryptionService)
     {
         _context = context;
         _logger = logger;
         _httpClient = httpClientFactory.CreateClient("CalendarSync");
+        _secretEncryptionService = secretEncryptionService;
     }
 
     #region Connection Management
@@ -178,10 +181,8 @@ public class CalendarSyncService : ICalendarSyncService
                 AccountEmail = accountInfo?.Email,
                 AccountName = accountInfo?.Name,
                 CalendarId = request.CalendarId,
-                AccessToken = EncryptToken(request.AccessToken),
-                RefreshToken = !string.IsNullOrEmpty(request.RefreshToken)
-                    ? EncryptToken(request.RefreshToken)
-                    : null,
+                AccessToken = _secretEncryptionService.Encrypt(request.AccessToken),
+                RefreshToken = _secretEncryptionService.EncryptIfNotEmpty(request.RefreshToken),
                 SyncDirection = request.SyncDirection.ToString(),
                 IsActive = true,
                 IsDefault = request.SetAsDefault,
@@ -1193,25 +1194,13 @@ public class CalendarSyncService : ICalendarSyncService
     private async Task<string> RefreshAccessTokenIfNeededAsync(CalendarConnection connection)
     {
         // TODO: Check token expiry and refresh if needed
-        return DecryptToken(connection.AccessToken);
+        return _secretEncryptionService.Decrypt(connection.AccessToken);
     }
 
     private async Task RevokeTokensAsync(CalendarConnection connection)
     {
         // Provider-specific token revocation
         _logger.LogInformation("Revoking tokens for connection {ConnectionId}", connection.Id);
-    }
-
-    private static string EncryptToken(string token)
-    {
-        // TODO: Implement proper encryption
-        return Convert.ToBase64String(Encoding.UTF8.GetBytes(token));
-    }
-
-    private static string DecryptToken(string encryptedToken)
-    {
-        // TODO: Implement proper decryption
-        return Encoding.UTF8.GetString(Convert.FromBase64String(encryptedToken));
     }
 
     private async Task<IEnumerable<AvailableCalendarDto>> GetGoogleCalendarsAsync(string accessToken)
