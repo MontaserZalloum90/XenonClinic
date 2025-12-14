@@ -657,14 +657,14 @@ public class BpmnService : IBpmnService
         }
     }
 
-    private static SequenceFlowDefinition ParseSequenceFlow(XElement element)
+    private static SequenceFlow ParseSequenceFlow(XElement element)
     {
-        return new SequenceFlowDefinition
+        return new SequenceFlow
         {
             Id = element.Attribute("id")?.Value ?? "",
             Name = element.Attribute("name")?.Value,
-            SourceRef = element.Attribute("sourceRef")?.Value ?? "",
-            TargetRef = element.Attribute("targetRef")?.Value ?? "",
+            SourceActivityId = element.Attribute("sourceRef")?.Value ?? "",
+            TargetActivityId = element.Attribute("targetRef")?.Value ?? "",
             ConditionExpression = element.Elements()
                 .FirstOrDefault(e => e.Name.LocalName == "conditionExpression")?.Value
         };
@@ -690,8 +690,8 @@ public class BpmnService : IBpmnService
         }
 
         // Add sequence flows
-        var sequenceFlows = model.SequenceFlows ?? new Dictionary<string, SequenceFlowDefinition>();
-        foreach (var flow in sequenceFlows.Values)
+        var sequenceFlows = model.SequenceFlows ?? new List<SequenceFlow>();
+        foreach (var flow in sequenceFlows)
         {
             process.Add(CreateSequenceFlowElement(flow));
         }
@@ -701,17 +701,18 @@ public class BpmnService : IBpmnService
 
     private static XElement CreateActivityElement(ActivityDefinition activity)
     {
+        // activity.Type returns a string like "startEvent", "userTask", etc.
         var elementName = activity.Type switch
         {
-            ActivityType.StartEvent => BpmnElementTypes.StartEvent,
-            ActivityType.EndEvent => BpmnElementTypes.EndEvent,
-            ActivityType.UserTask => BpmnElementTypes.UserTask,
-            ActivityType.ServiceTask => BpmnElementTypes.ServiceTask,
-            ActivityType.ScriptTask => BpmnElementTypes.ScriptTask,
-            ActivityType.ExclusiveGateway => BpmnElementTypes.ExclusiveGateway,
-            ActivityType.ParallelGateway => BpmnElementTypes.ParallelGateway,
-            ActivityType.InclusiveGateway => BpmnElementTypes.InclusiveGateway,
-            ActivityType.SubProcess => BpmnElementTypes.SubProcess,
+            "startEvent" => BpmnElementTypes.StartEvent,
+            "endEvent" => BpmnElementTypes.EndEvent,
+            "userTask" => BpmnElementTypes.UserTask,
+            "serviceTask" => BpmnElementTypes.ServiceTask,
+            "scriptTask" => BpmnElementTypes.ScriptTask,
+            "exclusiveGateway" => BpmnElementTypes.ExclusiveGateway,
+            "parallelGateway" => BpmnElementTypes.ParallelGateway,
+            "inclusiveGateway" => BpmnElementTypes.InclusiveGateway,
+            "subProcess" => BpmnElementTypes.SubProcess,
             _ => "task"
         };
 
@@ -719,25 +720,15 @@ public class BpmnService : IBpmnService
             new XAttribute("id", activity.Id),
             new XAttribute("name", activity.Name ?? ""));
 
-        // Add incoming/outgoing references
-        foreach (var incoming in activity.Incoming ?? Enumerable.Empty<string>())
-        {
-            element.Add(new XElement(BpmnNs + "incoming", incoming));
-        }
-        foreach (var outgoing in activity.Outgoing ?? Enumerable.Empty<string>())
-        {
-            element.Add(new XElement(BpmnNs + "outgoing", outgoing));
-        }
-
         return element;
     }
 
-    private static XElement CreateSequenceFlowElement(SequenceFlowDefinition flow)
+    private static XElement CreateSequenceFlowElement(SequenceFlow flow)
     {
         var element = new XElement(BpmnNs + "sequenceFlow",
             new XAttribute("id", flow.Id),
-            new XAttribute("sourceRef", flow.SourceRef),
-            new XAttribute("targetRef", flow.TargetRef));
+            new XAttribute("sourceRef", flow.SourceActivityId),
+            new XAttribute("targetRef", flow.TargetActivityId));
 
         if (!string.IsNullOrEmpty(flow.Name))
         {
@@ -789,8 +780,8 @@ public class BpmnService : IBpmnService
         }
 
         // Add edges for flows
-        var modelFlows = model.SequenceFlows ?? new Dictionary<string, SequenceFlowDefinition>();
-        foreach (var flow in modelFlows.Values)
+        var modelFlows = model.SequenceFlows ?? new List<SequenceFlow>();
+        foreach (var flow in modelFlows)
         {
             plane.Add(new XElement(BpmndiNs + "BPMNEdge",
                 new XAttribute("id", $"{flow.Id}_di"),
@@ -801,12 +792,12 @@ public class BpmnService : IBpmnService
         return diagram;
     }
 
-    private static (int width, int height) GetShapeSize(ActivityType type)
+    private static (int width, int height) GetShapeSize(string activityType)
     {
-        return type switch
+        return activityType switch
         {
-            ActivityType.StartEvent or ActivityType.EndEvent => (36, 36),
-            ActivityType.ExclusiveGateway or ActivityType.ParallelGateway or ActivityType.InclusiveGateway => (50, 50),
+            "startEvent" or "endEvent" => (36, 36),
+            "exclusiveGateway" or "parallelGateway" or "inclusiveGateway" => (50, 50),
             _ => (100, 80)
         };
     }

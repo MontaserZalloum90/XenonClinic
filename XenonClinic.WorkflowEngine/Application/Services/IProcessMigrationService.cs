@@ -49,6 +49,36 @@ public interface IProcessMigrationService
     /// Gets migration history for a process instance.
     /// </summary>
     Task<IList<MigrationRecord>> GetInstanceMigrationHistoryAsync(string instanceId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets a migration plan by ID.
+    /// </summary>
+    Task<MigrationPlan?> GetMigrationPlanAsync(string planId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Generates activity mappings automatically between source and target definitions.
+    /// </summary>
+    Task<IList<ActivityMapping>> GenerateActivityMappingsAsync(string sourceDefinitionId, string targetDefinitionId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Lists migration plans.
+    /// </summary>
+    Task<IList<MigrationPlan>> ListMigrationPlansAsync(string? tenantId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Lists migration executions.
+    /// </summary>
+    Task<IList<MigrationExecution>> ListMigrationExecutionsAsync(string? planId, MigrationStatus? status, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets migration statistics.
+    /// </summary>
+    Task<MigrationStatistics> GetMigrationStatisticsAsync(string? tenantId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Deletes a migration plan.
+    /// </summary>
+    Task DeleteMigrationPlanAsync(string planId, CancellationToken cancellationToken = default);
 }
 
 #region Migration Plan DTOs
@@ -309,6 +339,40 @@ public class MigrationRecord
     // State Snapshot (for rollback)
     public string? PreMigrationState { get; set; }
     public Dictionary<string, object> PreMigrationVariables { get; set; } = new();
+}
+
+#endregion
+
+#region Migration Statistics
+
+/// <summary>
+/// Status filter for migration queries.
+/// </summary>
+public enum MigrationStatus
+{
+    Pending,
+    Running,
+    Completed,
+    Failed,
+    Cancelled,
+    RolledBack
+}
+
+/// <summary>
+/// Migration statistics for a tenant.
+/// </summary>
+public class MigrationStatistics
+{
+    public string? TenantId { get; set; }
+    public DateTime AsOf { get; set; } = DateTime.UtcNow;
+    public int TotalMigrationPlans { get; set; }
+    public int TotalMigrationExecutions { get; set; }
+    public int SuccessfulMigrations { get; set; }
+    public int FailedMigrations { get; set; }
+    public int PendingMigrations { get; set; }
+    public int TotalInstancesMigrated { get; set; }
+    public double AverageMigrationDurationSeconds { get; set; }
+    public DateTime? LastMigrationAt { get; set; }
 }
 
 #endregion

@@ -3,6 +3,7 @@ namespace XenonClinic.WorkflowEngine.Application.Services;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using XenonClinic.WorkflowEngine.Application.DTOs;
 using XenonClinic.WorkflowEngine.Domain.Entities;
 using XenonClinic.WorkflowEngine.Domain.Models;
 using XenonClinic.WorkflowEngine.Infrastructure.Data;

@@ -217,6 +217,44 @@ public class EdgeUpdate
 
 #endregion
 
+#region BPMN Parsing Types
+
+/// <summary>
+/// Sequence flow definition for BPMN parsing.
+/// </summary>
+public class SequenceFlowDefinition
+{
+    public string Id { get; set; } = string.Empty;
+    public string? Name { get; set; }
+    public string SourceRef { get; set; } = string.Empty;
+    public string TargetRef { get; set; } = string.Empty;
+    public string? ConditionExpression { get; set; }
+    public bool IsDefault { get; set; }
+}
+
+/// <summary>
+/// Activity types for BPMN elements.
+/// </summary>
+public enum ActivityType
+{
+    StartEvent,
+    EndEvent,
+    UserTask,
+    ServiceTask,
+    ScriptTask,
+    ExclusiveGateway,
+    ParallelGateway,
+    InclusiveGateway,
+    SubProcess,
+    CallActivity,
+    IntermediateCatchEvent,
+    IntermediateThrowEvent,
+    BoundaryEvent,
+    Task
+}
+
+#endregion
+
 #region BPMN Element Types
 
 public static class BpmnElementTypes
