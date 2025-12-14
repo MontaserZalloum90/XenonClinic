@@ -1,6 +1,9 @@
 using System.Globalization;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
+using QuestPDF.Fluent;
+using QuestPDF.Helpers;
+using QuestPDF.Infrastructure;
 using XenonClinic.Core.DTOs;
 using XenonClinic.Core.Entities;
 using XenonClinic.Core.Interfaces;
@@ -305,11 +308,199 @@ public class PayrollService : IPayrollService
         return MapToPayslipDto(payslip);
     }
 
-    public Task<byte[]> GeneratePayslipPdfAsync(int payslipId)
+    public async Task<byte[]> GeneratePayslipPdfAsync(int payslipId)
     {
-        // Placeholder - would use a PDF generation library like iTextSharp or QuestPDF
-        var pdfContent = $"Payslip PDF for ID: {payslipId}";
-        return Task.FromResult(Encoding.UTF8.GetBytes(pdfContent));
+        var payslip = await _context.Payslips
+            .Include(p => p.Employee)
+            .ThenInclude(e => e.Branch)
+            .Include(p => p.PayrollPeriod)
+            .FirstOrDefaultAsync(p => p.Id == payslipId);
+
+        if (payslip == null)
+            return Array.Empty<byte>();
+
+        QuestPDF.Settings.License = LicenseType.Community;
+
+        var document = Document.Create(container =>
+        {
+            container.Page(page =>
+            {
+                page.Size(PageSizes.A4);
+                page.Margin(40);
+                page.DefaultTextStyle(x => x.FontSize(10));
+
+                // Header
+                page.Header().Column(header =>
+                {
+                    header.Item().Row(row =>
+                    {
+                        row.RelativeItem().Column(col =>
+                        {
+                            col.Item().Text(payslip.Employee?.Branch?.Name ?? "XenonClinic")
+                                .FontSize(18).Bold().FontColor(Colors.Blue.Darken2);
+                            col.Item().Text(payslip.Employee?.Branch?.Address ?? "").FontSize(9);
+                        });
+                        row.ConstantItem(150).AlignRight().Column(col =>
+                        {
+                            col.Item().Text("PAYSLIP").FontSize(20).Bold().FontColor(Colors.Blue.Darken2);
+                            col.Item().Text($"Period: {payslip.PayrollPeriod?.StartDate:MMM dd} - {payslip.PayrollPeriod?.EndDate:MMM dd, yyyy}").FontSize(9);
+                        });
+                    });
+                    header.Item().PaddingVertical(10).LineHorizontal(2).LineColor(Colors.Blue.Darken2);
+                });
+
+                // Content
+                page.Content().PaddingVertical(10).Column(col =>
+                {
+                    // Employee Information
+                    col.Item().Background(Colors.Grey.Lighten3).Padding(10).Row(row =>
+                    {
+                        row.RelativeItem().Column(c =>
+                        {
+                            c.Item().Text("EMPLOYEE DETAILS").Bold().FontSize(11);
+                            c.Item().PaddingTop(5).Text($"Name: {payslip.Employee?.FirstName} {payslip.Employee?.LastName}");
+                            c.Item().Text($"Employee ID: {payslip.Employee?.EmployeeId ?? payslip.EmployeeId.ToString()}");
+                            c.Item().Text($"Department: {payslip.Employee?.Department ?? "N/A"}");
+                        });
+                        row.RelativeItem().Column(c =>
+                        {
+                            c.Item().Text("PAYMENT DETAILS").Bold().FontSize(11);
+                            c.Item().PaddingTop(5).Text($"Pay Date: {payslip.PayDate:MMMM dd, yyyy}");
+                            c.Item().Text($"Bank: {payslip.Employee?.BankName ?? "N/A"}");
+                            c.Item().Text($"Account: {MaskAccountNumber(payslip.Employee?.BankAccountNumber)}");
+                        });
+                    });
+
+                    // Earnings
+                    col.Item().PaddingTop(20).Column(earnings =>
+                    {
+                        earnings.Item().Text("EARNINGS").Bold().FontSize(12).FontColor(Colors.Blue.Darken2);
+                        earnings.Item().PaddingTop(10).Table(table =>
+                        {
+                            table.ColumnsDefinition(columns =>
+                            {
+                                columns.RelativeColumn(3);
+                                columns.RelativeColumn(2);
+                            });
+
+                            AddPayslipRow(table, "Basic Salary", payslip.BasicSalary);
+                            if (payslip.HousingAllowance > 0)
+                                AddPayslipRow(table, "Housing Allowance", payslip.HousingAllowance);
+                            if (payslip.TransportAllowance > 0)
+                                AddPayslipRow(table, "Transport Allowance", payslip.TransportAllowance);
+                            if (payslip.OtherAllowances > 0)
+                                AddPayslipRow(table, "Other Allowances", payslip.OtherAllowances);
+                            if (payslip.OvertimePay > 0)
+                                AddPayslipRow(table, "Overtime Pay", payslip.OvertimePay);
+                            if (payslip.Bonus > 0)
+                                AddPayslipRow(table, "Bonus", payslip.Bonus);
+
+                            // Total Earnings
+                            table.Cell().BorderTop(1).PaddingTop(5).Text("Total Earnings").Bold();
+                            table.Cell().BorderTop(1).PaddingTop(5).AlignRight().Text($"{payslip.GrossSalary:C}").Bold().FontColor(Colors.Green.Darken2);
+                        });
+                    });
+
+                    // Deductions
+                    col.Item().PaddingTop(20).Column(deductions =>
+                    {
+                        deductions.Item().Text("DEDUCTIONS").Bold().FontSize(12).FontColor(Colors.Red.Darken2);
+                        deductions.Item().PaddingTop(10).Table(table =>
+                        {
+                            table.ColumnsDefinition(columns =>
+                            {
+                                columns.RelativeColumn(3);
+                                columns.RelativeColumn(2);
+                            });
+
+                            if (payslip.IncomeTax > 0)
+                                AddDeductionRow(table, "Income Tax", payslip.IncomeTax);
+                            if (payslip.SocialInsurance > 0)
+                                AddDeductionRow(table, "Social Insurance", payslip.SocialInsurance);
+                            if (payslip.HealthInsurance > 0)
+                                AddDeductionRow(table, "Health Insurance", payslip.HealthInsurance);
+                            if (payslip.PensionContribution > 0)
+                                AddDeductionRow(table, "Pension Contribution", payslip.PensionContribution);
+                            if (payslip.LoanDeduction > 0)
+                                AddDeductionRow(table, "Loan Deduction", payslip.LoanDeduction);
+                            if (payslip.OtherDeductions > 0)
+                                AddDeductionRow(table, "Other Deductions", payslip.OtherDeductions);
+
+                            // Total Deductions
+                            var totalDeductions = payslip.IncomeTax + payslip.SocialInsurance + payslip.HealthInsurance +
+                                payslip.PensionContribution + payslip.LoanDeduction + payslip.OtherDeductions;
+                            table.Cell().BorderTop(1).PaddingTop(5).Text("Total Deductions").Bold();
+                            table.Cell().BorderTop(1).PaddingTop(5).AlignRight().Text($"-{totalDeductions:C}").Bold().FontColor(Colors.Red.Darken2);
+                        });
+                    });
+
+                    // Net Pay
+                    col.Item().PaddingTop(20).Background(Colors.Blue.Lighten4).Padding(15).Row(row =>
+                    {
+                        row.RelativeItem().Text("NET PAY").FontSize(14).Bold();
+                        row.ConstantItem(150).AlignRight().Text($"{payslip.NetSalary:C}").FontSize(18).Bold().FontColor(Colors.Blue.Darken2);
+                    });
+
+                    // Year-to-Date Summary
+                    col.Item().PaddingTop(20).Column(ytd =>
+                    {
+                        ytd.Item().Text("YEAR-TO-DATE SUMMARY").Bold().FontSize(11).FontColor(Colors.Grey.Darken2);
+                        ytd.Item().PaddingTop(5).Row(r =>
+                        {
+                            r.RelativeItem().Text($"YTD Gross: {payslip.YtdGross:C}");
+                            r.RelativeItem().Text($"YTD Tax: {payslip.YtdTax:C}");
+                            r.RelativeItem().Text($"YTD Net: {payslip.YtdNet:C}");
+                        });
+                    });
+
+                    // Leave Balance (if available)
+                    col.Item().PaddingTop(15).Row(row =>
+                    {
+                        row.RelativeItem().Background(Colors.Grey.Lighten4).Padding(8).Column(leave =>
+                        {
+                            leave.Item().Text("LEAVE BALANCE").Bold().FontSize(10);
+                            leave.Item().Text($"Annual: {payslip.AnnualLeaveBalance ?? 0} days").FontSize(9);
+                            leave.Item().Text($"Sick: {payslip.SickLeaveBalance ?? 0} days").FontSize(9);
+                        });
+                        row.ConstantItem(20);
+                        row.RelativeItem();
+                    });
+                });
+
+                // Footer
+                page.Footer().Column(footer =>
+                {
+                    footer.Item().LineHorizontal(1).LineColor(Colors.Grey.Lighten2);
+                    footer.Item().PaddingTop(10).Text("This is a computer-generated document. No signature required.")
+                        .FontSize(8).FontColor(Colors.Grey.Medium).AlignCenter();
+                    footer.Item().PaddingTop(3).Text($"Generated: {DateTime.Now:MMMM dd, yyyy hh:mm tt}")
+                        .FontSize(7).FontColor(Colors.Grey.Lighten1).AlignCenter();
+                });
+            });
+        });
+
+        using var stream = new MemoryStream();
+        document.GeneratePdf(stream);
+        return stream.ToArray();
+    }
+
+    private static void AddPayslipRow(TableDescriptor table, string label, decimal amount)
+    {
+        table.Cell().Padding(3).Text(label);
+        table.Cell().Padding(3).AlignRight().Text($"{amount:C}");
+    }
+
+    private static void AddDeductionRow(TableDescriptor table, string label, decimal amount)
+    {
+        table.Cell().Padding(3).Text(label);
+        table.Cell().Padding(3).AlignRight().Text($"-{amount:C}").FontColor(Colors.Red.Darken1);
+    }
+
+    private static string MaskAccountNumber(string? accountNumber)
+    {
+        if (string.IsNullOrEmpty(accountNumber) || accountNumber.Length < 4)
+            return "****";
+        return $"****{accountNumber[^4..]}";
     }
 
     public Task<bool> EmailPayslipAsync(int payslipId, string? emailOverride = null)

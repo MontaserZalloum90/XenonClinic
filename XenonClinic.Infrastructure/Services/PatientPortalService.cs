@@ -1,9 +1,13 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using QuestPDF.Fluent;
+using QuestPDF.Helpers;
+using QuestPDF.Infrastructure;
 using System.Security.Cryptography;
 using System.Text;
 using XenonClinic.Core.DTOs;
 using XenonClinic.Core.Entities;
+using XenonClinic.Core.Enums;
 using XenonClinic.Core.Interfaces;
 using XenonClinic.Core.Utilities;
 using XenonClinic.Infrastructure.Data;
@@ -17,13 +21,19 @@ public class PatientPortalService : IPatientPortalService
 {
     private readonly ClinicDbContext _context;
     private readonly ILogger<PatientPortalService> _logger;
+    private readonly IPaymentGatewayService _paymentGatewayService;
+    private readonly IEmailService _emailService;
 
     public PatientPortalService(
         ClinicDbContext context,
-        ILogger<PatientPortalService> logger)
+        ILogger<PatientPortalService> logger,
+        IPaymentGatewayService paymentGatewayService,
+        IEmailService emailService)
     {
         _context = context;
         _logger = logger;
+        _paymentGatewayService = paymentGatewayService;
+        _emailService = emailService;
     }
 
     #region Authentication
@@ -307,6 +317,8 @@ public class PatientPortalService : IPatientPortalService
     public async Task<bool> RequestPasswordResetAsync(string email)
     {
         var account = await _context.PortalAccounts
+            .Include(pa => pa.Patient)
+            .ThenInclude(p => p.Branch)
             .FirstOrDefaultAsync(pa => pa.Email == email && pa.IsActive);
 
         if (account == null)
@@ -316,8 +328,48 @@ public class PatientPortalService : IPatientPortalService
         account.PasswordResetTokenExpiresAt = DateTime.UtcNow.AddHours(1);
         await _context.SaveChangesAsync();
 
-        // TODO: Send password reset email
-        _logger.LogInformation("Password reset requested for PatientId: {PatientId}", account.PatientId);
+        // Send password reset email
+        try
+        {
+            var patientName = $"{account.Patient?.FirstName} {account.Patient?.LastName}".Trim();
+            var resetLink = $"https://portal.xenonclinic.com/reset-password?token={account.PasswordResetToken}";
+            var companyId = account.Patient?.Branch?.CompanyId ?? 1;
+
+            var emailBody = $@"
+                <html>
+                <body style='font-family: Arial, sans-serif; line-height: 1.6;'>
+                    <h2>Password Reset Request</h2>
+                    <p>Dear {patientName},</p>
+                    <p>We received a request to reset your XenonClinic Patient Portal password.</p>
+                    <p>Click the button below to reset your password:</p>
+                    <p style='margin: 20px 0;'>
+                        <a href='{resetLink}' style='background-color: #4CAF50; color: white; padding: 14px 20px; text-decoration: none; border-radius: 4px;'>
+                            Reset Password
+                        </a>
+                    </p>
+                    <p>Or copy and paste this link in your browser:</p>
+                    <p style='word-break: break-all; color: #666;'>{resetLink}</p>
+                    <p><strong>This link will expire in 1 hour.</strong></p>
+                    <p>If you did not request a password reset, please ignore this email or contact support if you have concerns.</p>
+                    <hr style='margin: 20px 0; border: none; border-top: 1px solid #eee;'>
+                    <p style='color: #888; font-size: 12px;'>This is an automated message from XenonClinic. Please do not reply to this email.</p>
+                </body>
+                </html>";
+
+            await _emailService.SendEmailAsync(
+                companyId,
+                email,
+                "Reset Your XenonClinic Password",
+                emailBody,
+                isHtml: true);
+
+            _logger.LogInformation("Password reset email sent to PatientId: {PatientId}", account.PatientId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to send password reset email for PatientId: {PatientId}", account.PatientId);
+            // Don't fail the request if email fails - token is still generated
+        }
 
         return true;
     }
@@ -1101,12 +1153,220 @@ public class PatientPortalService : IPatientPortalService
 
     public async Task<byte[]> DownloadMedicalRecordsAsync(int patientId, string format = "pdf")
     {
-        // TODO: Implement PDF generation using a library like iTextSharp or QuestPDF
         _logger.LogInformation("Medical records download requested for PatientId: {PatientId}, Format: {Format}",
             patientId, format);
 
-        // Placeholder - return empty byte array
-        return Array.Empty<byte>();
+        // Gather comprehensive medical records
+        var patient = await _context.Patients
+            .Include(p => p.Branch)
+            .FirstOrDefaultAsync(p => p.Id == patientId);
+
+        if (patient == null)
+            return Array.Empty<byte>();
+
+        var diagnoses = await GetActiveDiagnosesAsync(patientId);
+        var allergies = await GetAllergiesAsync(patientId);
+        var immunizations = await GetImmunizationsAsync(patientId);
+        var medications = await GetActiveMedicationsAsync(patientId);
+        var recentVisits = await GetVisitHistoryAsync(patientId, null, 10);
+        var vitals = await GetVitalSignsHistoryAsync(patientId, 5);
+        var labResults = await GetLabResultsAsync(patientId, null, 10);
+
+        QuestPDF.Settings.License = LicenseType.Community;
+
+        var document = Document.Create(container =>
+        {
+            container.Page(page =>
+            {
+                page.Size(PageSizes.A4);
+                page.Margin(40);
+                page.DefaultTextStyle(x => x.FontSize(10));
+
+                // Header
+                page.Header().Element(header =>
+                {
+                    header.Column(col =>
+                    {
+                        col.Item().Row(row =>
+                        {
+                            row.RelativeItem().Text("MEDICAL RECORDS SUMMARY").FontSize(18).Bold().FontColor(Colors.Blue.Darken2);
+                            row.ConstantItem(100).AlignRight().Text($"Generated: {DateTime.Now:MM/dd/yyyy}").FontSize(8);
+                        });
+                        col.Item().PaddingVertical(5).LineHorizontal(2).LineColor(Colors.Blue.Darken2);
+                    });
+                });
+
+                // Content
+                page.Content().PaddingVertical(10).Column(col =>
+                {
+                    // Patient Information Section
+                    col.Item().Background(Colors.Grey.Lighten3).Padding(10).Column(patientInfo =>
+                    {
+                        patientInfo.Item().Text("PATIENT INFORMATION").Bold().FontSize(12);
+                        patientInfo.Item().PaddingTop(5).Row(r =>
+                        {
+                            r.RelativeItem().Text($"Name: {patient.FirstName} {patient.LastName}");
+                            r.RelativeItem().Text($"MRN: {patient.MRN}");
+                        });
+                        patientInfo.Item().Row(r =>
+                        {
+                            r.RelativeItem().Text($"DOB: {patient.DateOfBirth:MM/dd/yyyy}");
+                            r.RelativeItem().Text($"Gender: {patient.Gender ?? "N/A"}");
+                        });
+                        patientInfo.Item().Row(r =>
+                        {
+                            r.RelativeItem().Text($"Blood Type: {patient.BloodType ?? "N/A"}");
+                            r.RelativeItem().Text($"Phone: {patient.PhoneNumber ?? "N/A"}");
+                        });
+                    });
+
+                    // Allergies
+                    col.Item().PaddingTop(15).Column(section =>
+                    {
+                        section.Item().Text("ALLERGIES").Bold().FontSize(12).FontColor(Colors.Red.Darken1);
+                        section.Item().PaddingTop(5);
+                        if (allergies.Any())
+                        {
+                            foreach (var allergy in allergies)
+                            {
+                                section.Item().Row(r =>
+                                {
+                                    r.ConstantItem(8).Text("•");
+                                    r.RelativeItem().Text($"{allergy.AllergyName} - {allergy.Severity ?? "Unknown severity"}: {allergy.Reaction ?? "N/A"}");
+                                });
+                            }
+                        }
+                        else
+                        {
+                            section.Item().Text("No known allergies").Italic().FontColor(Colors.Grey.Medium);
+                        }
+                    });
+
+                    // Active Diagnoses
+                    col.Item().PaddingTop(15).Column(section =>
+                    {
+                        section.Item().Text("ACTIVE DIAGNOSES").Bold().FontSize(12).FontColor(Colors.Blue.Darken2);
+                        section.Item().PaddingTop(5);
+                        if (diagnoses.Any())
+                        {
+                            foreach (var dx in diagnoses)
+                            {
+                                section.Item().Row(r =>
+                                {
+                                    r.ConstantItem(8).Text("•");
+                                    r.RelativeItem().Text($"{dx.DiagnosisName} ({dx.ICD10Code ?? "N/A"}) - {dx.DiagnosisDate:MM/dd/yyyy}");
+                                });
+                            }
+                        }
+                        else
+                        {
+                            section.Item().Text("No active diagnoses").Italic().FontColor(Colors.Grey.Medium);
+                        }
+                    });
+
+                    // Current Medications
+                    col.Item().PaddingTop(15).Column(section =>
+                    {
+                        section.Item().Text("CURRENT MEDICATIONS").Bold().FontSize(12).FontColor(Colors.Blue.Darken2);
+                        section.Item().PaddingTop(5);
+                        if (medications.Any())
+                        {
+                            foreach (var med in medications)
+                            {
+                                section.Item().Row(r =>
+                                {
+                                    r.ConstantItem(8).Text("•");
+                                    r.RelativeItem().Text($"{med.MedicationName} {med.Dosage} - {med.Frequency}");
+                                });
+                            }
+                        }
+                        else
+                        {
+                            section.Item().Text("No current medications").Italic().FontColor(Colors.Grey.Medium);
+                        }
+                    });
+
+                    // Recent Vital Signs
+                    if (vitals.Any())
+                    {
+                        var latestVitals = vitals.First();
+                        col.Item().PaddingTop(15).Column(section =>
+                        {
+                            section.Item().Text($"LATEST VITAL SIGNS ({latestVitals.RecordedAt:MM/dd/yyyy})").Bold().FontSize(12).FontColor(Colors.Blue.Darken2);
+                            section.Item().PaddingTop(5).Row(r =>
+                            {
+                                r.RelativeItem().Text($"BP: {latestVitals.BloodPressureSystolic}/{latestVitals.BloodPressureDiastolic} mmHg");
+                                r.RelativeItem().Text($"HR: {latestVitals.HeartRate} bpm");
+                                r.RelativeItem().Text($"Temp: {latestVitals.Temperature}°F");
+                            });
+                            section.Item().Row(r =>
+                            {
+                                r.RelativeItem().Text($"Weight: {latestVitals.Weight} kg");
+                                r.RelativeItem().Text($"Height: {latestVitals.Height} cm");
+                                r.RelativeItem().Text($"BMI: {latestVitals.BMI:F1}");
+                            });
+                        });
+                    }
+
+                    // Recent Visits
+                    col.Item().PaddingTop(15).Column(section =>
+                    {
+                        section.Item().Text("RECENT VISITS").Bold().FontSize(12).FontColor(Colors.Blue.Darken2);
+                        section.Item().PaddingTop(5);
+                        if (recentVisits.Any())
+                        {
+                            foreach (var visit in recentVisits.Take(5))
+                            {
+                                section.Item().Row(r =>
+                                {
+                                    r.ConstantItem(80).Text($"{visit.VisitDate:MM/dd/yyyy}");
+                                    r.RelativeItem().Text($"{visit.DoctorName} - {visit.ChiefComplaint ?? "Routine visit"}");
+                                });
+                            }
+                        }
+                        else
+                        {
+                            section.Item().Text("No recent visits").Italic().FontColor(Colors.Grey.Medium);
+                        }
+                    });
+
+                    // Immunizations
+                    col.Item().PaddingTop(15).Column(section =>
+                    {
+                        section.Item().Text("IMMUNIZATION HISTORY").Bold().FontSize(12).FontColor(Colors.Blue.Darken2);
+                        section.Item().PaddingTop(5);
+                        if (immunizations.Any())
+                        {
+                            foreach (var imm in immunizations.Take(10))
+                            {
+                                section.Item().Row(r =>
+                                {
+                                    r.ConstantItem(80).Text($"{imm.AdministeredDate:MM/dd/yyyy}");
+                                    r.RelativeItem().Text($"{imm.VaccineName} (Dose {imm.DoseNumber ?? 1})");
+                                });
+                            }
+                        }
+                        else
+                        {
+                            section.Item().Text("No immunization records").Italic().FontColor(Colors.Grey.Medium);
+                        }
+                    });
+                });
+
+                // Footer
+                page.Footer().AlignCenter().Text(text =>
+                {
+                    text.Span("XenonClinic - Confidential Medical Record - Page ");
+                    text.CurrentPageNumber();
+                    text.Span(" of ");
+                    text.TotalPages();
+                }).FontSize(8).FontColor(Colors.Grey.Medium);
+            });
+        });
+
+        using var stream = new MemoryStream();
+        document.GeneratePdf(stream);
+        return stream.ToArray();
     }
 
     #endregion
@@ -1181,16 +1441,166 @@ public class PatientPortalService : IPatientPortalService
     public async Task<byte[]> DownloadLabReportAsync(int patientId, int labResultId)
     {
         var labOrder = await _context.LabOrders
+            .Include(l => l.OrderingDoctor)
+            .Include(l => l.Results)
+            .Include(l => l.Patient)
+            .ThenInclude(p => p.Branch)
             .FirstOrDefaultAsync(l => l.Id == labResultId && l.PatientId == patientId);
 
         if (labOrder == null)
             return Array.Empty<byte>();
 
-        // TODO: Implement PDF generation
         _logger.LogInformation("Lab report download requested for PatientId: {PatientId}, LabResultId: {LabResultId}",
             patientId, labResultId);
 
-        return Array.Empty<byte>();
+        QuestPDF.Settings.License = LicenseType.Community;
+
+        var document = Document.Create(container =>
+        {
+            container.Page(page =>
+            {
+                page.Size(PageSizes.A4);
+                page.Margin(40);
+                page.DefaultTextStyle(x => x.FontSize(10));
+
+                // Header
+                page.Header().Column(header =>
+                {
+                    header.Item().Row(row =>
+                    {
+                        row.RelativeItem().Column(col =>
+                        {
+                            col.Item().Text(labOrder.Patient?.Branch?.Name ?? "XenonClinic").FontSize(16).Bold().FontColor(Colors.Blue.Darken2);
+                            col.Item().Text("LABORATORY REPORT").FontSize(14).Bold();
+                        });
+                        row.ConstantItem(120).AlignRight().Column(col =>
+                        {
+                            col.Item().Text($"Report Date: {DateTime.Now:MM/dd/yyyy}").FontSize(9);
+                            col.Item().Text($"Lab Order #: {labOrder.Id}").FontSize(9);
+                        });
+                    });
+                    header.Item().PaddingVertical(5).LineHorizontal(2).LineColor(Colors.Blue.Darken2);
+                });
+
+                // Content
+                page.Content().PaddingVertical(10).Column(col =>
+                {
+                    // Patient Info
+                    col.Item().Background(Colors.Grey.Lighten3).Padding(10).Row(row =>
+                    {
+                        row.RelativeItem().Column(c =>
+                        {
+                            c.Item().Text("PATIENT INFORMATION").Bold().FontSize(11);
+                            c.Item().Text($"Name: {labOrder.Patient?.FirstName} {labOrder.Patient?.LastName}");
+                            c.Item().Text($"MRN: {labOrder.Patient?.MRN}");
+                            c.Item().Text($"DOB: {labOrder.Patient?.DateOfBirth:MM/dd/yyyy}");
+                        });
+                        row.RelativeItem().Column(c =>
+                        {
+                            c.Item().Text("ORDER INFORMATION").Bold().FontSize(11);
+                            c.Item().Text($"Ordering Physician: {(labOrder.OrderingDoctor != null ? $"Dr. {labOrder.OrderingDoctor.FirstName} {labOrder.OrderingDoctor.LastName}" : "N/A")}");
+                            c.Item().Text($"Order Date: {labOrder.OrderDate:MM/dd/yyyy}");
+                            c.Item().Text($"Result Date: {labOrder.ResultDate?.ToString("MM/dd/yyyy") ?? "Pending"}");
+                        });
+                    });
+
+                    // Test Information
+                    col.Item().PaddingTop(15).Column(section =>
+                    {
+                        section.Item().Text($"TEST: {labOrder.TestName}").Bold().FontSize(12);
+                        if (!string.IsNullOrEmpty(labOrder.TestCode))
+                        {
+                            section.Item().Text($"Test Code: {labOrder.TestCode}").FontSize(9).FontColor(Colors.Grey.Medium);
+                        }
+                    });
+
+                    // Results Table
+                    if (labOrder.Results != null && labOrder.Results.Any())
+                    {
+                        col.Item().PaddingTop(15).Table(table =>
+                        {
+                            table.ColumnsDefinition(columns =>
+                            {
+                                columns.RelativeColumn(3); // Component Name
+                                columns.RelativeColumn(2); // Value
+                                columns.RelativeColumn(1); // Unit
+                                columns.RelativeColumn(2); // Reference Range
+                                columns.RelativeColumn(1); // Flag
+                            });
+
+                            // Header
+                            table.Header(header =>
+                            {
+                                header.Cell().Background(Colors.Blue.Darken2).Padding(5).Text("Component").FontColor(Colors.White).Bold();
+                                header.Cell().Background(Colors.Blue.Darken2).Padding(5).Text("Value").FontColor(Colors.White).Bold();
+                                header.Cell().Background(Colors.Blue.Darken2).Padding(5).Text("Unit").FontColor(Colors.White).Bold();
+                                header.Cell().Background(Colors.Blue.Darken2).Padding(5).Text("Reference").FontColor(Colors.White).Bold();
+                                header.Cell().Background(Colors.Blue.Darken2).Padding(5).Text("Flag").FontColor(Colors.White).Bold();
+                            });
+
+                            // Data rows
+                            foreach (var result in labOrder.Results)
+                            {
+                                var bgColor = result.IsAbnormal ? Colors.Red.Lighten4 : Colors.White;
+                                var textColor = result.IsAbnormal ? Colors.Red.Darken2 : Colors.Black;
+
+                                table.Cell().Background(bgColor).Padding(5).Text(result.ComponentName);
+                                table.Cell().Background(bgColor).Padding(5).Text(result.Value ?? "-").FontColor(textColor).Bold();
+                                table.Cell().Background(bgColor).Padding(5).Text(result.Unit ?? "");
+                                table.Cell().Background(bgColor).Padding(5).Text(result.ReferenceRange ?? "-");
+                                table.Cell().Background(bgColor).Padding(5).Text(result.Flag ?? "").FontColor(textColor);
+                            }
+                        });
+                    }
+                    else
+                    {
+                        col.Item().PaddingTop(15).Background(Colors.Yellow.Lighten3).Padding(10)
+                            .Text("Results pending - this report will be updated when results are available.")
+                            .FontColor(Colors.Orange.Darken2);
+                    }
+
+                    // Comments
+                    if (!string.IsNullOrEmpty(labOrder.Comments))
+                    {
+                        col.Item().PaddingTop(15).Column(section =>
+                        {
+                            section.Item().Text("COMMENTS").Bold().FontSize(11);
+                            section.Item().PaddingTop(5).Text(labOrder.Comments);
+                        });
+                    }
+
+                    // Status
+                    col.Item().PaddingTop(20).Row(row =>
+                    {
+                        row.RelativeItem().Text($"Status: {labOrder.Status ?? "Processing"}")
+                            .Bold()
+                            .FontColor(labOrder.Status == "Completed" ? Colors.Green.Darken2 : Colors.Orange.Darken2);
+                    });
+                });
+
+                // Footer
+                page.Footer().Column(footer =>
+                {
+                    footer.Item().LineHorizontal(1).LineColor(Colors.Grey.Lighten2);
+                    footer.Item().PaddingTop(5).Row(row =>
+                    {
+                        row.RelativeItem().Text("This report is confidential and intended for the named patient only.")
+                            .FontSize(8).FontColor(Colors.Grey.Medium);
+                        row.ConstantItem(100).AlignRight().Text(text =>
+                        {
+                            text.Span("Page ");
+                            text.CurrentPageNumber();
+                            text.Span(" of ");
+                            text.TotalPages();
+                        }).FontSize(8);
+                    });
+                });
+            });
+        });
+
+        using var stream = new MemoryStream();
+        document.GeneratePdf(stream);
+        return stream.ToArray();
     }
 
     #endregion
@@ -1573,6 +1983,8 @@ public class PatientPortalService : IPatientPortalService
         try
         {
             var invoice = await _context.Invoices
+                .Include(i => i.Patient)
+                .ThenInclude(p => p.Branch)
                 .FirstOrDefaultAsync(i => i.Id == dto.InvoiceId && i.PatientId == patientId);
 
             if (invoice == null)
@@ -1594,8 +2006,73 @@ public class PatientPortalService : IPatientPortalService
                 };
             }
 
-            // TODO: Process payment through payment gateway
-            var transactionId = $"TXN-{DateTime.UtcNow:yyyyMMddHHmmss}-{Guid.NewGuid().ToString()[..8].ToUpper()}";
+            var branchId = invoice.Patient?.BranchId ?? 1;
+            var patient = invoice.Patient;
+
+            // Process payment through payment gateway
+            var paymentIntentDto = new CreatePaymentIntentDto
+            {
+                Amount = dto.Amount,
+                Currency = "USD",
+                InvoiceId = dto.InvoiceId,
+                PatientId = patientId,
+                CustomerEmail = patient?.Email,
+                CustomerName = patient != null ? $"{patient.FirstName} {patient.LastName}" : null,
+                Description = $"Payment for Invoice #{invoice.InvoiceNumber}",
+                ReturnUrl = dto.ReturnUrl,
+                CancelUrl = dto.CancelUrl
+            };
+
+            PaymentIntentResponseDto? paymentIntent = null;
+            string transactionId;
+
+            try
+            {
+                // Create payment intent with the payment gateway
+                paymentIntent = await _paymentGatewayService.CreatePaymentIntentAsync(branchId, paymentIntentDto);
+                transactionId = paymentIntent.TransactionReference;
+
+                // If the payment requires redirect (e.g., PayPal), return the URL
+                if (!string.IsNullOrEmpty(paymentIntent.PaymentUrl))
+                {
+                    return new PortalPaymentResponseDto
+                    {
+                        Success = true,
+                        TransactionId = transactionId,
+                        Message = "Please complete payment",
+                        PaymentUrl = paymentIntent.PaymentUrl,
+                        RequiresAction = true,
+                        ClientSecret = paymentIntent.ClientSecret
+                    };
+                }
+
+                // For Stripe with client secret, return it for frontend handling
+                if (!string.IsNullOrEmpty(paymentIntent.ClientSecret))
+                {
+                    return new PortalPaymentResponseDto
+                    {
+                        Success = true,
+                        TransactionId = transactionId,
+                        Message = "Complete payment with card details",
+                        RequiresAction = true,
+                        ClientSecret = paymentIntent.ClientSecret
+                    };
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Payment gateway error for PatientId: {PatientId}, InvoiceId: {InvoiceId}",
+                    patientId, dto.InvoiceId);
+                return new PortalPaymentResponseDto
+                {
+                    Success = false,
+                    Message = "Payment processing failed. Please try again or contact support."
+                };
+            }
+
+            // If payment was immediately successful (unlikely without confirmation)
+            transactionId = paymentIntent?.TransactionReference ??
+                $"TXN-{DateTime.UtcNow:yyyyMMddHHmmss}-{Guid.NewGuid().ToString()[..8].ToUpper()}";
 
             var payment = new Payment
             {
@@ -1604,7 +2081,7 @@ public class PatientPortalService : IPatientPortalService
                 Amount = dto.Amount,
                 PaymentMethod = dto.PaymentMethod,
                 TransactionReference = transactionId,
-                Status = "Completed",
+                Status = "Pending",
                 PaymentDate = DateTime.UtcNow,
                 CreatedAt = DateTime.UtcNow
             };
@@ -1645,31 +2122,326 @@ public class PatientPortalService : IPatientPortalService
     public async Task<byte[]> DownloadInvoiceAsync(int patientId, int invoiceId)
     {
         var invoice = await _context.Invoices
+            .Include(i => i.Patient)
+            .ThenInclude(p => p.Branch)
+            .Include(i => i.Items)
+            .Include(i => i.Payments)
             .FirstOrDefaultAsync(i => i.Id == invoiceId && i.PatientId == patientId);
 
         if (invoice == null)
             return Array.Empty<byte>();
 
-        // TODO: Implement PDF generation
         _logger.LogInformation("Invoice download requested for PatientId: {PatientId}, InvoiceId: {InvoiceId}",
             patientId, invoiceId);
 
-        return Array.Empty<byte>();
+        QuestPDF.Settings.License = LicenseType.Community;
+
+        var document = Document.Create(container =>
+        {
+            container.Page(page =>
+            {
+                page.Size(PageSizes.A4);
+                page.Margin(40);
+                page.DefaultTextStyle(x => x.FontSize(10));
+
+                // Header
+                page.Header().Column(header =>
+                {
+                    header.Item().Row(row =>
+                    {
+                        row.RelativeItem().Column(col =>
+                        {
+                            col.Item().Text(invoice.Patient?.Branch?.Name ?? "XenonClinic")
+                                .FontSize(18).Bold().FontColor(Colors.Blue.Darken2);
+                            col.Item().Text(invoice.Patient?.Branch?.Address ?? "").FontSize(9);
+                            col.Item().Text($"Phone: {invoice.Patient?.Branch?.Phone ?? ""}").FontSize(9);
+                        });
+                        row.ConstantItem(150).AlignRight().Column(col =>
+                        {
+                            col.Item().Text("INVOICE").FontSize(24).Bold().FontColor(Colors.Blue.Darken2);
+                            col.Item().Text($"#{invoice.InvoiceNumber}").FontSize(12);
+                            col.Item().PaddingTop(5).Text($"Date: {invoice.InvoiceDate:MM/dd/yyyy}").FontSize(9);
+                            col.Item().Text($"Due: {invoice.DueDate:MM/dd/yyyy}").FontSize(9);
+                        });
+                    });
+                    header.Item().PaddingVertical(10).LineHorizontal(2).LineColor(Colors.Blue.Darken2);
+                });
+
+                // Content
+                page.Content().PaddingVertical(10).Column(col =>
+                {
+                    // Bill To
+                    col.Item().Row(row =>
+                    {
+                        row.RelativeItem().Column(billTo =>
+                        {
+                            billTo.Item().Text("BILL TO").Bold().FontSize(11).FontColor(Colors.Grey.Darken1);
+                            billTo.Item().PaddingTop(5).Text($"{invoice.Patient?.FirstName} {invoice.Patient?.LastName}");
+                            billTo.Item().Text(invoice.Patient?.Address ?? "");
+                            billTo.Item().Text($"{invoice.Patient?.City ?? ""}, {invoice.Patient?.State ?? ""} {invoice.Patient?.PostalCode ?? ""}");
+                            billTo.Item().Text($"MRN: {invoice.Patient?.MRN}");
+                        });
+                        row.RelativeItem().AlignRight().Column(status =>
+                        {
+                            var statusColor = invoice.Status switch
+                            {
+                                "Paid" => Colors.Green.Darken2,
+                                "Overdue" => Colors.Red.Darken2,
+                                "Partial" => Colors.Orange.Darken2,
+                                _ => Colors.Blue.Darken2
+                            };
+                            status.Item().Text($"Status: {invoice.Status}").Bold().FontColor(statusColor);
+                        });
+                    });
+
+                    // Items Table
+                    col.Item().PaddingTop(20).Table(table =>
+                    {
+                        table.ColumnsDefinition(columns =>
+                        {
+                            columns.RelativeColumn(4); // Description
+                            columns.RelativeColumn(1); // Qty
+                            columns.RelativeColumn(2); // Unit Price
+                            columns.RelativeColumn(2); // Amount
+                        });
+
+                        // Header
+                        table.Header(header =>
+                        {
+                            header.Cell().Background(Colors.Blue.Darken2).Padding(8).Text("Description").FontColor(Colors.White).Bold();
+                            header.Cell().Background(Colors.Blue.Darken2).Padding(8).Text("Qty").FontColor(Colors.White).Bold();
+                            header.Cell().Background(Colors.Blue.Darken2).Padding(8).AlignRight().Text("Unit Price").FontColor(Colors.White).Bold();
+                            header.Cell().Background(Colors.Blue.Darken2).Padding(8).AlignRight().Text("Amount").FontColor(Colors.White).Bold();
+                        });
+
+                        // Data rows
+                        if (invoice.Items != null)
+                        {
+                            var rowIndex = 0;
+                            foreach (var item in invoice.Items)
+                            {
+                                var bgColor = rowIndex++ % 2 == 0 ? Colors.White : Colors.Grey.Lighten4;
+                                table.Cell().Background(bgColor).Padding(8).Text(item.Description ?? item.ServiceCode ?? "Service");
+                                table.Cell().Background(bgColor).Padding(8).Text(item.Quantity.ToString());
+                                table.Cell().Background(bgColor).Padding(8).AlignRight().Text($"{item.UnitPrice:C}");
+                                table.Cell().Background(bgColor).Padding(8).AlignRight().Text($"{item.Amount:C}");
+                            }
+                        }
+                    });
+
+                    // Totals
+                    col.Item().PaddingTop(10).AlignRight().Width(200).Column(totals =>
+                    {
+                        totals.Item().Row(r =>
+                        {
+                            r.RelativeItem().Text("Subtotal:");
+                            r.ConstantItem(80).AlignRight().Text($"{invoice.SubTotal:C}");
+                        });
+                        if (invoice.Tax > 0)
+                        {
+                            totals.Item().Row(r =>
+                            {
+                                r.RelativeItem().Text("Tax:");
+                                r.ConstantItem(80).AlignRight().Text($"{invoice.Tax:C}");
+                            });
+                        }
+                        if (invoice.Discount > 0)
+                        {
+                            totals.Item().Row(r =>
+                            {
+                                r.RelativeItem().Text("Discount:");
+                                r.ConstantItem(80).AlignRight().Text($"-{invoice.Discount:C}");
+                            });
+                        }
+                        totals.Item().PaddingTop(5).LineHorizontal(1);
+                        totals.Item().PaddingTop(5).Row(r =>
+                        {
+                            r.RelativeItem().Text("TOTAL:").Bold();
+                            r.ConstantItem(80).AlignRight().Text($"{invoice.TotalAmount:C}").Bold();
+                        });
+                        if (invoice.PaidAmount > 0)
+                        {
+                            totals.Item().Row(r =>
+                            {
+                                r.RelativeItem().Text("Paid:").FontColor(Colors.Green.Darken2);
+                                r.ConstantItem(80).AlignRight().Text($"-{invoice.PaidAmount:C}").FontColor(Colors.Green.Darken2);
+                            });
+                        }
+                        var balance = invoice.TotalAmount - invoice.PaidAmount;
+                        if (balance > 0)
+                        {
+                            totals.Item().Row(r =>
+                            {
+                                r.RelativeItem().Text("Balance Due:").Bold().FontColor(Colors.Red.Darken2);
+                                r.ConstantItem(80).AlignRight().Text($"{balance:C}").Bold().FontColor(Colors.Red.Darken2);
+                            });
+                        }
+                    });
+
+                    // Payment History
+                    if (invoice.Payments != null && invoice.Payments.Any())
+                    {
+                        col.Item().PaddingTop(20).Column(section =>
+                        {
+                            section.Item().Text("PAYMENT HISTORY").Bold().FontSize(11);
+                            section.Item().PaddingTop(5);
+                            foreach (var payment in invoice.Payments.OrderByDescending(p => p.PaymentDate))
+                            {
+                                section.Item().Row(r =>
+                                {
+                                    r.RelativeItem().Text($"{payment.PaymentDate:MM/dd/yyyy} - {payment.PaymentMethod}: {payment.Amount:C}");
+                                });
+                            }
+                        });
+                    }
+
+                    // Notes
+                    if (!string.IsNullOrEmpty(invoice.Notes))
+                    {
+                        col.Item().PaddingTop(20).Background(Colors.Grey.Lighten4).Padding(10).Column(notes =>
+                        {
+                            notes.Item().Text("NOTES").Bold().FontSize(10);
+                            notes.Item().Text(invoice.Notes);
+                        });
+                    }
+                });
+
+                // Footer
+                page.Footer().Column(footer =>
+                {
+                    footer.Item().AlignCenter().Text("Thank you for your business!").FontSize(10).FontColor(Colors.Blue.Darken2);
+                    footer.Item().PaddingTop(5).AlignCenter().Text("Please remit payment within terms. Questions? Contact our billing department.")
+                        .FontSize(8).FontColor(Colors.Grey.Medium);
+                });
+            });
+        });
+
+        using var stream = new MemoryStream();
+        document.GeneratePdf(stream);
+        return stream.ToArray();
     }
 
     public async Task<byte[]> DownloadReceiptAsync(int patientId, int paymentId)
     {
         var payment = await _context.Payments
+            .Include(p => p.Patient)
+            .ThenInclude(p => p.Branch)
+            .Include(p => p.Invoice)
             .FirstOrDefaultAsync(p => p.Id == paymentId && p.PatientId == patientId);
 
         if (payment == null)
             return Array.Empty<byte>();
 
-        // TODO: Implement PDF generation
         _logger.LogInformation("Receipt download requested for PatientId: {PatientId}, PaymentId: {PaymentId}",
             patientId, paymentId);
 
-        return Array.Empty<byte>();
+        QuestPDF.Settings.License = LicenseType.Community;
+
+        var document = Document.Create(container =>
+        {
+            container.Page(page =>
+            {
+                page.Size(PageSizes.A5);
+                page.Margin(30);
+                page.DefaultTextStyle(x => x.FontSize(10));
+
+                // Header
+                page.Header().Column(header =>
+                {
+                    header.Item().AlignCenter().Text(payment.Patient?.Branch?.Name ?? "XenonClinic")
+                        .FontSize(16).Bold().FontColor(Colors.Blue.Darken2);
+                    header.Item().AlignCenter().Text(payment.Patient?.Branch?.Address ?? "").FontSize(9);
+                    header.Item().AlignCenter().Text($"Phone: {payment.Patient?.Branch?.Phone ?? ""}").FontSize(9);
+                    header.Item().PaddingVertical(10).LineHorizontal(2).LineColor(Colors.Blue.Darken2);
+                    header.Item().AlignCenter().Text("PAYMENT RECEIPT").FontSize(14).Bold();
+                });
+
+                // Content
+                page.Content().PaddingVertical(15).Column(col =>
+                {
+                    // Receipt Info
+                    col.Item().Background(Colors.Grey.Lighten4).Padding(10).Column(info =>
+                    {
+                        info.Item().Row(r =>
+                        {
+                            r.RelativeItem().Text("Receipt #:").Bold();
+                            r.RelativeItem().Text($"RCP-{payment.Id:D6}");
+                        });
+                        info.Item().Row(r =>
+                        {
+                            r.RelativeItem().Text("Date:").Bold();
+                            r.RelativeItem().Text($"{payment.PaymentDate:MM/dd/yyyy hh:mm tt}");
+                        });
+                        info.Item().Row(r =>
+                        {
+                            r.RelativeItem().Text("Invoice #:").Bold();
+                            r.RelativeItem().Text(payment.Invoice?.InvoiceNumber ?? $"INV-{payment.InvoiceId}");
+                        });
+                    });
+
+                    // Patient Info
+                    col.Item().PaddingTop(15).Column(patient =>
+                    {
+                        patient.Item().Text("RECEIVED FROM:").Bold().FontSize(10);
+                        patient.Item().PaddingTop(5).Text($"{payment.Patient?.FirstName} {payment.Patient?.LastName}");
+                        patient.Item().Text($"MRN: {payment.Patient?.MRN}");
+                    });
+
+                    // Payment Details
+                    col.Item().PaddingTop(15).Column(details =>
+                    {
+                        details.Item().Text("PAYMENT DETAILS:").Bold().FontSize(10);
+                        details.Item().PaddingTop(10).Row(r =>
+                        {
+                            r.RelativeItem().Text("Payment Method:");
+                            r.RelativeItem().Text(payment.PaymentMethod ?? "N/A");
+                        });
+                        if (!string.IsNullOrEmpty(payment.TransactionReference))
+                        {
+                            details.Item().Row(r =>
+                            {
+                                r.RelativeItem().Text("Transaction Ref:");
+                                r.RelativeItem().Text(payment.TransactionReference);
+                            });
+                        }
+                        details.Item().Row(r =>
+                        {
+                            r.RelativeItem().Text("Status:");
+                            r.RelativeItem().Text(payment.Status ?? "Completed").FontColor(Colors.Green.Darken2);
+                        });
+                    });
+
+                    // Amount
+                    col.Item().PaddingTop(20).Background(Colors.Blue.Lighten4).Padding(15).AlignCenter().Column(amount =>
+                    {
+                        amount.Item().Text("AMOUNT PAID").FontSize(12).Bold();
+                        amount.Item().PaddingTop(5).Text($"{payment.Amount:C}").FontSize(24).Bold().FontColor(Colors.Blue.Darken2);
+                    });
+
+                    // Notes
+                    if (!string.IsNullOrEmpty(payment.Notes))
+                    {
+                        col.Item().PaddingTop(15).Text($"Notes: {payment.Notes}").FontSize(9).FontColor(Colors.Grey.Darken1);
+                    }
+                });
+
+                // Footer
+                page.Footer().Column(footer =>
+                {
+                    footer.Item().LineHorizontal(1).LineColor(Colors.Grey.Lighten2);
+                    footer.Item().PaddingTop(10).AlignCenter().Text("Thank you for your payment!")
+                        .FontSize(10).FontColor(Colors.Blue.Darken2);
+                    footer.Item().PaddingTop(5).AlignCenter().Text("This receipt serves as confirmation of your payment.")
+                        .FontSize(8).FontColor(Colors.Grey.Medium);
+                    footer.Item().PaddingTop(5).AlignCenter().Text($"Generated: {DateTime.Now:MM/dd/yyyy hh:mm tt}")
+                        .FontSize(7).FontColor(Colors.Grey.Lighten1);
+                });
+            });
+        });
+
+        using var stream = new MemoryStream();
+        document.GeneratePdf(stream);
+        return stream.ToArray();
     }
 
     #endregion
