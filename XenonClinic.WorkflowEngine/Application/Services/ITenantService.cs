@@ -59,6 +59,31 @@ public interface ITenantService
     /// Validates if an operation is allowed for the current tenant.
     /// </summary>
     Task<bool> ValidateOperationAsync(string operation, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Deletes a tenant.
+    /// </summary>
+    Task DeleteTenantAsync(string tenantId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Suspends a tenant (alias for DeactivateTenantAsync).
+    /// </summary>
+    Task SuspendTenantAsync(string tenantId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Activates a suspended tenant (alias for ReactivateTenantAsync).
+    /// </summary>
+    Task ActivateTenantAsync(string tenantId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets tenant usage statistics.
+    /// </summary>
+    Task<TenantUsage> GetTenantUsageAsync(string tenantId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Lists all tenants without parameters (convenience overload).
+    /// </summary>
+    Task<IList<TenantInfo>> ListTenantsAsync(CancellationToken cancellationToken = default);
 }
 
 /// <summary>
@@ -242,6 +267,13 @@ public class LimitUtilization
     public double UtilizationPercent => MaxValue > 0 ? (CurrentValue * 100.0 / MaxValue) : 0;
     public bool IsNearLimit => UtilizationPercent >= 80;
     public bool IsAtLimit => UtilizationPercent >= 100;
+}
+
+/// <summary>
+/// Alias for TenantUsageStats for API compatibility.
+/// </summary>
+public class TenantUsage : TenantUsageStats
+{
 }
 
 #endregion
