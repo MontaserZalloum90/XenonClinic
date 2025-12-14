@@ -29,7 +29,6 @@ Thumbs.db
 
 ## Node.js
 node_modules/
-package-lock.json
 
 ## TypeScript build artifacts
 *.tsbuildinfo
