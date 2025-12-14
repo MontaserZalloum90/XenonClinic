@@ -409,9 +409,20 @@ public class AppointmentService : IAppointmentService
         }
 
         var availableSlots = new List<DateTime>();
-        // TODO: Retrieve operating hours from Branch entity instead of hardcoding
-        var startOfDay = date.Date.AddHours(8); // Start at 8 AM
-        var endOfDay = date.Date.AddHours(18); // End at 6 PM
+
+        // Retrieve operating hours from Branch entity
+        var branch = await _context.Branches.FindAsync(branchId);
+        if (branch == null)
+        {
+            throw new KeyNotFoundException($"Branch with ID {branchId} not found");
+        }
+
+        // Use branch operating hours with fallback defaults (8 AM - 6 PM)
+        var openingTime = branch.OpeningTime ?? new TimeSpan(8, 0, 0);
+        var closingTime = branch.ClosingTime ?? new TimeSpan(18, 0, 0);
+
+        var startOfDay = date.Date.Add(openingTime);
+        var endOfDay = date.Date.Add(closingTime);
 
         var currentSlot = startOfDay;
         while (currentSlot.AddMinutes(durationMinutes) <= endOfDay)
