@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
@@ -25,6 +26,7 @@ public class PatientPortalService : IPatientPortalService
     private readonly IEmailService _emailService;
     private readonly IFileStorageService _fileStorageService;
     private readonly ICacheService _cacheService;
+    private readonly string _portalBaseUrl;
     private static readonly TimeSpan DashboardCacheExpiration = TimeSpan.FromMinutes(2);
 
     public PatientPortalService(
@@ -33,7 +35,8 @@ public class PatientPortalService : IPatientPortalService
         IPaymentGatewayService paymentGatewayService,
         IEmailService emailService,
         IFileStorageService fileStorageService,
-        ICacheService cacheService)
+        ICacheService cacheService,
+        IConfiguration configuration)
     {
         _context = context;
         _logger = logger;
@@ -41,6 +44,7 @@ public class PatientPortalService : IPatientPortalService
         _emailService = emailService;
         _fileStorageService = fileStorageService;
         _cacheService = cacheService;
+        _portalBaseUrl = configuration["PatientPortal:BaseUrl"] ?? "https://portal.xenonclinic.com";
     }
 
     #region Authentication
@@ -339,7 +343,7 @@ public class PatientPortalService : IPatientPortalService
         try
         {
             var patientName = $"{account.Patient?.FirstName} {account.Patient?.LastName}".Trim();
-            var resetLink = $"https://portal.xenonclinic.com/reset-password?token={account.PasswordResetToken}";
+            var resetLink = $"{_portalBaseUrl}/reset-password?token={account.PasswordResetToken}";
             var companyId = account.Patient?.Branch?.CompanyId ?? 1;
 
             var emailBody = $@"
