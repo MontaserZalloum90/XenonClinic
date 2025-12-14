@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using System.Net.Http.Headers;
+using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -1320,22 +1322,157 @@ public class PushNotificationService : IPushNotificationService
     private async Task<PushNotificationResponseDto> SendViaFcmAsync(
         List<string> tokens, PushNotificationRequestDto request)
     {
-        // TODO: Implement actual FCM API call using Firebase Admin SDK
         _logger.LogInformation("Sending FCM notification to {Count} devices", tokens.Count);
 
-        // Simulated response
-        var results = tokens.Select(t => new PushNotificationResultDto
+        var results = new List<PushNotificationResultDto>();
+        var successCount = 0;
+        var failureCount = 0;
+
+        try
         {
-            DeviceToken = t,
-            Success = true,
-            MessageId = Guid.NewGuid().ToString()
-        }).ToList();
+            // Get FCM configuration from database (using first active branch config)
+            var fcmConfig = await _context.PushConfigurations
+                .FirstOrDefaultAsync(c => c.Provider == "FCM" && c.IsActive);
+
+            if (fcmConfig == null)
+            {
+                _logger.LogWarning("FCM configuration not found");
+                return new PushNotificationResponseDto
+                {
+                    Success = false,
+                    Error = "FCM configuration not found",
+                    FailureCount = tokens.Count
+                };
+            }
+
+            var projectId = fcmConfig.GetConfigValue("ProjectId");
+            var clientEmail = fcmConfig.GetConfigValue("ClientEmail");
+            var privateKey = fcmConfig.GetConfigValue("PrivateKey");
+
+            if (string.IsNullOrEmpty(projectId) || string.IsNullOrEmpty(clientEmail) || string.IsNullOrEmpty(privateKey))
+            {
+                _logger.LogWarning("FCM configuration is incomplete");
+                return new PushNotificationResponseDto
+                {
+                    Success = false,
+                    Error = "FCM configuration is incomplete",
+                    FailureCount = tokens.Count
+                };
+            }
+
+            // Generate OAuth 2.0 access token using service account credentials
+            var accessToken = await GenerateFcmAccessTokenAsync(clientEmail, privateKey);
+
+            // FCM HTTP v1 API endpoint
+            var fcmUrl = $"https://fcm.googleapis.com/v1/projects/{projectId}/messages:send";
+
+            foreach (var token in tokens)
+            {
+                try
+                {
+                    var payload = new
+                    {
+                        message = new
+                        {
+                            token,
+                            notification = new
+                            {
+                                title = request.Title,
+                                body = request.Body,
+                                image = request.ImageUrl
+                            },
+                            data = request.Data ?? new Dictionary<string, string>(),
+                            android = new
+                            {
+                                priority = request.Priority == PushNotificationPriorityDto.High ? "high" : "normal",
+                                notification = new
+                                {
+                                    sound = request.Sound ?? "default",
+                                    click_action = request.ClickAction
+                                }
+                            }
+                        }
+                    };
+
+                    var jsonPayload = JsonSerializer.Serialize(payload, new JsonSerializerOptions
+                    {
+                        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                        DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
+                    });
+
+                    using var httpRequest = new HttpRequestMessage(HttpMethod.Post, fcmUrl);
+                    httpRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+                    httpRequest.Content = new StringContent(jsonPayload, Encoding.UTF8, "application/json");
+
+                    var response = await _httpClient.SendAsync(httpRequest);
+                    var responseContent = await response.Content.ReadAsStringAsync();
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        var fcmResponse = JsonSerializer.Deserialize<JsonElement>(responseContent);
+                        var messageId = fcmResponse.TryGetProperty("name", out var nameProp)
+                            ? nameProp.GetString()
+                            : Guid.NewGuid().ToString();
+
+                        results.Add(new PushNotificationResultDto
+                        {
+                            DeviceToken = token,
+                            Success = true,
+                            MessageId = messageId
+                        });
+                        successCount++;
+                    }
+                    else
+                    {
+                        _logger.LogWarning("FCM send failed for token {Token}: {Response}", token, responseContent);
+
+                        // Check if token is invalid and should be removed
+                        var shouldRemoveToken = responseContent.Contains("UNREGISTERED") ||
+                                                responseContent.Contains("INVALID_ARGUMENT");
+
+                        if (shouldRemoveToken)
+                        {
+                            await MarkDeviceTokenInvalidAsync(token);
+                        }
+
+                        results.Add(new PushNotificationResultDto
+                        {
+                            DeviceToken = token,
+                            Success = false,
+                            Error = responseContent
+                        });
+                        failureCount++;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error sending FCM notification to token {Token}", token);
+                    results.Add(new PushNotificationResultDto
+                    {
+                        DeviceToken = token,
+                        Success = false,
+                        Error = ex.Message
+                    });
+                    failureCount++;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error initializing FCM send");
+            return new PushNotificationResponseDto
+            {
+                Success = false,
+                Error = ex.Message,
+                FailureCount = tokens.Count
+            };
+        }
 
         return new PushNotificationResponseDto
         {
-            Success = true,
-            SuccessCount = tokens.Count,
-            FailureCount = 0,
+            Success = successCount > 0,
+            SuccessCount = successCount,
+            FailureCount = failureCount,
             Results = results
         };
     }
@@ -1343,21 +1480,175 @@ public class PushNotificationService : IPushNotificationService
     private async Task<PushNotificationResponseDto> SendViaApnsAsync(
         List<string> tokens, PushNotificationRequestDto request)
     {
-        // TODO: Implement actual APNs API call
         _logger.LogInformation("Sending APNs notification to {Count} devices", tokens.Count);
 
-        var results = tokens.Select(t => new PushNotificationResultDto
+        var results = new List<PushNotificationResultDto>();
+        var successCount = 0;
+        var failureCount = 0;
+
+        try
         {
-            DeviceToken = t,
-            Success = true,
-            MessageId = Guid.NewGuid().ToString()
-        }).ToList();
+            // Get APNs configuration from database
+            var apnsConfig = await _context.PushConfigurations
+                .FirstOrDefaultAsync(c => c.Provider == "APNs" && c.IsActive);
+
+            if (apnsConfig == null)
+            {
+                _logger.LogWarning("APNs configuration not found");
+                return new PushNotificationResponseDto
+                {
+                    Success = false,
+                    Error = "APNs configuration not found",
+                    FailureCount = tokens.Count
+                };
+            }
+
+            var teamId = apnsConfig.GetConfigValue("TeamId");
+            var keyId = apnsConfig.GetConfigValue("KeyId");
+            var privateKey = apnsConfig.GetConfigValue("PrivateKey");
+            var bundleId = apnsConfig.GetConfigValue("BundleId");
+            var useSandbox = apnsConfig.GetConfigValue("UseSandbox") == "true";
+
+            if (string.IsNullOrEmpty(teamId) || string.IsNullOrEmpty(keyId) ||
+                string.IsNullOrEmpty(privateKey) || string.IsNullOrEmpty(bundleId))
+            {
+                _logger.LogWarning("APNs configuration is incomplete");
+                return new PushNotificationResponseDto
+                {
+                    Success = false,
+                    Error = "APNs configuration is incomplete",
+                    FailureCount = tokens.Count
+                };
+            }
+
+            // Generate JWT token for APNs authentication
+            var jwtToken = GenerateApnsJwtToken(teamId, keyId, privateKey);
+
+            // APNs HTTP/2 endpoint
+            var apnsHost = useSandbox
+                ? "https://api.sandbox.push.apple.com"
+                : "https://api.push.apple.com";
+
+            foreach (var token in tokens)
+            {
+                try
+                {
+                    var apnsUrl = $"{apnsHost}/3/device/{token}";
+
+                    // Build APNs payload
+                    var aps = new Dictionary<string, object>
+                    {
+                        ["alert"] = new Dictionary<string, string>
+                        {
+                            ["title"] = request.Title,
+                            ["body"] = request.Body
+                        },
+                        ["sound"] = request.Sound ?? "default"
+                    };
+
+                    if (request.Badge.HasValue)
+                    {
+                        aps["badge"] = request.Badge.Value;
+                    }
+
+                    if (!string.IsNullOrEmpty(request.Category))
+                    {
+                        aps["category"] = request.Category;
+                    }
+
+                    var payload = new Dictionary<string, object> { ["aps"] = aps };
+
+                    // Add custom data
+                    if (request.Data != null)
+                    {
+                        foreach (var kvp in request.Data)
+                        {
+                            payload[kvp.Key] = kvp.Value;
+                        }
+                    }
+
+                    var jsonPayload = JsonSerializer.Serialize(payload);
+
+                    using var httpRequest = new HttpRequestMessage(HttpMethod.Post, apnsUrl);
+                    httpRequest.Headers.Authorization = new AuthenticationHeaderValue("bearer", jwtToken);
+                    httpRequest.Headers.TryAddWithoutValidation("apns-topic", bundleId);
+                    httpRequest.Headers.TryAddWithoutValidation("apns-push-type", "alert");
+                    httpRequest.Headers.TryAddWithoutValidation("apns-priority",
+                        request.Priority == PushNotificationPriorityDto.High ? "10" : "5");
+                    httpRequest.Headers.TryAddWithoutValidation("apns-expiration", "0");
+                    httpRequest.Content = new StringContent(jsonPayload, Encoding.UTF8, "application/json");
+
+                    var response = await _httpClient.SendAsync(httpRequest);
+                    var responseContent = await response.Content.ReadAsStringAsync();
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        // APNs returns the message ID in the apns-id header
+                        var messageId = response.Headers.TryGetValues("apns-id", out var apnsIdValues)
+                            ? apnsIdValues.FirstOrDefault()
+                            : Guid.NewGuid().ToString();
+
+                        results.Add(new PushNotificationResultDto
+                        {
+                            DeviceToken = token,
+                            Success = true,
+                            MessageId = messageId
+                        });
+                        successCount++;
+                    }
+                    else
+                    {
+                        _logger.LogWarning("APNs send failed for token {Token}: {StatusCode} - {Response}",
+                            token, response.StatusCode, responseContent);
+
+                        // Check for invalid token errors
+                        var shouldRemoveToken = responseContent.Contains("BadDeviceToken") ||
+                                                responseContent.Contains("Unregistered") ||
+                                                responseContent.Contains("DeviceTokenNotForTopic");
+
+                        if (shouldRemoveToken)
+                        {
+                            await MarkDeviceTokenInvalidAsync(token);
+                        }
+
+                        results.Add(new PushNotificationResultDto
+                        {
+                            DeviceToken = token,
+                            Success = false,
+                            Error = responseContent
+                        });
+                        failureCount++;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error sending APNs notification to token {Token}", token);
+                    results.Add(new PushNotificationResultDto
+                    {
+                        DeviceToken = token,
+                        Success = false,
+                        Error = ex.Message
+                    });
+                    failureCount++;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error initializing APNs send");
+            return new PushNotificationResponseDto
+            {
+                Success = false,
+                Error = ex.Message,
+                FailureCount = tokens.Count
+            };
+        }
 
         return new PushNotificationResponseDto
         {
-            Success = true,
-            SuccessCount = tokens.Count,
-            FailureCount = 0,
+            Success = successCount > 0,
+            SuccessCount = successCount,
+            FailureCount = failureCount,
             Results = results
         };
     }
@@ -1365,21 +1656,170 @@ public class PushNotificationService : IPushNotificationService
     private async Task<PushNotificationResponseDto> SendViaWebPushAsync(
         List<string> tokens, PushNotificationRequestDto request)
     {
-        // TODO: Implement actual Web Push API call using VAPID
         _logger.LogInformation("Sending Web Push notification to {Count} devices", tokens.Count);
 
-        var results = tokens.Select(t => new PushNotificationResultDto
+        var results = new List<PushNotificationResultDto>();
+        var successCount = 0;
+        var failureCount = 0;
+
+        try
         {
-            DeviceToken = t,
-            Success = true,
-            MessageId = Guid.NewGuid().ToString()
-        }).ToList();
+            // Get Web Push configuration from database
+            var webPushConfig = await _context.PushConfigurations
+                .FirstOrDefaultAsync(c => c.Provider == "WebPush" && c.IsActive);
+
+            if (webPushConfig == null)
+            {
+                _logger.LogWarning("Web Push configuration not found");
+                return new PushNotificationResponseDto
+                {
+                    Success = false,
+                    Error = "Web Push configuration not found",
+                    FailureCount = tokens.Count
+                };
+            }
+
+            var vapidPublicKey = webPushConfig.GetConfigValue("VapidPublicKey");
+            var vapidPrivateKey = webPushConfig.GetConfigValue("VapidPrivateKey");
+            var subject = webPushConfig.GetConfigValue("Subject");
+
+            if (string.IsNullOrEmpty(vapidPublicKey) || string.IsNullOrEmpty(vapidPrivateKey) || string.IsNullOrEmpty(subject))
+            {
+                _logger.LogWarning("Web Push configuration is incomplete");
+                return new PushNotificationResponseDto
+                {
+                    Success = false,
+                    Error = "Web Push configuration is incomplete",
+                    FailureCount = tokens.Count
+                };
+            }
+
+            // Get device details for Web Push (need endpoint, p256dh, auth)
+            var devices = await _context.PushDevices
+                .Where(d => tokens.Contains(d.DeviceToken) && d.IsActive && d.Platform.ToLower() == "web")
+                .ToListAsync();
+
+            foreach (var device in devices)
+            {
+                if (string.IsNullOrEmpty(device.PushEndpoint) ||
+                    string.IsNullOrEmpty(device.P256dh) ||
+                    string.IsNullOrEmpty(device.Auth))
+                {
+                    _logger.LogWarning("Web Push device {DeviceId} missing subscription data", device.Id);
+                    results.Add(new PushNotificationResultDto
+                    {
+                        DeviceToken = device.DeviceToken,
+                        Success = false,
+                        Error = "Missing subscription data"
+                    });
+                    failureCount++;
+                    continue;
+                }
+
+                try
+                {
+                    // Build Web Push payload
+                    var payload = new
+                    {
+                        title = request.Title,
+                        body = request.Body,
+                        icon = request.ImageUrl ?? "/icons/notification-icon.png",
+                        badge = "/icons/badge-icon.png",
+                        data = request.Data ?? new Dictionary<string, string>(),
+                        actions = new[]
+                        {
+                            new { action = "open", title = "Open" },
+                            new { action = "dismiss", title = "Dismiss" }
+                        },
+                        requireInteraction = request.Priority == PushNotificationPriorityDto.High,
+                        tag = request.CollapseKey ?? Guid.NewGuid().ToString()
+                    };
+
+                    var jsonPayload = JsonSerializer.Serialize(payload, new JsonSerializerOptions
+                    {
+                        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+                    });
+
+                    // Generate VAPID JWT token
+                    var vapidToken = GenerateVapidJwtToken(device.PushEndpoint, subject, vapidPublicKey, vapidPrivateKey);
+
+                    // Encrypt the payload using the subscription keys
+                    var encryptedPayload = EncryptWebPushPayload(jsonPayload, device.P256dh, device.Auth);
+
+                    using var httpRequest = new HttpRequestMessage(HttpMethod.Post, device.PushEndpoint);
+                    httpRequest.Headers.TryAddWithoutValidation("Authorization", $"vapid t={vapidToken}, k={vapidPublicKey}");
+                    httpRequest.Headers.TryAddWithoutValidation("TTL", "86400"); // 24 hours
+                    httpRequest.Headers.TryAddWithoutValidation("Urgency", request.Priority == PushNotificationPriorityDto.High ? "high" : "normal");
+                    httpRequest.Content = new ByteArrayContent(encryptedPayload.Payload);
+                    httpRequest.Content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
+                    httpRequest.Content.Headers.ContentEncoding.Add("aes128gcm");
+                    httpRequest.Headers.TryAddWithoutValidation("Crypto-Key", $"p256ecdsa={vapidPublicKey}");
+
+                    var response = await _httpClient.SendAsync(httpRequest);
+
+                    if (response.IsSuccessStatusCode || response.StatusCode == System.Net.HttpStatusCode.Created)
+                    {
+                        results.Add(new PushNotificationResultDto
+                        {
+                            DeviceToken = device.DeviceToken,
+                            Success = true,
+                            MessageId = Guid.NewGuid().ToString()
+                        });
+                        successCount++;
+                    }
+                    else
+                    {
+                        var responseContent = await response.Content.ReadAsStringAsync();
+                        _logger.LogWarning("Web Push send failed for device {DeviceId}: {StatusCode} - {Response}",
+                            device.Id, response.StatusCode, responseContent);
+
+                        // Check for subscription expiration
+                        var shouldRemoveToken = response.StatusCode == System.Net.HttpStatusCode.Gone ||
+                                                response.StatusCode == System.Net.HttpStatusCode.NotFound;
+
+                        if (shouldRemoveToken)
+                        {
+                            await MarkDeviceTokenInvalidAsync(device.DeviceToken);
+                        }
+
+                        results.Add(new PushNotificationResultDto
+                        {
+                            DeviceToken = device.DeviceToken,
+                            Success = false,
+                            Error = responseContent
+                        });
+                        failureCount++;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error sending Web Push notification to device {DeviceId}", device.Id);
+                    results.Add(new PushNotificationResultDto
+                    {
+                        DeviceToken = device.DeviceToken,
+                        Success = false,
+                        Error = ex.Message
+                    });
+                    failureCount++;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error initializing Web Push send");
+            return new PushNotificationResponseDto
+            {
+                Success = false,
+                Error = ex.Message,
+                FailureCount = tokens.Count
+            };
+        }
 
         return new PushNotificationResponseDto
         {
-            Success = true,
-            SuccessCount = tokens.Count,
-            FailureCount = 0,
+            Success = successCount > 0,
+            SuccessCount = successCount,
+            FailureCount = failureCount,
             Results = results
         };
     }
@@ -1459,7 +1899,337 @@ public class PushNotificationService : IPushNotificationService
         };
     }
 
+    /// <summary>
+    /// Generates an OAuth 2.0 access token for FCM using service account credentials.
+    /// Uses Google's OAuth 2.0 server-to-server authentication.
+    /// </summary>
+    private async Task<string> GenerateFcmAccessTokenAsync(string clientEmail, string privateKey)
+    {
+        var now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+        var expiry = now + 3600; // 1 hour
+
+        // Build JWT header
+        var header = new { alg = "RS256", typ = "JWT" };
+        var headerJson = JsonSerializer.Serialize(header);
+        var headerBase64 = Base64UrlEncode(Encoding.UTF8.GetBytes(headerJson));
+
+        // Build JWT claim set
+        var claimSet = new
+        {
+            iss = clientEmail,
+            scope = "https://www.googleapis.com/auth/firebase.messaging",
+            aud = "https://oauth2.googleapis.com/token",
+            iat = now,
+            exp = expiry
+        };
+        var claimSetJson = JsonSerializer.Serialize(claimSet);
+        var claimSetBase64 = Base64UrlEncode(Encoding.UTF8.GetBytes(claimSetJson));
+
+        // Create signature input
+        var signatureInput = $"{headerBase64}.{claimSetBase64}";
+
+        // Sign with RSA private key
+        using var rsa = RSA.Create();
+        var privateKeyContent = privateKey
+            .Replace("-----BEGIN PRIVATE KEY-----", "")
+            .Replace("-----END PRIVATE KEY-----", "")
+            .Replace("\\n", "")
+            .Replace("\n", "")
+            .Trim();
+        rsa.ImportPkcs8PrivateKey(Convert.FromBase64String(privateKeyContent), out _);
+
+        var signature = rsa.SignData(
+            Encoding.UTF8.GetBytes(signatureInput),
+            HashAlgorithmName.SHA256,
+            RSASignaturePadding.Pkcs1);
+        var signatureBase64 = Base64UrlEncode(signature);
+
+        var jwt = $"{signatureInput}.{signatureBase64}";
+
+        // Exchange JWT for access token
+        var tokenRequest = new Dictionary<string, string>
+        {
+            ["grant_type"] = "urn:ietf:params:oauth:grant-type:jwt-bearer",
+            ["assertion"] = jwt
+        };
+
+        using var content = new FormUrlEncodedContent(tokenRequest);
+        var response = await _httpClient.PostAsync("https://oauth2.googleapis.com/token", content);
+        var responseContent = await response.Content.ReadAsStringAsync();
+
+        if (!response.IsSuccessStatusCode)
+        {
+            throw new InvalidOperationException($"Failed to get FCM access token: {responseContent}");
+        }
+
+        var tokenResponse = JsonSerializer.Deserialize<JsonElement>(responseContent);
+        return tokenResponse.GetProperty("access_token").GetString()
+            ?? throw new InvalidOperationException("Access token not found in response");
+    }
+
+    /// <summary>
+    /// Generates a JWT token for APNs authentication using ES256 algorithm.
+    /// </summary>
+    private static string GenerateApnsJwtToken(string teamId, string keyId, string privateKey)
+    {
+        var now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+
+        // Build JWT header
+        var header = new { alg = "ES256", kid = keyId };
+        var headerJson = JsonSerializer.Serialize(header);
+        var headerBase64 = Base64UrlEncode(Encoding.UTF8.GetBytes(headerJson));
+
+        // Build JWT payload
+        var payload = new { iss = teamId, iat = now };
+        var payloadJson = JsonSerializer.Serialize(payload);
+        var payloadBase64 = Base64UrlEncode(Encoding.UTF8.GetBytes(payloadJson));
+
+        // Create signature input
+        var signatureInput = $"{headerBase64}.{payloadBase64}";
+
+        // Sign with ECDSA P-256 private key
+        using var ecdsa = ECDsa.Create();
+        var privateKeyContent = privateKey
+            .Replace("-----BEGIN PRIVATE KEY-----", "")
+            .Replace("-----END PRIVATE KEY-----", "")
+            .Replace("\\n", "")
+            .Replace("\n", "")
+            .Trim();
+        ecdsa.ImportPkcs8PrivateKey(Convert.FromBase64String(privateKeyContent), out _);
+
+        var signature = ecdsa.SignData(
+            Encoding.UTF8.GetBytes(signatureInput),
+            HashAlgorithmName.SHA256);
+        var signatureBase64 = Base64UrlEncode(signature);
+
+        return $"{signatureInput}.{signatureBase64}";
+    }
+
+    /// <summary>
+    /// Generates a VAPID JWT token for Web Push authentication.
+    /// </summary>
+    private static string GenerateVapidJwtToken(string endpoint, string subject, string publicKey, string privateKey)
+    {
+        var uri = new Uri(endpoint);
+        var audience = $"{uri.Scheme}://{uri.Host}";
+        var now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+        var expiry = now + 43200; // 12 hours
+
+        // Build JWT header
+        var header = new { typ = "JWT", alg = "ES256" };
+        var headerJson = JsonSerializer.Serialize(header);
+        var headerBase64 = Base64UrlEncode(Encoding.UTF8.GetBytes(headerJson));
+
+        // Build JWT payload
+        var payload = new
+        {
+            aud = audience,
+            exp = expiry,
+            sub = subject
+        };
+        var payloadJson = JsonSerializer.Serialize(payload);
+        var payloadBase64 = Base64UrlEncode(Encoding.UTF8.GetBytes(payloadJson));
+
+        // Create signature input
+        var signatureInput = $"{headerBase64}.{payloadBase64}";
+
+        // Sign with ECDSA P-256 private key
+        using var ecdsa = ECDsa.Create();
+        var privateKeyBytes = Base64UrlDecode(privateKey);
+        ecdsa.ImportPkcs8PrivateKey(privateKeyBytes, out _);
+
+        var signature = ecdsa.SignData(
+            Encoding.UTF8.GetBytes(signatureInput),
+            HashAlgorithmName.SHA256);
+        var signatureBase64 = Base64UrlEncode(signature);
+
+        return $"{signatureInput}.{signatureBase64}";
+    }
+
+    /// <summary>
+    /// Encrypts Web Push payload using the subscription's p256dh and auth keys.
+    /// Implements RFC 8291 (Message Encryption for Web Push).
+    /// </summary>
+    private static WebPushEncryptionResult EncryptWebPushPayload(string payload, string p256dh, string auth)
+    {
+        var payloadBytes = Encoding.UTF8.GetBytes(payload);
+
+        // Decode subscription keys
+        var clientPublicKey = Base64UrlDecode(p256dh);
+        var authSecret = Base64UrlDecode(auth);
+
+        // Generate ephemeral key pair for ECDH
+        using var serverKey = ECDiffieHellman.Create(ECCurve.NamedCurves.nistP256);
+        var serverPublicKey = serverKey.PublicKey.ExportSubjectPublicKeyInfo();
+
+        // Import client public key
+        using var clientKey = ECDiffieHellman.Create();
+        clientKey.ImportSubjectPublicKeyInfo(clientPublicKey, out _);
+
+        // Derive shared secret
+        var sharedSecret = serverKey.DeriveKeyMaterial(clientKey.PublicKey);
+
+        // Derive encryption key using HKDF
+        var salt = RandomNumberGenerator.GetBytes(16);
+        var context = CreateContext(clientPublicKey, serverPublicKey);
+
+        // PRK = HKDF-Extract(auth, shared_secret)
+        var prk = HkdfExtract(authSecret, sharedSecret);
+
+        // IKM = HKDF-Expand(prk, "WebPush: info" || 0x00 || context, 32)
+        var ikmInfo = CombineBytes(Encoding.ASCII.GetBytes("WebPush: info\0"), context);
+        var ikm = HkdfExpand(prk, ikmInfo, 32);
+
+        // Derive CEK and nonce
+        var prkKey = HkdfExtract(salt, ikm);
+        var cekInfo = Encoding.ASCII.GetBytes("Content-Encoding: aes128gcm\0");
+        var nonceInfo = Encoding.ASCII.GetBytes("Content-Encoding: nonce\0");
+        var cek = HkdfExpand(prkKey, cekInfo, 16);
+        var nonce = HkdfExpand(prkKey, nonceInfo, 12);
+
+        // Encrypt with AES-128-GCM
+        using var aes = new AesGcm(cek, 16);
+        var paddedPayload = new byte[payloadBytes.Length + 1]; // Add padding delimiter
+        Buffer.BlockCopy(payloadBytes, 0, paddedPayload, 0, payloadBytes.Length);
+        paddedPayload[payloadBytes.Length] = 0x02; // Padding delimiter
+
+        var ciphertext = new byte[paddedPayload.Length];
+        var tag = new byte[16];
+        aes.Encrypt(nonce, paddedPayload, ciphertext, tag);
+
+        // Build encrypted content (salt || rs || idlen || keyid || ciphertext || tag)
+        var recordSize = BitConverter.GetBytes((uint)4096);
+        if (BitConverter.IsLittleEndian)
+            Array.Reverse(recordSize);
+
+        var keyIdLen = (byte)65; // Uncompressed EC point length
+        var serverPublicKeyBytes = ExportUncompressedPublicKey(serverKey);
+
+        var encryptedContent = CombineBytes(
+            salt,
+            recordSize,
+            new[] { keyIdLen },
+            serverPublicKeyBytes,
+            ciphertext,
+            tag);
+
+        return new WebPushEncryptionResult
+        {
+            Payload = encryptedContent,
+            Salt = Convert.ToBase64String(salt),
+            ServerPublicKey = Base64UrlEncode(serverPublicKeyBytes)
+        };
+    }
+
+    /// <summary>
+    /// Marks a device token as invalid (unregistered from push notifications).
+    /// </summary>
+    private async Task MarkDeviceTokenInvalidAsync(string deviceToken)
+    {
+        var device = await _context.PushDevices
+            .FirstOrDefaultAsync(d => d.DeviceToken == deviceToken);
+
+        if (device != null)
+        {
+            device.IsActive = false;
+            device.UnregisteredAt = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
+            _logger.LogInformation("Marked device token as invalid: {Token}", deviceToken);
+        }
+    }
+
+    // Helper methods for cryptographic operations
+    private static string Base64UrlEncode(byte[] data)
+    {
+        return Convert.ToBase64String(data)
+            .Replace('+', '-')
+            .Replace('/', '_')
+            .TrimEnd('=');
+    }
+
+    private static byte[] Base64UrlDecode(string input)
+    {
+        var base64 = input.Replace('-', '+').Replace('_', '/');
+        switch (base64.Length % 4)
+        {
+            case 2: base64 += "=="; break;
+            case 3: base64 += "="; break;
+        }
+        return Convert.FromBase64String(base64);
+    }
+
+    private static byte[] CombineBytes(params byte[][] arrays)
+    {
+        var result = new byte[arrays.Sum(a => a.Length)];
+        var offset = 0;
+        foreach (var array in arrays)
+        {
+            Buffer.BlockCopy(array, 0, result, offset, array.Length);
+            offset += array.Length;
+        }
+        return result;
+    }
+
+    private static byte[] CreateContext(byte[] clientPublicKey, byte[] serverPublicKey)
+    {
+        var clientLen = BitConverter.GetBytes((ushort)clientPublicKey.Length);
+        var serverLen = BitConverter.GetBytes((ushort)serverPublicKey.Length);
+        if (BitConverter.IsLittleEndian)
+        {
+            Array.Reverse(clientLen);
+            Array.Reverse(serverLen);
+        }
+        return CombineBytes(clientLen, clientPublicKey, serverLen, serverPublicKey);
+    }
+
+    private static byte[] HkdfExtract(byte[] salt, byte[] ikm)
+    {
+        using var hmac = new HMACSHA256(salt);
+        return hmac.ComputeHash(ikm);
+    }
+
+    private static byte[] HkdfExpand(byte[] prk, byte[] info, int length)
+    {
+        using var hmac = new HMACSHA256(prk);
+        var result = new byte[length];
+        var t = Array.Empty<byte>();
+        var offset = 0;
+        byte counter = 1;
+
+        while (offset < length)
+        {
+            var input = CombineBytes(t, info, new[] { counter });
+            t = hmac.ComputeHash(input);
+            var toCopy = Math.Min(t.Length, length - offset);
+            Buffer.BlockCopy(t, 0, result, offset, toCopy);
+            offset += toCopy;
+            counter++;
+        }
+
+        return result;
+    }
+
+    private static byte[] ExportUncompressedPublicKey(ECDiffieHellman key)
+    {
+        var parameters = key.ExportParameters(false);
+        var result = new byte[65];
+        result[0] = 0x04; // Uncompressed point indicator
+        Buffer.BlockCopy(parameters.Q.X!, 0, result, 1, 32);
+        Buffer.BlockCopy(parameters.Q.Y!, 0, result, 33, 32);
+        return result;
+    }
+
     #endregion
+}
+
+/// <summary>
+/// Result of Web Push payload encryption
+/// </summary>
+internal class WebPushEncryptionResult
+{
+    public byte[] Payload { get; set; } = Array.Empty<byte>();
+    public string Salt { get; set; } = string.Empty;
+    public string ServerPublicKey { get; set; } = string.Empty;
 }
 
 #region Push Notification Entities
