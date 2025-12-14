@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
   HeartIcon,
@@ -7,68 +6,50 @@ import {
   BeakerIcon,
   CalendarIcon,
   DocumentTextIcon,
-  ArrowTrendingUpIcon,
-  ExclamationTriangleIcon,
 } from '@heroicons/react/24/outline';
 import { format } from 'date-fns';
-import type { CardiologyStatistics, ECGRecord } from '../../types/cardiology';
+import type { CardiologyStatistics } from '../../types/cardiology';
+import { cardiologyApi } from '../../lib/api';
+
+interface RecentProcedure {
+  id: number;
+  patientName: string;
+  procedureType: string;
+  date: string;
+  status: string;
+  performedBy: string;
+}
 
 export const CardiologyDashboard = () => {
-  // Mock data - In production, replace with actual API calls
   const { data: stats } = useQuery<CardiologyStatistics>({
     queryKey: ['cardiology-stats'],
     queryFn: async () => {
-      // Mock implementation
-      return {
-        totalPatients: 342,
-        newPatientsThisMonth: 28,
-        ecgsToday: 12,
-        ecgsThisWeek: 45,
-        ecgsThisMonth: 178,
-        echosThisWeek: 8,
-        echosThisMonth: 32,
-        stressTestsThisMonth: 15,
-        cathsThisMonth: 7,
-        pendingResults: 23,
-        pendingReviews: 9,
-        abnormalECGs: 34,
-        reducedEF: 12,
-        positiveStressTests: 4,
-        monthlyRevenue: 125000,
+      const response = await cardiologyApi.getStatistics();
+      return response.data?.data ?? response.data ?? {
+        totalPatients: 0,
+        newPatientsThisMonth: 0,
+        ecgsToday: 0,
+        ecgsThisWeek: 0,
+        ecgsThisMonth: 0,
+        echosThisWeek: 0,
+        echosThisMonth: 0,
+        stressTestsThisMonth: 0,
+        cathsThisMonth: 0,
+        pendingResults: 0,
+        pendingReviews: 0,
+        abnormalECGs: 0,
+        reducedEF: 0,
+        positiveStressTests: 0,
+        monthlyRevenue: 0,
       };
     },
   });
 
-  const { data: recentProcedures } = useQuery<any[]>({
-    queryKey: ['recent-procedures'],
+  const { data: recentProcedures } = useQuery<RecentProcedure[]>({
+    queryKey: ['cardiology-recent-procedures'],
     queryFn: async () => {
-      // Mock implementation
-      return [
-        {
-          id: 1,
-          patientName: 'John Smith',
-          procedureType: 'ECG',
-          date: new Date().toISOString(),
-          status: 'Completed',
-          performedBy: 'Dr. Johnson',
-        },
-        {
-          id: 2,
-          patientName: 'Mary Johnson',
-          procedureType: 'Echo',
-          date: new Date().toISOString(),
-          status: 'In Progress',
-          performedBy: 'Dr. Williams',
-        },
-        {
-          id: 3,
-          patientName: 'Robert Davis',
-          procedureType: 'Stress Test',
-          date: new Date().toISOString(),
-          status: 'Scheduled',
-          performedBy: 'Dr. Brown',
-        },
-      ];
+      const response = await cardiologyApi.getRecentProcedures();
+      return response.data?.data ?? response.data ?? [];
     },
   });
 

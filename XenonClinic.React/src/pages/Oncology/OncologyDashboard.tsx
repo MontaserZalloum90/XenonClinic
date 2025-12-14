@@ -11,63 +11,47 @@ import {
 } from '@heroicons/react/24/outline';
 import { format } from 'date-fns';
 import type { OncologyStatistics } from '../../types/oncology';
+import { oncologyApi } from '../../lib/api';
+
+interface RecentActivity {
+  id: number;
+  patientName: string;
+  activity: string;
+  date: string;
+  status: string;
+  performedBy: string;
+}
 
 export const OncologyDashboard = () => {
-  // Mock data - In production, replace with actual API calls
   const { data: stats } = useQuery<OncologyStatistics>({
     queryKey: ['oncology-stats'],
     queryFn: async () => {
-      // Mock implementation
-      return {
-        totalPatients: 156,
-        activePatients: 89,
-        newPatientsThisMonth: 12,
-        newDiagnosesThisMonth: 8,
-        activeTreatments: 67,
-        activeChemoProtocols: 42,
-        activeRadiationTreatments: 25,
-        completedTreatmentsThisMonth: 18,
-        chemoAdministrationsToday: 15,
-        chemoAdministrationsThisWeek: 78,
-        radiationSessionsThisWeek: 125,
-        tumorMarkersThisMonth: 45,
-        abnormalMarkers: 12,
-        remissionRate: 68.5,
-        adverseReactionRate: 12.3,
+      const response = await oncologyApi.getStatistics();
+      return response.data?.data ?? response.data ?? {
+        totalPatients: 0,
+        activePatients: 0,
+        newPatientsThisMonth: 0,
+        newDiagnosesThisMonth: 0,
+        activeTreatments: 0,
+        activeChemoProtocols: 0,
+        activeRadiationTreatments: 0,
+        completedTreatmentsThisMonth: 0,
+        chemoAdministrationsToday: 0,
+        chemoAdministrationsThisWeek: 0,
+        radiationSessionsThisWeek: 0,
+        tumorMarkersThisMonth: 0,
+        abnormalMarkers: 0,
+        remissionRate: 0,
+        adverseReactionRate: 0,
       };
     },
   });
 
-  const { data: recentActivities } = useQuery<any[]>({
-    queryKey: ['recent-oncology-activities'],
+  const { data: recentActivities } = useQuery<RecentActivity[]>({
+    queryKey: ['oncology-recent-activities'],
     queryFn: async () => {
-      // Mock implementation
-      return [
-        {
-          id: 1,
-          patientName: 'Sarah Johnson',
-          activity: 'Chemotherapy Administration',
-          date: new Date().toISOString(),
-          status: 'Completed',
-          performedBy: 'Dr. Williams',
-        },
-        {
-          id: 2,
-          patientName: 'Michael Brown',
-          activity: 'Radiation Therapy Session',
-          date: new Date().toISOString(),
-          status: 'In Progress',
-          performedBy: 'Dr. Davis',
-        },
-        {
-          id: 3,
-          patientName: 'Jennifer Lee',
-          activity: 'Tumor Marker Test',
-          date: new Date().toISOString(),
-          status: 'Scheduled',
-          performedBy: 'Dr. Martinez',
-        },
-      ];
+      const response = await oncologyApi.getStatistics();
+      return response.data?.recentActivities ?? [];
     },
   });
 

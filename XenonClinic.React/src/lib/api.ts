@@ -497,6 +497,10 @@ export const cardiologyApi = {
   createCathProcedure: (data: Record<string, unknown>) => api.post('/api/ClinicalVisitsApi/cardiology/cath', data),
   updateCathProcedure: (id: number, data: Record<string, unknown>) => api.put(`/api/ClinicalVisitsApi/cardiology/cath/${id}`, data),
   deleteCathProcedure: (id: number) => api.delete(`/api/ClinicalVisitsApi/cardiology/cath/${id}`),
+
+  // Statistics
+  getStatistics: () => api.get('/api/ClinicalVisitsApi/cardiology/statistics'),
+  getRecentProcedures: () => api.get('/api/ClinicalVisitsApi/cardiology/recent-procedures'),
 };
 
 // ============================================
@@ -527,6 +531,10 @@ export const neurologyApi = {
   createEMG: (data: Record<string, unknown>) => api.post('/api/ClinicalVisitsApi/neurology/emg', data),
   updateEMG: (id: number, data: Record<string, unknown>) => api.put(`/api/ClinicalVisitsApi/neurology/emg/${id}`, data),
   deleteEMG: (id: number) => api.delete(`/api/ClinicalVisitsApi/neurology/emg/${id}`),
+
+  // Statistics
+  getStatistics: () => api.get('/api/ClinicalVisitsApi/neurology/statistics'),
+  getRecentProcedures: () => api.get('/api/ClinicalVisitsApi/neurology/recent-procedures'),
 };
 
 // ============================================
@@ -557,6 +565,10 @@ export const pediatricsApi = {
   createGrowthRecord: (data: Record<string, unknown>) => api.post('/api/ClinicalVisitsApi/pediatrics/growth', data),
   updateGrowthRecord: (id: number, data: Record<string, unknown>) => api.put(`/api/ClinicalVisitsApi/pediatrics/growth/${id}`, data),
   deleteGrowthRecord: (id: number) => api.delete(`/api/ClinicalVisitsApi/pediatrics/growth/${id}`),
+
+  // Statistics
+  getStatistics: () => api.get('/api/ClinicalVisitsApi/pediatrics/statistics'),
+  getUpcomingVaccinations: () => api.get('/api/ClinicalVisitsApi/pediatrics/upcoming-vaccinations'),
 };
 
 // ============================================
