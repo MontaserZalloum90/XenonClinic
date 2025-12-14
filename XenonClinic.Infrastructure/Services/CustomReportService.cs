@@ -1,5 +1,9 @@
+using ClosedXML.Excel;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using QuestPDF.Fluent;
+using QuestPDF.Helpers;
+using QuestPDF.Infrastructure;
 using System.Diagnostics;
 using System.Reflection;
 using System.Text;
@@ -1264,14 +1268,206 @@ public class CustomReportService : ICustomReportService
 
     private static byte[] GeneratePdfReport(ExecuteReportResponseDto data)
     {
-        // TODO: Implement PDF generation using a library like iTextSharp or QuestPDF
-        return Array.Empty<byte>();
+        // Configure QuestPDF license (Community license for open source)
+        QuestPDF.Settings.License = LicenseType.Community;
+
+        var document = Document.Create(container =>
+        {
+            container.Page(page =>
+            {
+                page.Size(PageSizes.A4.Landscape());
+                page.Margin(30);
+                page.DefaultTextStyle(x => x.FontSize(10));
+
+                // Header
+                page.Header().Element(header =>
+                {
+                    header.Row(row =>
+                    {
+                        row.RelativeItem().Column(col =>
+                        {
+                            col.Item().Text(data.ReportName).FontSize(18).Bold();
+                            col.Item().Text($"Generated: {data.ExecutedAt:yyyy-MM-dd HH:mm}")
+                                .FontSize(9).FontColor(Colors.Grey.Medium);
+                            col.Item().Text($"Total Records: {data.TotalRecords}")
+                                .FontSize(9).FontColor(Colors.Grey.Medium);
+                        });
+                    });
+                });
+
+                // Content - Data Table
+                page.Content().PaddingVertical(10).Element(content =>
+                {
+                    content.Table(table =>
+                    {
+                        var visibleColumns = data.Columns.Where(c => c.Visible).ToList();
+
+                        // Define columns
+                        table.ColumnsDefinition(columns =>
+                        {
+                            foreach (var col in visibleColumns)
+                            {
+                                columns.RelativeColumn(col.Width > 0 ? col.Width : 1);
+                            }
+                        });
+
+                        // Header row
+                        table.Header(header =>
+                        {
+                            foreach (var col in visibleColumns)
+                            {
+                                header.Cell().Background(Colors.Blue.Darken2)
+                                    .Padding(5)
+                                    .Text(col.DisplayName ?? col.FieldName)
+                                    .FontColor(Colors.White)
+                                    .Bold();
+                            }
+                        });
+
+                        // Data rows
+                        foreach (var row in data.Data)
+                        {
+                            foreach (var col in visibleColumns)
+                            {
+                                var value = row.GetValueOrDefault(col.FieldName)?.ToString() ?? "";
+                                var cell = table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(5);
+
+                                // Apply alignment
+                                if (col.Alignment?.ToLower() == "right" || col.DataType == "Number" || col.DataType == "Currency")
+                                    cell.AlignRight();
+                                else if (col.Alignment?.ToLower() == "center")
+                                    cell.AlignCenter();
+
+                                cell.Text(FormatCellValue(value, col));
+                            }
+                        }
+                    });
+                });
+
+                // Footer
+                page.Footer().AlignCenter().Text(text =>
+                {
+                    text.Span("Page ");
+                    text.CurrentPageNumber();
+                    text.Span(" of ");
+                    text.TotalPages();
+                });
+            });
+        });
+
+        using var stream = new MemoryStream();
+        document.GeneratePdf(stream);
+        return stream.ToArray();
     }
 
     private static byte[] GenerateExcelReport(ExecuteReportResponseDto data)
     {
-        // TODO: Implement Excel generation using EPPlus or ClosedXML
-        return Array.Empty<byte>();
+        using var workbook = new XLWorkbook();
+        var worksheet = workbook.Worksheets.Add("Report Data");
+
+        var visibleColumns = data.Columns.Where(c => c.Visible).ToList();
+
+        // Add title
+        worksheet.Cell(1, 1).Value = data.ReportName;
+        worksheet.Cell(1, 1).Style.Font.Bold = true;
+        worksheet.Cell(1, 1).Style.Font.FontSize = 14;
+        worksheet.Range(1, 1, 1, visibleColumns.Count).Merge();
+
+        // Add metadata
+        worksheet.Cell(2, 1).Value = $"Generated: {data.ExecutedAt:yyyy-MM-dd HH:mm} | Total Records: {data.TotalRecords}";
+        worksheet.Cell(2, 1).Style.Font.FontColor = XLColor.Gray;
+        worksheet.Range(2, 1, 2, visibleColumns.Count).Merge();
+
+        // Header row (row 4)
+        var headerRow = 4;
+        for (int i = 0; i < visibleColumns.Count; i++)
+        {
+            var col = visibleColumns[i];
+            var cell = worksheet.Cell(headerRow, i + 1);
+            cell.Value = col.DisplayName ?? col.FieldName;
+            cell.Style.Font.Bold = true;
+            cell.Style.Fill.BackgroundColor = XLColor.FromHtml("#1F6FEB");
+            cell.Style.Font.FontColor = XLColor.White;
+            cell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+        }
+
+        // Data rows
+        var dataRowStart = headerRow + 1;
+        for (int rowIdx = 0; rowIdx < data.Data.Count; rowIdx++)
+        {
+            var row = data.Data[rowIdx];
+            for (int colIdx = 0; colIdx < visibleColumns.Count; colIdx++)
+            {
+                var col = visibleColumns[colIdx];
+                var cell = worksheet.Cell(dataRowStart + rowIdx, colIdx + 1);
+                var value = row.GetValueOrDefault(col.FieldName);
+
+                // Set value with appropriate type
+                if (value != null)
+                {
+                    if (col.DataType == "Number" || col.DataType == "Currency")
+                    {
+                        if (decimal.TryParse(value.ToString(), out var numValue))
+                            cell.Value = numValue;
+                        else
+                            cell.Value = value.ToString();
+
+                        if (col.DataType == "Currency")
+                            cell.Style.NumberFormat.Format = "$#,##0.00";
+                    }
+                    else if (col.DataType == "Date" && DateTime.TryParse(value.ToString(), out var dateValue))
+                    {
+                        cell.Value = dateValue;
+                        cell.Style.NumberFormat.Format = col.Format ?? "yyyy-MM-dd";
+                    }
+                    else
+                    {
+                        cell.Value = value.ToString();
+                    }
+                }
+
+                // Apply alignment
+                if (col.Alignment?.ToLower() == "right" || col.DataType == "Number" || col.DataType == "Currency")
+                    cell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Right;
+                else if (col.Alignment?.ToLower() == "center")
+                    cell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+            }
+        }
+
+        // Auto-fit columns
+        worksheet.Columns().AdjustToContents();
+
+        // Add table formatting
+        var tableRange = worksheet.Range(headerRow, 1, dataRowStart + data.Data.Count - 1, visibleColumns.Count);
+        tableRange.Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
+        tableRange.Style.Border.InsideBorder = XLBorderStyleValues.Thin;
+
+        // Alternate row colors for data
+        for (int rowIdx = 0; rowIdx < data.Data.Count; rowIdx++)
+        {
+            if (rowIdx % 2 == 1)
+            {
+                worksheet.Range(dataRowStart + rowIdx, 1, dataRowStart + rowIdx, visibleColumns.Count)
+                    .Style.Fill.BackgroundColor = XLColor.FromHtml("#F3F4F6");
+            }
+        }
+
+        using var stream = new MemoryStream();
+        workbook.SaveAs(stream);
+        return stream.ToArray();
+    }
+
+    private static string FormatCellValue(string value, ReportColumnDto column)
+    {
+        if (string.IsNullOrEmpty(value)) return value;
+
+        return column.DataType switch
+        {
+            "Currency" when decimal.TryParse(value, out var currency) => currency.ToString("C2"),
+            "Number" when decimal.TryParse(value, out var number) => number.ToString(column.Format ?? "N2"),
+            "Date" when DateTime.TryParse(value, out var date) => date.ToString(column.Format ?? "yyyy-MM-dd"),
+            _ => value
+        };
     }
 
     private static byte[] GenerateCsvReport(ExecuteReportResponseDto data)
