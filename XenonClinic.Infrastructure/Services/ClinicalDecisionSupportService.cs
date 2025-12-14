@@ -721,9 +721,9 @@ public class ClinicalDecisionSupportService : IClinicalDecisionSupportService
         // Wait for all tasks to complete
         await Task.WhenAll(allergyCheckTask, interactionCheckTask, contraindicationCheckTask);
 
-        var allergyCheck = allergyCheckTask.Result;
-        var interactionCheck = interactionCheckTask.Result;
-        var contraindicationCheck = contraindicationCheckTask.Result;
+        var allergyCheck = await allergyCheckTask;
+        var interactionCheck = await interactionCheckTask;
+        var contraindicationCheck = await contraindicationCheckTask;
 
         DosageCheckResultDto? dosageCheck = null;
         if (dosageInfo != null)
