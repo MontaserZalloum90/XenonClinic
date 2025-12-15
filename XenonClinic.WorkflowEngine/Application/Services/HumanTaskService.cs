@@ -38,10 +38,11 @@ public class HumanTaskService : IHumanTaskService
         int tenantId,
         CancellationToken cancellationToken = default)
     {
+        var taskGuid = Guid.Parse(taskId);
         var task = await _context.HumanTasks
             .Include(t => t.Comments)
             .Include(t => t.Attachments)
-            .FirstOrDefaultAsync(t => t.Id == taskId && t.TenantId == tenantId, cancellationToken);
+            .FirstOrDefaultAsync(t => t.Id == taskGuid && t.TenantId == tenantId, cancellationToken);
 
         if (task == null)
             return null;
@@ -192,8 +193,8 @@ public class HumanTaskService : IHumanTaskService
         availableTasks = availableTasks.Where(t =>
         {
             var candidateUsers = DeserializeList(t.CandidateUserIdsJson);
-            var candidateGroups = DeserializeList(t.CandidateGroupsJson);
-            var candidateRoles = DeserializeList(t.CandidateRolesJson);
+            var candidateGroups = DeserializeList(t.CandidateGroupIdsJson);
+            var candidateRoles = DeserializeList(t.CandidateRoleIdsJson);
 
             // No restrictions means anyone can claim
             if (candidateUsers.Count == 0 && candidateGroups.Count == 0 && candidateRoles.Count == 0)
@@ -271,8 +272,8 @@ public class HumanTaskService : IHumanTaskService
 
         // Verify user can claim
         var candidateUsers = DeserializeList(task.CandidateUserIdsJson);
-        var candidateGroups = DeserializeList(task.CandidateGroupsJson);
-        var candidateRoles = DeserializeList(task.CandidateRolesJson);
+        var candidateGroups = DeserializeList(task.CandidateGroupIdsJson);
+        var candidateRoles = DeserializeList(task.CandidateRoleIdsJson);
 
         // If there are restrictions, verify user is allowed
         // (In a full implementation, would check user's groups and roles)
@@ -383,7 +384,7 @@ public class HumanTaskService : IHumanTaskService
 
         var previousAssignee = task.AssigneeUserId;
         task.AssigneeUserId = delegateUserId;
-        task.Status = HumanTaskStatus.Delegated;
+        task.Status = HumanTaskStatus.Reserved;
 
         await AddActionAsync(task, TaskActionTypes.Delegate, performedBy,
             new Dictionary<string, object>
@@ -439,10 +440,7 @@ public class HumanTaskService : IHumanTaskService
         task.Status = HumanTaskStatus.Completed;
         task.CompletedAt = DateTime.UtcNow;
         task.CompletedBy = userId;
-        task.CompletionAction = action;
-        task.OutputVariablesJson = outputVariables != null
-            ? JsonSerializer.Serialize(outputVariables, _jsonOptions)
-            : null;
+        task.Outcome = action;
 
         await AddActionAsync(task, action ?? TaskActionTypes.Complete, userId,
             outputVariables, cancellationToken);
@@ -478,14 +476,14 @@ public class HumanTaskService : IHumanTaskService
                         activityInstance.CompletedAt = DateTime.UtcNow;
 
                         var activeActivities = JsonSerializer.Deserialize<List<string>>(instance.ActiveActivityIdsJson) ?? new();
-                        activeActivities.Remove(activityInstance.ActivityId);
+                        activeActivities.Remove(activityInstance.ActivityDefinitionId);
                         instance.ActiveActivityIdsJson = JsonSerializer.Serialize(activeActivities);
 
                         await _context.SaveChangesAsync(cancellationToken);
 
                         // Find and execute next activities
                         var outgoingFlows = model.SequenceFlows?
-                            .Where(f => f.SourceActivityId == activityInstance.ActivityId)
+                            .Where(f => f.SourceActivityId == activityInstance.ActivityDefinitionId)
                             .ToList() ?? new();
 
                         // Determine which flow to take based on action
@@ -535,22 +533,22 @@ public class HumanTaskService : IHumanTaskService
 
         var comment = new TaskComment
         {
-            Id = Guid.NewGuid().ToString(),
-            TaskId = taskId,
+            Id = Guid.NewGuid(),
+            TaskId = task.Id,
             Content = content,
             UserId = userId,
             CreatedAt = DateTime.UtcNow
         };
 
         _context.TaskComments.Add(comment);
-        await AddActionAsync(task, TaskActionTypes.Comment, userId,
-            new Dictionary<string, object> { ["commentId"] = comment.Id }, cancellationToken);
+        await AddActionAsync(task, TaskActionTypes.AddComment, userId,
+            new Dictionary<string, object> { ["commentId"] = comment.Id.ToString() }, cancellationToken);
 
         await _context.SaveChangesAsync(cancellationToken);
 
         return new TaskCommentDto
         {
-            Id = comment.Id,
+            Id = comment.Id.ToString(),
             Content = comment.Content,
             UserId = comment.UserId,
             CreatedAt = comment.CreatedAt
@@ -562,8 +560,9 @@ public class HumanTaskService : IHumanTaskService
         int tenantId,
         CancellationToken cancellationToken = default)
     {
+        var taskGuid = Guid.Parse(taskId);
         var exists = await _context.HumanTasks
-            .AnyAsync(t => t.Id == taskId && t.TenantId == tenantId, cancellationToken);
+            .AnyAsync(t => t.Id == taskGuid && t.TenantId == tenantId, cancellationToken);
 
         if (!exists)
         {
@@ -571,13 +570,13 @@ public class HumanTaskService : IHumanTaskService
         }
 
         var comments = await _context.TaskComments
-            .Where(c => c.TaskId == taskId)
+            .Where(c => c.TaskId == taskGuid)
             .OrderByDescending(c => c.CreatedAt)
             .ToListAsync(cancellationToken);
 
         return comments.Select(c => new TaskCommentDto
         {
-            Id = c.Id,
+            Id = c.Id.ToString(),
             Content = c.Content,
             UserId = c.UserId,
             CreatedAt = c.CreatedAt
@@ -597,20 +596,20 @@ public class HumanTaskService : IHumanTaskService
 
         var attachment = new TaskAttachment
         {
-            Id = Guid.NewGuid().ToString(),
-            TaskId = taskId,
-            FileName = fileName,
+            Id = Guid.NewGuid(),
+            TaskId = task.Id,
+            Name = fileName,
             ContentType = contentType,
             Url = url,
-            UserId = userId,
-            CreatedAt = DateTime.UtcNow
+            UploadedBy = userId,
+            UploadedAt = DateTime.UtcNow
         };
 
         _context.TaskAttachments.Add(attachment);
         await AddActionAsync(task, TaskActionTypes.AddAttachment, userId,
             new Dictionary<string, object>
             {
-                ["attachmentId"] = attachment.Id,
+                ["attachmentId"] = attachment.Id.ToString(),
                 ["fileName"] = fileName
             }, cancellationToken);
 
@@ -618,13 +617,13 @@ public class HumanTaskService : IHumanTaskService
 
         return new TaskAttachmentDto
         {
-            Id = attachment.Id,
-            FileName = attachment.FileName,
+            Id = attachment.Id.ToString(),
+            FileName = attachment.Name,
             ContentType = attachment.ContentType,
             Url = attachment.Url,
             SizeBytes = attachment.SizeBytes,
-            UserId = attachment.UserId,
-            CreatedAt = attachment.CreatedAt
+            UserId = attachment.UploadedBy,
+            CreatedAt = attachment.UploadedAt
         };
     }
 
@@ -633,15 +632,15 @@ public class HumanTaskService : IHumanTaskService
         int tenantId,
         CancellationToken cancellationToken = default)
     {
+        var taskGuid = Guid.Parse(taskId);
         var exists = await _context.HumanTasks
-            .AnyAsync(t => t.Id == taskId && t.TenantId == tenantId, cancellationToken);
+            .AnyAsync(t => t.Id == taskGuid && t.TenantId == tenantId, cancellationToken);
 
         if (!exists)
         {
             throw new KeyNotFoundException($"Task '{taskId}' not found.");
         }
 
-        var taskGuid = Guid.Parse(taskId);
         var attachments = await _context.TaskAttachments
             .Where(a => a.TaskId == taskGuid)
             .OrderByDescending(a => a.UploadedAt)

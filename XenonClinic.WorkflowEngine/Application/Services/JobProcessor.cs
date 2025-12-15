@@ -34,18 +34,22 @@ public class JobProcessor : IJobProcessor
         EnqueueJobRequest request,
         CancellationToken cancellationToken = default)
     {
+        var activityInstanceId = !string.IsNullOrEmpty(request.ActivityInstanceId) && Guid.TryParse(request.ActivityInstanceId, out var aid)
+            ? aid
+            : (Guid?)null;
+
         var job = new AsyncJob
         {
-            Id = Guid.NewGuid().ToString(),
+            Id = Guid.NewGuid(),
             TenantId = request.TenantId,
             ProcessInstanceId = request.ProcessInstanceId,
-            ActivityInstanceId = request.ActivityInstanceId,
+            ActivityInstanceId = activityInstanceId,
             JobType = request.JobType,
             Status = JobStatus.Pending,
             Priority = request.Priority,
-            PayloadJson = request.Payload != null
+            JobDataJson = request.Payload != null
                 ? JsonSerializer.Serialize(request.Payload, _jsonOptions)
-                : null,
+                : "{}",
             MaxRetries = request.MaxRetries,
             RetryDelaySeconds = (int)request.RetryDelay.TotalSeconds,
             CreatedAt = DateTime.UtcNow,
@@ -103,8 +107,9 @@ public class JobProcessor : IJobProcessor
         string jobId,
         CancellationToken cancellationToken = default)
     {
+        var jobGuid = Guid.Parse(jobId);
         var job = await _context.AsyncJobs
-            .FirstOrDefaultAsync(j => j.Id == jobId, cancellationToken);
+            .FirstOrDefaultAsync(j => j.Id == jobGuid, cancellationToken);
 
         if (job == null)
         {
@@ -113,18 +118,18 @@ public class JobProcessor : IJobProcessor
         }
 
         var now = DateTime.UtcNow;
-        job.Status = JobStatus.Running;
+        job.Status = JobStatus.Processing;
         job.StartedAt = now;
         await _context.SaveChangesAsync(cancellationToken);
 
         try
         {
             Dictionary<string, object>? payload;
-            if (!string.IsNullOrEmpty(job.PayloadJson))
+            if (!string.IsNullOrEmpty(job.JobDataJson) && job.JobDataJson != "{}")
             {
                 try
                 {
-                    payload = JsonSerializer.Deserialize<Dictionary<string, object>>(job.PayloadJson, _jsonOptions);
+                    payload = JsonSerializer.Deserialize<Dictionary<string, object>>(job.JobDataJson, _jsonOptions);
                 }
                 catch (JsonException ex)
                 {
@@ -201,15 +206,16 @@ public class JobProcessor : IJobProcessor
         string? result = null,
         CancellationToken cancellationToken = default)
     {
+        var jobGuid = Guid.Parse(jobId);
         var job = await _context.AsyncJobs
-            .FirstOrDefaultAsync(j => j.Id == jobId, cancellationToken);
+            .FirstOrDefaultAsync(j => j.Id == jobGuid, cancellationToken);
 
         if (job == null)
             return;
 
         job.Status = JobStatus.Completed;
         job.CompletedAt = DateTime.UtcNow;
-        job.ResultJson = result;
+        // Note: AsyncJob doesn't have ResultJson property, result is ignored
         job.LockOwner = null;
         job.LockExpiry = null;
 
@@ -224,8 +230,9 @@ public class JobProcessor : IJobProcessor
         bool shouldRetry = true,
         CancellationToken cancellationToken = default)
     {
+        var jobGuid = Guid.Parse(jobId);
         var job = await _context.AsyncJobs
-            .FirstOrDefaultAsync(j => j.Id == jobId, cancellationToken);
+            .FirstOrDefaultAsync(j => j.Id == jobGuid, cancellationToken);
 
         if (job == null)
             return;
@@ -267,8 +274,9 @@ public class JobProcessor : IJobProcessor
         string jobId,
         CancellationToken cancellationToken = default)
     {
+        var jobGuid = Guid.Parse(jobId);
         var job = await _context.AsyncJobs
-            .FirstOrDefaultAsync(j => j.Id == jobId, cancellationToken);
+            .FirstOrDefaultAsync(j => j.Id == jobGuid, cancellationToken);
 
         if (job == null)
             return null;
@@ -293,13 +301,14 @@ public class JobProcessor : IJobProcessor
         string jobId,
         CancellationToken cancellationToken = default)
     {
+        var jobGuid = Guid.Parse(jobId);
         var job = await _context.AsyncJobs
-            .FirstOrDefaultAsync(j => j.Id == jobId, cancellationToken);
+            .FirstOrDefaultAsync(j => j.Id == jobGuid, cancellationToken);
 
         if (job == null)
             return;
 
-        if (job.Status == JobStatus.Running)
+        if (job.Status == JobStatus.Processing)
         {
             throw new InvalidOperationException("Cannot cancel a running job.");
         }
@@ -309,7 +318,7 @@ public class JobProcessor : IJobProcessor
             return;
         }
 
-        job.Status = JobStatus.Cancelled;
+        job.Status = JobStatus.DeadLetter;
         job.CompletedAt = DateTime.UtcNow;
 
         await _context.SaveChangesAsync(cancellationToken);
@@ -324,7 +333,7 @@ public class JobProcessor : IJobProcessor
         var cutoff = DateTime.UtcNow.Subtract(olderThan);
 
         var deletedCount = await _context.AsyncJobs
-            .Where(j => (j.Status == JobStatus.Completed || j.Status == JobStatus.Failed || j.Status == JobStatus.Cancelled) &&
+            .Where(j => (j.Status == JobStatus.Completed || j.Status == JobStatus.Failed || j.Status == JobStatus.DeadLetter) &&
                        j.CompletedAt < cutoff)
             .ExecuteDeleteAsync(cancellationToken);
 
@@ -334,11 +343,11 @@ public class JobProcessor : IJobProcessor
     private JobDto MapToDto(AsyncJob job)
     {
         Dictionary<string, object>? payload = null;
-        if (!string.IsNullOrEmpty(job.PayloadJson))
+        if (!string.IsNullOrEmpty(job.JobDataJson) && job.JobDataJson != "{}")
         {
             try
             {
-                payload = JsonSerializer.Deserialize<Dictionary<string, object>>(job.PayloadJson, _jsonOptions);
+                payload = JsonSerializer.Deserialize<Dictionary<string, object>>(job.JobDataJson, _jsonOptions);
             }
             catch (JsonException)
             {
@@ -348,15 +357,15 @@ public class JobProcessor : IJobProcessor
 
         return new JobDto
         {
-            Id = job.Id,
+            Id = job.Id.ToString(),
             TenantId = job.TenantId,
             ProcessInstanceId = job.ProcessInstanceId,
-            ActivityInstanceId = job.ActivityInstanceId,
+            ActivityInstanceId = job.ActivityInstanceId?.ToString(),
             JobType = job.JobType,
             Status = job.Status,
             Priority = job.Priority,
             Payload = payload,
-            Result = job.ResultJson,
+            Result = null, // AsyncJob doesn't have ResultJson
             ErrorMessage = job.ErrorMessage,
             RetryCount = job.RetryCount,
             MaxRetries = job.MaxRetries,
