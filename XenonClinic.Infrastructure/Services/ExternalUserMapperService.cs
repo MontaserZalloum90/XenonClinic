@@ -44,7 +44,7 @@ public class ExternalUserMapperService : IExternalUserMapper
     /// <inheritdoc />
     public async Task<ExternalUserMappingResult> MapExternalUserAsync(
         ClaimsPrincipal principal,
-        CompanyIdentityProvider provider,
+        XenonClinic.Core.Entities.CompanyIdentityProvider provider,
         int companyId)
     {
         try
@@ -156,7 +156,7 @@ public class ExternalUserMapperService : IExternalUserMapper
     }
 
     /// <inheritdoc />
-    public Dictionary<string, string?> ExtractClaims(ClaimsPrincipal principal, CompanyIdentityProvider provider)
+    public Dictionary<string, string?> ExtractClaims(ClaimsPrincipal principal, XenonClinic.Core.Entities.CompanyIdentityProvider provider)
     {
         var result = new Dictionary<string, string?>();
 
@@ -238,7 +238,7 @@ public class ExternalUserMapperService : IExternalUserMapper
     private async Task UpdateUserFromClaims(
         ApplicationUser user,
         Dictionary<string, string?> claims,
-        CompanyIdentityProvider provider)
+        XenonClinic.Core.Entities.CompanyIdentityProvider provider)
     {
         var updated = false;
 
@@ -277,10 +277,10 @@ public class ExternalUserMapperService : IExternalUserMapper
 
     private async Task<ApplicationUser?> CreateUserFromClaims(
         Dictionary<string, string?> claims,
-        CompanyIdentityProvider provider,
+        XenonClinic.Core.Entities.CompanyIdentityProvider provider,
         int companyId,
         string externalUserId,
-        CompanyAuthSettings authSettings)
+        XenonClinic.Core.Entities.CompanyAuthSettings authSettings)
     {
         var email = claims.GetValueOrDefault("email")!;
 

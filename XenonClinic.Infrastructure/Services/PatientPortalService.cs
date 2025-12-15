@@ -12,6 +12,7 @@ using XenonClinic.Core.Enums;
 using XenonClinic.Core.Interfaces;
 using XenonClinic.Core.Utilities;
 using XenonClinic.Infrastructure.Data;
+using XenonClinic.Infrastructure.Entities;
 
 namespace XenonClinic.Infrastructure.Services;
 

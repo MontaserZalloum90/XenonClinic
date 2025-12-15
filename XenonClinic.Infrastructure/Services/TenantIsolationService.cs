@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using XenonClinic.Core.Entities;
+using XenonClinic.Core.Interfaces;
 using XenonClinic.Infrastructure.Data;
 
 namespace XenonClinic.Infrastructure.Services;

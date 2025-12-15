@@ -99,7 +99,7 @@ public class ConsentService : IConsentService
         return await GetConsentByIdAsync(consent.Id);
     }
 
-    public async Task<PatientConsentDto> UpdateConsentAsync(int consentId, SaveConsentDto request, int updatedByUserId)
+    public async Task<PatientConsentDto?> UpdateConsentAsync(int consentId, SaveConsentDto request, int updatedByUserId)
     {
         var consent = await _context.Set<PatientConsent>().FindAsync(consentId);
         if (consent == null)

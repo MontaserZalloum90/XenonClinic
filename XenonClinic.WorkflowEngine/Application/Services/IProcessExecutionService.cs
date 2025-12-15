@@ -191,6 +191,7 @@ public class ProcessInstanceSummaryDto
     public DateTime? CompletedAt { get; set; }
     public string? StartedBy { get; set; }
     public int ActiveTaskCount { get; set; }
+    public string? CurrentActivityId { get; set; }
 }
 
 public class ProcessInstanceDetailDto : ProcessInstanceDto

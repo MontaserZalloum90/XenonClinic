@@ -272,7 +272,7 @@ public class BpmnService : IBpmnService
         foreach (var flowElement in processElement.Elements().Where(e => e.Name.LocalName == "sequenceFlow"))
         {
             var flow = ParseSequenceFlow(flowElement);
-            model.SequenceFlows[flow.Id] = flow;
+            model.SequenceFlows.Add(flow);
         }
 
         _logger.LogDebug("Parsed BPMN with {ActivityCount} activities and {FlowCount} flows",

@@ -801,7 +801,7 @@ public class ProcessExecutionService : IProcessExecutionService
                 ? EvaluateExpression(userTask.Description, variables)
                 : null,
             Status = HumanTaskStatus.Created,
-            Priority = userTask.Priority.HasValue ? (TaskPriority)userTask.Priority.Value : TaskPriority.Medium,
+            Priority = userTask.Priority.HasValue ? (TaskPriority)userTask.Priority.Value : TaskPriority.Normal,
             BusinessKey = instance.BusinessKey,
             CreatedAt = DateTime.UtcNow,
             FormKey = userTask.FormKey
@@ -1329,7 +1329,7 @@ public class ProcessExecutionService : IProcessExecutionService
             ProcessVersion = instance.ProcessVersion,
             Status = instance.Status,
             BusinessKey = instance.BusinessKey,
-            StartedAt = instance.StartedAt,
+            StartedAt = instance.StartedAt ?? instance.CreatedAt,
             CompletedAt = instance.CompletedAt,
             StartedBy = instance.StartedBy,
             ActiveActivityIds = JsonSerializer.Deserialize<List<string>>(instance.ActiveActivityIdsJson) ?? new()
@@ -1338,6 +1338,7 @@ public class ProcessExecutionService : IProcessExecutionService
 
     private ProcessInstanceSummaryDto MapToSummaryDto(ProcessInstance instance, ProcessDefinition? definition, int activeTaskCount)
     {
+        var activeActivityIds = JsonSerializer.Deserialize<List<string>>(instance.ActiveActivityIdsJson) ?? new();
         return new ProcessInstanceSummaryDto
         {
             Id = instance.Id,
@@ -1350,7 +1351,8 @@ public class ProcessExecutionService : IProcessExecutionService
             StartedAt = instance.StartedAt ?? instance.CreatedAt,
             CompletedAt = instance.CompletedAt,
             StartedBy = instance.InitiatorUserId,
-            ActiveTaskCount = activeTaskCount
+            ActiveTaskCount = activeTaskCount,
+            CurrentActivityId = activeActivityIds.FirstOrDefault()
         };
     }
 

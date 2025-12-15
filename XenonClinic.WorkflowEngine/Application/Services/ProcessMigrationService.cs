@@ -431,7 +431,7 @@ public class ProcessMigrationService : IProcessMigrationService
         {
             var migratable = new MigratableInstance
             {
-                InstanceId = instance.Id,
+                InstanceId = instance.Id.ToString(),
                 BusinessKey = instance.BusinessKey ?? "",
                 CurrentActivityId = instance.CurrentActivityId ?? "",
                 CurrentActivityName = sourceDefinition?.LatestVersionDetail?.Model?.Activities?

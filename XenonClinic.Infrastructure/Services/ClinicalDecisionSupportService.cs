@@ -476,7 +476,7 @@ public class ClinicalDecisionSupportService : IClinicalDecisionSupportService
         });
     }
 
-    public async Task<IEnumerable<ContraindicationAlertDto>> GetPatientContraindicationsAsync(int patientId)
+    public async Task<List<ContraindicationAlertDto>> GetPatientContraindicationsAsync(int patientId)
     {
         _logger.LogInformation("Getting all contraindications for patient: {PatientId}", patientId);
         ValidatePatientId(patientId);
@@ -494,7 +494,7 @@ public class ClinicalDecisionSupportService : IClinicalDecisionSupportService
             allContraindications.AddRange(result.Contraindications);
         }
 
-        return allContraindications.DistinctBy(c => c.ConditionCode + c.ContraindicationType);
+        return allContraindications.DistinctBy(c => c.ConditionCode + c.ContraindicationType).ToList();
     }
 
     public async Task<PregnancyLactationCheckResultDto> CheckPregnancyLactationAsync(PregnancyLactationCheckRequestDto request)
@@ -550,15 +550,65 @@ public class ClinicalDecisionSupportService : IClinicalDecisionSupportService
 
     #region Care Gap Management
 
-    public async Task<IEnumerable<CareGapDto>> GetPatientCareGapsAsync(int patientId)
+    public async Task<PatientCareGapSummaryDto> GetPatientCareGapsAsync(int patientId)
     {
         _logger.LogInformation("Getting care gaps for patient: {PatientId}", patientId);
         ValidatePatientId(patientId);
 
+        var careGaps = await CalculatePatientCareGapsInternalAsync(patientId);
+
+        var patient = await _unitOfWork.Patients.GetByIdWithMedicalHistoryAsync(patientId);
+        var patientName = patient != null ? $"{patient.FirstName} {patient.LastName}" : "Unknown";
+
+        var openGaps = careGaps.Where(g => g.Status == "Open").ToList();
+        var overdueGaps = openGaps.Where(g => g.DueDate < DateTime.UtcNow).ToList();
+        var highPriorityGaps = openGaps.Where(g => g.Priority == "High").ToList();
+
+        // Convert CareGapDto to ClinicalReminderDto
+        var clinicalReminders = careGaps.Select(g => new ClinicalReminderDto
+        {
+            Id = g.Id,
+            PatientId = patientId,
+            ReminderType = g.GapType,
+            Title = g.GapType,
+            Description = g.Description,
+            Priority = g.Priority,
+            DueDate = g.DueDate,
+            Status = g.Status,
+            ActionRequired = g.Recommendation,
+            Source = "Care Gap Analysis"
+        }).ToList();
+
+        // Calculate compliance score (percentage of gaps that are not overdue)
+        var complianceScore = openGaps.Count > 0
+            ? (double)(openGaps.Count - overdueGaps.Count) / openGaps.Count * 100
+            : 100.0;
+
+        // Determine risk level based on priority and overdue gaps
+        var riskLevel = highPriorityGaps.Count > 2 || overdueGaps.Count > 3 ? "High" :
+                        highPriorityGaps.Count > 0 || overdueGaps.Count > 0 ? "Medium" : "Low";
+
+        return new PatientCareGapSummaryDto
+        {
+            PatientId = patientId,
+            PatientName = patientName,
+            AsOfDate = DateTime.UtcNow,
+            TotalGaps = openGaps.Count,
+            OverdueGaps = overdueGaps.Count,
+            HighPriorityGaps = highPriorityGaps.Count,
+            CompletedThisYear = 0, // Would need to track completed gaps from database
+            CareGaps = clinicalReminders,
+            ComplianceScore = complianceScore,
+            RiskLevel = riskLevel
+        };
+    }
+
+    private async Task<List<CareGapDto>> CalculatePatientCareGapsInternalAsync(int patientId)
+    {
         // Calculate care gaps based on patient conditions and preventive care guidelines
         var patient = await _unitOfWork.Patients.GetByIdWithMedicalHistoryAsync(patientId);
         if (patient == null)
-            return Enumerable.Empty<CareGapDto>();
+            return new List<CareGapDto>();
 
         var careGaps = new List<CareGapDto>();
         var age = CalculateAge(patient.DateOfBirth);
@@ -655,18 +705,18 @@ public class ClinicalDecisionSupportService : IClinicalDecisionSupportService
         return age;
     }
 
-    public async Task<IEnumerable<CareGapDto>> GetOverdueCareGapsAsync(int patientId)
+    private async Task<List<CareGapDto>> GetOverdueCareGapsInternalAsync(int patientId)
     {
-        var gaps = await GetPatientCareGapsAsync(patientId);
-        return gaps.Where(g => g.DueDate < DateTime.UtcNow && g.Status == "Open");
+        var gaps = await CalculatePatientCareGapsInternalAsync(patientId);
+        return gaps.Where(g => g.DueDate < DateTime.UtcNow && g.Status == "Open").ToList();
     }
 
-    public async Task<IEnumerable<ClinicalReminderDto>> GetClinicalRemindersAsync(int patientId)
+    private async Task<List<ClinicalReminderDto>> GetClinicalRemindersInternalAsync(int patientId)
     {
         _logger.LogInformation("Getting clinical reminders for patient: {PatientId}", patientId);
         ValidatePatientId(patientId);
 
-        var careGaps = await GetPatientCareGapsAsync(patientId);
+        var careGaps = await CalculatePatientCareGapsInternalAsync(patientId);
 
         return careGaps.Select(g => new ClinicalReminderDto
         {
@@ -680,7 +730,7 @@ public class ClinicalDecisionSupportService : IClinicalDecisionSupportService
             Status = g.Status,
             ActionRequired = g.Recommendation,
             Source = "Care Gap Analysis"
-        });
+        }).ToList();
     }
 
     public async Task<IEnumerable<int>> GetPatientsWithOverdueCareGapsAsync(int branchId)
@@ -710,18 +760,11 @@ public class ClinicalDecisionSupportService : IClinicalDecisionSupportService
     }
 
 
-    public async Task<IEnumerable<CareGapDto>> RecalculateCareGapsAsync(int patientId)
+    public async Task RecalculateCareGapsAsync(int patientId)
     {
         _logger.LogInformation("Recalculating care gaps for patient: {PatientId}", patientId);
-        return await GetPatientCareGapsAsync(patientId);
+        await CalculatePatientCareGapsInternalAsync(patientId);
     }
-
-    #endregion
-
-    #region Clinical Reminders Original
-    // Previous region content maintained for compatibility
-    public Task<IEnumerable<CareGapDto>> CalculatePatientCareGapsAsync(int patientId)
-        => GetPatientCareGapsAsync(patientId);
 
     #endregion
 
