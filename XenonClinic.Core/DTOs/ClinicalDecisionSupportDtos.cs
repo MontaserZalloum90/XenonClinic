@@ -44,6 +44,10 @@ public class DrugInteractionAlertDto
     public List<string>? MonitoringRecommendations { get; set; }
     public string? EvidenceSource { get; set; }
     public DateTime? LastUpdated { get; set; }
+    public string ClinicalRecommendation { get; set; } = string.Empty;
+    public bool IsContraindicated { get; set; }
+    public bool RequiresMonitoring { get; set; }
+    public List<string> References { get; set; } = new();
 }
 
 /// <summary>
@@ -95,10 +99,12 @@ public class AllergyAlertDto
 {
     public int AlertId { get; set; }
     public string AllergenName { get; set; } = string.Empty;
+    public string AllergenCode { get; set; } = string.Empty;
     public string AllergenType { get; set; } = string.Empty; // Drug, DrugClass, Ingredient, CrossReactive
     public string MedicationName { get; set; } = string.Empty;
     public string MedicationCode { get; set; } = string.Empty;
     public string Severity { get; set; } = string.Empty; // Contraindicated, Warning, Caution
+    public string ReactionType { get; set; } = string.Empty; // Allergic reaction, Anaphylaxis, etc.
     public string PreviousReaction { get; set; } = string.Empty;
     public string PreviousReactionSeverity { get; set; } = string.Empty;
     public DateTime? ReactionDate { get; set; }
@@ -107,7 +113,10 @@ public class AllergyAlertDto
     public string Recommendation { get; set; } = string.Empty;
     public List<string>? AlternativeMedications { get; set; }
     public bool IsCrossReactivity { get; set; }
+    public bool CrossReactivity { get; set; } // Alias for IsCrossReactivity for backward compatibility
     public string? CrossReactivityExplanation { get; set; }
+    public bool CanOverride { get; set; }
+    public bool RequiresDocumentation { get; set; }
 }
 
 /// <summary>
@@ -137,6 +146,7 @@ public class AllergyCheckResultDto
 public class ClinicalReminderDto
 {
     public int ReminderId { get; set; }
+    public int Id { get => ReminderId; set => ReminderId = value; } // Alias for ReminderId
     public int PatientId { get; set; }
     public string ReminderType { get; set; } = string.Empty; // Screening, Vaccination, LabTest, Assessment, Follow-up
     public string Category { get; set; } = string.Empty; // Preventive, ChronicCare, Medication, SafetyAlert
@@ -159,6 +169,8 @@ public class ClinicalReminderDto
     public DateTime? AcknowledgedAt { get; set; }
     public string? AcknowledgedBy { get; set; }
     public string? DismissalReason { get; set; }
+    public string ActionRequired { get; set; } = string.Empty; // Simple string action required description
+    public string Source { get; set; } = string.Empty; // Source of the reminder (e.g., Care Gap Analysis, Guideline)
 }
 
 /// <summary>
@@ -306,9 +318,13 @@ public class DosageCheckRequestDto
     [Range(0.001, 100000, ErrorMessage = "Proposed dose must be between 0.001 and 100000")]
     public decimal ProposedDose { get; set; }
 
+    public decimal Dose { get => ProposedDose; set => ProposedDose = value; } // Alias for ProposedDose
+
     [Required(ErrorMessage = "Dose unit is required")]
     [StringLength(20, ErrorMessage = "Dose unit cannot exceed 20 characters")]
     public string DoseUnit { get; set; } = string.Empty;
+
+    public string Unit { get => DoseUnit; set => DoseUnit = value; } // Alias for DoseUnit
 
     [Required(ErrorMessage = "Frequency is required")]
     [StringLength(50, ErrorMessage = "Frequency cannot exceed 50 characters")]
@@ -328,6 +344,7 @@ public class DosageCheckRequestDto
 public class DosageCheckResultDto
 {
     public int PatientId { get; set; }
+    public string MedicationCode { get; set; } = string.Empty;
     public string MedicationName { get; set; } = string.Empty;
     /// <summary>
     /// Medication code for identification
@@ -360,6 +377,8 @@ public class DosageCheckResultDto
     public DosageRangeDto? RecommendedRange { get; set; }
     public DosageRangeDto? MaxDailyDose { get; set; }
     public List<DosageAlertDto> Alerts { get; set; } = new();
+    public List<string> Warnings { get; set; } = new();
+    public List<string> FactorsConsidered { get; set; } = new();
     public bool RequiresRenalAdjustment { get; set; }
     public bool RequiresHepaticAdjustment { get; set; }
     public bool RequiresAgeAdjustment { get; set; }
@@ -417,9 +436,13 @@ public class DosageAlertDto
 /// </summary>
 public class DosageRecommendationDto
 {
+    public int PatientId { get; set; }
+    public string MedicationCode { get; set; } = string.Empty;
     public decimal RecommendedDose { get; set; }
     public string Unit { get; set; } = string.Empty;
+    public string RecommendedUnit { get => Unit; set => Unit = value; } // Alias for Unit
     public string Frequency { get; set; } = string.Empty;
+    public string RecommendedFrequency { get => Frequency; set => Frequency = value; } // Alias for Frequency
     public string Rationale { get; set; } = string.Empty;
     public List<string> AdjustmentFactors { get; set; } = new();
 }
@@ -487,6 +510,7 @@ public class ContraindicationAlertDto
     public string ContraindicationType { get; set; } = string.Empty; // Absolute, Relative, Precaution
     public string Reason { get; set; } = string.Empty;
     public string? ConditionName { get; set; }
+    public string? ConditionCode { get; set; } // Code for the contraindicated condition
     public string? IcdCode { get; set; }
     public string Severity { get; set; } = string.Empty; // Contraindicated, UseWithCaution, MonitorClosely
     public string Description { get; set; } = string.Empty;
@@ -495,6 +519,7 @@ public class ContraindicationAlertDto
     public List<string>? Alternatives { get; set; }
     public bool CanOverride { get; set; }
     public string? OverrideRequirement { get; set; }
+    public bool RequiresSpecialistConsult { get; set; }
 }
 
 /// <summary>
@@ -510,7 +535,9 @@ public class ContraindicationCheckResultDto
     public bool HasRelativeContraindication { get; set; }
     public bool HasPrecautions { get; set; }
     public List<ContraindicationAlertDto> Alerts { get; set; } = new();
+    public List<ContraindicationAlertDto> Contraindications { get => Alerts; set => Alerts = value; } // Alias for Alerts
     public bool CanPrescribe { get; set; }
+    public bool CanPrescribeWithCaution { get => CanPrescribe; set => CanPrescribe = value; } // Alias for CanPrescribe
     public string PrescribingDecision { get; set; } = string.Empty; // Safe, ProceedWithCaution, NotRecommended, Contraindicated
     public List<string>? RecommendedAlternatives { get; set; }
 }
@@ -561,10 +588,28 @@ public class LabInterpretationResultDto
     public string Interpretation { get; set; } = string.Empty;
     public List<string> PossibleCauses { get; set; } = new();
     public List<string> RecommendedActions { get; set; } = new();
+    public List<string> Recommendations { get => RecommendedActions; set => RecommendedActions = value; } // Alias for RecommendedActions
     public List<string>? AssociatedConditions { get; set; }
     public bool IsCritical { get; set; }
     public string? CriticalAction { get; set; }
     public TrendAnalysisDto? TrendAnalysis { get; set; }
+    public DateTime InterpretedAt { get; set; }
+    public string OverallAssessment { get; set; } = string.Empty;
+    public List<LabValueInterpretationDto> Interpretations { get; set; } = new();
+}
+
+/// <summary>
+/// Individual lab value interpretation
+/// </summary>
+public class LabValueInterpretationDto
+{
+    public string LabCode { get; set; } = string.Empty;
+    public string LabName { get; set; } = string.Empty;
+    public decimal Value { get; set; }
+    public string Unit { get; set; } = string.Empty;
+    public string Status { get; set; } = string.Empty;
+    public string Flag { get; set; } = string.Empty;
+    public string Interpretation { get; set; } = string.Empty;
 }
 
 /// <summary>
@@ -721,10 +766,12 @@ public class RiskCalculationRequestDto
 public class RiskCalculationResultDto
 {
     public int PatientId { get; set; }
+    public string CalculatorId { get; set; } = string.Empty;
     public string CalculatorName { get; set; } = string.Empty;
     public DateTime CalculatedAt { get; set; }
     public double RiskScore { get; set; }
     public string RiskLevel { get; set; } = string.Empty; // Low, Moderate, High, Very High
+    public string RiskCategory { get => RiskLevel; set => RiskLevel = value; } // Alias for RiskLevel
     public string RiskPercentage { get; set; } = string.Empty;
     public string TimeFrame { get; set; } = string.Empty; // e.g., "10-year risk"
     public string Interpretation { get; set; } = string.Empty;

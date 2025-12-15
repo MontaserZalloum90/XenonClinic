@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations.Schema;
+
 namespace XenonClinic.Core.Entities;
 
 public class PatientMedicalHistory
@@ -21,6 +23,9 @@ public class PatientMedicalHistory
     // Surgical History
     public string? SurgicalHistory { get; set; }
 
+    [NotMapped]
+    public string? PastSurgeries { get => SurgicalHistory; set => SurgicalHistory = value; } // Alias for SurgicalHistory
+
     // Family History
     public string? FamilyHistory { get; set; }
 
@@ -29,10 +34,24 @@ public class PatientMedicalHistory
     public bool ConsumesAlcohol { get; set; }
     public string? OccupationalExposure { get; set; }
 
+    [NotMapped]
+    public bool AlcoholConsumption { get => ConsumesAlcohol; set => ConsumesAlcohol = value; } // Alias for ConsumesAlcohol
+
+    [NotMapped]
+    public string? SocialHistory { get; set; } // Combined social history field (not persisted)
+
     // Hearing Specific
     public string? NoiseExposureHistory { get; set; }
+
+    [NotMapped]
+    public string? NoiseExposure { get => NoiseExposureHistory; set => NoiseExposureHistory = value; } // Alias for NoiseExposureHistory
+
     public string? PreviousHearingAids { get; set; }
     public string? TinnitusHistory { get; set; }
+
+    [NotMapped]
+    public string? Tinnitus { get => TinnitusHistory; set => TinnitusHistory = value; } // Alias for TinnitusHistory
+
     public string? BalanceProblems { get; set; }
 
     // Additional Notes
