@@ -2788,7 +2788,7 @@ public class MessageThread
     public bool IsClosed { get; set; }
 
     public Patient? Patient { get; set; }
-    public User? Doctor { get; set; }
+    public ApplicationUser? Doctor { get; set; }
     public ICollection<Message> Messages { get; set; } = new List<Message>();
 }
 

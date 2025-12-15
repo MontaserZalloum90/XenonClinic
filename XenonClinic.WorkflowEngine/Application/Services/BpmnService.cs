@@ -94,10 +94,7 @@ public class BpmnService : IBpmnService
             // Parse to process model
             var processModel = await ParseAsync(bpmnXml, cancellationToken);
 
-            // Parse tenant ID
-            var tenantId = int.TryParse(request.TenantId, out var tid) ? tid : 0;
-
-            // Create process definition
+            // Parse tenant ID and create process definition
             var tenantId = int.TryParse(request.TenantId, out var tid) ? tid : 1; // Default to tenant 1 if invalid
             var definition = await _processDefinitionService.CreateAsync(
                 tenantId,
@@ -112,9 +109,9 @@ public class BpmnService : IBpmnService
                 "system", // userId - TODO: get from context
                 cancellationToken);
 
-            if (request.DeployImmediately && definition.Version > 0)
+            if (request.DeployImmediately && definition.LatestVersion > 0)
             {
-                await _processDefinitionService.PublishVersionAsync(definition.Id, definition.Version, tenantId, "system", cancellationToken);
+                await _processDefinitionService.PublishVersionAsync(definition.Id, definition.LatestVersion, tenantId, "system", cancellationToken);
             }
 
             result.Success = true;

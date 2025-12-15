@@ -66,7 +66,7 @@ public class ClinicDbContext : IdentityDbContext<Entities.ApplicationUser>
     // Multi-tenancy entities
     public DbSet<Tenant> Tenants => Set<Tenant>();
     public DbSet<Company> Companies => Set<Company>();
-    public DbSet<TenantSettings> TenantSettings => Set<TenantSettings>();
+    public DbSet<XenonClinic.Core.Entities.TenantSettings> TenantSettings => Set<XenonClinic.Core.Entities.TenantSettings>();
     public DbSet<CompanySettings> CompanySettings => Set<CompanySettings>();
 
     // Existing entities

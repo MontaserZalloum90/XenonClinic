@@ -34,7 +34,7 @@ public class CustomReportService : ICustomReportService
         ["Prescriptions"] = typeof(Prescription),
         ["LabOrders"] = typeof(LabOrder),
         ["Visits"] = typeof(Visit),
-        ["Users"] = typeof(User),
+        ["Users"] = typeof(ApplicationUser),
         ["Branches"] = typeof(Branch),
         ["Diagnoses"] = typeof(Diagnosis),
         ["InsuranceClaims"] = typeof(InsuranceClaim),
@@ -405,7 +405,7 @@ public class CustomReportService : ICustomReportService
                 DisplayName = "Staff",
                 Description = "Staff and user records",
                 Category = "Administrative",
-                Fields = GetEntityFields(typeof(User))
+                Fields = GetEntityFields(typeof(ApplicationUser))
             }
         };
 
@@ -1681,7 +1681,7 @@ public class CustomReportDefinition
     public DateTime? UpdatedAt { get; set; }
     public DateTime? DeletedAt { get; set; }
 
-    public User? CreatedByUser { get; set; }
+    public ApplicationUser? CreatedByUser { get; set; }
 }
 
 /// <summary>
@@ -1726,7 +1726,7 @@ public class SavedReport
     public DateTime SavedAt { get; set; }
 
     public CustomReportDefinition? Report { get; set; }
-    public User? SavedByUser { get; set; }
+    public ApplicationUser? SavedByUser { get; set; }
 }
 
 /// <summary>
@@ -1747,7 +1747,7 @@ public class ReportExecutionHistoryEntry
     public string? Error { get; set; }
 
     public CustomReportDefinition? Report { get; set; }
-    public User? ExecutedByUser { get; set; }
+    public ApplicationUser? ExecutedByUser { get; set; }
 }
 
 /// <summary>
@@ -1788,7 +1788,7 @@ public class ReportPermission
     public bool CanShare { get; set; }
 
     public CustomReportDefinition? Report { get; set; }
-    public User? User { get; set; }
+    public ApplicationUser? User { get; set; }
     public Role? Role { get; set; }
 }
 

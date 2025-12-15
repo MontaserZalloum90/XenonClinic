@@ -11,14 +11,14 @@ namespace XenonClinic.Infrastructure.Services;
 /// </summary>
 public class TenantContextService
 {
-    private readonly XenonClinicDbContext _context;
+    private readonly ClinicDbContext _context;
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
         PropertyNameCaseInsensitive = true
     };
 
-    public TenantContextService(XenonClinicDbContext context)
+    public TenantContextService(ClinicDbContext context)
     {
         _context = context;
     }

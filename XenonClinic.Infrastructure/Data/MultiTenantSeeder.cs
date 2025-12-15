@@ -8,7 +8,7 @@ namespace XenonClinic.Infrastructure.Data;
 /// </summary>
 public static class MultiTenantSeeder
 {
-    public static async Task SeedAsync(XenonClinicDbContext context)
+    public static async Task SeedAsync(ClinicDbContext context)
     {
         await SeedCompanyTypesAsync(context);
         await SeedClinicTypesAsync(context);
@@ -18,7 +18,7 @@ public static class MultiTenantSeeder
         await context.SaveChangesAsync();
     }
 
-    private static async Task SeedCompanyTypesAsync(XenonClinicDbContext context)
+    private static async Task SeedCompanyTypesAsync(ClinicDbContext context)
     {
         if (await context.CompanyTypes.AnyAsync()) return;
 
@@ -31,7 +31,7 @@ public static class MultiTenantSeeder
         context.CompanyTypes.AddRange(types);
     }
 
-    private static async Task SeedClinicTypesAsync(XenonClinicDbContext context)
+    private static async Task SeedClinicTypesAsync(ClinicDbContext context)
     {
         if (await context.ClinicTypes.AnyAsync()) return;
 
@@ -48,7 +48,7 @@ public static class MultiTenantSeeder
         context.ClinicTypes.AddRange(types);
     }
 
-    private static async Task SeedFeaturesAsync(XenonClinicDbContext context)
+    private static async Task SeedFeaturesAsync(ClinicDbContext context)
     {
         if (await context.Features.AnyAsync()) return;
 
@@ -99,7 +99,7 @@ public static class MultiTenantSeeder
         context.Features.AddRange(features);
     }
 
-    private static async Task SeedCompanyTypeTemplatesAsync(XenonClinicDbContext context)
+    private static async Task SeedCompanyTypeTemplatesAsync(ClinicDbContext context)
     {
         if (await context.CompanyTypeTemplates.AnyAsync()) return;
 
@@ -132,7 +132,7 @@ public static class MultiTenantSeeder
         context.CompanyTypeTemplates.AddRange(clinicTemplate, tradingTemplate);
     }
 
-    private static async Task SeedClinicTypeTemplatesAsync(XenonClinicDbContext context)
+    private static async Task SeedClinicTypeTemplatesAsync(ClinicDbContext context)
     {
         if (await context.ClinicTypeTemplates.AnyAsync()) return;
 
