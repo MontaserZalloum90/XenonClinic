@@ -267,6 +267,67 @@ public class TenantService : ITenantService
         return isAllowed;
     }
 
+    public Task DeleteTenantAsync(string tenantId, CancellationToken cancellationToken = default)
+    {
+        if (tenantId == "default")
+        {
+            throw new InvalidOperationException("Cannot delete the default tenant");
+        }
+
+        if (!_tenants.TryRemove(tenantId, out _))
+        {
+            throw new InvalidOperationException($"Tenant '{tenantId}' not found");
+        }
+
+        _logger.LogInformation("Deleted tenant {TenantId}", tenantId);
+
+        return Task.CompletedTask;
+    }
+
+    public Task SuspendTenantAsync(string tenantId, CancellationToken cancellationToken = default)
+    {
+        // Alias for DeactivateTenantAsync
+        return DeactivateTenantAsync(tenantId, cancellationToken);
+    }
+
+    public Task ActivateTenantAsync(string tenantId, CancellationToken cancellationToken = default)
+    {
+        // Alias for ReactivateTenantAsync
+        return ReactivateTenantAsync(tenantId, cancellationToken);
+    }
+
+    public async Task<TenantUsage> GetTenantUsageAsync(string tenantId, CancellationToken cancellationToken = default)
+    {
+        // TenantUsage inherits from TenantUsageStats, so get stats and return as TenantUsage
+        var stats = await GetUsageStatsAsync(tenantId, cancellationToken);
+        return new TenantUsage
+        {
+            TenantId = stats.TenantId,
+            AsOf = stats.AsOf,
+            ProcessDefinitionCount = stats.ProcessDefinitionCount,
+            ActiveProcessInstanceCount = stats.ActiveProcessInstanceCount,
+            CompletedProcessInstanceCount = stats.CompletedProcessInstanceCount,
+            FailedProcessInstanceCount = stats.FailedProcessInstanceCount,
+            PendingTaskCount = stats.PendingTaskCount,
+            CompletedTaskCount = stats.CompletedTaskCount,
+            AverageTaskDurationMinutes = stats.AverageTaskDurationMinutes,
+            WebhookSubscriptionCount = stats.WebhookSubscriptionCount,
+            WebhookDeliveriesLast24Hours = stats.WebhookDeliveriesLast24Hours,
+            ExternalConnectorCount = stats.ExternalConnectorCount,
+            EmailsSentLast24Hours = stats.EmailsSentLast24Hours,
+            StorageUsedMb = stats.StorageUsedMb,
+            DocumentTemplateCount = stats.DocumentTemplateCount,
+            ApiCallsLast24Hours = stats.ApiCallsLast24Hours,
+            LimitUtilizations = stats.LimitUtilizations
+        };
+    }
+
+    public Task<IList<TenantInfo>> ListTenantsAsync(CancellationToken cancellationToken = default)
+    {
+        // Overload that defaults to excluding inactive tenants
+        return ListTenantsAsync(includeInactive: false, cancellationToken);
+    }
+
     /// <summary>
     /// Resolves tenant ID from request context using registered strategies.
     /// </summary>

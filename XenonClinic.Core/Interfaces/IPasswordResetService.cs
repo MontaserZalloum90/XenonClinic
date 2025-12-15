@@ -56,14 +56,7 @@ public record PasswordResetResult(
     DateTime? ExpiresAt = null
 );
 
-/// <summary>
-/// Password validation result.
-/// </summary>
-public record PasswordValidationResult(
-    bool IsValid,
-    List<string> Errors,
-    int Strength // 0-100
-);
+// Note: PasswordValidationResult is defined in ISecurityConfigurationService.cs
 
 /// <summary>
 /// Password policy configuration.
