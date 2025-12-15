@@ -193,8 +193,8 @@ public class HumanTaskService : IHumanTaskService
         availableTasks = availableTasks.Where(t =>
         {
             var candidateUsers = DeserializeList(t.CandidateUserIdsJson);
-            var candidateGroups = DeserializeList(t.CandidateGroupsJson);
-            var candidateRoles = DeserializeList(t.CandidateRolesJson);
+            var candidateGroups = DeserializeList(t.CandidateGroupIdsJson);
+            var candidateRoles = DeserializeList(t.CandidateRoleIdsJson);
 
             // No restrictions means anyone can claim
             if (candidateUsers.Count == 0 && candidateGroups.Count == 0 && candidateRoles.Count == 0)
@@ -272,8 +272,8 @@ public class HumanTaskService : IHumanTaskService
 
         // Verify user can claim
         var candidateUsers = DeserializeList(task.CandidateUserIdsJson);
-        var candidateGroups = DeserializeList(task.CandidateGroupsJson);
-        var candidateRoles = DeserializeList(task.CandidateRolesJson);
+        var candidateGroups = DeserializeList(task.CandidateGroupIdsJson);
+        var candidateRoles = DeserializeList(task.CandidateRoleIdsJson);
 
         // If there are restrictions, verify user is allowed
         // (In a full implementation, would check user's groups and roles)
@@ -384,7 +384,7 @@ public class HumanTaskService : IHumanTaskService
 
         var previousAssignee = task.AssigneeUserId;
         task.AssigneeUserId = delegateUserId;
-        task.Status = HumanTaskStatus.Delegated;
+        task.Status = HumanTaskStatus.Reserved;
 
         await AddActionAsync(task, TaskActionTypes.Delegate, performedBy,
             new Dictionary<string, object>
@@ -440,10 +440,7 @@ public class HumanTaskService : IHumanTaskService
         task.Status = HumanTaskStatus.Completed;
         task.CompletedAt = DateTime.UtcNow;
         task.CompletedBy = userId;
-        task.CompletionAction = action;
-        task.OutputVariablesJson = outputVariables != null
-            ? JsonSerializer.Serialize(outputVariables, _jsonOptions)
-            : null;
+        task.Outcome = action;
 
         await AddActionAsync(task, action ?? TaskActionTypes.Complete, userId,
             outputVariables, cancellationToken);
@@ -479,14 +476,14 @@ public class HumanTaskService : IHumanTaskService
                         activityInstance.CompletedAt = DateTime.UtcNow;
 
                         var activeActivities = JsonSerializer.Deserialize<List<string>>(instance.ActiveActivityIdsJson) ?? new();
-                        activeActivities.Remove(activityInstance.ActivityId);
+                        activeActivities.Remove(activityInstance.ActivityDefinitionId);
                         instance.ActiveActivityIdsJson = JsonSerializer.Serialize(activeActivities);
 
                         await _context.SaveChangesAsync(cancellationToken);
 
                         // Find and execute next activities
                         var outgoingFlows = model.SequenceFlows?
-                            .Where(f => f.SourceActivityId == activityInstance.ActivityId)
+                            .Where(f => f.SourceActivityId == activityInstance.ActivityDefinitionId)
                             .ToList() ?? new();
 
                         // Determine which flow to take based on action
@@ -612,7 +609,7 @@ public class HumanTaskService : IHumanTaskService
         await AddActionAsync(task, TaskActionTypes.AddAttachment, userId,
             new Dictionary<string, object>
             {
-                ["attachmentId"] = attachment.Id,
+                ["attachmentId"] = attachment.Id.ToString(),
                 ["fileName"] = fileName
             }, cancellationToken);
 

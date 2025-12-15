@@ -34,12 +34,16 @@ public class JobProcessor : IJobProcessor
         EnqueueJobRequest request,
         CancellationToken cancellationToken = default)
     {
+        var activityInstanceId = !string.IsNullOrEmpty(request.ActivityInstanceId) && Guid.TryParse(request.ActivityInstanceId, out var aid)
+            ? aid
+            : (Guid?)null;
+
         var job = new AsyncJob
         {
             Id = Guid.NewGuid(),
             TenantId = request.TenantId,
             ProcessInstanceId = request.ProcessInstanceId,
-            ActivityInstanceId = request.ActivityInstanceId,
+            ActivityInstanceId = activityInstanceId,
             JobType = request.JobType,
             Status = JobStatus.Pending,
             Priority = request.Priority,
@@ -370,7 +374,7 @@ public class JobProcessor : IJobProcessor
             Id = job.Id.ToString(),
             TenantId = job.TenantId,
             ProcessInstanceId = job.ProcessInstanceId,
-            ActivityInstanceId = job.ActivityInstanceId,
+            ActivityInstanceId = job.ActivityInstanceId?.ToString(),
             JobType = job.JobType,
             Status = job.Status,
             Priority = job.Priority,
