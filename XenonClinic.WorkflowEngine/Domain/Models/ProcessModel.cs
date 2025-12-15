@@ -33,6 +33,11 @@ public class ProcessModel
     public Dictionary<string, ActivityDefinition> Activities { get; set; } = new();
 
     /// <summary>
+    /// All elements (alias for Activities)
+    /// </summary>
+    public Dictionary<string, ActivityDefinition>? Elements { get; set; }
+
+    /// <summary>
     /// Sequence flows connecting activities
     /// </summary>
     public List<SequenceFlow> SequenceFlows { get; set; } = new();
@@ -92,6 +97,8 @@ public class ProcessModel
 [JsonDerivedType(typeof(TimerEventDefinition), "timerEvent")]
 [JsonDerivedType(typeof(MessageEventDefinition), "messageEvent")]
 [JsonDerivedType(typeof(SignalEventDefinition), "signalEvent")]
+[JsonDerivedType(typeof(IntermediateCatchEventDefinition), "intermediateCatchEvent")]
+[JsonDerivedType(typeof(IntermediateThrowEventDefinition), "intermediateThrowEvent")]
 public abstract class ActivityDefinition
 {
     public string Id { get; set; } = Guid.NewGuid().ToString();
@@ -218,6 +225,27 @@ public class SignalEventDefinition : ActivityDefinition
     public string SignalName { get; set; } = string.Empty;
 }
 
+public class IntermediateCatchEventDefinition : ActivityDefinition
+{
+    public override string Type => "intermediateCatchEvent";
+
+    public string EventType { get; set; } = string.Empty;
+    public string? SignalRef { get; set; }
+    public string? MessageRef { get; set; }
+    public string? TimerExpression { get; set; }
+    public string? CorrelationKeyExpression { get; set; }
+}
+
+public class IntermediateThrowEventDefinition : ActivityDefinition
+{
+    public override string Type => "intermediateThrowEvent";
+
+    public string EventType { get; set; } = string.Empty;
+    public string? SignalRef { get; set; }
+    public string? MessageRef { get; set; }
+    public Dictionary<string, object>? MessagePayload { get; set; }
+}
+
 public class BoundaryEventDefinition
 {
     public string Id { get; set; } = Guid.NewGuid().ToString();
@@ -265,6 +293,11 @@ public class UserTaskDefinition : ActivityDefinition
     /// </summary>
     public string? AssigneeExpression { get; set; }
 
+    /// <summary>
+    /// Assignment configuration (alias/alternative to AssignmentStrategy)
+    /// </summary>
+    public string? Assignment { get; set; }
+
     public List<string>? CandidateUsers { get; set; }
     public List<string>? CandidateGroups { get; set; }
     public List<string>? CandidateRoles { get; set; }
@@ -281,8 +314,10 @@ public class UserTaskDefinition : ActivityDefinition
 
     // SLA
     public string? DueDateExpression { get; set; }
+    public string? DurationExpression { get; set; }
     public TimeSpan? DueIn { get; set; }
     public int DefaultPriority { get; set; } = 5;
+    public int? Priority { get; set; }
 
     // Escalation
     public List<EscalationRule>? Escalations { get; set; }
@@ -368,6 +403,16 @@ public class ServiceTaskDefinition : ActivityDefinition
     /// Connector type: "http", "email", "database", etc.
     /// </summary>
     public string ConnectorType { get; set; } = "http";
+
+    /// <summary>
+    /// Service name
+    /// </summary>
+    public string? ServiceName { get; set; }
+
+    /// <summary>
+    /// HTTP endpoint URL
+    /// </summary>
+    public string? HttpEndpoint { get; set; }
 
     /// <summary>
     /// Connector-specific configuration
@@ -467,6 +512,21 @@ public class SubProcessDefinition : ActivityDefinition
     public ProcessModel? EmbeddedProcess { get; set; }
 
     /// <summary>
+    /// Activities in the subprocess (alias for EmbeddedProcess.Activities)
+    /// </summary>
+    public Dictionary<string, ActivityDefinition>? Activities { get; set; }
+
+    /// <summary>
+    /// Elements in the subprocess (alias for EmbeddedProcess.Activities)
+    /// </summary>
+    public Dictionary<string, ActivityDefinition>? Elements { get; set; }
+
+    /// <summary>
+    /// Sequence flows in the subprocess (alias for EmbeddedProcess.SequenceFlows)
+    /// </summary>
+    public List<SequenceFlow>? SequenceFlows { get; set; }
+
+    /// <summary>
     /// Multi-instance configuration
     /// </summary>
     public MultiInstanceConfig? MultiInstance { get; set; }
@@ -480,6 +540,11 @@ public class CallActivityDefinition : ActivityDefinition
     /// Key of the process to call
     /// </summary>
     public string CalledProcessKey { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Called element (alias for CalledProcessKey)
+    /// </summary>
+    public string? CalledElement { get; set; }
 
     /// <summary>
     /// Specific version to call (null = latest)
@@ -611,6 +676,7 @@ public class RetryPolicy
 {
     public int MaxRetries { get; set; } = 3;
     public TimeSpan InitialDelay { get; set; } = TimeSpan.FromSeconds(30);
+    public int InitialIntervalSeconds { get; set; } = 30;
     public double BackoffMultiplier { get; set; } = 2.0;
     public TimeSpan MaxDelay { get; set; } = TimeSpan.FromMinutes(30);
     public List<string>? RetryableErrors { get; set; }

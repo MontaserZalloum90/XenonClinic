@@ -13,6 +13,11 @@ public interface IAuditService
     Task LogAsync(AuditEventDto eventData, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Logs an audit event from a request.
+    /// </summary>
+    Task LogAsync(AuditLogRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Queries audit events.
     /// </summary>
     Task<AuditQueryResult> QueryAsync(AuditQueryDto query, CancellationToken cancellationToken = default);
@@ -76,6 +81,35 @@ public class AuditQueryResult
     public int PageNumber { get; set; }
     public int PageSize { get; set; }
     public int TotalPages => (int)Math.Ceiling((double)TotalCount / PageSize);
+}
+
+/// <summary>
+/// Request to log an audit event (alias for AuditEventDto)
+/// </summary>
+public class AuditLogRequest
+{
+    public int TenantId { get; set; }
+    public string EventType { get; set; } = string.Empty;
+    public string EntityType { get; set; } = string.Empty;
+    public string EntityId { get; set; } = string.Empty;
+    public Guid? ProcessInstanceId { get; set; }
+    public Guid? TaskId { get; set; }
+    public string? ActivityId { get; set; }
+    public string? UserId { get; set; }
+    public string? UserDisplayName { get; set; }
+    public DateTime Timestamp { get; set; } = DateTime.UtcNow;
+    public string? Action { get; set; }
+    public string? Summary { get; set; }
+    public Dictionary<string, object>? OldValues { get; set; }
+    public Dictionary<string, object>? NewValues { get; set; }
+    public string? IpAddress { get; set; }
+    public string? UserAgent { get; set; }
+    public string? CorrelationId { get; set; }
+    public Dictionary<string, object>? AdditionalData { get; set; }
+    public long? DurationMs { get; set; }
+    public bool IsError { get; set; }
+    public string? ErrorCode { get; set; }
+    public string? ErrorMessage { get; set; }
 }
 
 #endregion

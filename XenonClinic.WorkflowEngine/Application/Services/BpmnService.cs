@@ -117,7 +117,7 @@ public class BpmnService : IBpmnService
             result.ProcessDefinitionId = definition.Id;
             result.ProcessDefinitionKey = definition.Key;
             result.ProcessName = definition.Name;
-            result.Version = definition.Version;
+            result.Version = definition.LatestVersionDetail?.Version ?? definition.LatestVersion;
 
             _logger.LogInformation("Successfully imported BPMN process {ProcessKey} as definition {DefinitionId}",
                 processModel.ProcessDefinitionKey, definition.Id);
@@ -151,12 +151,19 @@ public class BpmnService : IBpmnService
                 return result;
             }
 
-            var bpmnXml = await SerializeAsync(definition.Model, cancellationToken);
+            var model = definition.LatestVersionDetail?.Model;
+            if (model == null)
+            {
+                result.ErrorMessage = "Process model not found";
+                return result;
+            }
+
+            var bpmnXml = await SerializeAsync(model, cancellationToken);
 
             result.Success = true;
             result.BpmnXml = bpmnXml;
             result.BpmnFile = Encoding.UTF8.GetBytes(bpmnXml);
-            result.FileName = $"{definition.Key}_v{definition.Version}.bpmn";
+            result.FileName = $"{definition.Key}_v{definition.LatestVersionDetail?.Version ?? definition.LatestVersion}.bpmn";
 
             _logger.LogInformation("Exported process definition {DefinitionId} to BPMN", processDefinitionId);
         }

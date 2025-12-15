@@ -77,7 +77,9 @@ public enum TimerType
 public enum TimerStatus
 {
     Pending,
+    Scheduled,
     Triggered,
+    Fired,
     Cancelled,
     Expired
 }
@@ -106,6 +108,16 @@ public class AsyncJob
     /// </summary>
     [Required]
     public string JobDataJson { get; set; } = "{}";
+
+    /// <summary>
+    /// Job payload (alias for JobDataJson)
+    /// </summary>
+    public string? PayloadJson { get; set; }
+
+    /// <summary>
+    /// Job result (JSON)
+    /// </summary>
+    public string? ResultJson { get; set; }
 
     public JobStatus Status { get; set; } = JobStatus.Pending;
 
@@ -153,9 +165,11 @@ public class AsyncJob
 public enum JobStatus
 {
     Pending,
+    Running,
     Processing,
     Completed,
     Failed,
+    Cancelled,
     Retrying,
     DeadLetter
 }
