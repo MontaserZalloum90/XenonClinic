@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import {
   // File Upload Security
   sanitizeFilename,
@@ -429,7 +429,6 @@ describe('Security Integration', () => {
 
     const firstLockout = isAccountLocked(username);
     expect(firstLockout.locked).toBe(true);
-    const firstDuration = firstLockout.remainingMinutes;
 
     // Clear and trigger second lockout (would have longer duration if incremental)
     clearLockoutState(username);
