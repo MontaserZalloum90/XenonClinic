@@ -250,20 +250,32 @@ public class DiagnosisSuggestionDto
     public string DiagnosisName { get; set; } = string.Empty;
     public string? Description { get; set; }
     public double ConfidenceScore { get; set; }
-    public double Confidence { get => ConfidenceScore; set => ConfidenceScore = value; } // Alias for ConfidenceScore
+    /// <summary>
+    /// Alias for ConfidenceScore for backwards compatibility
+    /// </summary>
+    public double Confidence { get => ConfidenceScore; set => ConfidenceScore = value; }
     public string ConfidenceLevel { get; set; } = string.Empty; // High, Medium, Low
     public List<string> MatchingSymptoms { get; set; } = new();
-    public List<string> MatchedSymptoms { get => MatchingSymptoms; set => MatchingSymptoms = value; } // Alias for MatchingSymptoms
+    /// <summary>
+    /// Alias for MatchingSymptoms for backwards compatibility
+    /// </summary>
+    public List<string> MatchedSymptoms { get => MatchingSymptoms; set => MatchingSymptoms = value; }
     public List<string>? SupportingFindings { get; set; }
     public List<string>? ConflictingFindings { get; set; }
     public List<string>? AdditionalTestsRecommended { get; set; }
-    public List<string>? RecommendedTests { get => AdditionalTestsRecommended; set => AdditionalTestsRecommended = value; } // Alias for AdditionalTestsRecommended
+    /// <summary>
+    /// Alias for AdditionalTestsRecommended for backwards compatibility
+    /// </summary>
+    public List<string>? RecommendedTests { get => AdditionalTestsRecommended; set => AdditionalTestsRecommended = value; }
     public List<string>? DifferentialDiagnoses { get; set; }
     public string? ClinicalPearl { get; set; }
     public string? Urgency { get; set; } // Emergent, Urgent, Routine
     public bool RequiresSpecialistReferral { get; set; }
     public string? ReferralSpecialty { get; set; }
-    public List<string> RedFlags { get; set; } = new(); // Red flags specific to this diagnosis suggestion
+    /// <summary>
+    /// Red flags associated with this diagnosis
+    /// </summary>
+    public List<string> RedFlags { get; set; } = new();
 }
 
 /// <summary>
@@ -334,18 +346,34 @@ public class DosageCheckResultDto
     public int PatientId { get; set; }
     public string MedicationCode { get; set; } = string.Empty;
     public string MedicationName { get; set; } = string.Empty;
+    /// <summary>
+    /// Medication code for identification
+    /// </summary>
+    public string MedicationCode { get; set; } = string.Empty;
     public decimal ProposedDose { get; set; }
-    public decimal RequestedDose { get => ProposedDose; set => ProposedDose = value; } // Alias for ProposedDose
+    /// <summary>
+    /// Alias for ProposedDose for backwards compatibility
+    /// </summary>
+    public decimal RequestedDose { get => ProposedDose; set => ProposedDose = value; }
     public string DoseUnit { get; set; } = string.Empty;
-    public string RequestedUnit { get => DoseUnit; set => DoseUnit = value; } // Alias for DoseUnit
+    /// <summary>
+    /// Alias for DoseUnit for backwards compatibility
+    /// </summary>
+    public string RequestedUnit { get => DoseUnit; set => DoseUnit = value; }
+    /// <summary>
+    /// Requested frequency for the medication
+    /// </summary>
     public string RequestedFrequency { get; set; } = string.Empty;
     public bool IsDoseAppropriate { get; set; }
-    public bool IsWithinRange { get => IsDoseAppropriate; set => IsDoseAppropriate = value; } // Alias for IsDoseAppropriate
+    /// <summary>
+    /// Alias for IsDoseAppropriate for backwards compatibility
+    /// </summary>
+    public bool IsWithinRange { get => IsDoseAppropriate; set => IsDoseAppropriate = value; }
     public string DoseStatus { get; set; } = string.Empty; // Normal, Low, High, Excessive, SubTherapeutic
-    public string DosageStatus { get => DoseStatus; set => DoseStatus = value; } // Alias for DoseStatus
-    public decimal RecommendedDose { get; set; }
-    public string RecommendedUnit { get; set; } = string.Empty;
-    public string RecommendedFrequency { get; set; } = string.Empty;
+    /// <summary>
+    /// Alias for DoseStatus for backwards compatibility
+    /// </summary>
+    public string DosageStatus { get => DoseStatus; set => DoseStatus = value; }
     public DosageRangeDto? RecommendedRange { get; set; }
     public DosageRangeDto? MaxDailyDose { get; set; }
     public List<DosageAlertDto> Alerts { get; set; } = new();
@@ -357,6 +385,26 @@ public class DosageCheckResultDto
     public bool RequiresWeightAdjustment { get; set; }
     public DosageRecommendationDto? AdjustedDoseRecommendation { get; set; }
     public string? SpecialConsiderations { get; set; }
+    /// <summary>
+    /// Recommended dose value
+    /// </summary>
+    public decimal RecommendedDose { get; set; }
+    /// <summary>
+    /// Recommended unit for the dose
+    /// </summary>
+    public string RecommendedUnit { get; set; } = string.Empty;
+    /// <summary>
+    /// Recommended frequency for the medication
+    /// </summary>
+    public string RecommendedFrequency { get; set; } = string.Empty;
+    /// <summary>
+    /// Warnings associated with this dosage
+    /// </summary>
+    public List<string> Warnings { get; set; } = new();
+    /// <summary>
+    /// Factors considered in the dosage check
+    /// </summary>
+    public List<string> FactorsConsidered { get; set; } = new();
 }
 
 /// <summary>
