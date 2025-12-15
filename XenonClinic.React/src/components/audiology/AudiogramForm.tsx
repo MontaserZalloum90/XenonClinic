@@ -1,4 +1,4 @@
-import { useForm, UseFormRegister } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import type { CreateAudiogramRequest, AudiogramDataPoint, TympanogramResult } from '../../types/audiology';
 import { AUDIOGRAM_FREQUENCIES } from '../../types/audiology';
 
