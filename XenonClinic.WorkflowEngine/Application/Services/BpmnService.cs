@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Linq;
 using Microsoft.Extensions.Logging;
+using XenonClinic.WorkflowEngine.Application.DTOs;
 using XenonClinic.WorkflowEngine.Domain.Models;
 
 namespace XenonClinic.WorkflowEngine.Application.Services;
@@ -92,6 +93,9 @@ public class BpmnService : IBpmnService
 
             // Parse to process model
             var processModel = await ParseAsync(bpmnXml, cancellationToken);
+
+            // Parse tenant ID
+            var tenantId = int.TryParse(request.TenantId, out var tid) ? tid : 0;
 
             // Create process definition
             var tenantId = int.TryParse(request.TenantId, out var tid) ? tid : 1; // Default to tenant 1 if invalid
