@@ -126,6 +126,76 @@ public class EmailService : IEmailService
         return await SendEmailAsync(companyId, toEmail, subject, body, isHtml: true);
     }
 
+    public async Task SendAsync(EmailMessage message)
+    {
+        // TODO: Implement full EmailMessage support with attachments, CC, BCC, etc.
+        // For now, delegate to the existing SendEmailAsync method
+        if (string.IsNullOrEmpty(message.To))
+        {
+            throw new ArgumentException("Recipient email address is required", nameof(message));
+        }
+
+        // Extract company ID from context or use default - this is a limitation of the stub
+        // In a real implementation, this would come from the message context or current tenant
+        const int defaultCompanyId = 1;
+
+        await SendEmailAsync(defaultCompanyId, message.To, message.Subject, message.Body, message.IsHtml);
+    }
+
+    public async Task SendTemplateAsync(string templateId, EmailMessage message, Dictionary<string, object> model)
+    {
+        // TODO: Implement template engine support (e.g., Razor, Handlebars, Liquid)
+        // For now, just send the message as-is
+        _logger.LogWarning("SendTemplateAsync called but template engine not implemented. Template ID: {TemplateId}", templateId);
+        await SendAsync(message);
+    }
+
+    public async Task SendBulkAsync(IEnumerable<EmailMessage> messages)
+    {
+        // TODO: Implement proper bulk sending with rate limiting and retry logic
+        // For now, send each message individually
+        var messageList = messages.ToList();
+        _logger.LogInformation("Sending {Count} bulk emails", messageList.Count);
+
+        foreach (var message in messageList)
+        {
+            try
+            {
+                await SendAsync(message);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to send bulk email to {To}", LoggingHelpers.MaskEmail(message.To));
+            }
+        }
+    }
+
+    public Task<string> QueueAsync(EmailMessage message)
+    {
+        // TODO: Implement background queue (e.g., using Hangfire, Azure Queue, RabbitMQ)
+        // For now, return a mock job ID
+        _logger.LogWarning("QueueAsync called but background queue not implemented. Email will be sent synchronously.");
+
+        // Generate a mock job ID
+        var jobId = Guid.NewGuid().ToString();
+
+        // Fire and forget - send in background
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await SendAsync(message);
+                _logger.LogInformation("Queued email {JobId} sent successfully", jobId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to send queued email {JobId}", jobId);
+            }
+        });
+
+        return Task.FromResult(jobId);
+    }
+
     public async Task<bool> IsConfiguredAsync(int companyId)
     {
         var config = await _configResolver.GetEmailConfigurationAsync(companyId);

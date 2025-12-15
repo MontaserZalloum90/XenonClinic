@@ -26,10 +26,10 @@ public class AnalyticsService : IAnalyticsService
 
     #region Dashboard Management
 
-    public async Task<List<DashboardDto>> GetDashboardsAsync(int userId, int branchId)
+    public async Task<List<DashboardDto>> GetDashboardsAsync(int userId)
     {
         var dashboards = await _context.Set<AnalyticsDashboard>()
-            .Where(d => d.BranchId == branchId && (d.CreatedByUserId == userId || d.IsPublic))
+            .Where(d => d.CreatedByUserId == userId || d.IsPublic)
             .OrderByDescending(d => d.IsDefault)
             .ThenBy(d => d.Name)
             .ToListAsync();
@@ -37,7 +37,16 @@ public class AnalyticsService : IAnalyticsService
         return dashboards.Select(MapToDashboardDto).ToList();
     }
 
-    public async Task<DashboardDto?> GetDashboardAsync(int dashboardId, int userId)
+    public async Task<DashboardDto?> GetDashboardByIdAsync(int dashboardId)
+    {
+        var dashboard = await _context.Set<AnalyticsDashboard>()
+            .Include(d => d.Widgets)
+            .FirstOrDefaultAsync(d => d.Id == dashboardId);
+
+        return dashboard != null ? MapToDashboardDto(dashboard) : null;
+    }
+
+    private async Task<DashboardDto?> GetDashboardAsync(int dashboardId, int userId)
     {
         var dashboard = await _context.Set<AnalyticsDashboard>()
             .Include(d => d.Widgets)
@@ -55,20 +64,63 @@ public class AnalyticsService : IAnalyticsService
         return dashboard != null ? MapToDashboardDto(dashboard) : null;
     }
 
-    public async Task<DashboardDto> CreateDashboardAsync(CreateDashboardDto request, int userId, int branchId)
+    public async Task<DashboardDataDto> GetDashboardDataAsync(int dashboardId, int branchId, DateTime? startDate = null, DateTime? endDate = null)
+    {
+        var dashboard = await _context.Set<AnalyticsDashboard>()
+            .Include(d => d.Widgets)
+            .FirstOrDefaultAsync(d => d.Id == dashboardId);
+
+        if (dashboard == null)
+            throw new InvalidOperationException("Dashboard not found");
+
+        var widgetData = new List<WidgetDataDto>();
+        foreach (var widget in dashboard.Widgets.Where(w => w.IsVisible))
+        {
+            try
+            {
+                var data = await FetchWidgetDataAsync(widget, null);
+                widgetData.Add(new WidgetDataDto
+                {
+                    WidgetId = widget.Id,
+                    Title = widget.Title,
+                    Type = widget.WidgetType,
+                    Data = data,
+                    LastUpdated = DateTime.UtcNow,
+                    StartDate = startDate,
+                    EndDate = endDate
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error fetching data for widget {WidgetId}", widget.Id);
+            }
+        }
+
+        return new DashboardDataDto
+        {
+            DashboardId = dashboardId,
+            DashboardName = dashboard.Name,
+            Widgets = widgetData,
+            LastUpdated = DateTime.UtcNow,
+            StartDate = startDate,
+            EndDate = endDate
+        };
+    }
+
+    public async Task<DashboardDto> CreateDashboardAsync(SaveDashboardDto request, int userId)
     {
         var dashboard = new AnalyticsDashboard
         {
             Name = request.Name,
             Description = request.Description,
-            Category = request.Category,
+            Category = request.Category ?? "General",
             IsDefault = request.IsDefault,
             IsPublic = request.IsPublic,
             LayoutJson = request.Layout != null ? JsonSerializer.Serialize(request.Layout) : null,
             ThemeJson = request.Theme != null ? JsonSerializer.Serialize(request.Theme) : null,
-            RefreshIntervalSeconds = request.RefreshIntervalSeconds,
+            RefreshIntervalSeconds = request.RefreshIntervalSeconds ?? 300,
             CreatedByUserId = userId,
-            BranchId = branchId,
+            BranchId = request.BranchId,
             CreatedAt = DateTime.UtcNow
         };
 
@@ -87,44 +139,43 @@ public class AnalyticsService : IAnalyticsService
         return await GetDashboardAsync(dashboard.Id, userId) ?? MapToDashboardDto(dashboard);
     }
 
-    public async Task<DashboardDto> UpdateDashboardAsync(int dashboardId, UpdateDashboardDto request, int userId)
+    public async Task<DashboardDto?> UpdateDashboardAsync(int dashboardId, SaveDashboardDto request)
     {
         var dashboard = await _context.Set<AnalyticsDashboard>()
-            .FirstOrDefaultAsync(d => d.Id == dashboardId && d.CreatedByUserId == userId);
+            .FirstOrDefaultAsync(d => d.Id == dashboardId);
 
         if (dashboard == null)
-            throw new InvalidOperationException("Dashboard not found or access denied");
+            return null;
 
         dashboard.Name = request.Name;
         dashboard.Description = request.Description;
-        dashboard.Category = request.Category;
+        dashboard.Category = request.Category ?? dashboard.Category;
         dashboard.IsDefault = request.IsDefault;
         dashboard.IsPublic = request.IsPublic;
         dashboard.LayoutJson = request.Layout != null ? JsonSerializer.Serialize(request.Layout) : null;
         dashboard.ThemeJson = request.Theme != null ? JsonSerializer.Serialize(request.Theme) : null;
-        dashboard.RefreshIntervalSeconds = request.RefreshIntervalSeconds;
+        dashboard.RefreshIntervalSeconds = request.RefreshIntervalSeconds ?? dashboard.RefreshIntervalSeconds;
         dashboard.UpdatedAt = DateTime.UtcNow;
 
         await _context.SaveChangesAsync();
 
         _logger.LogInformation("Updated analytics dashboard {DashboardId}", dashboardId);
-        return await GetDashboardAsync(dashboardId, userId) ?? MapToDashboardDto(dashboard);
+        return MapToDashboardDto(dashboard);
     }
 
-    public async Task<bool> DeleteDashboardAsync(int dashboardId, int userId)
+    public async Task DeleteDashboardAsync(int dashboardId)
     {
         var dashboard = await _context.Set<AnalyticsDashboard>()
             .Include(d => d.Widgets)
-            .FirstOrDefaultAsync(d => d.Id == dashboardId && d.CreatedByUserId == userId);
+            .FirstOrDefaultAsync(d => d.Id == dashboardId);
 
         if (dashboard == null)
-            return false;
+            return;
 
         _context.Set<AnalyticsDashboard>().Remove(dashboard);
         await _context.SaveChangesAsync();
 
         _logger.LogInformation("Deleted analytics dashboard {DashboardId}", dashboardId);
-        return true;
     }
 
     public async Task<DashboardDto> DuplicateDashboardAsync(int dashboardId, string newName, int userId)
@@ -206,15 +257,44 @@ public class AnalyticsService : IAnalyticsService
 
     #region Widget Management
 
-    public async Task<DashboardWidgetDto> AddWidgetAsync(int dashboardId, DashboardWidgetDto widget, int userId)
+    public async Task<WidgetDto> AddWidgetAsync(int dashboardId, SaveWidgetDto widget)
     {
         var dashboard = await _context.Set<AnalyticsDashboard>()
-            .FirstOrDefaultAsync(d => d.Id == dashboardId && d.CreatedByUserId == userId);
+            .FirstOrDefaultAsync(d => d.Id == dashboardId);
 
         if (dashboard == null)
-            throw new InvalidOperationException("Dashboard not found or access denied");
+            throw new InvalidOperationException("Dashboard not found");
 
-        return await AddWidgetInternalAsync(dashboardId, widget);
+        var entity = new AnalyticsDashboardWidget
+        {
+            DashboardId = dashboardId,
+            WidgetId = Guid.NewGuid().ToString(),
+            Title = widget.Title,
+            WidgetType = widget.WidgetType,
+            DataSource = widget.DataSource,
+            ConfigurationJson = widget.Configuration != null ? JsonSerializer.Serialize(widget.Configuration) : null,
+            PositionJson = widget.Position != null ? JsonSerializer.Serialize(widget.Position) : null,
+            FiltersJson = widget.Filters != null ? JsonSerializer.Serialize(widget.Filters) : null,
+            RefreshIntervalSeconds = widget.RefreshIntervalSeconds ?? 300,
+            IsVisible = widget.IsVisible
+        };
+
+        _context.Set<AnalyticsDashboardWidget>().Add(entity);
+        await _context.SaveChangesAsync();
+
+        return new WidgetDto
+        {
+            Id = entity.Id,
+            DashboardId = entity.DashboardId,
+            Title = entity.Title,
+            WidgetType = entity.WidgetType,
+            DataSource = entity.DataSource,
+            Configuration = widget.Configuration,
+            Position = widget.Position,
+            Filters = widget.Filters,
+            RefreshIntervalSeconds = entity.RefreshIntervalSeconds,
+            IsVisible = entity.IsVisible
+        };
     }
 
     private async Task<DashboardWidgetDto> AddWidgetInternalAsync(int dashboardId, DashboardWidgetDto widget)
@@ -241,31 +321,53 @@ public class AnalyticsService : IAnalyticsService
         return widget;
     }
 
-    public async Task<DashboardWidgetDto> UpdateWidgetAsync(int dashboardId, string widgetId, DashboardWidgetDto widget, int userId)
+    public async Task<WidgetDto?> UpdateWidgetAsync(int widgetId, SaveWidgetDto widget)
     {
         var entity = await _context.Set<AnalyticsDashboardWidget>()
-            .Include(w => w.Dashboard)
-            .FirstOrDefaultAsync(w => w.DashboardId == dashboardId && w.WidgetId == widgetId && w.Dashboard.CreatedByUserId == userId);
+            .FirstOrDefaultAsync(w => w.Id == widgetId);
 
         if (entity == null)
-            throw new InvalidOperationException("Widget not found or access denied");
+            return null;
 
         entity.Title = widget.Title;
         entity.WidgetType = widget.WidgetType;
         entity.DataSource = widget.DataSource;
-        entity.ConfigurationJson = JsonSerializer.Serialize(widget.Configuration);
-        entity.PositionJson = JsonSerializer.Serialize(widget.Position);
+        entity.ConfigurationJson = widget.Configuration != null ? JsonSerializer.Serialize(widget.Configuration) : null;
+        entity.PositionJson = widget.Position != null ? JsonSerializer.Serialize(widget.Position) : null;
         entity.FiltersJson = widget.Filters != null ? JsonSerializer.Serialize(widget.Filters) : null;
-        entity.RefreshIntervalSeconds = widget.RefreshIntervalSeconds;
+        entity.RefreshIntervalSeconds = widget.RefreshIntervalSeconds ?? entity.RefreshIntervalSeconds;
         entity.IsVisible = widget.IsVisible;
 
         await _context.SaveChangesAsync();
 
-        widget.Id = entity.Id;
-        return widget;
+        return new WidgetDto
+        {
+            Id = entity.Id,
+            DashboardId = entity.DashboardId,
+            Title = entity.Title,
+            WidgetType = entity.WidgetType,
+            DataSource = entity.DataSource,
+            Configuration = widget.Configuration,
+            Position = widget.Position,
+            Filters = widget.Filters,
+            RefreshIntervalSeconds = entity.RefreshIntervalSeconds,
+            IsVisible = entity.IsVisible
+        };
     }
 
-    public async Task<bool> RemoveWidgetAsync(int dashboardId, string widgetId, int userId)
+    public async Task DeleteWidgetAsync(int widgetId)
+    {
+        var entity = await _context.Set<AnalyticsDashboardWidget>()
+            .FirstOrDefaultAsync(w => w.Id == widgetId);
+
+        if (entity == null)
+            return;
+
+        _context.Set<AnalyticsDashboardWidget>().Remove(entity);
+        await _context.SaveChangesAsync();
+    }
+
+    private async Task<bool> RemoveWidgetAsync(int dashboardId, string widgetId, int userId)
     {
         var entity = await _context.Set<AnalyticsDashboardWidget>()
             .Include(w => w.Dashboard)
@@ -279,7 +381,29 @@ public class AnalyticsService : IAnalyticsService
         return true;
     }
 
-    public async Task<Dictionary<string, object>> GetWidgetDataAsync(int dashboardId, string widgetId, Dictionary<string, object>? filters = null)
+    public async Task<WidgetDataDto> GetWidgetDataAsync(int widgetId, int branchId, DateTime? startDate = null, DateTime? endDate = null)
+    {
+        var widget = await _context.Set<AnalyticsDashboardWidget>()
+            .FirstOrDefaultAsync(w => w.Id == widgetId);
+
+        if (widget == null)
+            throw new InvalidOperationException("Widget not found");
+
+        var data = await FetchWidgetDataAsync(widget, null);
+
+        return new WidgetDataDto
+        {
+            WidgetId = widgetId,
+            Title = widget.Title,
+            Type = widget.WidgetType,
+            Data = data,
+            LastUpdated = DateTime.UtcNow,
+            StartDate = startDate,
+            EndDate = endDate
+        };
+    }
+
+    private async Task<Dictionary<string, object>> GetWidgetDataInternalAsync(int dashboardId, string widgetId, Dictionary<string, object>? filters = null)
     {
         var widget = await _context.Set<AnalyticsDashboardWidget>()
             .FirstOrDefaultAsync(w => w.DashboardId == dashboardId && w.WidgetId == widgetId);
@@ -292,7 +416,7 @@ public class AnalyticsService : IAnalyticsService
 
     public async Task<Dictionary<string, object>> RefreshWidgetAsync(int dashboardId, string widgetId)
     {
-        return await GetWidgetDataAsync(dashboardId, widgetId);
+        return await GetWidgetDataInternalAsync(dashboardId, widgetId);
     }
 
     private async Task<Dictionary<string, object>> FetchWidgetDataAsync(AnalyticsDashboardWidget widget, Dictionary<string, object>? filters = null)
@@ -656,6 +780,75 @@ public class AnalyticsService : IAnalyticsService
         };
     }
 
+    public async Task<ClinicalOutcomesDto> GetClinicalOutcomesAsync(int branchId, DateTime startDate, DateTime endDate)
+    {
+        // Stub implementation - returns sample clinical outcomes data
+        return await Task.FromResult(new ClinicalOutcomesDto
+        {
+            PatientOutcomes = new List<PatientOutcomeDto>(),
+            TreatmentEffectiveness = 85.5m,
+            ReadmissionRate = 3.2m,
+            ComplicationRate = 1.8m,
+            RecoveryTimeAverage = 14.5m
+        });
+    }
+
+    public async Task<ResourceUtilizationDto> GetResourceUtilizationAsync(int branchId, DateTime startDate, DateTime endDate)
+    {
+        // Stub implementation - returns sample resource utilization data
+        return await Task.FromResult(new ResourceUtilizationDto
+        {
+            ResourceType = "Overall",
+            ResourceName = "All Resources",
+            UtilizationRate = 78.5m,
+            AvailableHours = 8,
+            UsedHours = 6.28m
+        });
+    }
+
+    public async Task<KPIDashboardDto> GetKPIsAsync(int branchId, DateTime startDate, DateTime endDate)
+    {
+        // Stub implementation - returns sample KPI dashboard data
+        return await Task.FromResult(new KPIDashboardDto
+        {
+            Kpis = new List<KpiDto>
+            {
+                new() { Name = "Patient Satisfaction", Value = 4.5m, Target = 4.0m, Unit = "rating", Status = "Above" },
+                new() { Name = "Revenue Growth", Value = 12.5m, Target = 10.0m, Unit = "%", Status = "Above" },
+                new() { Name = "Appointment Utilization", Value = 85.0m, Target = 80.0m, Unit = "%", Status = "Above" }
+            },
+            Period = $"{startDate:yyyy-MM-dd} to {endDate:yyyy-MM-dd}"
+        });
+    }
+
+    public async Task<List<MetricDataPointDto>> GetMetricHistoryAsync(int branchId, string metricName, DateTime startDate, DateTime endDate, string granularity)
+    {
+        // Stub implementation - returns sample metric history data
+        var dataPoints = new List<MetricDataPointDto>();
+        var current = startDate;
+
+        while (current <= endDate)
+        {
+            dataPoints.Add(new MetricDataPointDto
+            {
+                Timestamp = current,
+                Value = new Random().Next(50, 150),
+                MetricName = metricName
+            });
+
+            current = granularity switch
+            {
+                "Hour" => current.AddHours(1),
+                "Day" => current.AddDays(1),
+                "Week" => current.AddDays(7),
+                "Month" => current.AddMonths(1),
+                _ => current.AddDays(1)
+            };
+        }
+
+        return await Task.FromResult(dataPoints);
+    }
+
     #endregion
 
     #region Metrics & Time Series
@@ -837,14 +1030,14 @@ public class AnalyticsService : IAnalyticsService
         };
     }
 
-    public async Task<List<PatientRiskScoreDto>> GetPatientRiskScoresAsync(int branchId, int? limit = 100)
+    public async Task<List<PatientRiskScoreDto>> GetPatientRiskScoresAsync(int branchId, string? riskCategory = null, int minScore = 0)
     {
         var patients = await _context.Patients
             .Where(p => p.BranchId == branchId && p.IsActive)
-            .Take(limit ?? 100)
+            .Take(100)
             .ToListAsync();
 
-        return patients.Select(p => new PatientRiskScoreDto
+        var scores = patients.Select(p => new PatientRiskScoreDto
         {
             PatientId = p.Id,
             PatientName = $"{p.FirstName} {p.LastName}",
@@ -857,7 +1050,21 @@ public class AnalyticsService : IAnalyticsService
             },
             RecommendedInterventions = new List<string> { "Annual wellness visit", "Medication review" },
             CalculatedAt = DateTime.UtcNow
-        }).OrderByDescending(r => r.OverallRiskScore).ToList();
+        }).OrderByDescending(r => r.OverallRiskScore);
+
+        // Filter by risk category if specified
+        if (!string.IsNullOrEmpty(riskCategory))
+        {
+            scores = scores.Where(s => s.RiskCategory.Equals(riskCategory, StringComparison.OrdinalIgnoreCase));
+        }
+
+        // Filter by minimum score
+        if (minScore > 0)
+        {
+            scores = scores.Where(s => s.OverallRiskScore >= minScore / 100m);
+        }
+
+        return scores.ToList();
     }
 
     public async Task<PatientRiskScoreDto?> GetPatientRiskScoreAsync(int patientId)
@@ -906,11 +1113,11 @@ public class AnalyticsService : IAnalyticsService
         _ => "Low"
     };
 
-    public async Task<List<NoShowPredictionDto>> GetNoShowPredictionsAsync(int branchId, DateTime date)
+    public async Task<List<NoShowPredictionDto>> GetNoShowPredictionsAsync(int branchId, DateTime fromDate, DateTime toDate)
     {
         var appointments = await _context.Appointments
             .Include(a => a.Patient)
-            .Where(a => a.BranchId == branchId && a.AppointmentDate.Date == date.Date && a.Status == "Scheduled")
+            .Where(a => a.BranchId == branchId && a.AppointmentDate >= fromDate && a.AppointmentDate <= toDate && a.Status == "Scheduled")
             .ToListAsync();
 
         return appointments.Select(a => new NoShowPredictionDto
@@ -1195,11 +1402,33 @@ public class AnalyticsService : IAnalyticsService
         return true;
     }
 
+    public async Task<AnalyticsAlertConfigDto> ConfigureAlertAsync(AnalyticsAlertConfigDto config)
+    {
+        // Stub implementation - returns the configuration as-is
+        // In a real implementation, this would save the alert configuration to the database
+        await Task.CompletedTask;
+        return config;
+    }
+
     #endregion
 
     #region Export & Sharing
 
-    public async Task<byte[]> ExportDashboardAsync(ExportDashboardDto request, int userId)
+    public async Task<byte[]> ExportDashboardAsync(int dashboardId, int branchId, string format, DateTime? startDate = null, DateTime? endDate = null)
+    {
+        var dashboard = await GetDashboardByIdAsync(dashboardId);
+        if (dashboard == null)
+            throw new InvalidOperationException("Dashboard not found");
+
+        // Generate export content based on format
+        var content = $"Dashboard: {dashboard.Name}\nExported: {DateTime.UtcNow}\nWidgets: {dashboard.Widgets.Count}\nFormat: {format}\nDate Range: {startDate} to {endDate}";
+
+        _logger.LogInformation("Exported dashboard {DashboardId} as {Format}", dashboardId, format);
+
+        return System.Text.Encoding.UTF8.GetBytes(content);
+    }
+
+    private async Task<byte[]> ExportDashboardInternalAsync(ExportDashboardDto request, int userId)
     {
         var dashboard = await GetDashboardAsync(request.DashboardId, userId);
         if (dashboard == null)
@@ -1210,6 +1439,20 @@ public class AnalyticsService : IAnalyticsService
 
         _logger.LogInformation("Exported dashboard {DashboardId} as {Format}", request.DashboardId, request.Format);
 
+        return System.Text.Encoding.UTF8.GetBytes(content);
+    }
+
+    public async Task<byte[]> ExportAnalyticsDataAsync(int branchId, string reportType, string format, DateTime? startDate = null, DateTime? endDate = null)
+    {
+        // Stub implementation - exports analytics data based on report type
+        var start = startDate ?? DateTime.UtcNow.AddMonths(-1);
+        var end = endDate ?? DateTime.UtcNow;
+
+        var content = $"Analytics Report\nBranch ID: {branchId}\nReport Type: {reportType}\nFormat: {format}\nDate Range: {start:yyyy-MM-dd} to {end:yyyy-MM-dd}\nExported: {DateTime.UtcNow}";
+
+        _logger.LogInformation("Exported analytics data for branch {BranchId}, type {ReportType}, format {Format}", branchId, reportType, format);
+
+        await Task.CompletedTask;
         return System.Text.Encoding.UTF8.GetBytes(content);
     }
 
@@ -1427,7 +1670,7 @@ public class AnalyticsService : IAnalyticsService
                     IncludeData = true
                 };
 
-                var content = await ExportDashboardAsync(exportRequest, subscription.UserId);
+                var content = await ExportDashboardInternalAsync(exportRequest, subscription.UserId);
 
                 // Send via delivery method (email, slack, etc.)
                 _logger.LogInformation("Processed subscription {SubscriptionId} for user {UserId}",
