@@ -245,13 +245,17 @@ public class DiagnosisSuggestionDto
     public string IcdCode { get; set; } = string.Empty;
     public string DiagnosisName { get; set; } = string.Empty;
     public string? Description { get; set; }
+    public double Confidence { get; set; }
     public double ConfidenceScore { get; set; }
     public string ConfidenceLevel { get; set; } = string.Empty; // High, Medium, Low
+    public List<string> MatchedSymptoms { get; set; } = new();
     public List<string> MatchingSymptoms { get; set; } = new();
     public List<string>? SupportingFindings { get; set; }
     public List<string>? ConflictingFindings { get; set; }
+    public List<string>? RecommendedTests { get; set; }
     public List<string>? AdditionalTestsRecommended { get; set; }
     public List<string>? DifferentialDiagnoses { get; set; }
+    public List<string>? RedFlags { get; set; }
     public string? ClinicalPearl { get; set; }
     public string? Urgency { get; set; } // Emergent, Urgent, Routine
     public bool RequiresSpecialistReferral { get; set; }
