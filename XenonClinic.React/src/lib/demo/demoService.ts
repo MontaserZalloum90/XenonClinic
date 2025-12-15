@@ -4,7 +4,7 @@
  * Provides idempotent operations safe to run multiple times
  */
 
-import { ClinicType, DemoDataset, getDatasetByType, availableDatasets } from './demoData';
+import { ClinicType, getDatasetByType, availableDatasets } from './demoData';
 
 // ============================================
 // TYPES

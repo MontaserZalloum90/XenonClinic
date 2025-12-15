@@ -1,8 +1,7 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import { describe, it, expect, vi } from 'vitest';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
-import { BrowserRouter } from 'react-router-dom';
 
 // Shared test interfaces
 interface PatientData {
@@ -163,14 +162,12 @@ const MockAppointmentsList = ({
   onAdd,
   onCancel,
   onCheckin,
-  selectedDate
 }: {
   appointments?: AppointmentData[];
   isLoading?: boolean;
   onAdd?: () => void;
   onCancel?: (appointment: AppointmentData) => void;
   onCheckin?: (appointment: AppointmentData) => void;
-  selectedDate?: Date;
 }) => {
   if (isLoading) {
     return <div data-testid="appointments-loading">Loading appointments...</div>;
@@ -465,7 +462,7 @@ const MockLoginPage = ({
 
 // Tests
 describe('Dashboard Page Tests', () => {
-  #region Rendering Tests
+  // Rendering Tests
   describe('Rendering', () => {
     it('renders dashboard', () => {
       render(<MockDashboard />);
@@ -517,9 +514,8 @@ describe('Dashboard Page Tests', () => {
       expect(screen.getByTestId('dashboard-stats')).toBeInTheDocument();
     });
   });
-  #endregion
 
-  #region Stats Display Tests
+  // Stats Display Tests
   describe('Stats Display', () => {
     it('displays zero stats correctly', () => {
       render(<MockDashboard stats={{ patients: 0, appointments: 0, revenue: 0, pending: 0 }} />);
@@ -536,7 +532,7 @@ describe('Dashboard Page Tests', () => {
       expect(screen.getByTestId('stat-revenue')).toHaveTextContent('AED 1,000,000');
     });
   });
-  #endregion
+  // End
 });
 
 describe('PatientList Page Tests', () => {
@@ -545,7 +541,7 @@ describe('PatientList Page Tests', () => {
     { firstName: 'Jane', lastName: 'Smith', emiratesId: '784-1985-9876543-2', phone: '+971509876543' }
   ];
 
-  #region Rendering Tests
+  // Rendering Tests
   describe('Rendering', () => {
     it('renders patient list', () => {
       render(<MockPatientList patients={mockPatients} />);
@@ -601,9 +597,9 @@ describe('PatientList Page Tests', () => {
       expect(screen.getByTestId('delete-patient-1')).toBeInTheDocument();
     });
   });
-  #endregion
+  // End
 
-  #region Interaction Tests
+  // Interaction Tests
   describe('Interactions', () => {
     it('calls onAdd when add button is clicked', async () => {
       const onAdd = vi.fn();
@@ -637,7 +633,7 @@ describe('PatientList Page Tests', () => {
       expect(onSearch).toHaveBeenCalled();
     });
   });
-  #endregion
+  // End
 });
 
 describe('AppointmentsList Page Tests', () => {
@@ -646,7 +642,7 @@ describe('AppointmentsList Page Tests', () => {
     { time: '10:30', patientName: 'Jane Smith', doctorName: 'Dr. Sarah', type: 'Follow-up', status: 'Confirmed' }
   ];
 
-  #region Rendering Tests
+  // Rendering Tests
   describe('Rendering', () => {
     it('renders appointments list', () => {
       render(<MockAppointmentsList appointments={mockAppointments} />);
@@ -704,9 +700,9 @@ describe('AppointmentsList Page Tests', () => {
       expect(screen.getByTestId('add-appointment-btn')).toBeInTheDocument();
     });
   });
-  #endregion
+  // End
 
-  #region Interaction Tests
+  // Interaction Tests
   describe('Interactions', () => {
     it('calls onAdd when book appointment is clicked', async () => {
       const onAdd = vi.fn();
@@ -732,7 +728,7 @@ describe('AppointmentsList Page Tests', () => {
       expect(onCancel).toHaveBeenCalledWith(mockAppointments[0]);
     });
   });
-  #endregion
+  // End
 });
 
 describe('LabResults Page Tests', () => {
@@ -741,7 +737,7 @@ describe('LabResults Page Tests', () => {
     { patientName: 'Jane Smith', testName: 'Lipid Panel', date: '2025-01-14', status: 'completed' }
   ];
 
-  #region Rendering Tests
+  // Rendering Tests
   describe('Rendering', () => {
     it('renders lab results page', () => {
       render(<MockLabResultsPage results={mockResults} />);
@@ -784,9 +780,9 @@ describe('LabResults Page Tests', () => {
       expect(screen.queryByTestId('verify-result-1')).not.toBeInTheDocument();
     });
   });
-  #endregion
+  // End
 
-  #region Interaction Tests
+  // Interaction Tests
   describe('Interactions', () => {
     it('calls onView when view is clicked', async () => {
       const onView = vi.fn();
@@ -812,7 +808,7 @@ describe('LabResults Page Tests', () => {
       expect(onVerify).toHaveBeenCalledWith(mockResults[0]);
     });
   });
-  #endregion
+  // End
 });
 
 describe('Financial Page Tests', () => {
@@ -823,7 +819,7 @@ describe('Financial Page Tests', () => {
 
   const mockSummary = { total: 50000, paid: 35000, pending: 10000, overdue: 5000 };
 
-  #region Rendering Tests
+  // Rendering Tests
   describe('Rendering', () => {
     it('renders financial page', () => {
       render(<MockFinancialPage invoices={mockInvoices} summary={mockSummary} />);
@@ -880,9 +876,9 @@ describe('Financial Page Tests', () => {
       expect(screen.queryByTestId('record-payment-1')).not.toBeInTheDocument();
     });
   });
-  #endregion
+  // End
 
-  #region Interaction Tests
+  // Interaction Tests
   describe('Interactions', () => {
     it('calls onCreateInvoice when create invoice is clicked', async () => {
       const onCreateInvoice = vi.fn();
@@ -908,7 +904,7 @@ describe('Financial Page Tests', () => {
       expect(onRecordPayment).toHaveBeenCalledWith(mockInvoices[0]);
     });
   });
-  #endregion
+  // End
 });
 
 describe('Inventory Page Tests', () => {
@@ -917,7 +913,7 @@ describe('Inventory Page Tests', () => {
     { name: 'Syringes', sku: 'SYR-001', quantity: 5, unit: 'box' }
   ];
 
-  #region Rendering Tests
+  // Rendering Tests
   describe('Rendering', () => {
     it('renders inventory page', () => {
       render(<MockInventoryPage items={mockItems} />);
@@ -960,9 +956,9 @@ describe('Inventory Page Tests', () => {
       expect(screen.getByTestId('add-item-btn')).toBeInTheDocument();
     });
   });
-  #endregion
+  // End
 
-  #region Interaction Tests
+  // Interaction Tests
   describe('Interactions', () => {
     it('calls onAddItem when add item is clicked', async () => {
       const onAddItem = vi.fn();
@@ -988,7 +984,7 @@ describe('Inventory Page Tests', () => {
       expect(onAdjustStock).toHaveBeenCalledWith(mockItems[0]);
     });
   });
-  #endregion
+  // End
 });
 
 describe('HR Page Tests', () => {
@@ -997,7 +993,7 @@ describe('HR Page Tests', () => {
     { name: 'Sara Khan', department: 'Nursing', position: 'Nurse', status: 'Active' }
   ];
 
-  #region Rendering Tests
+  // Rendering Tests
   describe('Rendering', () => {
     it('renders HR page', () => {
       render(<MockHRPage employees={mockEmployees} />);
@@ -1034,9 +1030,9 @@ describe('HR Page Tests', () => {
       expect(screen.getByTestId('process-payroll-btn')).toBeInTheDocument();
     });
   });
-  #endregion
+  // End
 
-  #region Interaction Tests
+  // Interaction Tests
   describe('Interactions', () => {
     it('calls onAddEmployee when add employee is clicked', async () => {
       const onAddEmployee = vi.fn();
@@ -1062,11 +1058,11 @@ describe('HR Page Tests', () => {
       expect(onProcessPayroll).toHaveBeenCalled();
     });
   });
-  #endregion
+  // End
 });
 
 describe('Login Page Tests', () => {
-  #region Rendering Tests
+  // Rendering Tests
   describe('Rendering', () => {
     it('renders login page', () => {
       render(<MockLoginPage />);
@@ -1113,9 +1109,9 @@ describe('Login Page Tests', () => {
       expect(screen.getByTestId('login-btn')).toBeDisabled();
     });
   });
-  #endregion
+  // End
 
-  #region Interaction Tests
+  // Interaction Tests
   describe('Interactions', () => {
     it('allows typing email', async () => {
       const user = userEvent.setup();
@@ -1159,9 +1155,9 @@ describe('Login Page Tests', () => {
       expect(onLogin).toHaveBeenCalled();
     });
   });
-  #endregion
+  // End
 
-  #region Edge Cases
+  // Edge Cases
   describe('Edge Cases', () => {
     it('handles empty email submission', async () => {
       const onLogin = vi.fn();
@@ -1199,5 +1195,5 @@ describe('Login Page Tests', () => {
       expect(screen.getByTestId('login-email')).toHaveValue('test+special@example.com');
     });
   });
-  #endregion
+  // End
 });

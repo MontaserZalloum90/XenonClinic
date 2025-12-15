@@ -123,7 +123,7 @@ const deriveKey = async (
  */
 const getEncryptionKey = async (): Promise<{ key: CryptoKey; salt: Uint8Array }> => {
   // Check for existing key material in session
-  let saltBase64 = sessionStorage.getItem('encryption_salt');
+  const saltBase64 = sessionStorage.getItem('encryption_salt');
   let salt: Uint8Array;
 
   if (saltBase64) {

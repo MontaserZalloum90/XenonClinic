@@ -40,7 +40,6 @@ const findingStatusConfig = {
 export function ComplianceReports() {
   const [selectedReport, setSelectedReport] = useState<ComplianceReport | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const queryClient = useQueryClient();
 
   const { data: reports = [], isLoading } = useQuery({
     queryKey: ['compliance-reports'],

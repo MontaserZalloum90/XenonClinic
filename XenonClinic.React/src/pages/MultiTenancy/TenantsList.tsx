@@ -13,7 +13,7 @@ import {
   ExclamationTriangleIcon,
 } from '@heroicons/react/24/outline';
 import { api } from '../../lib/api';
-import type { Tenant, TenantStatus, SubscriptionPlan } from '../../types/multi-tenancy';
+import type { Tenant, TenantStatus } from '../../types/multi-tenancy';
 
 const statusConfig: Record<number, { label: string; color: string; icon: React.ComponentType<{ className?: string }> }> = {
   0: { label: 'Active', color: 'bg-green-100 text-green-800', icon: CheckCircleIcon },

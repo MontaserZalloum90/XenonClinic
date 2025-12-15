@@ -72,7 +72,8 @@ export const EncounterForm = ({
   onCancel,
   isLoading,
 }: EncounterFormProps) => {
-  const [activeTab, setActiveTab] = useState<'complaint' | 'assessment' | 'plan' | 'tasks'>('complaint');
+  type TabId = 'complaint' | 'assessment' | 'plan' | 'tasks';
+  const [activeTab, setActiveTab] = useState<TabId>('complaint');
   const [diagnoses, setDiagnoses] = useState<Diagnosis[]>([]);
   const [recommendations, setRecommendations] = useState<string[]>([]);
   const [tasks, setTasks] = useState<Partial<CreateEncounterTaskRequest>[]>([]);
@@ -84,7 +85,6 @@ export const EncounterForm = ({
     register,
     handleSubmit,
     watch,
-    formState: { errors },
   } = useForm<FormData>({
     defaultValues: {
       encounterDate: new Date().toISOString().split('T')[0],
@@ -134,7 +134,7 @@ export const EncounterForm = ({
   const handleFormSubmit = (data: FormData) => {
     const assessment: EncounterAssessment = {
       hearingStatus: data.hearingStatus || undefined,
-      hearingChangeFromLast: data.hearingChangeFromLast as any || undefined,
+      hearingChangeFromLast: data.hearingChangeFromLast || undefined,
       currentHearingAids: data.currentHearingAids || undefined,
       hearingAidPerformance: data.hearingAidPerformance || undefined,
       otoscopyRight: data.otoscopyRight || undefined,
@@ -185,10 +185,10 @@ export const EncounterForm = ({
       encounterId: 0, // Will be set after encounter creation
     })) as CreateEncounterTaskRequest[];
 
-    onSubmit(fullRequest as any, taskRequests);
+    onSubmit(fullRequest as CreateEncounterRequest, taskRequests);
   };
 
-  const tabs = [
+  const tabs: { id: TabId; label: string; step: number }[] = [
     { id: 'complaint', label: 'Complaint', step: 1 },
     { id: 'assessment', label: 'Assessment', step: 2 },
     { id: 'plan', label: 'Plan', step: 3 },
@@ -233,7 +233,7 @@ export const EncounterForm = ({
             <button
               key={tab.id}
               type="button"
-              onClick={() => setActiveTab(tab.id as any)}
+              onClick={() => setActiveTab(tab.id)}
               className={`py-2 px-1 border-b-2 font-medium text-sm ${
                 activeTab === tab.id
                   ? 'border-primary-500 text-primary-600'
@@ -687,7 +687,7 @@ export const EncounterForm = ({
               type="button"
               onClick={() => {
                 const currentIndex = tabs.findIndex((t) => t.id === activeTab);
-                if (currentIndex > 0) setActiveTab(tabs[currentIndex - 1].id as any);
+                if (currentIndex > 0) setActiveTab(tabs[currentIndex - 1].id);
               }}
               className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
             >
@@ -699,7 +699,7 @@ export const EncounterForm = ({
               type="button"
               onClick={() => {
                 const currentIndex = tabs.findIndex((t) => t.id === activeTab);
-                if (currentIndex < tabs.length - 1) setActiveTab(tabs[currentIndex + 1].id as any);
+                if (currentIndex < tabs.length - 1) setActiveTab(tabs[currentIndex + 1].id);
               }}
               className="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-md hover:bg-primary-700"
             >

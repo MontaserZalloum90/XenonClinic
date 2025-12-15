@@ -175,6 +175,7 @@ export const FeatureRoute: React.FC<FeatureRouteProps> = ({
  * useFeatureEnabled - Hook to check if feature is enabled
  * Returns loading state along with enabled status
  */
+// eslint-disable-next-line react-refresh/only-export-components
 export const useFeatureEnabled = (feature: string): {
   enabled: boolean;
   isLoading: boolean;

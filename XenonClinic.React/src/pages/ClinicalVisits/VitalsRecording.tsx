@@ -4,7 +4,6 @@ import {
   HeartIcon,
   MagnifyingGlassIcon,
   PlusIcon,
-  ChartBarIcon,
   ExclamationTriangleIcon,
   CheckCircleIcon,
 } from '@heroicons/react/24/outline';
@@ -60,10 +59,9 @@ const getVitalStatus = (value: number, min: number, max: number): 'normal' | 'wa
 
 export function VitalsRecording() {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedPatient, setSelectedPatient] = useState<{ id: number; name: string; mrn: string } | null>(null);
+  const [selectedPatient] = useState<{ id: number; name: string; mrn: string } | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [dateFilter, setDateFilter] = useState(new Date().toISOString().split('T')[0]);
-  const queryClient = useQueryClient();
 
   const { data: vitals = [], isLoading } = useQuery({
     queryKey: ['vitals', dateFilter],

@@ -52,6 +52,7 @@ export const ProtectedRoute = ({
 };
 
 // Helper function to check if user has specific role(s)
+// eslint-disable-next-line react-refresh/only-export-components
 export const hasRole = (userRoles: string[], requiredRoles: string[], requireAll = false): boolean => {
   if (requiredRoles.length === 0) return true;
 

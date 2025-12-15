@@ -130,12 +130,13 @@ export const sanitizeFilename = (filename: string, maxLength: number = 255): str
   let sanitized = filename;
 
   // Remove path components (path traversal prevention)
-  sanitized = sanitized.replace(/^.*[\\\/]/, '');
+  sanitized = sanitized.replace(/^.*[\\/#]/, '');
 
   // Remove null bytes
   sanitized = sanitized.replace(/\0/g, '');
 
   // Remove control characters
+  // eslint-disable-next-line no-control-regex
   sanitized = sanitized.replace(/[\x00-\x1f\x7f]/g, '');
 
   // Remove potentially dangerous characters

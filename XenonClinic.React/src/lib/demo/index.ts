@@ -12,7 +12,6 @@ export {
 
 export {
   type ClinicType,
-  type DemoDataset,
   type DemoPatient,
   type DemoAppointment,
   type DemoEncounter,

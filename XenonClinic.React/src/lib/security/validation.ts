@@ -33,7 +33,7 @@ export const validateEmiratesId = (value: string): ValidationResult => {
   }
 
   // Remove any whitespace and normalize dashes
-  let sanitized = value.trim().replace(/\s+/g, '').replace(/[-–—]/g, '-');
+  const sanitized = value.trim().replace(/\s+/g, '').replace(/[-–—]/g, '-');
 
   // Check format
   if (!EMIRATES_ID_REGEX.test(sanitized)) {
@@ -87,7 +87,7 @@ export const sanitizeText = (value: string, options?: {
 }): string => {
   if (!value || typeof value !== 'string') return '';
 
-  const { allowUnicode = true, maxLength = 1000, trim = true } = options || {};
+  const { maxLength = 1000, trim = true } = options || {};
 
   let sanitized = value;
 
@@ -100,6 +100,7 @@ export const sanitizeText = (value: string, options?: {
   sanitized = sanitized.replace(/\0/g, '');
 
   // Remove control characters (except newlines and tabs if needed)
+  // eslint-disable-next-line no-control-regex
   sanitized = sanitized.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
 
   // Remove potential SQL injection patterns BEFORE escaping
@@ -167,7 +168,7 @@ export const validateNameAr = (
   }
 
   // Check for valid Arabic characters
-  if (sanitized && !/^[\u0600-\u06FF\s\-]+$/.test(sanitized.replace(/&[^;]+;/g, ''))) {
+  if (sanitized && !/^[\u0600-\u06FF\s-]+$/.test(sanitized.replace(/&[^;]+;/g, ''))) {
     errors.push('Arabic name can only contain Arabic characters, spaces, and hyphens');
   }
 

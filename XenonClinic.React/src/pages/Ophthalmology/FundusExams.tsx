@@ -10,7 +10,7 @@ const fundusApi = {
   create: (data: CreateFundusExamRequest) => Promise.resolve({ data: { id: 1, ...data } }),
   update: (id: number, data: Partial<CreateFundusExamRequest>) =>
     Promise.resolve({ data: { id, ...data } }),
-  delete: (id: number) => Promise.resolve({ data: { success: true } }),
+  delete: () => Promise.resolve({ data: { success: true } }),
 };
 
 export const FundusExams = () => {

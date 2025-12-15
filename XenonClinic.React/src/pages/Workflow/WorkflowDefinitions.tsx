@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Dialog } from '@headlessui/react';
 import { format } from 'date-fns';
 import { workflowDefinitionsApi } from '../../lib/api';
-import type { WorkflowDefinition, WorkflowStep, WorkflowStatistics } from '../../types/workflow';
+import type { WorkflowDefinition, WorkflowStatistics } from '../../types/workflow';
 import { WorkflowStepType } from '../../types/workflow';
 
 export const WorkflowDefinitions = () => {

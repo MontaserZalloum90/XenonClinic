@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, waitFor, fireEvent, within } from '@testing-library/react';
+import { describe, it, expect, vi } from 'vitest';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
@@ -220,7 +220,7 @@ const MockInvoiceForm = ({
 );
 
 describe('PatientForm Component Tests', () => {
-  #region Rendering Tests
+  // Rendering Tests
   describe('Rendering', () => {
     it('renders the patient form', () => {
       render(<MockPatientForm />);
@@ -259,7 +259,8 @@ describe('PatientForm Component Tests', () => {
 
     it('renders gender select', () => {
       render(<MockPatientForm />);
-      expect(screen.getByRole('combobox', { name: '' })).toBeInTheDocument();
+      const genderSelect = screen.getByDisplayValue('Select Gender');
+      expect(genderSelect).toBeInTheDocument();
     });
 
     it('renders blood type select', () => {
@@ -298,9 +299,9 @@ describe('PatientForm Component Tests', () => {
       expect(screen.getByRole('button', { name: 'Saving...' })).toBeDisabled();
     });
   });
-  #endregion
+  // End
 
-  #region Initial Data Tests
+  // Initial Data Tests
   describe('Initial Data Population', () => {
     const initialData = {
       firstName: 'John',
@@ -349,9 +350,9 @@ describe('PatientForm Component Tests', () => {
       expect(screen.getByPlaceholderText('Allergies')).toHaveValue('Penicillin');
     });
   });
-  #endregion
+  // End
 
-  #region User Interaction Tests
+  // User Interaction Tests
   describe('User Interactions', () => {
     it('allows typing in first name field', async () => {
       const user = userEvent.setup();
@@ -433,9 +434,9 @@ describe('PatientForm Component Tests', () => {
       expect(input).toHaveValue('');
     });
   });
-  #endregion
+  // End
 
-  #region Form Submission Tests
+  // Form Submission Tests
   describe('Form Submission', () => {
     it('calls onSubmit when form is submitted', async () => {
       const onSubmit = vi.fn();
@@ -470,9 +471,9 @@ describe('PatientForm Component Tests', () => {
       expect(onSubmit).toHaveBeenCalledTimes(1);
     });
   });
-  #endregion
+  // End
 
-  #region Accessibility Tests
+  // Accessibility Tests
   describe('Accessibility', () => {
     it('has accessible submit button', () => {
       render(<MockPatientForm />);
@@ -498,7 +499,7 @@ describe('PatientForm Component Tests', () => {
       expect(comboboxes.length).toBeGreaterThanOrEqual(2);
     });
   });
-  #endregion
+  // End
 });
 
 describe('AppointmentForm Component Tests', () => {
@@ -514,7 +515,7 @@ describe('AppointmentForm Component Tests', () => {
     { id: 3, name: 'Dr. Mohammed' }
   ];
 
-  #region Rendering Tests
+  // Rendering Tests
   describe('Rendering', () => {
     it('renders the appointment form', () => {
       render(<MockAppointmentForm />);
@@ -581,9 +582,9 @@ describe('AppointmentForm Component Tests', () => {
       });
     });
   });
-  #endregion
+  // End
 
-  #region User Interaction Tests
+  // User Interaction Tests
   describe('User Interactions', () => {
     it('allows selecting a patient', async () => {
       const user = userEvent.setup();
@@ -678,9 +679,9 @@ describe('AppointmentForm Component Tests', () => {
       }
     });
   });
-  #endregion
+  // End
 
-  #region Form Submission Tests
+  // Form Submission Tests
   describe('Form Submission', () => {
     it('calls onSubmit when form is submitted', async () => {
       const onSubmit = vi.fn();
@@ -698,9 +699,9 @@ describe('AppointmentForm Component Tests', () => {
       expect(onCancel).toHaveBeenCalledTimes(1);
     });
   });
-  #endregion
+  // End
 
-  #region Initial Data Tests
+  // Initial Data Tests
   describe('Initial Data Population', () => {
     it('populates patient from initial data', () => {
       render(<MockAppointmentForm
@@ -723,7 +724,7 @@ describe('AppointmentForm Component Tests', () => {
       expect(screen.getByPlaceholderText('Notes')).toHaveValue('Existing notes');
     });
   });
-  #endregion
+  // End
 });
 
 describe('LabOrderForm Component Tests', () => {
@@ -737,7 +738,7 @@ describe('LabOrderForm Component Tests', () => {
 
   const mockPatient = { id: 1, name: 'John Doe' };
 
-  #region Rendering Tests
+  // Rendering Tests
   describe('Rendering', () => {
     it('renders the lab order form', () => {
       render(<MockLabOrderForm />);
@@ -791,9 +792,9 @@ describe('LabOrderForm Component Tests', () => {
       expect(screen.getByRole('button', { name: 'Cancel' })).toBeInTheDocument();
     });
   });
-  #endregion
+  // End
 
-  #region User Interaction Tests
+  // User Interaction Tests
   describe('User Interactions', () => {
     it('allows selecting a test', async () => {
       const user = userEvent.setup();
@@ -864,9 +865,9 @@ describe('LabOrderForm Component Tests', () => {
       expect(textarea).toHaveValue('Patient has elevated blood pressure');
     });
   });
-  #endregion
+  // End
 
-  #region Form Submission Tests
+  // Form Submission Tests
   describe('Form Submission', () => {
     it('calls onSubmit when order tests button is clicked', async () => {
       const onSubmit = vi.fn();
@@ -884,7 +885,7 @@ describe('LabOrderForm Component Tests', () => {
       expect(onCancel).toHaveBeenCalledTimes(1);
     });
   });
-  #endregion
+  // End
 });
 
 describe('InvoiceForm Component Tests', () => {
@@ -895,7 +896,7 @@ describe('InvoiceForm Component Tests', () => {
     { description: 'X-Ray', quantity: 2, price: 100 }
   ];
 
-  #region Rendering Tests
+  // Rendering Tests
   describe('Rendering', () => {
     it('renders the invoice form', () => {
       render(<MockInvoiceForm />);
@@ -952,9 +953,9 @@ describe('InvoiceForm Component Tests', () => {
       expect(screen.getByText('Total')).toBeInTheDocument();
     });
   });
-  #endregion
+  // End
 
-  #region User Interaction Tests
+  // User Interaction Tests
   describe('User Interactions', () => {
     it('allows selecting cash payment', async () => {
       const user = userEvent.setup();
@@ -1006,9 +1007,9 @@ describe('InvoiceForm Component Tests', () => {
       expect(input).toHaveValue(7);
     });
   });
-  #endregion
+  // End
 
-  #region Form Submission Tests
+  // Form Submission Tests
   describe('Form Submission', () => {
     it('calls onSubmit when generate invoice is clicked', async () => {
       const onSubmit = vi.fn();
@@ -1026,9 +1027,9 @@ describe('InvoiceForm Component Tests', () => {
       expect(onCancel).toHaveBeenCalledTimes(1);
     });
   });
-  #endregion
+  // End
 
-  #region Line Item Calculations
+  // Line Item Calculations
   describe('Line Item Calculations', () => {
     it('calculates correct total for single item', () => {
       render(<MockInvoiceForm items={[{ description: 'Test', quantity: 2, price: 100 }]} />);
@@ -1037,16 +1038,17 @@ describe('InvoiceForm Component Tests', () => {
 
     it('calculates correct total for multiple items', () => {
       render(<MockInvoiceForm items={mockItems} />);
-      expect(screen.getByText('200.00')).toBeInTheDocument(); // 1 * 200
+      const totals200 = screen.getAllByText('200.00'); // 1 * 200 and 2 * 100
+      expect(totals200).toHaveLength(2);
       expect(screen.getByText('150.00')).toBeInTheDocument(); // 1 * 150
     });
   });
-  #endregion
+  // End
 });
 
 // Additional form validation tests
 describe('Form Validation Tests', () => {
-  #region Email Validation
+  // Email Validation
   describe('Email Field Validation', () => {
     it('accepts valid email format', async () => {
       const user = userEvent.setup();
@@ -1072,9 +1074,9 @@ describe('Form Validation Tests', () => {
       expect(input).toHaveValue('test+label@example.com');
     });
   });
-  #endregion
+  // End
 
-  #region Phone Validation
+  // Phone Validation
   describe('Phone Field Input', () => {
     it('accepts UAE mobile format', async () => {
       const user = userEvent.setup();
@@ -1100,9 +1102,9 @@ describe('Form Validation Tests', () => {
       expect(input).toHaveValue('+14155551234');
     });
   });
-  #endregion
+  // End
 
-  #region Emirates ID Validation
+  // Emirates ID Validation
   describe('Emirates ID Field Input', () => {
     it('accepts valid Emirates ID format', async () => {
       const user = userEvent.setup();
@@ -1120,9 +1122,9 @@ describe('Form Validation Tests', () => {
       expect(input).toHaveValue('784199012345671');
     });
   });
-  #endregion
+  // End
 
-  #region Date Input Tests
+  // Date Input Tests
   describe('Date Input Validation', () => {
     it('accepts valid date format', async () => {
       const user = userEvent.setup();
@@ -1140,9 +1142,9 @@ describe('Form Validation Tests', () => {
       expect(input).toHaveValue('2024-02-29');
     });
   });
-  #endregion
+  // End
 
-  #region Time Input Tests
+  // Time Input Tests
   describe('Time Input Validation', () => {
     it('accepts valid time format', async () => {
       const user = userEvent.setup();
@@ -1176,9 +1178,9 @@ describe('Form Validation Tests', () => {
       expect(input).toHaveValue('23:59');
     });
   });
-  #endregion
+  // End
 
-  #region Numeric Input Tests
+  // Numeric Input Tests
   describe('Numeric Input Validation', () => {
     it('accepts positive duration', async () => {
       const user = userEvent.setup();
@@ -1190,7 +1192,6 @@ describe('Form Validation Tests', () => {
     });
 
     it('accepts zero discount', async () => {
-      const user = userEvent.setup();
       render(<MockInvoiceForm />);
       const input = screen.getByPlaceholderText('Discount %');
       expect(input).toHaveValue(0);
@@ -1205,5 +1206,5 @@ describe('Form Validation Tests', () => {
       expect(input).toHaveValue(15);
     });
   });
-  #endregion
+  // End
 });

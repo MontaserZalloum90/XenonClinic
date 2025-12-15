@@ -11,10 +11,9 @@ import { Dialog } from '@headlessui/react';
 import type {
   CancerDiagnosis,
   CreateCancerDiagnosisRequest,
-  CancerType,
-  CancerStage,
   CancerGrade,
 } from '../../types/oncology';
+import { CancerType, CancerStage } from '../../types/oncology';
 import { format } from 'date-fns';
 
 // Mock API functions - Replace with actual API calls
@@ -28,7 +27,7 @@ const diagnosisApi = {
   update: async (id: number, data: Partial<CancerDiagnosis>) => ({
     data: { id, ...data },
   }),
-  delete: async (id: number) => ({
+  delete: async () => ({
     data: { success: true },
   }),
 };
@@ -161,7 +160,7 @@ const DiagnosisForm = ({
 
   const updateMutation = useMutation({
     mutationFn: (data: DiagnosisFormData) =>
-      diagnosisApi.update(diagnosis!.id, { ...data, id: diagnosis!.id } as any),
+      diagnosisApi.update(diagnosis!.id, { ...data, id: diagnosis!.id } as Partial<CancerDiagnosis>),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cancer-diagnoses'] });
       onSuccess();

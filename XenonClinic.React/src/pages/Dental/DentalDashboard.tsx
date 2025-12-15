@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
   UserGroupIcon,
@@ -47,8 +46,6 @@ const dentalApi = {
 };
 
 export const DentalDashboard = () => {
-  const [dateRange, setDateRange] = useState('week');
-
   // Fetch statistics
   const { data: statsData, isLoading: statsLoading } = useQuery({
     queryKey: ['dental-stats'],

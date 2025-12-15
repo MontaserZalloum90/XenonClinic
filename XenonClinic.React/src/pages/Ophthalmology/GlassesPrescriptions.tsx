@@ -8,7 +8,7 @@ import type {
 import { PrescriptionStatus as PrescriptionStatusEnum } from '../../types/ophthalmology';
 import { Dialog } from '@headlessui/react';
 import { format } from 'date-fns';
-import { PrinterIcon, PlusIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
+import { PrinterIcon, PlusIcon } from '@heroicons/react/24/outline';
 
 // Mock API - Replace with actual API when backend is ready
 const prescriptionApi = {
@@ -16,7 +16,7 @@ const prescriptionApi = {
   create: (data: CreateGlassesPrescriptionRequest) => Promise.resolve({ data: { id: 1, ...data } }),
   update: (id: number, data: Partial<CreateGlassesPrescriptionRequest>) =>
     Promise.resolve({ data: { id, ...data } }),
-  delete: (id: number) => Promise.resolve({ data: { success: true } }),
+  delete: () => Promise.resolve({ data: { success: true } }),
 };
 
 export const GlassesPrescriptions = () => {

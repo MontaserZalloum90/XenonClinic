@@ -17,7 +17,6 @@ interface ECGRecordsProps {
 }
 
 export const ECGRecords = ({ patientId }: ECGRecordsProps = {}) => {
-  const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -34,31 +33,6 @@ export const ECGRecords = ({ patientId }: ECGRecordsProps = {}) => {
       // Return empty array when no patient selected - in production,
       // you might want to show a patient selector or fetch recent records
       return [];
-    },
-  });
-
-  // Create mutation
-  const createMutation = useMutation({
-    mutationFn: (data: CreateECGRequest) => cardiologyApi.createECG(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['ecg-records'] });
-    },
-  });
-
-  // Update mutation
-  const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: number; data: Partial<CreateECGRequest> }) =>
-      cardiologyApi.updateECG(id, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['ecg-records'] });
-    },
-  });
-
-  // Delete mutation
-  const deleteMutation = useMutation({
-    mutationFn: (id: number) => cardiologyApi.deleteECG(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['ecg-records'] });
     },
   });
 

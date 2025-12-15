@@ -11,8 +11,6 @@ import {
 import { format } from "date-fns";
 import {
   ChemoProtocolStatus,
-  CancerType,
-  CancerStage,
 } from "../../types/oncology";
 import { oncologyApi } from "../../lib/api";
 

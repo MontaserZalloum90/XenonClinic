@@ -357,6 +357,7 @@ export const HearingLossGradeLegend = () => (
 );
 
 // Calculate Pure Tone Average (PTA)
+// eslint-disable-next-line react-refresh/only-export-components
 export const calculatePTA = (dataPoints: AudiogramDataPoint[]): number | undefined => {
   const ptaFrequencies: readonly AudiogramFrequency[] = [500, 1000, 2000, 4000];
   const relevantPoints = dataPoints.filter(
@@ -370,6 +371,7 @@ export const calculatePTA = (dataPoints: AudiogramDataPoint[]): number | undefin
 };
 
 // Determine hearing loss grade from PTA
+// eslint-disable-next-line react-refresh/only-export-components
 export const getHearingLossGrade = (pta: number | undefined): HearingLossGrade | undefined => {
   if (pta === undefined) return undefined;
 

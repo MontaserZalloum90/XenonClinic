@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Dialog } from '@headlessui/react';
 import { format } from 'date-fns';
-import type { SkinPhoto, CreateSkinPhotoRequest } from '../../types/dermatology';
+import type { SkinPhoto } from '../../types/dermatology';
 import { dermatologyApi } from '../../lib/api';
 
 interface SkinPhotosProps {

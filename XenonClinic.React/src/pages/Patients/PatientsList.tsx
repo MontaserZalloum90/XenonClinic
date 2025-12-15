@@ -197,6 +197,7 @@ export const PatientsList = () => {
 
   // Clear selection when filter changes
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSelectedIds(new Set());
   }, [searchTerm]);
 

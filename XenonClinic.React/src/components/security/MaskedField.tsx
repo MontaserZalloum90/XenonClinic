@@ -81,15 +81,6 @@ export const MaskedField = ({
 
   const maskedValue = getMaskedValue(value, type);
 
-  const handleReveal = useCallback(() => {
-    if (requiresJustification) {
-      setShowJustificationModal(true);
-      return;
-    }
-
-    revealValue('Routine access');
-  }, [requiresJustification]);
-
   const revealValue = useCallback(
     (justification: string) => {
       setIsRevealed(true);
@@ -112,6 +103,15 @@ export const MaskedField = ({
     },
     [logAccess, resourceType, resourceId, resourceDescription, type, revealDuration]
   );
+
+  const handleReveal = useCallback(() => {
+    if (requiresJustification) {
+      setShowJustificationModal(true);
+      return;
+    }
+
+    revealValue('Routine access');
+  }, [requiresJustification, revealValue]);
 
   const handleHide = useCallback(() => {
     setIsRevealed(false);
@@ -168,7 +168,7 @@ interface JustificationModalProps {
   fieldType: MaskType;
 }
 
-const JustificationModal = ({ onSubmit, onCancel, fieldType }: JustificationModalProps) => {
+const JustificationModal = ({ onSubmit, onCancel }: JustificationModalProps) => {
   const [justification, setJustification] = useState('');
   const [selectedReason, setSelectedReason] = useState('');
 
@@ -342,6 +342,7 @@ interface UseMaskedDataOptions {
   logAccess?: boolean;
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useMaskedData = <T extends Record<string, unknown>>(
   data: T,
   fieldsToMask: Array<{ field: keyof T; type: MaskType }>,

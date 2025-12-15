@@ -21,6 +21,7 @@ export const useRecentItems = (itemType?: string) => {
       try {
         const items: RecentItem[] = JSON.parse(stored);
         const filtered = itemType ? items.filter((item) => item.type === itemType) : items;
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setRecentItems(filtered);
       } catch (error) {
         console.error('Failed to load recent items:', error);

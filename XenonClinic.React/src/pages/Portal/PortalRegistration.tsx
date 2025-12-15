@@ -51,7 +51,7 @@ export const PortalRegistration = () => {
 
     if (!formData.phoneNumber) {
       newErrors.phoneNumber = 'Phone number is required';
-    } else if (!/^[\d\s\-\+\(\)]+$/.test(formData.phoneNumber)) {
+    } else if (!/^[\d\s+()-]+$/.test(formData.phoneNumber)) {
       newErrors.phoneNumber = 'Please enter a valid phone number';
     }
 
