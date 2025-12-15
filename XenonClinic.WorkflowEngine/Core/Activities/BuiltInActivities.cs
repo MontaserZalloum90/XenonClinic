@@ -225,11 +225,40 @@ public class ServiceTaskActivity : ActivityBase
             if (result is Task task)
             {
                 await task;
+
+                // BUG FIX: Improved task result extraction with proper null handling and exception handling
                 var taskType = task.GetType();
                 if (taskType.IsGenericType)
                 {
-                    var resultProperty = taskType.GetProperty("Result");
-                    result = resultProperty?.GetValue(task);
+                    try
+                    {
+                        var resultProperty = taskType.GetProperty("Result");
+                        if (resultProperty != null)
+                        {
+                            // Check if the task faulted before accessing result
+                            if (task.IsFaulted)
+                            {
+                                var aggregateException = task.Exception;
+                                var innerException = aggregateException?.InnerException ?? aggregateException;
+                                return ActivityResult.Failure("SERVICE_ERROR",
+                                    innerException?.Message ?? "Task faulted",
+                                    innerException);
+                            }
+
+                            result = resultProperty.GetValue(task);
+                        }
+                        else
+                        {
+                            result = null;
+                        }
+                    }
+                    catch (System.Reflection.TargetInvocationException ex)
+                    {
+                        // The task's Result property throws if the task faulted
+                        return ActivityResult.Failure("SERVICE_ERROR",
+                            ex.InnerException?.Message ?? ex.Message,
+                            ex.InnerException ?? ex);
+                    }
                 }
                 else
                 {
@@ -241,6 +270,12 @@ public class ServiceTaskActivity : ActivityBase
             MapOutputs(output, context);
 
             return ActivityResult.Success(output);
+        }
+        catch (System.Reflection.TargetInvocationException ex)
+        {
+            // BUG FIX: Unwrap TargetInvocationException to get the actual error
+            var innerException = ex.InnerException ?? ex;
+            return ActivityResult.Failure("SERVICE_ERROR", innerException.Message, innerException);
         }
         catch (Exception ex)
         {
