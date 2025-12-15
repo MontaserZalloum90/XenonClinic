@@ -376,9 +376,9 @@ public static class ProcessDefinitionMappingExtensions
         if (model != null)
         {
             dto.ActivityCount = model.Activities?.Count ?? 0;
-            dto.UserTaskCount = model.Activities?.Count(a => a is UserTaskDefinition) ?? 0;
-            dto.ServiceTaskCount = model.Activities?.Count(a => a is ServiceTaskDefinition) ?? 0;
-            dto.GatewayCount = model.Activities?.Count(a => a is ExclusiveGatewayDefinition or ParallelGatewayDefinition or InclusiveGatewayDefinition) ?? 0;
+            dto.UserTaskCount = model.Activities?.Values.Count(a => a is UserTaskDefinition) ?? 0;
+            dto.ServiceTaskCount = model.Activities?.Values.Count(a => a is ServiceTaskDefinition) ?? 0;
+            dto.GatewayCount = model.Activities?.Values.Count(a => a is ExclusiveGatewayDefinition or ParallelGatewayDefinition or InclusiveGatewayDefinition) ?? 0;
         }
 
         return dto;

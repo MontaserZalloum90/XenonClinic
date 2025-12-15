@@ -31,9 +31,6 @@ public class Prescription
     [ForeignKey(nameof(PatientId))]
     public virtual Patient? Patient { get; set; }
 
-    [ForeignKey(nameof(ClinicalVisitId))]
-    public virtual ClinicalVisit? ClinicalVisit { get; set; }
-
     [ForeignKey(nameof(DoctorId))]
     public virtual Doctor? Doctor { get; set; }
 

@@ -32,13 +32,13 @@ public class AuditService : IAuditService
     {
         var auditEvent = new AuditEvent
         {
-            Id = string.IsNullOrEmpty(eventData.Id) ? Guid.NewGuid().ToString() : eventData.Id,
+            Id = string.IsNullOrEmpty(eventData.Id) ? Guid.NewGuid() : Guid.Parse(eventData.Id),
             TenantId = eventData.TenantId,
             EventType = eventData.EventType,
             EntityType = eventData.EntityType,
             EntityId = eventData.EntityId,
             ProcessInstanceId = eventData.ProcessInstanceId,
-            ActivityInstanceId = eventData.ActivityInstanceId,
+            ActivityId = eventData.ActivityInstanceId,
             UserId = eventData.UserId,
             CorrelationId = eventData.CorrelationId ?? Guid.NewGuid().ToString(),
             Timestamp = eventData.Timestamp == default ? DateTime.UtcNow : eventData.Timestamp,
@@ -48,7 +48,7 @@ public class AuditService : IAuditService
             NewValuesJson = eventData.NewValues != null
                 ? JsonSerializer.Serialize(eventData.NewValues, _jsonOptions)
                 : null,
-            MetadataJson = eventData.Metadata != null
+            AdditionalDataJson = eventData.Metadata != null
                 ? JsonSerializer.Serialize(eventData.Metadata, _jsonOptions)
                 : null
         };
@@ -139,19 +139,19 @@ public class AuditService : IAuditService
     {
         return new AuditEventDto
         {
-            Id = entity.Id,
+            Id = entity.Id.ToString(),
             TenantId = entity.TenantId,
             EventType = entity.EventType,
             EntityType = entity.EntityType,
             EntityId = entity.EntityId,
             ProcessInstanceId = entity.ProcessInstanceId,
-            ActivityInstanceId = entity.ActivityInstanceId,
+            ActivityInstanceId = entity.ActivityId,
             UserId = entity.UserId,
             CorrelationId = entity.CorrelationId,
             Timestamp = entity.Timestamp,
             OldValues = DeserializeJson(entity.OldValuesJson),
             NewValues = DeserializeJson(entity.NewValuesJson),
-            Metadata = DeserializeJson(entity.MetadataJson)
+            Metadata = DeserializeJson(entity.AdditionalDataJson)
         };
     }
 
