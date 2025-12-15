@@ -1,5 +1,6 @@
-import { useForm } from 'react-hook-form';
-import { LeadSource, LeadPriority, CreateLeadRequest } from '../../types/marketing';
+import { useForm } from "react-hook-form";
+import { LeadSource, LeadPriority } from "../../types/marketing";
+import type { CreateLeadRequest } from "../../types/marketing";
 
 interface LeadFormProps {
   initialData?: Partial<CreateLeadRequest>;
@@ -8,35 +9,39 @@ interface LeadFormProps {
 }
 
 const leadSources = [
-  { value: LeadSource.Website, label: 'Website' },
-  { value: LeadSource.Referral, label: 'Referral' },
-  { value: LeadSource.SocialMedia, label: 'Social Media' },
-  { value: LeadSource.Advertising, label: 'Advertising' },
-  { value: LeadSource.Event, label: 'Event' },
-  { value: LeadSource.WalkIn, label: 'Walk-in' },
-  { value: LeadSource.Phone, label: 'Phone Inquiry' },
-  { value: LeadSource.Email, label: 'Email Inquiry' },
-  { value: LeadSource.Partner, label: 'Partner' },
-  { value: LeadSource.Campaign, label: 'Marketing Campaign' },
-  { value: LeadSource.Other, label: 'Other' },
+  { value: LeadSource.Website, label: "Website" },
+  { value: LeadSource.Referral, label: "Referral" },
+  { value: LeadSource.SocialMedia, label: "Social Media" },
+  { value: LeadSource.Advertising, label: "Advertising" },
+  { value: LeadSource.Event, label: "Event" },
+  { value: LeadSource.WalkIn, label: "Walk-in" },
+  { value: LeadSource.Phone, label: "Phone Inquiry" },
+  { value: LeadSource.Email, label: "Email Inquiry" },
+  { value: LeadSource.Partner, label: "Partner" },
+  { value: LeadSource.Campaign, label: "Marketing Campaign" },
+  { value: LeadSource.Other, label: "Other" },
 ];
 
 const priorities = [
-  { value: LeadPriority.Low, label: 'Low' },
-  { value: LeadPriority.Medium, label: 'Medium' },
-  { value: LeadPriority.High, label: 'High' },
-  { value: LeadPriority.Urgent, label: 'Urgent' },
+  { value: LeadPriority.Low, label: "Low" },
+  { value: LeadPriority.Medium, label: "Medium" },
+  { value: LeadPriority.High, label: "High" },
+  { value: LeadPriority.Urgent, label: "Urgent" },
 ];
 
-export const LeadForm = ({ initialData, onSubmit, onCancel }: LeadFormProps) => {
+export const LeadForm = ({
+  initialData,
+  onSubmit,
+  onCancel,
+}: LeadFormProps) => {
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<CreateLeadRequest>({
     defaultValues: {
-      firstName: '',
-      lastName: '',
+      firstName: "",
+      lastName: "",
       source: LeadSource.Website,
       priority: LeadPriority.Medium,
       ...initialData,
@@ -47,7 +52,9 @@ export const LeadForm = ({ initialData, onSubmit, onCancel }: LeadFormProps) => 
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
       {/* Contact Information */}
       <div>
-        <h3 className="text-lg font-medium text-gray-900 mb-4">Contact Information</h3>
+        <h3 className="text-lg font-medium text-gray-900 mb-4">
+          Contact Information
+        </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* First Name */}
           <div>
@@ -56,11 +63,13 @@ export const LeadForm = ({ initialData, onSubmit, onCancel }: LeadFormProps) => 
             </label>
             <input
               type="text"
-              {...register('firstName', { required: 'First name is required' })}
+              {...register("firstName", { required: "First name is required" })}
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
             />
             {errors.firstName && (
-              <p className="mt-1 text-sm text-red-600">{errors.firstName.message}</p>
+              <p className="mt-1 text-sm text-red-600">
+                {errors.firstName.message}
+              </p>
             )}
           </div>
 
@@ -71,48 +80,58 @@ export const LeadForm = ({ initialData, onSubmit, onCancel }: LeadFormProps) => 
             </label>
             <input
               type="text"
-              {...register('lastName', { required: 'Last name is required' })}
+              {...register("lastName", { required: "Last name is required" })}
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
             />
             {errors.lastName && (
-              <p className="mt-1 text-sm text-red-600">{errors.lastName.message}</p>
+              <p className="mt-1 text-sm text-red-600">
+                {errors.lastName.message}
+              </p>
             )}
           </div>
 
           {/* Email */}
           <div>
-            <label className="block text-sm font-medium text-gray-700">Email</label>
+            <label className="block text-sm font-medium text-gray-700">
+              Email
+            </label>
             <input
               type="email"
-              {...register('email', {
+              {...register("email", {
                 pattern: {
                   value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                  message: 'Invalid email address',
+                  message: "Invalid email address",
                 },
               })}
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
             />
             {errors.email && (
-              <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
+              <p className="mt-1 text-sm text-red-600">
+                {errors.email.message}
+              </p>
             )}
           </div>
 
           {/* Phone */}
           <div>
-            <label className="block text-sm font-medium text-gray-700">Phone Number</label>
+            <label className="block text-sm font-medium text-gray-700">
+              Phone Number
+            </label>
             <input
               type="tel"
-              {...register('phoneNumber')}
+              {...register("phoneNumber")}
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
             />
           </div>
 
           {/* Mobile */}
           <div>
-            <label className="block text-sm font-medium text-gray-700">Mobile Number</label>
+            <label className="block text-sm font-medium text-gray-700">
+              Mobile Number
+            </label>
             <input
               type="tel"
-              {...register('mobileNumber')}
+              {...register("mobileNumber")}
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
             />
           </div>
@@ -121,21 +140,27 @@ export const LeadForm = ({ initialData, onSubmit, onCancel }: LeadFormProps) => 
 
       {/* Company Information (optional) */}
       <div>
-        <h3 className="text-lg font-medium text-gray-900 mb-4">Company Information (Optional)</h3>
+        <h3 className="text-lg font-medium text-gray-900 mb-4">
+          Company Information (Optional)
+        </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label className="block text-sm font-medium text-gray-700">Company Name</label>
+            <label className="block text-sm font-medium text-gray-700">
+              Company Name
+            </label>
             <input
               type="text"
-              {...register('companyName')}
+              {...register("companyName")}
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Job Title</label>
+            <label className="block text-sm font-medium text-gray-700">
+              Job Title
+            </label>
             <input
               type="text"
-              {...register('jobTitle')}
+              {...register("jobTitle")}
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
             />
           </div>
@@ -152,7 +177,7 @@ export const LeadForm = ({ initialData, onSubmit, onCancel }: LeadFormProps) => 
               Lead Source <span className="text-red-500">*</span>
             </label>
             <select
-              {...register('source', { required: 'Lead source is required' })}
+              {...register("source", { required: "Lead source is required" })}
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
             >
               {leadSources.map((source) => (
@@ -165,10 +190,12 @@ export const LeadForm = ({ initialData, onSubmit, onCancel }: LeadFormProps) => 
 
           {/* Source Details */}
           <div>
-            <label className="block text-sm font-medium text-gray-700">Source Details</label>
+            <label className="block text-sm font-medium text-gray-700">
+              Source Details
+            </label>
             <input
               type="text"
-              {...register('sourceDetails')}
+              {...register("sourceDetails")}
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
               placeholder="e.g., Google Ads, Facebook, Dr. Smith referral"
             />
@@ -176,9 +203,11 @@ export const LeadForm = ({ initialData, onSubmit, onCancel }: LeadFormProps) => 
 
           {/* Priority */}
           <div>
-            <label className="block text-sm font-medium text-gray-700">Priority</label>
+            <label className="block text-sm font-medium text-gray-700">
+              Priority
+            </label>
             <select
-              {...register('priority')}
+              {...register("priority")}
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
             >
               {priorities.map((priority) => (
@@ -191,10 +220,12 @@ export const LeadForm = ({ initialData, onSubmit, onCancel }: LeadFormProps) => 
 
           {/* Interested In */}
           <div>
-            <label className="block text-sm font-medium text-gray-700">Interested In</label>
+            <label className="block text-sm font-medium text-gray-700">
+              Interested In
+            </label>
             <input
               type="text"
-              {...register('interestedIn')}
+              {...register("interestedIn")}
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
               placeholder="e.g., Hearing aids, Hearing test, Consultation"
             />
@@ -202,11 +233,13 @@ export const LeadForm = ({ initialData, onSubmit, onCancel }: LeadFormProps) => 
 
           {/* Estimated Value */}
           <div>
-            <label className="block text-sm font-medium text-gray-700">Estimated Value (AED)</label>
+            <label className="block text-sm font-medium text-gray-700">
+              Estimated Value (AED)
+            </label>
             <input
               type="number"
               step="0.01"
-              {...register('estimatedValue', { valueAsNumber: true })}
+              {...register("estimatedValue", { valueAsNumber: true })}
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
               placeholder="0.00"
             />
@@ -214,10 +247,12 @@ export const LeadForm = ({ initialData, onSubmit, onCancel }: LeadFormProps) => 
 
           {/* Tags */}
           <div>
-            <label className="block text-sm font-medium text-gray-700">Tags</label>
+            <label className="block text-sm font-medium text-gray-700">
+              Tags
+            </label>
             <input
               type="text"
-              {...register('tags')}
+              {...register("tags")}
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
               placeholder="Comma-separated tags"
             />
@@ -230,18 +265,22 @@ export const LeadForm = ({ initialData, onSubmit, onCancel }: LeadFormProps) => 
         <h3 className="text-lg font-medium text-gray-900 mb-4">Follow-up</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label className="block text-sm font-medium text-gray-700">Next Follow-up Date</label>
+            <label className="block text-sm font-medium text-gray-700">
+              Next Follow-up Date
+            </label>
             <input
               type="date"
-              {...register('nextFollowUpDate')}
+              {...register("nextFollowUpDate")}
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Follow-up Notes</label>
+            <label className="block text-sm font-medium text-gray-700">
+              Follow-up Notes
+            </label>
             <input
               type="text"
-              {...register('nextFollowUpNotes')}
+              {...register("nextFollowUpNotes")}
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
               placeholder="What to discuss in follow-up"
             />
@@ -253,7 +292,7 @@ export const LeadForm = ({ initialData, onSubmit, onCancel }: LeadFormProps) => 
       <div>
         <label className="block text-sm font-medium text-gray-700">Notes</label>
         <textarea
-          {...register('notes')}
+          {...register("notes")}
           rows={3}
           className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
           placeholder="Additional notes about this lead"
@@ -274,7 +313,7 @@ export const LeadForm = ({ initialData, onSubmit, onCancel }: LeadFormProps) => 
           disabled={isSubmitting}
           className="px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 disabled:opacity-50"
         >
-          {isSubmitting ? 'Creating...' : 'Create Lead'}
+          {isSubmitting ? "Creating..." : "Create Lead"}
         </button>
       </div>
     </form>
