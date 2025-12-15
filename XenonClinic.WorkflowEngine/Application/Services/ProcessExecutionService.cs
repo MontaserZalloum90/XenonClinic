@@ -1357,27 +1357,27 @@ public class ProcessExecutionService : IProcessExecutionService
             BusinessKey = instance.BusinessKey,
             StartedAt = instance.StartedAt,
             CompletedAt = instance.CompletedAt,
-            StartedBy = instance.StartedBy,
+            StartedBy = instance.InitiatorUserId,
             ParentInstanceId = instance.ParentInstanceId,
-            ParentActivityInstanceId = instance.ParentActivityInstanceId,
-            ErrorMessage = instance.ErrorMessage,
+            ParentActivityInstanceId = instance.ParentActivityId,
+            ErrorMessage = instance.ErrorJson,
             ActiveActivityIds = JsonSerializer.Deserialize<List<string>>(instance.ActiveActivityIdsJson) ?? new(),
             Variables = instance.Variables.ToDictionary(v => v.Name, v => GetVariableValue(v)),
             ActivityInstances = instance.ActivityInstances.Select(ai => new ActivityInstanceDto
             {
-                Id = ai.Id,
-                ActivityId = ai.ActivityId,
+                Id = ai.Id.ToString(),
+                ActivityId = ai.ActivityDefinitionId,
                 ActivityName = ai.ActivityName,
                 ActivityType = ai.ActivityType,
                 Status = ai.Status,
-                StartedAt = ai.StartedAt,
+                StartedAt = ai.StartedAt ?? DateTime.MinValue,
                 CompletedAt = ai.CompletedAt,
                 ErrorMessage = ai.ErrorMessage,
-                RetryCount = ai.RetryCount
+                RetryCount = ai.ExecutionCount
             }).ToList(),
             ActiveTasks = activeTasks.Select(t => new HumanTaskSummaryDto
             {
-                Id = t.Id,
+                Id = t.Id.ToString(),
                 Name = t.Name,
                 Status = t.Status,
                 AssigneeUserId = t.AssigneeUserId,

@@ -558,7 +558,7 @@ public class MonitoringService : IMonitoringService
                 Severity = "medium",
                 Message = j.ErrorMessage ?? "Job failed",
                 ProcessInstanceId = j.ProcessInstanceId,
-                ActivityInstanceId = j.ActivityInstanceId?.ToString(),
+                ActivityInstanceId = j.ActivityInstanceId.HasValue ? j.ActivityInstanceId.Value.ToString() : null,
                 OccurredAt = j.CompletedAt ?? DateTime.UtcNow,
                 IsResolved = false
             })
