@@ -9,6 +9,7 @@ using XenonClinic.Core.DTOs;
 using XenonClinic.Core.Entities;
 using XenonClinic.Core.Interfaces;
 using XenonClinic.Infrastructure.Data;
+using XenonClinic.Infrastructure.Entities;
 
 namespace XenonClinic.Infrastructure.Services;
 
@@ -1697,7 +1698,7 @@ public class CalendarConnection
     public string? LastSyncStatus { get; set; }
     public int? LastSyncEventCount { get; set; }
 
-    public User? User { get; set; }
+    public ApplicationUser? User { get; set; }
 }
 
 public class CalendarSyncSettings
@@ -1718,7 +1719,7 @@ public class CalendarSyncSettings
     public int SyncWindowDaysFuture { get; set; } = 90;
     public DateTime? UpdatedAt { get; set; }
 
-    public User? User { get; set; }
+    public ApplicationUser? User { get; set; }
 }
 
 public class AppointmentCalendarMapping

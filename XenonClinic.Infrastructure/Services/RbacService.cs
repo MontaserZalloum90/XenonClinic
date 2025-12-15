@@ -36,10 +36,17 @@ public class RbacService : IRbacService
     /// BUG FIX: Added AsNoTracking() and reasonable limit to prevent memory exhaustion.
     /// Permissions are typically a finite set, but we still cap at 500 for safety.
     /// </summary>
-    public async Task<List<PermissionDto>> GetAllPermissionsAsync()
+    public async Task<List<PermissionDto>> GetAllPermissionsAsync(string? category = null)
     {
-        var permissions = await _context.Set<Permission>()
-            .AsNoTracking()
+        var query = _context.Set<Permission>()
+            .AsNoTracking();
+
+        if (!string.IsNullOrEmpty(category))
+        {
+            query = query.Where(p => p.Category == category);
+        }
+
+        var permissions = await query
             .OrderBy(p => p.Category)
             .ThenBy(p => p.Name)
             .Take(500) // BUG FIX: Limit to prevent unbounded query
@@ -179,7 +186,7 @@ public class RbacService : IRbacService
         return role != null ? MapToDto(role, 0) : null;
     }
 
-    public async Task<RoleDto> CreateRoleAsync(SaveRoleDto request, int createdByUserId)
+    public async Task<RoleDto> CreateRoleAsync(SaveRoleDto request)
     {
         var role = new Role
         {
@@ -188,8 +195,7 @@ public class RbacService : IRbacService
             RoleType = request.RoleType,
             IsSystemRole = false,
             IsActive = true,
-            CreatedAt = DateTime.UtcNow,
-            CreatedByUserId = createdByUserId
+            CreatedAt = DateTime.UtcNow
         };
 
         _context.Set<Role>().Add(role);
@@ -202,38 +208,34 @@ public class RbacService : IRbacService
             await _context.SaveChangesAsync();
         }
 
-        await _auditService.LogDataChangeAsync(createdByUserId, "Role", role.Id.ToString(), "CREATE", null, role);
         await ClearAllCachesAsync();
-        
+
         return (await GetRoleByIdAsync(role.Id))!;
     }
 
-    public async Task<RoleDto> UpdateRoleAsync(int roleId, SaveRoleDto request, int updatedByUserId)
+    public async Task<RoleDto?> UpdateRoleAsync(int roleId, SaveRoleDto request)
     {
         var role = await _context.Set<Role>().Include(r => r.RolePermissions).FirstOrDefaultAsync(r => r.Id == roleId);
-        if (role == null) throw new InvalidOperationException("Role not found");
+        if (role == null) return null;
         if (role.IsSystemRole) throw new InvalidOperationException("Cannot modify system roles");
 
-        var oldRole = JsonSerializer.Serialize(role);
         role.Name = request.Name;
         role.Description = request.Description;
         role.RoleType = request.RoleType;
         role.UpdatedAt = DateTime.UtcNow;
-        role.UpdatedByUserId = updatedByUserId;
 
         // Update permissions
         _context.Set<RolePermission>().RemoveRange(role.RolePermissions);
         var newPermissions = request.PermissionIds.Select(pid => new RolePermission { RoleId = role.Id, PermissionId = pid }).ToList();
         _context.Set<RolePermission>().AddRange(newPermissions);
-        
+
         await _context.SaveChangesAsync();
-        await _auditService.LogDataChangeAsync(updatedByUserId, "Role", role.Id.ToString(), "UPDATE", oldRole, role);
         await ClearAllCachesAsync();
 
-        return (await GetRoleByIdAsync(role.Id))!;
+        return await GetRoleByIdAsync(role.Id);
     }
 
-    public async Task<bool> DeleteRoleAsync(int roleId, int deletedByUserId)
+    public async Task<bool> DeleteRoleAsync(int roleId)
     {
         var role = await _context.Set<Role>().FindAsync(roleId);
         if (role == null) return false;
@@ -244,9 +246,8 @@ public class RbacService : IRbacService
 
         _context.Set<Role>().Remove(role);
         await _context.SaveChangesAsync();
-        await _auditService.LogDataChangeAsync(deletedByUserId, "Role", roleId.ToString(), "DELETE", role, null);
         await ClearAllCachesAsync();
-        
+
         return true;
     }
 
@@ -330,14 +331,14 @@ public class RbacService : IRbacService
         return result;
     }
 
-    public async Task<bool> AssignRolesToUserAsync(AssignRolesDto request, int assignedByUserId)
+    public async Task AssignRolesToUserAsync(AssignRolesDto request)
     {
         // Remove existing roles
         var existing = await _context.Set<UserRole>().Where(ur => ur.UserId == request.UserId).ToListAsync();
         _context.Set<UserRole>().RemoveRange(existing);
 
         // Add new roles
-        var newRoles = request.RoleIds.Select(rid => new UserRole { UserId = request.UserId, RoleId = rid, AssignedAt = DateTime.UtcNow, AssignedByUserId = assignedByUserId }).ToList();
+        var newRoles = request.RoleIds.Select(rid => new UserRole { UserId = request.UserId, RoleId = rid, AssignedAt = DateTime.UtcNow }).ToList();
         _context.Set<UserRole>().AddRange(newRoles);
 
         // Handle direct permissions if provided
@@ -346,15 +347,12 @@ public class RbacService : IRbacService
             var existingPerms = await _context.Set<UserPermission>().Where(up => up.UserId == request.UserId).ToListAsync();
             _context.Set<UserPermission>().RemoveRange(existingPerms);
 
-            var newPerms = request.DirectPermissionIds.Select(pid => new UserPermission { UserId = request.UserId, PermissionId = pid, GrantedAt = DateTime.UtcNow, GrantedByUserId = assignedByUserId }).ToList();
+            var newPerms = request.DirectPermissionIds.Select(pid => new UserPermission { UserId = request.UserId, PermissionId = pid, GrantedAt = DateTime.UtcNow }).ToList();
             _context.Set<UserPermission>().AddRange(newPerms);
         }
 
         await _context.SaveChangesAsync();
-        await _auditService.LogAsync(new AuditLogEntry { EventType = AuditEventTypes.RoleAssigned, EventCategory = AuditEventCategories.Authorization, Action = "ASSIGN_ROLES", ResourceType = "User", ResourceId = request.UserId.ToString(), UserId = assignedByUserId, NewValues = new { RoleIds = request.RoleIds }, IsSuccess = true });
         await ClearUserCacheAsync(request.UserId);
-        
-        return true;
     }
 
     public async Task<bool> RemoveRoleFromUserAsync(int userId, int roleId, int removedByUserId)
@@ -488,7 +486,7 @@ public class RbacService : IRbacService
         };
     }
 
-    public async Task<List<string>> GetEffectivePermissionsAsync(int userId)
+    public async Task<List<string>> GetUserEffectivePermissionsAsync(int userId)
     {
         var userRoles = await GetUserRolesAsync(userId);
         return userRoles.EffectivePermissions;
@@ -604,10 +602,11 @@ public class RbacService : IRbacService
         return matrix;
     }
 
-    public async Task<bool> BulkUpdatePermissionsAsync(BulkPermissionUpdateDto request, int updatedByUserId)
+    public async Task BulkUpdateRolePermissionsAsync(BulkPermissionUpdateDto request)
     {
         var role = await _context.Set<Role>().Include(r => r.RolePermissions).FirstOrDefaultAsync(r => r.Id == request.RoleId);
-        if (role == null || role.IsSystemRole) return false;
+        if (role == null || role.IsSystemRole)
+            throw new InvalidOperationException("Role not found or is a system role");
 
         // Remove specified permissions
         var toRemove = role.RolePermissions.Where(rp => request.RemovePermissionIds.Contains(rp.PermissionId)).ToList();
@@ -620,7 +619,6 @@ public class RbacService : IRbacService
 
         await _context.SaveChangesAsync();
         await ClearAllCachesAsync();
-        return true;
     }
 
     #endregion
