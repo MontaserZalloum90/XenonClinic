@@ -28,6 +28,28 @@ public class Patient : ISoftDelete, IBranchEntity
     public string EmiratesId { get; set; } = string.Empty;
     public string FullNameEn { get; set; } = string.Empty;
     public string? FullNameAr { get; set; }
+
+    /// <summary>
+    /// First name derived from FullNameEn (first word).
+    /// NotMapped - computed property for service compatibility.
+    /// </summary>
+    [System.ComponentModel.DataAnnotations.Schema.NotMapped]
+    public string FirstName => FullNameEn?.Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() ?? string.Empty;
+
+    /// <summary>
+    /// Last name derived from FullNameEn (remaining words after first).
+    /// NotMapped - computed property for service compatibility.
+    /// </summary>
+    [System.ComponentModel.DataAnnotations.Schema.NotMapped]
+    public string LastName
+    {
+        get
+        {
+            var parts = FullNameEn?.Split(' ', StringSplitOptions.RemoveEmptyEntries) ?? Array.Empty<string>();
+            return parts.Length > 1 ? string.Join(" ", parts.Skip(1)) : string.Empty;
+        }
+    }
+
     public DateTime DateOfBirth { get; set; }
     public string Gender { get; set; } = "M";
     public string? PhoneNumber { get; set; }

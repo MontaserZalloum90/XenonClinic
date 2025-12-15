@@ -42,6 +42,22 @@ public class LabOrder : IBranchEntity
 
     public DateTime? CompletedDate { get; set; }
 
+    // Workflow tracking properties
+    public DateTime? ReceivedDate { get; set; }
+
+    [MaxLength(450)]
+    public string? ReceivedBy { get; set; }
+
+    public DateTime? PerformedDate { get; set; }
+
+    [MaxLength(450)]
+    public string? PerformedBy { get; set; }
+
+    public DateTime? ApprovedDate { get; set; }
+
+    [MaxLength(450)]
+    public string? ApprovedBy { get; set; }
+
     [Required]
     public decimal TotalAmount { get; set; }
 
