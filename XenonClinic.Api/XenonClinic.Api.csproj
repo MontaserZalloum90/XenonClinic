@@ -14,6 +14,5 @@
   <ItemGroup>
     <ProjectReference Include="../XenonClinic.Core/XenonClinic.Core.csproj" />
     <ProjectReference Include="../XenonClinic.Infrastructure/XenonClinic.Infrastructure.csproj" />
-    <ProjectReference Include="../XenonClinic.WorkflowEngine/XenonClinic.WorkflowEngine.csproj" />
   </ItemGroup>
 </Project>
