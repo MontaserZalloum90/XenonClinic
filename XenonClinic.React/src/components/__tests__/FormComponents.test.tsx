@@ -259,7 +259,8 @@ describe('PatientForm Component Tests', () => {
 
     it('renders gender select', () => {
       render(<MockPatientForm />);
-      expect(screen.getByRole('combobox', { name: '' })).toBeInTheDocument();
+      const genderSelect = screen.getByDisplayValue('Select Gender');
+      expect(genderSelect).toBeInTheDocument();
     });
 
     it('renders blood type select', () => {
@@ -1037,7 +1038,8 @@ describe('InvoiceForm Component Tests', () => {
 
     it('calculates correct total for multiple items', () => {
       render(<MockInvoiceForm items={mockItems} />);
-      expect(screen.getByText('200.00')).toBeInTheDocument(); // 1 * 200
+      const totals200 = screen.getAllByText('200.00'); // 1 * 200 and 2 * 100
+      expect(totals200).toHaveLength(2);
       expect(screen.getByText('150.00')).toBeInTheDocument(); // 1 * 150
     });
   });
