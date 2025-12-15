@@ -60,9 +60,9 @@ public class ProcessMigrationService : IProcessMigrationService
             Name = request.Name,
             Description = request.Description,
             SourceProcessDefinitionId = request.SourceProcessDefinitionId,
-            SourceVersion = sourceDefinition.Version,
+            SourceVersion = sourceDefinition.LatestVersion,
             TargetProcessDefinitionId = request.TargetProcessDefinitionId,
-            TargetVersion = targetDefinition.Version,
+            TargetVersion = targetDefinition.LatestVersion,
             ActivityMappings = request.ActivityMappings ?? new List<ActivityMapping>(),
             VariableMappings = request.VariableMappings ?? new List<VariableMapping>(),
             Instructions = request.Instructions ?? new List<MigrationInstruction>(),
@@ -79,8 +79,8 @@ public class ProcessMigrationService : IProcessMigrationService
         _migrationPlans[plan.Id] = plan;
 
         _logger.LogInformation("Created migration plan {PlanId} from {SourceId} v{SourceVersion} to {TargetId} v{TargetVersion}",
-            plan.Id, request.SourceProcessDefinitionId, sourceDefinition.Version,
-            request.TargetProcessDefinitionId, targetDefinition.Version);
+            plan.Id, request.SourceProcessDefinitionId, sourceDefinition.LatestVersion,
+            request.TargetProcessDefinitionId, targetDefinition.LatestVersion);
 
         return plan;
     }
@@ -115,8 +115,8 @@ public class ProcessMigrationService : IProcessMigrationService
         }
 
         // Validate activity mappings
-        var sourceActivities = (sourceDefinition.Model?.Activities?.Keys ?? Enumerable.Empty<string>()).ToHashSet();
-        var targetActivities = (targetDefinition.Model?.Activities?.Keys ?? Enumerable.Empty<string>()).ToHashSet();
+        var sourceActivities = (sourceDefinition.LatestVersionDetail?.Model?.Activities?.Keys ?? Enumerable.Empty<string>()).ToHashSet();
+        var targetActivities = (targetDefinition.LatestVersionDetail?.Model?.Activities?.Keys ?? Enumerable.Empty<string>()).ToHashSet();
 
         foreach (var mapping in plan.ActivityMappings)
         {
@@ -418,7 +418,7 @@ public class ProcessMigrationService : IProcessMigrationService
 
         // Get all active instances for the source definition
         // TODO: QueryInstancesAsync method signature needs to be verified
-        var instances = new PagedResult<ProcessInstanceSummary> { Items = new List<ProcessInstanceSummary>(), TotalCount = 0 };
+        var instances = new PagedResultDto<ProcessInstanceSummary> { Items = new List<ProcessInstanceSummary>(), TotalCount = 0, PageNumber = 1, PageSize = 100 };
 
         var sourceDefinition = await _definitionService.GetByIdAsync(sourceDefinitionId, tenantId, cancellationToken);
         var targetDefinition = await _definitionService.GetByIdAsync(targetDefinitionId, tenantId, cancellationToken);
@@ -498,8 +498,8 @@ public class ProcessMigrationService : IProcessMigrationService
             return new List<ActivityMapping>();
         }
 
-        var sourceActivities = sourceDefinition.Model?.Activities ?? new Dictionary<string, ActivityDefinition>();
-        var targetActivities = targetDefinition.Model?.Activities ?? new Dictionary<string, ActivityDefinition>();
+        var sourceActivities = sourceDefinition.LatestVersionDetail?.Model?.Activities ?? new Dictionary<string, ActivityDefinition>();
+        var targetActivities = targetDefinition.LatestVersionDetail?.Model?.Activities ?? new Dictionary<string, ActivityDefinition>();
 
         var mappings = new List<ActivityMapping>();
 
@@ -657,7 +657,9 @@ public class ProcessMigrationService : IProcessMigrationService
             }
 
             // Get current instance state for rollback
-            var currentState = await _executionService.GetInstanceAsync(instance.InstanceId, cancellationToken);
+            var tenantId = 1; // TODO: get from context
+            var instanceGuid = Guid.TryParse(instance.InstanceId, out var guid) ? guid : Guid.Empty;
+            var currentState = await _executionService.GetInstanceAsync(instanceGuid, tenantId, cancellationToken);
             if (currentState == null)
             {
                 throw new InvalidOperationException($"Instance '{instance.InstanceId}' not found");
@@ -698,8 +700,9 @@ public class ProcessMigrationService : IProcessMigrationService
                 }
 
                 // Log audit event
-                await _auditService.LogAsync(new AuditLogRequest
+                await _auditService.LogAsync(new AuditEventDto
                 {
+                    Id = Guid.NewGuid().ToString(),
                     TenantId = currentState.TenantId,
                     EventType = "ProcessInstance.Migrated",
                     EntityType = "ProcessInstance",
