@@ -39,13 +39,13 @@ public class ProcessMigrationService : IProcessMigrationService
     public async Task<MigrationPlan> CreateMigrationPlanAsync(CreateMigrationPlanRequest request, CancellationToken cancellationToken = default)
     {
         // Validate source and target definitions exist
-        var sourceDefinition = await _definitionService.GetByIdAsync(request.SourceProcessDefinitionId, cancellationToken);
+        var sourceDefinition = await _definitionService.GetByIdAsync(request.SourceProcessDefinitionId, request.TenantId, cancellationToken);
         if (sourceDefinition == null)
         {
             throw new InvalidOperationException($"Source process definition '{request.SourceProcessDefinitionId}' not found");
         }
 
-        var targetDefinition = await _definitionService.GetByIdAsync(request.TargetProcessDefinitionId, cancellationToken);
+        var targetDefinition = await _definitionService.GetByIdAsync(request.TargetProcessDefinitionId, request.TenantId, cancellationToken);
         if (targetDefinition == null)
         {
             throw new InvalidOperationException($"Target process definition '{request.TargetProcessDefinitionId}' not found");
@@ -54,6 +54,7 @@ public class ProcessMigrationService : IProcessMigrationService
         var plan = new MigrationPlan
         {
             Id = Guid.NewGuid().ToString(),
+            TenantId = request.TenantId,
             Name = request.Name,
             Description = request.Description,
             SourceProcessDefinitionId = request.SourceProcessDefinitionId,
@@ -96,8 +97,8 @@ public class ProcessMigrationService : IProcessMigrationService
         };
 
         // Get source and target definitions
-        var sourceDefinition = await _definitionService.GetByIdAsync(plan.SourceProcessDefinitionId, cancellationToken);
-        var targetDefinition = await _definitionService.GetByIdAsync(plan.TargetProcessDefinitionId, cancellationToken);
+        var sourceDefinition = await _definitionService.GetByIdAsync(plan.SourceProcessDefinitionId, plan.TenantId, cancellationToken);
+        var targetDefinition = await _definitionService.GetByIdAsync(plan.TargetProcessDefinitionId, plan.TenantId, cancellationToken);
 
         if (sourceDefinition == null || targetDefinition == null)
         {
@@ -139,7 +140,7 @@ public class ProcessMigrationService : IProcessMigrationService
 
         // Check for unmapped activities that have instances
         var migratableInstances = await GetMigratableInstancesAsync(
-            plan.SourceProcessDefinitionId, plan.TargetProcessDefinitionId, cancellationToken);
+            plan.SourceProcessDefinitionId, plan.TargetProcessDefinitionId, plan.TenantId, cancellationToken);
 
         var mappedSourceActivities = plan.ActivityMappings.Select(m => m.SourceActivityId).ToHashSet();
         var instanceActivities = migratableInstances.Select(i => i.CurrentActivityId).Distinct();
@@ -221,7 +222,7 @@ public class ProcessMigrationService : IProcessMigrationService
 
         // Get instances to migrate
         var allInstances = await GetMigratableInstancesAsync(
-            plan.SourceProcessDefinitionId, plan.TargetProcessDefinitionId, cancellationToken);
+            plan.SourceProcessDefinitionId, plan.TargetProcessDefinitionId, plan.TenantId, cancellationToken);
 
         var instancesToMigrate = allInstances.Where(i => i.CanMigrate).ToList();
 
@@ -408,7 +409,7 @@ public class ProcessMigrationService : IProcessMigrationService
         return rollbackExecution;
     }
 
-    public async Task<IList<MigratableInstance>> GetMigratableInstancesAsync(string sourceDefinitionId, string targetDefinitionId, CancellationToken cancellationToken = default)
+    public async Task<IList<MigratableInstance>> GetMigratableInstancesAsync(string sourceDefinitionId, string targetDefinitionId, int tenantId, CancellationToken cancellationToken = default)
     {
         // Get all active instances for the source definition
         var instances = await _executionService.QueryInstancesAsync(new ProcessInstanceQuery
@@ -417,8 +418,8 @@ public class ProcessMigrationService : IProcessMigrationService
             Statuses = new List<string> { "Running", "Suspended" }
         }, cancellationToken);
 
-        var sourceDefinition = await _definitionService.GetByIdAsync(sourceDefinitionId, cancellationToken);
-        var targetDefinition = await _definitionService.GetByIdAsync(targetDefinitionId, cancellationToken);
+        var sourceDefinition = await _definitionService.GetByIdAsync(sourceDefinitionId, tenantId, cancellationToken);
+        var targetDefinition = await _definitionService.GetByIdAsync(targetDefinitionId, tenantId, cancellationToken);
 
         var targetActivities = (targetDefinition?.Model?.Activities?.Keys ?? Enumerable.Empty<string>()).ToHashSet();
 
@@ -484,10 +485,11 @@ public class ProcessMigrationService : IProcessMigrationService
     public async Task<IList<ActivityMapping>> GenerateActivityMappingsAsync(
         string sourceDefinitionId,
         string targetDefinitionId,
+        int tenantId,
         CancellationToken cancellationToken = default)
     {
-        var sourceDefinition = await _definitionService.GetByIdAsync(sourceDefinitionId, cancellationToken);
-        var targetDefinition = await _definitionService.GetByIdAsync(targetDefinitionId, cancellationToken);
+        var sourceDefinition = await _definitionService.GetByIdAsync(sourceDefinitionId, tenantId, cancellationToken);
+        var targetDefinition = await _definitionService.GetByIdAsync(targetDefinitionId, tenantId, cancellationToken);
 
         if (sourceDefinition == null || targetDefinition == null)
         {

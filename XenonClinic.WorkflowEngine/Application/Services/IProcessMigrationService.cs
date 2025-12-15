@@ -43,7 +43,7 @@ public interface IProcessMigrationService
     /// <summary>
     /// Gets instances that can be migrated between versions.
     /// </summary>
-    Task<IList<MigratableInstance>> GetMigratableInstancesAsync(string sourceDefinitionId, string targetDefinitionId, CancellationToken cancellationToken = default);
+    Task<IList<MigratableInstance>> GetMigratableInstancesAsync(string sourceDefinitionId, string targetDefinitionId, int tenantId, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Gets migration history for a process instance.
@@ -58,7 +58,7 @@ public interface IProcessMigrationService
     /// <summary>
     /// Generates activity mappings automatically between source and target definitions.
     /// </summary>
-    Task<IList<ActivityMapping>> GenerateActivityMappingsAsync(string sourceDefinitionId, string targetDefinitionId, CancellationToken cancellationToken = default);
+    Task<IList<ActivityMapping>> GenerateActivityMappingsAsync(string sourceDefinitionId, string targetDefinitionId, int tenantId, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Lists migration plans.
@@ -86,6 +86,7 @@ public interface IProcessMigrationService
 public class MigrationPlan
 {
     public string Id { get; set; } = Guid.NewGuid().ToString();
+    public int TenantId { get; set; }
     public string Name { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
 
@@ -174,6 +175,7 @@ public class MigrationOptions
 
 public class CreateMigrationPlanRequest
 {
+    public int TenantId { get; set; }
     public string Name { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
     public string SourceProcessDefinitionId { get; set; } = string.Empty;

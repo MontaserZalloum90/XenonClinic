@@ -94,15 +94,18 @@ public class BpmnService : IBpmnService
             var processModel = await ParseAsync(bpmnXml, cancellationToken);
 
             // Create process definition
-            var definition = await _processDefinitionService.CreateAsync(new CreateProcessDefinitionRequest
-            {
-                TenantId = request.TenantId,
-                Key = processModel.ProcessDefinitionKey,
-                Name = processModel.Name,
-                Description = processModel.Documentation,
-                Model = processModel,
-                Metadata = request.Metadata
-            }, cancellationToken);
+            var definition = await _processDefinitionService.CreateAsync(
+                request.TenantId,
+                new CreateProcessDefinitionRequest
+                {
+                    Key = processModel.ProcessDefinitionKey,
+                    Name = processModel.Name,
+                    Description = processModel.Documentation,
+                    Model = processModel,
+                    Metadata = request.Metadata
+                },
+                request.UserId,
+                cancellationToken);
 
             if (request.DeployImmediately)
             {
@@ -132,14 +135,14 @@ public class BpmnService : IBpmnService
         return result;
     }
 
-    public async Task<BpmnExportResult> ExportAsync(string processDefinitionId, BpmnExportOptions? options = null, CancellationToken cancellationToken = default)
+    public async Task<BpmnExportResult> ExportAsync(string processDefinitionId, int tenantId, BpmnExportOptions? options = null, CancellationToken cancellationToken = default)
     {
         options ??= new BpmnExportOptions();
         var result = new BpmnExportResult();
 
         try
         {
-            var definition = await _processDefinitionService.GetByIdAsync(processDefinitionId, cancellationToken);
+            var definition = await _processDefinitionService.GetByIdAsync(processDefinitionId, tenantId, cancellationToken);
             if (definition == null)
             {
                 result.ErrorMessage = $"Process definition {processDefinitionId} not found";
@@ -266,7 +269,7 @@ public class BpmnService : IBpmnService
         foreach (var flowElement in processElement.Elements().Where(e => e.Name.LocalName == "sequenceFlow"))
         {
             var flow = ParseSequenceFlow(flowElement);
-            model.SequenceFlows[flow.Id] = flow;
+            model.SequenceFlows.Add(flow);
         }
 
         _logger.LogDebug("Parsed BPMN with {ActivityCount} activities and {FlowCount} flows",

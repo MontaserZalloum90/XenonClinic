@@ -70,9 +70,11 @@ public class MigrationsController : ControllerBase
         [FromBody] GenerateMappingsRequest request,
         CancellationToken cancellationToken)
     {
+        var tenantId = GetTenantId();
         var mappings = await _migrationService.GenerateActivityMappingsAsync(
             request.SourceDefinitionId,
             request.TargetDefinitionId,
+            tenantId,
             cancellationToken);
         return Ok(mappings);
     }
@@ -164,6 +166,24 @@ public class MigrationsController : ControllerBase
     {
         await _migrationService.DeleteMigrationPlanAsync(planId, cancellationToken);
         return NoContent();
+    }
+
+    private int GetTenantId()
+    {
+        // In production, extract from claims or tenant resolver
+        var claim = User.FindFirst("tenant_id");
+        if (claim != null && int.TryParse(claim.Value, out var tenantId))
+        {
+            return tenantId;
+        }
+        return 1; // Default tenant for development
+    }
+
+    private string GetUserId()
+    {
+        return User.FindFirst("sub")?.Value
+            ?? User.FindFirst("user_id")?.Value
+            ?? "system";
     }
 }
 

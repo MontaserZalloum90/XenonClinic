@@ -19,7 +19,7 @@ public interface IBpmnService
     /// <summary>
     /// Exports a process definition to BPMN 2.0 XML format.
     /// </summary>
-    Task<BpmnExportResult> ExportAsync(string processDefinitionId, BpmnExportOptions? options = null, CancellationToken cancellationToken = default);
+    Task<BpmnExportResult> ExportAsync(string processDefinitionId, int tenantId, BpmnExportOptions? options = null, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Validates BPMN 2.0 XML without importing.
@@ -51,7 +51,8 @@ public interface IBpmnService
 
 public class BpmnImportRequest
 {
-    public string TenantId { get; set; } = string.Empty;
+    public int TenantId { get; set; }
+    public string UserId { get; set; } = string.Empty;
     public string BpmnXml { get; set; } = string.Empty;
     public byte[]? BpmnFile { get; set; }
     public string? FileName { get; set; }

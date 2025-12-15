@@ -31,6 +31,16 @@ public class BpmnController : ControllerBase
         [FromBody] BpmnImportRequest request,
         CancellationToken cancellationToken)
     {
+        // Set tenant and user context if not provided
+        if (request.TenantId == 0)
+        {
+            request.TenantId = GetTenantId();
+        }
+        if (string.IsNullOrEmpty(request.UserId))
+        {
+            request.UserId = GetUserId();
+        }
+
         var result = await _bpmnService.ImportAsync(request, cancellationToken);
 
         if (!result.Success)
@@ -47,7 +57,7 @@ public class BpmnController : ControllerBase
     [HttpPost("import/file")]
     [Authorize(Policy = "ProcessDesigner")]
     public async Task<ActionResult<BpmnImportResult>> ImportFile(
-        [FromForm] string tenantId,
+        [FromForm] int? tenantId,
         [FromForm] bool deployImmediately,
         [FromForm] bool overwriteExisting,
         IFormFile file,
@@ -58,7 +68,8 @@ public class BpmnController : ControllerBase
 
         var request = new BpmnImportRequest
         {
-            TenantId = tenantId,
+            TenantId = tenantId ?? GetTenantId(),
+            UserId = GetUserId(),
             BpmnFile = memoryStream.ToArray(),
             FileName = file.FileName,
             DeployImmediately = deployImmediately,
@@ -85,13 +96,14 @@ public class BpmnController : ControllerBase
         [FromQuery] bool prettyPrint = true,
         CancellationToken cancellationToken = default)
     {
+        var tenantId = GetTenantId();
         var options = new BpmnExportOptions
         {
             IncludeDiagram = includeDiagram,
             PrettyPrint = prettyPrint
         };
 
-        var result = await _bpmnService.ExportAsync(processDefinitionId, options, cancellationToken);
+        var result = await _bpmnService.ExportAsync(processDefinitionId, tenantId, options, cancellationToken);
 
         if (!result.Success)
         {
@@ -110,13 +122,14 @@ public class BpmnController : ControllerBase
         [FromQuery] bool includeDiagram = true,
         CancellationToken cancellationToken = default)
     {
+        var tenantId = GetTenantId();
         var options = new BpmnExportOptions
         {
             IncludeDiagram = includeDiagram,
             PrettyPrint = true
         };
 
-        var result = await _bpmnService.ExportAsync(processDefinitionId, options, cancellationToken);
+        var result = await _bpmnService.ExportAsync(processDefinitionId, tenantId, options, cancellationToken);
 
         if (!result.Success || result.BpmnXml == null)
         {
@@ -204,6 +217,24 @@ public class BpmnController : ControllerBase
     {
         var xml = await _bpmnService.SerializeAsync(model, cancellationToken);
         return Ok(new { bpmnXml = xml });
+    }
+
+    private int GetTenantId()
+    {
+        // In production, extract from claims or tenant resolver
+        var claim = User.FindFirst("tenant_id");
+        if (claim != null && int.TryParse(claim.Value, out var tenantId))
+        {
+            return tenantId;
+        }
+        return 1; // Default tenant for development
+    }
+
+    private string GetUserId()
+    {
+        return User.FindFirst("sub")?.Value
+            ?? User.FindFirst("user_id")?.Value
+            ?? "system";
     }
 }
 
