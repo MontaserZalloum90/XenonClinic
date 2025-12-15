@@ -440,8 +440,7 @@ public class WorkflowsController : BaseApiController
             IsDraft = definition.IsDraft,
             Tags = definition.Tags?.ToList() ?? new List<string>(),
             CreatedAt = definition.CreatedAt,
-            UpdatedAt = definition.UpdatedAt,
-            CreatedBy = definition.CreatedBy
+            UpdatedAt = definition.ModifiedAt
         };
     }
 
@@ -458,8 +457,7 @@ public class WorkflowsController : BaseApiController
             IsDraft = definition.IsDraft,
             Tags = definition.Tags?.ToList() ?? new List<string>(),
             CreatedAt = definition.CreatedAt,
-            UpdatedAt = definition.UpdatedAt,
-            CreatedBy = definition.CreatedBy,
+            UpdatedAt = definition.ModifiedAt,
             TenantId = definition.TenantId,
             InputParameters = definition.InputParameters?.Select(p => new WorkflowParameterDto
             {
@@ -468,7 +466,7 @@ public class WorkflowsController : BaseApiController
                 Description = p.Description,
                 IsRequired = p.IsRequired,
                 DefaultValue = p.DefaultValue,
-                ValidationRule = p.ValidationRule
+                ValidationRule = p.Schema
             }).ToList() ?? new List<WorkflowParameterDto>(),
             OutputParameters = definition.OutputParameters?.Select(p => new WorkflowParameterDto
             {
@@ -482,14 +480,14 @@ public class WorkflowsController : BaseApiController
                 Name = v.Name,
                 Type = v.Type,
                 DefaultValue = v.DefaultValue,
-                Scope = v.Scope
+                Scope = v.Scope.ToString()
             }).ToList() ?? new List<WorkflowVariableDto>(),
             Triggers = definition.Triggers?.Select(t => new WorkflowTriggerDto
             {
                 Name = t.Name,
                 Type = t.Type.ToString(),
                 IsEnabled = t.IsEnabled,
-                Config = t.Config ?? new Dictionary<string, object?>()
+                Config = t.Configuration?.ToDictionary(k => k.Key, v => v.Value) ?? new Dictionary<string, object?>()
             }).ToList() ?? new List<WorkflowTriggerDto>()
         };
     }
@@ -530,9 +528,9 @@ public class WorkflowsController : BaseApiController
             TenantId = instance.TenantId,
             CurrentActivityId = instance.CurrentActivityId,
             CompletedActivityIds = instance.CompletedActivityIds?.ToList() ?? new List<string>(),
-            Input = instance.Input ?? new Dictionary<string, object?>(),
-            Output = instance.Output ?? new Dictionary<string, object?>(),
-            Variables = instance.Variables ?? new Dictionary<string, object?>(),
+            Input = instance.Input?.ToDictionary(k => k.Key, v => v.Value) ?? new Dictionary<string, object?>(),
+            Output = instance.Output?.ToDictionary(k => k.Key, v => v.Value) ?? new Dictionary<string, object?>(),
+            Variables = instance.Variables?.ToDictionary(k => k.Key, v => v.Value) ?? new Dictionary<string, object?>(),
             ScheduledStartTime = instance.ScheduledStartTime,
             FaultCount = instance.FaultCount,
             Error = instance.Error != null ? new WorkflowErrorDto
@@ -563,7 +561,7 @@ public class WorkflowsController : BaseApiController
         {
             InstanceId = result.InstanceId,
             Status = result.Status.ToString(),
-            Output = result.Output,
+            Output = result.Output?.ToDictionary(k => k.Key, v => v.Value),
             DurationMs = result.Duration.TotalMilliseconds,
             ActivitiesExecuted = result.ActivitiesExecuted,
             IsCompleted = result.IsCompleted,
@@ -594,7 +592,7 @@ public class WorkflowsController : BaseApiController
             RecordType = record.Type.ToString(),
             Timestamp = record.Timestamp,
             DurationMs = record.Duration?.TotalMilliseconds,
-            Output = record.Output,
+            Output = record.Output?.ToDictionary(k => k.Key, v => v.Value),
             Error = record.Error != null ? new WorkflowActivityErrorDto
             {
                 Code = record.Error.Code,
