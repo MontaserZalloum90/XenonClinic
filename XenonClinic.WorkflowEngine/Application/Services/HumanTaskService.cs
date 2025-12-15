@@ -485,7 +485,7 @@ public class HumanTaskService : IHumanTaskService
 
                         // Find and execute next activities
                         var outgoingFlows = model.SequenceFlows?
-                            .Where(f => f.SourceRef == activityInstance.ActivityId)
+                            .Where(f => f.SourceActivityId == activityInstance.ActivityId)
                             .ToList() ?? new();
 
                         // Determine which flow to take based on action
