@@ -23,7 +23,7 @@ public class CacheService : ICacheService
         _logger = logger;
     }
 
-    public Task<T?> GetAsync<T>(string key)
+    public Task<T?> GetAsync<T>(string key, CancellationToken cancellationToken = default)
     {
         if (_cache.TryGetValue(key, out T? value))
         {
@@ -35,7 +35,7 @@ public class CacheService : ICacheService
         return Task.FromResult(default(T));
     }
 
-    public Task SetAsync<T>(string key, T value, TimeSpan? expiration = null)
+    public Task SetAsync<T>(string key, T value, TimeSpan? expiration = null, CancellationToken cancellationToken = default)
     {
         var options = new MemoryCacheEntryOptions
         {
@@ -59,7 +59,7 @@ public class CacheService : ICacheService
         return Task.CompletedTask;
     }
 
-    public async Task<T> GetOrCreateAsync<T>(string key, Func<Task<T>> factory, TimeSpan? expiration = null)
+    public async Task<T> GetOrSetAsync<T>(string key, Func<Task<T>> factory, TimeSpan? expiration = null, CancellationToken cancellationToken = default)
     {
         if (_cache.TryGetValue(key, out T? value) && value is not null)
         {
@@ -72,13 +72,13 @@ public class CacheService : ICacheService
 
         if (value is not null)
         {
-            await SetAsync(key, value, expiration);
+            await SetAsync(key, value, expiration, cancellationToken);
         }
 
         return value;
     }
 
-    public Task RemoveAsync(string key)
+    public Task RemoveAsync(string key, CancellationToken cancellationToken = default)
     {
         _cache.Remove(key);
         _keys.TryRemove(key, out _);
@@ -87,10 +87,10 @@ public class CacheService : ICacheService
         return Task.CompletedTask;
     }
 
-    public Task RemoveByPatternAsync(string pattern)
+    public Task RemoveByPrefixAsync(string prefix, CancellationToken cancellationToken = default)
     {
         var keysToRemove = _keys.Keys
-            .Where(k => MatchesPattern(k, pattern))
+            .Where(k => MatchesPattern(k, prefix))
             .ToList();
 
         foreach (var key in keysToRemove)
@@ -99,11 +99,11 @@ public class CacheService : ICacheService
             _keys.TryRemove(key, out _);
         }
 
-        _logger.LogDebug("Removed {Count} cache entries matching pattern: {Pattern}", keysToRemove.Count, pattern);
+        _logger.LogDebug("Removed {Count} cache entries matching prefix: {Prefix}", keysToRemove.Count, prefix);
         return Task.CompletedTask;
     }
 
-    public Task<bool> ExistsAsync(string key)
+    public Task<bool> ExistsAsync(string key, CancellationToken cancellationToken = default)
     {
         return Task.FromResult(_cache.TryGetValue(key, out _));
     }
