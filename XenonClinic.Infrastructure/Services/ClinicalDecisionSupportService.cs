@@ -692,27 +692,23 @@ public class ClinicalDecisionSupportService : IClinicalDecisionSupportService
         return await Task.FromResult(Enumerable.Empty<int>());
     }
 
-    public async Task AcknowledgeReminderAsync(int reminderId, int userId)
+    public async Task<bool> AcknowledgeReminderAsync(int reminderId, int userId)
     {
         _logger.LogInformation("Acknowledging reminder {ReminderId} by user {UserId}", reminderId, userId);
         // In production, this would update the reminder status in the database
         await Task.CompletedTask;
+        return true;
     }
 
-    public async Task DismissReminderAsync(int reminderId, int userId, string reason)
+    public async Task<bool> DismissReminderAsync(int reminderId, int userId, string reason)
     {
         _logger.LogInformation("Dismissing reminder {ReminderId} by user {UserId}. Reason: {Reason}",
             reminderId, userId, SanitizeLogInput(reason));
         // In production, this would update the reminder status in the database
         await Task.CompletedTask;
+        return true;
     }
 
-    public async Task CompleteCareGapAsync(int careGapId, int userId, string? notes)
-    {
-        _logger.LogInformation("Completing care gap {CareGapId} by user {UserId}", careGapId, userId);
-        // In production, this would update the care gap status in the database
-        await Task.CompletedTask;
-    }
 
     public async Task<IEnumerable<CareGapDto>> RecalculateCareGapsAsync(int patientId)
     {
@@ -935,8 +931,6 @@ public class ClinicalDecisionSupportService : IClinicalDecisionSupportService
     public Task<OrderSetDto?> GetOrderSetAsync(int orderSetId)
         => Task.FromResult<OrderSetDto?>(null);
 
-    public Task<IEnumerable<OrderSetDto>> GetRecommendedOrderSetsAsync(int patientId)
-        => Task.FromResult(Enumerable.Empty<OrderSetDto>());
 
     public Task<OrderSetDto> CreateOrderSetAsync(CreateOrderSetDto dto)
         => Task.FromResult(new OrderSetDto { Id = 0, Name = dto.Name });
@@ -980,8 +974,6 @@ public class ClinicalDecisionSupportService : IClinicalDecisionSupportService
     public Task<IEnumerable<AlertOverrideAuditDto>> GetAlertOverrideAuditAsync(int? patientId = null, DateTime? fromDate = null)
         => Task.FromResult(Enumerable.Empty<AlertOverrideAuditDto>());
 
-    public Task ReviewAlertOverrideAsync(int overrideId, int reviewerId, string? notes)
-        => Task.CompletedTask;
 
     #endregion
 
@@ -1073,23 +1065,6 @@ public class ClinicalDecisionSupportService : IClinicalDecisionSupportService
         return await Task.FromResult(new List<string>());
     }
 
-    public async Task<PatientCareGapSummaryDto> GetPatientCareGapsAsync(int patientId)
-    {
-        _logger.LogInformation("Getting patient care gaps summary for patient: {PatientId}", patientId);
-        return await Task.FromResult(new PatientCareGapSummaryDto
-        {
-            PatientId = patientId,
-            PatientName = "Patient",
-            AsOfDate = DateTime.UtcNow,
-            TotalGaps = 0,
-            HighPriorityGaps = 0,
-            OverdueGaps = 0,
-            CompletedThisYear = 0,
-            CareGaps = new List<ClinicalReminderDto>(),
-            ComplianceScore = 100.0,
-            RiskLevel = "Low"
-        });
-    }
 
     public async Task<List<ClinicalReminderDto>> GetClinicalRemindersAsync(int patientId, string? category = null)
     {
@@ -1103,29 +1078,14 @@ public class ClinicalDecisionSupportService : IClinicalDecisionSupportService
         return await Task.FromResult(new List<PatientCareGapSummaryDto>());
     }
 
-    public async Task<bool> AcknowledgeReminderAsync(int reminderId, int userId)
+
+
+    public async Task<bool> CompleteCareGapAsync(int careGapId, int userId, string? notes = null)
     {
-        _logger.LogInformation("Acknowledging reminder: {ReminderId} by user: {UserId}", reminderId, userId);
+        _logger.LogInformation("Completing care gap: {CareGapId} by user: {UserId}", careGapId, userId);
         return await Task.FromResult(true);
     }
 
-    public async Task<bool> DismissReminderAsync(int reminderId, int userId, string reason)
-    {
-        _logger.LogInformation("Dismissing reminder: {ReminderId} by user: {UserId}", reminderId, userId);
-        return await Task.FromResult(true);
-    }
-
-    public async Task<bool> CompleteCareGapAsync(int reminderId, int userId, string? notes = null)
-    {
-        _logger.LogInformation("Completing care gap: {ReminderId} by user: {UserId}", reminderId, userId);
-        return await Task.FromResult(true);
-    }
-
-    public async Task RecalculateCareGapsAsync(int patientId)
-    {
-        _logger.LogInformation("Recalculating care gaps for patient: {PatientId}", patientId);
-        await Task.CompletedTask;
-    }
 
     public async Task<DiagnosisSuggestionResultDto> GetDiagnosisSuggestionsAsync(DiagnosisSuggestionRequestDto request)
     {
@@ -1176,11 +1136,6 @@ public class ClinicalDecisionSupportService : IClinicalDecisionSupportService
         });
     }
 
-    public async Task<List<ContraindicationAlertDto>> GetPatientContraindicationsAsync(int patientId)
-    {
-        _logger.LogInformation("Getting patient contraindications for patient: {PatientId}", patientId);
-        return await Task.FromResult(new List<ContraindicationAlertDto>());
-    }
 
     public async Task<ContraindicationCheckResultDto> CheckPregnancyContraindicationsAsync(int patientId, string medicationCode)
     {

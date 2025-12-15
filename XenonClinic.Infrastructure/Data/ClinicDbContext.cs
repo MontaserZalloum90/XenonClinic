@@ -78,6 +78,8 @@ public class ClinicDbContext : IdentityDbContext<Entities.ApplicationUser>
     public DbSet<PatientDocument> PatientDocuments => Set<PatientDocument>();
     public DbSet<Appointment> Appointments => Set<Appointment>();
     public DbSet<AudiologyVisit> AudiologyVisits => Set<AudiologyVisit>();
+    public DbSet<ClinicalVisit> ClinicalVisits => Set<ClinicalVisit>();
+    public DbSet<Diagnosis> Diagnoses => Set<Diagnosis>();
     public DbSet<Audiogram> Audiograms => Set<Audiogram>();
     public DbSet<HearingDevice> HearingDevices => Set<HearingDevice>();
     public DbSet<Invoice> Invoices => Set<Invoice>();
