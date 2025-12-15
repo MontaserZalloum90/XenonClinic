@@ -9,11 +9,11 @@ const salaryStructureApi = {
   getAll: () => Promise.resolve({ data: [] as SalaryStructure[] }),
   getById: (_id: number) => Promise.resolve({ data: {} as SalaryStructure }),
   getActive: () => Promise.resolve({ data: [] as SalaryStructure[] }),
-  create: (_data: SalaryStructureFormData) => Promise.resolve({ data: {} as SalaryStructure }),
-  update: (_id: number, _data: SalaryStructureFormData) => Promise.resolve({ data: {} as SalaryStructure }),
-  delete: (_id: number) => Promise.resolve({ data: {} }),
-  activate: (_id: number) => Promise.resolve({ data: {} as SalaryStructure }),
-  deactivate: (_id: number) => Promise.resolve({ data: {} as SalaryStructure }),
+  create: () => Promise.resolve({ data: {} as SalaryStructure }),
+  update: () => Promise.resolve({ data: {} as SalaryStructure }),
+  delete: () => Promise.resolve({ data: {} }),
+  activate: () => Promise.resolve({ data: {} as SalaryStructure }),
+  deactivate: () => Promise.resolve({ data: {} as SalaryStructure }),
 };
 
 export const SalaryStructures = () => {

@@ -15,7 +15,7 @@ const dentalChartApi = {
   getAll: async () => ({
     data: [] as DentalChart[],
   }),
-  delete: async (_id: number) => ({
+  delete: async () => ({
     data: { success: true },
   }),
 };

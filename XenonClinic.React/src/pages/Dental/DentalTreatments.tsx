@@ -27,7 +27,7 @@ const dentalTreatmentApi = {
   update: async (id: number, data: Partial<DentalTreatment>) => ({
     data: { id, ...data },
   }),
-  delete: async (_id: number) => ({
+  delete: async () => ({
     data: { success: true },
   }),
 };

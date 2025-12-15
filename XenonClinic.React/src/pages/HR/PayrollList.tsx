@@ -7,15 +7,15 @@ import type { PayrollRecord, PayrollStatistics, Allowance, Deduction } from '../
 // Mock API - Replace with actual API when backend is ready
 const payrollApi = {
   getAll: () => Promise.resolve({ data: [] as PayrollRecord[] }),
-  getByPeriod: (_period: string) => Promise.resolve({ data: [] as PayrollRecord[] }),
-  getById: (_id: number) => Promise.resolve({ data: {} as PayrollRecord }),
-  create: (_data: Partial<PayrollRecord>) => Promise.resolve({ data: {} as PayrollRecord }),
-  update: (_id: number, _data: Partial<PayrollRecord>) => Promise.resolve({ data: {} as PayrollRecord }),
-  delete: (_id: number) => Promise.resolve({ data: {} }),
-  process: (_id: number) => Promise.resolve({ data: {} as PayrollRecord }),
-  approve: (_id: number) => Promise.resolve({ data: {} as PayrollRecord }),
-  pay: (_id: number, _data: { paymentDate: string; paymentMethod: string }) => Promise.resolve({ data: {} as PayrollRecord }),
-  cancel: (_id: number) => Promise.resolve({ data: {} as PayrollRecord }),
+  getByPeriod: () => Promise.resolve({ data: [] as PayrollRecord[] }),
+  getById: () => Promise.resolve({ data: {} as PayrollRecord }),
+  create: () => Promise.resolve({ data: {} as PayrollRecord }),
+  update: () => Promise.resolve({ data: {} as PayrollRecord }),
+  delete: () => Promise.resolve({ data: {} }),
+  process: () => Promise.resolve({ data: {} as PayrollRecord }),
+  approve: () => Promise.resolve({ data: {} as PayrollRecord }),
+  pay: () => Promise.resolve({ data: {} as PayrollRecord }),
+  cancel: () => Promise.resolve({ data: {} as PayrollRecord }),
   getStatistics: () => Promise.resolve({
     data: {
       totalPayroll: 0,

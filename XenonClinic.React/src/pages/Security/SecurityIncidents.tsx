@@ -6,7 +6,6 @@ import {
   PlusIcon,
   PencilIcon,
   MagnifyingGlassIcon,
-  FunnelIcon,
   ExclamationTriangleIcon,
   CheckCircleIcon,
   ClockIcon,

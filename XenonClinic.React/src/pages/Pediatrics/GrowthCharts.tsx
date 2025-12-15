@@ -20,7 +20,7 @@ const growthApi = {
   update: async (id: number, data: Partial<GrowthMeasurement>) => ({
     data: { id, ...data },
   }),
-  delete: async (id: number) => ({
+  delete: async (_id: number) => ({
     data: { success: true },
   }),
 };
@@ -37,14 +37,6 @@ export const GrowthCharts = () => {
   const { data: measurementsData, isLoading } = useQuery({
     queryKey: ['growth-measurements'],
     queryFn: () => growthApi.getAll(),
-  });
-
-  const createMutation = useMutation({
-    mutationFn: (data: CreateGrowthMeasurementRequest) => growthApi.create(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['growth-measurements'] });
-      setIsModalOpen(false);
-    },
   });
 
   const deleteMutation = useMutation({

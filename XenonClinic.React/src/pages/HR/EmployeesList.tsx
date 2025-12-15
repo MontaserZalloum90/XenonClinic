@@ -9,7 +9,7 @@ import { format } from 'date-fns';
 
 // Mock payroll API - Replace with actual API when backend is ready
 const payrollApi = {
-  getByEmployee: (_employeeId: number) => Promise.resolve({ data: [] as PayrollRecord[] }),
+  getByEmployee: () => Promise.resolve({ data: [] as PayrollRecord[] }),
 };
 
 export const EmployeesList = () => {

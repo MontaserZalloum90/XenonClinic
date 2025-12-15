@@ -355,7 +355,7 @@ export const MarketingList = () => {
                   className="px-3 py-2 border border-gray-300 rounded-md"
                 >
                   <option value="">All Types</option>
-                  {Object.entries(CampaignType).map(([_key, value]) => (
+                  {Object.entries(CampaignType).map(([, value]) => (
                     <option key={value} value={value}>
                       {getCampaignTypeLabel(value)}
                     </option>

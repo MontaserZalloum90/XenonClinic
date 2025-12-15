@@ -21,7 +21,7 @@ const periodontalExamApi = {
   update: async (id: number, data: Partial<PeriodontalExam>) => ({
     data: { id, ...data },
   }),
-  delete: async (_id: number) => ({
+  delete: async () => ({
     data: { success: true },
   }),
 };

@@ -9,7 +9,7 @@ const pregnancyApi = {
   getAll: async (): Promise<Pregnancy[]> => [],
   create: async (data: Partial<Pregnancy>): Promise<Pregnancy> => ({ id: 1, ...data } as Pregnancy),
   update: async (id: number, data: Partial<Pregnancy>): Promise<Pregnancy> => ({ id, ...data } as Pregnancy),
-  delete: async (_id: number): Promise<void> => {},
+  delete: async (): Promise<void> => {},
 };
 
 export const Pregnancies = () => {

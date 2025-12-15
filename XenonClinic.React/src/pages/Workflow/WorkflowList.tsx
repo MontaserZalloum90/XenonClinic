@@ -40,6 +40,7 @@ export function WorkflowList() {
 
   useEffect(() => {
     fetchWorkflows();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchTerm, category, showDrafts, page]);
 
   const handleCreateWorkflow = async () => {
