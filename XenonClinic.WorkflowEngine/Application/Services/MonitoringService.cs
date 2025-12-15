@@ -529,7 +529,7 @@ public class MonitoringService : IMonitoringService
         // Get recent failures from process instances and jobs
         var recentFailures = await _context.ProcessInstances
             .Where(i => i.TenantId == tenantId &&
-                       i.Status == ProcessInstanceStatus.Failed &&
+                       i.Status == ProcessInstanceStatus.Faulted &&
                        i.CompletedAt != null)
             .OrderByDescending(i => i.CompletedAt)
             .Take(limit)
@@ -538,7 +538,7 @@ public class MonitoringService : IMonitoringService
                 Id = i.Id.ToString(),
                 Type = "process_failure",
                 Severity = "high",
-                Message = i.ErrorMessage ?? "Process failed",
+                Message = i.ErrorJson ?? "Process failed",
                 ProcessInstanceId = i.Id,
                 OccurredAt = i.CompletedAt ?? DateTime.UtcNow,
                 IsResolved = false
@@ -553,12 +553,12 @@ public class MonitoringService : IMonitoringService
             .Take(limit)
             .Select(j => new IncidentDto
             {
-                Id = j.Id,
+                Id = j.Id.ToString(),
                 Type = "job_failure",
                 Severity = "medium",
                 Message = j.ErrorMessage ?? "Job failed",
                 ProcessInstanceId = j.ProcessInstanceId,
-                ActivityInstanceId = j.ActivityInstanceId,
+                ActivityInstanceId = j.ActivityInstanceId.HasValue ? j.ActivityInstanceId.Value.ToString() : null,
                 OccurredAt = j.CompletedAt ?? DateTime.UtcNow,
                 IsResolved = false
             })
@@ -574,15 +574,18 @@ public class MonitoringService : IMonitoringService
         RecordMetricRequest request,
         CancellationToken cancellationToken = default)
     {
+        var timestamp = request.Timestamp ?? DateTime.UtcNow;
         var metric = new ProcessMetric
         {
-            Id = Guid.NewGuid().ToString(),
+            Id = Guid.NewGuid(),
             TenantId = request.TenantId,
             ProcessDefinitionId = request.ProcessDefinitionId,
-            MetricType = request.MetricType,
-            PeriodStart = (request.Timestamp ?? DateTime.UtcNow).Date,
-            PeriodEnd = (request.Timestamp ?? DateTime.UtcNow).Date.AddDays(1),
-            Value = request.Value
+            PeriodStart = timestamp.Date,
+            Granularity = "Day",
+            InstancesStarted = request.MetricType == "instances_started" ? (int)request.Value : 0,
+            InstancesCompleted = request.MetricType == "instances_completed" ? (int)request.Value : 0,
+            InstancesFaulted = request.MetricType == "instances_faulted" ? (int)request.Value : 0,
+            ComputedAt = DateTime.UtcNow
         };
 
         _context.ProcessMetrics.Add(metric);
@@ -609,13 +612,14 @@ public class MonitoringService : IMonitoringService
         }
 
         var dailyData = await query
-            .GroupBy(i => i.StartedAt.Date)
+            .Where(i => i.StartedAt.HasValue)
+            .GroupBy(i => i.StartedAt!.Value.Date)
             .Select(g => new
             {
                 Date = g.Key,
                 Started = g.Count(),
                 Completed = g.Count(i => i.Status == ProcessInstanceStatus.Completed),
-                Failed = g.Count(i => i.Status == ProcessInstanceStatus.Failed)
+                Failed = g.Count(i => i.Status == ProcessInstanceStatus.Faulted)
             })
             .OrderBy(d => d.Date)
             .ToListAsync(cancellationToken);

@@ -63,7 +63,7 @@ public class Employee : IBranchEntity
     public Branch Branch { get; set; } = null!;
     public Department Department { get; set; } = null!;
     public JobPosition JobPosition { get; set; } = null!;
-    public ApplicationUser? User { get; set; }
+    // Note: ApplicationUser navigation removed to avoid circular dependency with Infrastructure
     public ICollection<Attendance> Attendances { get; set; } = new List<Attendance>();
     public ICollection<LeaveRequest> LeaveRequests { get; set; } = new List<LeaveRequest>();
     public ICollection<PerformanceReview> PerformanceReviews { get; set; } = new List<PerformanceReview>();

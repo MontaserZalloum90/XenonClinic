@@ -44,5 +44,5 @@ public class CaseActivity
     public Lookups.CaseActivityTypeLookup CaseActivityType { get; set; } = null!;
     public Lookups.CaseActivityStatusLookup CaseActivityStatus { get; set; } = null!;
     public Lookups.CasePriorityLookup CasePriority { get; set; } = null!;
-    public ApplicationUser? AssignedToUser { get; set; }
+    // Note: ApplicationUser navigation removed to avoid circular dependency with Infrastructure
 }
