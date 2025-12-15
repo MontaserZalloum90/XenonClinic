@@ -28,6 +28,7 @@ export const generateCsrfToken = (): string => {
 /**
  * Generate token with timestamp for expiry checking
  */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const generateTimedToken = (): { token: string; timestamp: number } => {
   return {
     token: generateCsrfToken(),
