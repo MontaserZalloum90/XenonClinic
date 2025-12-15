@@ -346,10 +346,6 @@ public class DosageCheckResultDto
     public int PatientId { get; set; }
     public string MedicationCode { get; set; } = string.Empty;
     public string MedicationName { get; set; } = string.Empty;
-    /// <summary>
-    /// Medication code for identification
-    /// </summary>
-    public string MedicationCode { get; set; } = string.Empty;
     public decimal ProposedDose { get; set; }
     /// <summary>
     /// Alias for ProposedDose for backwards compatibility
@@ -397,14 +393,6 @@ public class DosageCheckResultDto
     /// Recommended frequency for the medication
     /// </summary>
     public string RecommendedFrequency { get; set; } = string.Empty;
-    /// <summary>
-    /// Warnings associated with this dosage
-    /// </summary>
-    public List<string> Warnings { get; set; } = new();
-    /// <summary>
-    /// Factors considered in the dosage check
-    /// </summary>
-    public List<string> FactorsConsidered { get; set; } = new();
 }
 
 /// <summary>
