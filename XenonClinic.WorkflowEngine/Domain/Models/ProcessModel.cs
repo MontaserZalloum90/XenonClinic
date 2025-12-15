@@ -8,6 +8,21 @@ using System.Text.Json.Serialization;
 public class ProcessModel
 {
     /// <summary>
+    /// Unique key identifying this process definition
+    /// </summary>
+    public string ProcessDefinitionKey { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Human-readable name of the process
+    /// </summary>
+    public string? Name { get; set; }
+
+    /// <summary>
+    /// Documentation/description of the process
+    /// </summary>
+    public string? Documentation { get; set; }
+
+    /// <summary>
     /// ID of the start activity
     /// </summary>
     public string StartActivityId { get; set; } = string.Empty;
