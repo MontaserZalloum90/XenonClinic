@@ -10,6 +10,10 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "XenonClinic.WorkflowEngine"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "XenonClinic.WorkflowEngine.Tests", "XenonClinic.WorkflowEngine.Tests\XenonClinic.WorkflowEngine.Tests.csproj", "{b1c2d3e4-f5a6-4789-0123-456789abcdef}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "XenonClinic.Api", "XenonClinic.Api\XenonClinic.Api.csproj", "{c2d3e4f5-a6b7-4890-1234-567890abcdef}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "XenonClinic.Tests", "XenonClinic.Tests\XenonClinic.Tests.csproj", "{d3e4f5a6-b7c8-4901-2345-67890abcdef1}"
+EndProject
 Global
 GlobalSection(SolutionConfigurationPlatforms) = preSolution
 Debug|Any CPU = Debug|Any CPU
@@ -32,6 +36,14 @@ GlobalSection(ProjectConfigurationPlatforms) = postSolution
 {b1c2d3e4-f5a6-4789-0123-456789abcdef}.Debug|Any CPU.Build.0 = Debug|Any CPU
 {b1c2d3e4-f5a6-4789-0123-456789abcdef}.Release|Any CPU.ActiveCfg = Release|Any CPU
 {b1c2d3e4-f5a6-4789-0123-456789abcdef}.Release|Any CPU.Build.0 = Release|Any CPU
+{c2d3e4f5-a6b7-4890-1234-567890abcdef}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+{c2d3e4f5-a6b7-4890-1234-567890abcdef}.Debug|Any CPU.Build.0 = Debug|Any CPU
+{c2d3e4f5-a6b7-4890-1234-567890abcdef}.Release|Any CPU.ActiveCfg = Release|Any CPU
+{c2d3e4f5-a6b7-4890-1234-567890abcdef}.Release|Any CPU.Build.0 = Release|Any CPU
+{d3e4f5a6-b7c8-4901-2345-67890abcdef1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+{d3e4f5a6-b7c8-4901-2345-67890abcdef1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+{d3e4f5a6-b7c8-4901-2345-67890abcdef1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+{d3e4f5a6-b7c8-4901-2345-67890abcdef1}.Release|Any CPU.Build.0 = Release|Any CPU
 EndGlobalSection
 GlobalSection(SolutionProperties) = preSolution
 HideSolutionNode = FALSE
