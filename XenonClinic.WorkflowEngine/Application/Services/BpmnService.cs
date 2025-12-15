@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Linq;
 using Microsoft.Extensions.Logging;
+using XenonClinic.WorkflowEngine.Application.DTOs;
 using XenonClinic.WorkflowEngine.Domain.Models;
 
 namespace XenonClinic.WorkflowEngine.Application.Services;
@@ -93,27 +94,33 @@ public class BpmnService : IBpmnService
             // Parse to process model
             var processModel = await ParseAsync(bpmnXml, cancellationToken);
 
+            // Parse tenant ID
+            var tenantId = int.TryParse(request.TenantId, out var tid) ? tid : 0;
+
             // Create process definition
-            var definition = await _processDefinitionService.CreateAsync(new CreateProcessDefinitionRequest
-            {
-                TenantId = request.TenantId,
-                Key = processModel.ProcessDefinitionKey,
-                Name = processModel.Name,
-                Description = processModel.Documentation,
-                Model = processModel,
-                Metadata = request.Metadata
-            }, cancellationToken);
+            var definition = await _processDefinitionService.CreateAsync(
+                tenantId,
+                new CreateProcessDefinitionRequest
+                {
+                    Key = processModel.ProcessDefinitionKey,
+                    Name = processModel.Name,
+                    Description = processModel.Documentation,
+                    Model = processModel
+                },
+                "system", // User ID - should be passed from request if available
+                cancellationToken);
 
             if (request.DeployImmediately)
             {
-                await _processDefinitionService.DeployAsync(definition.Id, cancellationToken);
+                var version = definition.LatestVersionDetail?.Version ?? 1;
+                await _processDefinitionService.PublishVersionAsync(definition.Id, version, tenantId, "system", cancellationToken);
             }
 
             result.Success = true;
             result.ProcessDefinitionId = definition.Id;
             result.ProcessDefinitionKey = definition.Key;
             result.ProcessName = definition.Name;
-            result.Version = definition.Version;
+            result.Version = definition.LatestVersion;
 
             _logger.LogInformation("Successfully imported BPMN process {ProcessKey} as definition {DefinitionId}",
                 processModel.ProcessDefinitionKey, definition.Id);
@@ -139,19 +146,28 @@ public class BpmnService : IBpmnService
 
         try
         {
-            var definition = await _processDefinitionService.GetByIdAsync(processDefinitionId, cancellationToken);
+            // Note: tenantId should be passed as parameter, using 0 as default for now
+            var definition = await _processDefinitionService.GetByIdAsync(processDefinitionId, 0, cancellationToken);
             if (definition == null)
             {
                 result.ErrorMessage = $"Process definition {processDefinitionId} not found";
                 return result;
             }
 
-            var bpmnXml = await SerializeAsync(definition.Model, cancellationToken);
+            // Get the model from the latest version
+            var model = definition.LatestVersionDetail?.Model;
+            if (model == null)
+            {
+                result.ErrorMessage = "Process definition has no model";
+                return result;
+            }
+
+            var bpmnXml = await SerializeAsync(model, cancellationToken);
 
             result.Success = true;
             result.BpmnXml = bpmnXml;
             result.BpmnFile = Encoding.UTF8.GetBytes(bpmnXml);
-            result.FileName = $"{definition.Key}_v{definition.Version}.bpmn";
+            result.FileName = $"{definition.Key}_v{definition.LatestVersion}.bpmn";
 
             _logger.LogInformation("Exported process definition {DefinitionId} to BPMN", processDefinitionId);
         }

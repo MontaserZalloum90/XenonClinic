@@ -1343,9 +1343,9 @@ public class ProcessExecutionService : IProcessExecutionService
             ProcessVersion = instance.ProcessVersion,
             Status = instance.Status,
             BusinessKey = instance.BusinessKey,
-            StartedAt = instance.StartedAt,
+            StartedAt = instance.StartedAt ?? instance.CreatedAt,
             CompletedAt = instance.CompletedAt,
-            StartedBy = instance.StartedBy,
+            StartedBy = instance.InitiatorUserId,
             ActiveTaskCount = activeTaskCount
         };
     }
@@ -1362,7 +1362,7 @@ public class ProcessExecutionService : IProcessExecutionService
             ProcessVersion = instance.ProcessVersion,
             Status = instance.Status,
             BusinessKey = instance.BusinessKey,
-            StartedAt = instance.StartedAt,
+            StartedAt = instance.StartedAt ?? instance.CreatedAt,
             CompletedAt = instance.CompletedAt,
             StartedBy = instance.InitiatorUserId,
             ParentInstanceId = instance.ParentInstanceId,
