@@ -241,14 +241,14 @@ public class PayrollService : IPayrollService
             query = query.Where(p => p.Employee.DepartmentId == departmentId.Value);
 
         var payslips = await query
-            .OrderBy(p => p.Employee.EmployeeNumber)
+            .OrderBy(p => p.Employee.EmployeeCode)
             .ToListAsync();
 
         return payslips.Select(p => new PayslipSummaryDto
         {
             Id = p.Id,
             EmployeeId = p.EmployeeId,
-            EmployeeNumber = p.Employee?.EmployeeNumber ?? "",
+            EmployeeNumber = p.Employee?.EmployeeCode ?? "",
             EmployeeName = $"{p.Employee?.FirstName} {p.Employee?.LastName}",
             PeriodName = p.PayrollPeriod?.PeriodName ?? "",
             GrossPay = p.GrossPay,
@@ -289,7 +289,7 @@ public class PayrollService : IPayrollService
         {
             Id = p.Id,
             EmployeeId = p.EmployeeId,
-            EmployeeNumber = p.Employee?.EmployeeNumber ?? "",
+            EmployeeNumber = p.Employee?.EmployeeCode ?? "",
             EmployeeName = $"{p.Employee?.FirstName} {p.Employee?.LastName}",
             PeriodName = p.PayrollPeriod?.PeriodName ?? "",
             GrossPay = p.GrossPay,
@@ -365,13 +365,13 @@ public class PayrollService : IPayrollService
                         {
                             c.Item().Text("EMPLOYEE DETAILS").Bold().FontSize(11);
                             c.Item().PaddingTop(5).Text($"Name: {payslip.Employee?.FirstName} {payslip.Employee?.LastName}");
-                            c.Item().Text($"Employee ID: {payslip.Employee?.EmployeeId ?? payslip.EmployeeId.ToString()}");
-                            c.Item().Text($"Department: {payslip.Employee?.Department ?? "N/A"}");
+                            c.Item().Text($"Employee ID: {payslip.Employee?.Id.ToString() ?? payslip.EmployeeId.ToString()}");
+                            c.Item().Text($"Department: {payslip.Employee?.Department?.Name ?? "N/A"}");
                         });
                         row.RelativeItem().Column(c =>
                         {
                             c.Item().Text("PAYMENT DETAILS").Bold().FontSize(11);
-                            c.Item().PaddingTop(5).Text($"Pay Date: {payslip.PayDate:MMMM dd, yyyy}");
+                            c.Item().PaddingTop(5).Text($"Pay Date: {payslip.PaidDate:MMMM dd, yyyy}");
                             c.Item().Text($"Bank: {payslip.Employee?.BankName ?? "N/A"}");
                             c.Item().Text($"Account: {MaskAccountNumber(payslip.Employee?.BankAccountNumber)}");
                         });
@@ -403,7 +403,7 @@ public class PayrollService : IPayrollService
 
                             // Total Earnings
                             table.Cell().BorderTop(1).PaddingTop(5).Text("Total Earnings").Bold();
-                            table.Cell().BorderTop(1).PaddingTop(5).AlignRight().Text($"{payslip.GrossSalary:C}").Bold().FontColor(Colors.Green.Darken2);
+                            table.Cell().BorderTop(1).PaddingTop(5).AlignRight().Text($"{payslip.GrossPay:C}").Bold().FontColor(Colors.Green.Darken2);
                         });
                     });
 
@@ -419,8 +419,8 @@ public class PayrollService : IPayrollService
                                 columns.RelativeColumn(2);
                             });
 
-                            if (payslip.IncomeTax > 0)
-                                AddDeductionRow(table, "Income Tax", payslip.IncomeTax);
+                            if (payslip.Tax > 0)
+                                AddDeductionRow(table, "Income Tax", payslip.Tax);
                             if (payslip.SocialInsurance > 0)
                                 AddDeductionRow(table, "Social Insurance", payslip.SocialInsurance);
                             if (payslip.HealthInsurance > 0)
@@ -433,7 +433,7 @@ public class PayrollService : IPayrollService
                                 AddDeductionRow(table, "Other Deductions", payslip.OtherDeductions);
 
                             // Total Deductions
-                            var totalDeductions = payslip.IncomeTax + payslip.SocialInsurance + payslip.HealthInsurance +
+                            var totalDeductions = payslip.Tax + payslip.SocialInsurance + payslip.HealthInsurance +
                                 payslip.PensionContribution + payslip.LoanDeduction + payslip.OtherDeductions;
                             table.Cell().BorderTop(1).PaddingTop(5).Text("Total Deductions").Bold();
                             table.Cell().BorderTop(1).PaddingTop(5).AlignRight().Text($"-{totalDeductions:C}").Bold().FontColor(Colors.Red.Darken2);
@@ -444,7 +444,7 @@ public class PayrollService : IPayrollService
                     col.Item().PaddingTop(20).Background(Colors.Blue.Lighten4).Padding(15).Row(row =>
                     {
                         row.RelativeItem().Text("NET PAY").FontSize(14).Bold();
-                        row.ConstantItem(150).AlignRight().Text($"{payslip.NetSalary:C}").FontSize(18).Bold().FontColor(Colors.Blue.Darken2);
+                        row.ConstantItem(150).AlignRight().Text($"{payslip.NetPay:C}").FontSize(18).Bold().FontColor(Colors.Blue.Darken2);
                     });
 
                     // Year-to-Date Summary
@@ -533,7 +533,7 @@ public class PayrollService : IPayrollService
 
             var periodLabel = payslip.PayrollPeriod != null
                 ? $"{payslip.PayrollPeriod.StartDate:MMM dd} - {payslip.PayrollPeriod.EndDate:MMM dd, yyyy}"
-                : $"Pay Date: {payslip.PayDate:MMMM dd, yyyy}";
+                : $"Pay Date: {payslip.PaidDate:MMMM dd, yyyy}";
 
             var emailMessage = new EmailMessage
             {
@@ -547,9 +547,9 @@ public class PayrollService : IPayrollService
                     <p>Your payslip for the period <strong>{periodLabel}</strong> is now available.</p>
                     <p><strong>Summary:</strong></p>
                     <table style='border-collapse: collapse; margin: 15px 0;'>
-                        <tr><td style='padding: 5px 15px 5px 0;'>Gross Pay:</td><td style='text-align: right;'>{payslip.GrossSalary:C}</td></tr>
-                        <tr><td style='padding: 5px 15px 5px 0;'>Total Deductions:</td><td style='text-align: right;'>-{(payslip.IncomeTax + payslip.SocialInsurance + payslip.HealthInsurance + payslip.PensionContribution + payslip.LoanDeduction + payslip.OtherDeductions):C}</td></tr>
-                        <tr style='font-weight: bold; border-top: 1px solid #ccc;'><td style='padding: 8px 15px 5px 0;'>Net Pay:</td><td style='text-align: right; padding-top: 8px;'>{payslip.NetSalary:C}</td></tr>
+                        <tr><td style='padding: 5px 15px 5px 0;'>Gross Pay:</td><td style='text-align: right;'>{payslip.GrossPay:C}</td></tr>
+                        <tr><td style='padding: 5px 15px 5px 0;'>Total Deductions:</td><td style='text-align: right;'>-{(payslip.Tax + payslip.SocialInsurance + payslip.HealthInsurance + payslip.PensionContribution + payslip.LoanDeduction + payslip.OtherDeductions):C}</td></tr>
+                        <tr style='font-weight: bold; border-top: 1px solid #ccc;'><td style='padding: 8px 15px 5px 0;'>Net Pay:</td><td style='text-align: right; padding-top: 8px;'>{payslip.NetPay:C}</td></tr>
                     </table>
                     <p>Please find your detailed payslip attached to this email.</p>
                     <p style='color: #666; font-size: 12px;'>This is an automated message. For questions about your pay, please contact HR.</p>
@@ -562,7 +562,7 @@ public class PayrollService : IPayrollService
                 {
                     new EmailAttachment
                     {
-                        FileName = $"Payslip_{payslip.Employee?.EmployeeId ?? payslipId.ToString()}_{payslip.PayDate:yyyyMMdd}.pdf",
+                        FileName = $"Payslip_{payslip.Employee?.Id.ToString() ?? payslipId.ToString()}_{payslip.PaidDate:yyyyMMdd}.pdf",
                         Content = pdfContent,
                         ContentType = "application/pdf"
                     }
@@ -643,7 +643,7 @@ public class PayrollService : IPayrollService
             var record = new WpsRecordDto
             {
                 RecordType = "SAL",
-                EmployeeNumber = employee.EmployeeNumber ?? "",
+                EmployeeNumber = employee.EmployeeCode ?? "",
                 EmployeeName = $"{employee.FirstName} {employee.LastName}",
                 EmiratesId = employee.EmiratesId,
                 LaborCardNumber = employee.LaborCardNumber,
@@ -712,7 +712,7 @@ public class PayrollService : IPayrollService
 
             var record = new WpsRecordDto
             {
-                EmployeeNumber = employee.EmployeeNumber ?? "",
+                EmployeeNumber = employee.EmployeeCode ?? "",
                 EmployeeName = $"{employee.FirstName} {employee.LastName}",
                 EmiratesId = employee.EmiratesId,
                 BankCode = employee.BankCode ?? "",
@@ -732,7 +732,7 @@ public class PayrollService : IPayrollService
         }
 
         response.TotalRecords = payslips.Count;
-        response.TotalAmount = payslips.Where(p => response.Records.Any(r => r.EmployeeNumber == p.Employee?.EmployeeNumber && r.IsValid)).Sum(p => p.NetPay);
+        response.TotalAmount = payslips.Where(p => response.Records.Any(r => r.EmployeeCode == p.Employee?.EmployeeCode && r.IsValid)).Sum(p => p.NetPay);
 
         return response;
     }
@@ -915,7 +915,7 @@ public class PayrollService : IPayrollService
         if (departmentId.HasValue)
             query = query.Where(p => p.Employee.DepartmentId == departmentId.Value);
 
-        var payslips = await query.OrderBy(p => p.Employee.EmployeeNumber).ToListAsync();
+        var payslips = await query.OrderBy(p => p.Employee.EmployeeCode).ToListAsync();
 
         var report = new PayrollRegisterReportDto
         {
@@ -923,11 +923,11 @@ public class PayrollService : IPayrollService
             PeriodName = period.PeriodName,
             Entries = payslips.Select(p => new PayrollRegisterEntryDto
             {
-                EmployeeNumber = p.Employee?.EmployeeNumber ?? "",
+                EmployeeNumber = p.Employee?.EmployeeCode ?? "",
                 EmployeeName = $"{p.Employee?.FirstName} {p.Employee?.LastName}",
                 Department = p.Employee?.Department?.Name,
-                Position = p.Employee?.Position,
-                JoinDate = p.Employee?.JoinDate ?? DateTime.MinValue,
+                Position = p.Employee?.JobPosition?.Title,
+                JoinDate = p.Employee?.HireDate ?? DateTime.MinValue,
                 DaysWorked = p.DaysWorked,
                 BasicSalary = p.BasicSalary,
                 HousingAllowance = p.HousingAllowance,
@@ -970,7 +970,7 @@ public class PayrollService : IPayrollService
         var payslips = await _context.Payslips
             .Include(p => p.Employee)
             .Where(p => p.PayrollPeriodId == periodId && !string.IsNullOrEmpty(p.Employee.BankAccountNumber))
-            .OrderBy(p => p.Employee.EmployeeNumber)
+            .OrderBy(p => p.Employee.EmployeeCode)
             .ToListAsync();
 
         var report = new BankTransferListReportDto
@@ -983,7 +983,7 @@ public class PayrollService : IPayrollService
             Transfers = payslips.Select((p, i) => new BankTransferEntryDto
             {
                 SequenceNumber = i + 1,
-                EmployeeNumber = p.Employee?.EmployeeNumber ?? "",
+                EmployeeNumber = p.Employee?.EmployeeCode ?? "",
                 EmployeeName = $"{p.Employee?.FirstName} {p.Employee?.LastName}",
                 BankName = p.Employee?.BankName ?? "",
                 BankCode = p.Employee?.BankCode ?? "",
@@ -1016,7 +1016,7 @@ public class PayrollService : IPayrollService
             GeneratedDate = DateTime.UtcNow,
             Year = year,
             EmployeeId = employee.Id,
-            EmployeeNumber = employee.EmployeeNumber ?? "",
+            EmployeeNumber = employee.EmployeeCode ?? "",
             EmployeeName = $"{employee.FirstName} {employee.LastName}",
             Department = employee.Department?.Name,
             Position = employee.Position,
@@ -1133,7 +1133,7 @@ public class PayrollService : IPayrollService
             {
                 report.SignificantVariances.Add(new PayrollVarianceEntryDto
                 {
-                    EmployeeNumber = current.Employee?.EmployeeNumber ?? "",
+                    EmployeeNumber = current.Employee?.EmployeeCode ?? "",
                     EmployeeName = $"{current.Employee?.FirstName} {current.Employee?.LastName}",
                     CurrentAmount = current.NetPay,
                     PreviousAmount = previous.NetPay,
@@ -1168,10 +1168,10 @@ public class PayrollService : IPayrollService
             query = query.Where(p => p.PayrollPeriodId == request.PayrollPeriodId);
 
         if (request.StartDate.HasValue)
-            query = query.Where(p => p.PayDate >= request.StartDate.Value);
+            query = query.Where(p => p.PaidDate >= request.StartDate.Value);
 
         if (request.EndDate.HasValue)
-            query = query.Where(p => p.PayDate <= request.EndDate.Value);
+            query = query.Where(p => p.PaidDate <= request.EndDate.Value);
 
         if (request.DepartmentId.HasValue)
             query = query.Where(p => p.Employee.DepartmentId == request.DepartmentId);
@@ -1244,26 +1244,26 @@ public class PayrollService : IPayrollService
                     {
                         var bgColor = rowIndex++ % 2 == 0 ? Colors.White : Colors.Grey.Lighten4;
                         var allowances = payslip.HousingAllowance + payslip.TransportAllowance + payslip.OtherAllowances;
-                        var deductions = payslip.IncomeTax + payslip.SocialInsurance + payslip.HealthInsurance +
+                        var deductions = payslip.Tax + payslip.SocialInsurance + payslip.HealthInsurance +
                             payslip.PensionContribution + payslip.LoanDeduction + payslip.OtherDeductions;
 
                         table.Cell().Background(bgColor).Padding(4).Text($"{payslip.Employee?.FirstName} {payslip.Employee?.LastName}");
-                        table.Cell().Background(bgColor).Padding(4).Text(payslip.Employee?.EmployeeId ?? "");
-                        table.Cell().Background(bgColor).Padding(4).Text(payslip.Employee?.Department ?? "");
+                        table.Cell().Background(bgColor).Padding(4).Text(payslip.Employee?.Id.ToString() ?? "");
+                        table.Cell().Background(bgColor).Padding(4).Text(payslip.Employee?.Department?.Name ?? "");
                         table.Cell().Background(bgColor).Padding(4).AlignRight().Text($"{payslip.BasicSalary:N2}");
                         table.Cell().Background(bgColor).Padding(4).AlignRight().Text($"{allowances:N2}");
-                        table.Cell().Background(bgColor).Padding(4).AlignRight().Text($"{payslip.GrossSalary:N2}").FontColor(Colors.Green.Darken2);
+                        table.Cell().Background(bgColor).Padding(4).AlignRight().Text($"{payslip.GrossPay:N2}").FontColor(Colors.Green.Darken2);
                         table.Cell().Background(bgColor).Padding(4).AlignRight().Text($"{deductions:N2}").FontColor(Colors.Red.Darken2);
-                        table.Cell().Background(bgColor).Padding(4).AlignRight().Text($"{payslip.NetSalary:N2}").Bold();
+                        table.Cell().Background(bgColor).Padding(4).AlignRight().Text($"{payslip.NetPay:N2}").Bold();
                     }
 
                     // Totals row
                     var totalBasic = payslips.Sum(p => p.BasicSalary);
                     var totalAllowances = payslips.Sum(p => p.HousingAllowance + p.TransportAllowance + p.OtherAllowances);
-                    var totalGross = payslips.Sum(p => p.GrossSalary);
+                    var totalGross = payslips.Sum(p => p.GrossPay);
                     var totalDeductions = payslips.Sum(p => p.IncomeTax + p.SocialInsurance + p.HealthInsurance +
                         p.PensionContribution + p.LoanDeduction + p.OtherDeductions);
-                    var totalNet = payslips.Sum(p => p.NetSalary);
+                    var totalNet = payslips.Sum(p => p.NetPay);
 
                     table.Cell().BorderTop(2).Padding(5).Text("TOTALS").Bold();
                     table.Cell().BorderTop(2).Padding(5).Text($"{payslips.Count} employees").Italic();
@@ -1323,18 +1323,18 @@ public class PayrollService : IPayrollService
         foreach (var payslip in payslips)
         {
             worksheet.Cell(row, 1).Value = $"{payslip.Employee?.FirstName} {payslip.Employee?.LastName}";
-            worksheet.Cell(row, 2).Value = payslip.Employee?.EmployeeId ?? "";
-            worksheet.Cell(row, 3).Value = payslip.Employee?.Department ?? "";
+            worksheet.Cell(row, 2).Value = payslip.Employee?.Id.ToString() ?? "";
+            worksheet.Cell(row, 3).Value = payslip.Employee?.Department?.Name ?? "";
             worksheet.Cell(row, 4).Value = payslip.BasicSalary;
             worksheet.Cell(row, 5).Value = payslip.HousingAllowance;
             worksheet.Cell(row, 6).Value = payslip.TransportAllowance;
             worksheet.Cell(row, 7).Value = payslip.OtherAllowances;
-            worksheet.Cell(row, 8).Value = payslip.GrossSalary;
-            worksheet.Cell(row, 9).Value = payslip.IncomeTax;
+            worksheet.Cell(row, 8).Value = payslip.GrossPay;
+            worksheet.Cell(row, 9).Value = payslip.Tax;
             worksheet.Cell(row, 10).Value = payslip.SocialInsurance + payslip.HealthInsurance;
             worksheet.Cell(row, 11).Value = payslip.PensionContribution;
             worksheet.Cell(row, 12).Value = payslip.LoanDeduction + payslip.OtherDeductions;
-            worksheet.Cell(row, 13).Value = payslip.NetSalary;
+            worksheet.Cell(row, 13).Value = payslip.NetPay;
 
             // Format currency columns
             for (int col = 4; col <= 13; col++)
@@ -1379,18 +1379,18 @@ public class PayrollService : IPayrollService
             var name = $"{payslip.Employee?.FirstName} {payslip.Employee?.LastName}".Replace(",", " ");
             sb.AppendLine(string.Join(",",
                 name,
-                payslip.Employee?.EmployeeId ?? "",
-                (payslip.Employee?.Department ?? "").Replace(",", " "),
+                payslip.Employee?.Id.ToString() ?? "",
+                (payslip.Employee?.Department?.Name ?? "").Replace(",", " "),
                 payslip.BasicSalary,
                 payslip.HousingAllowance,
                 payslip.TransportAllowance,
                 payslip.OtherAllowances,
-                payslip.GrossSalary,
-                payslip.IncomeTax,
+                payslip.GrossPay,
+                payslip.Tax,
                 payslip.SocialInsurance + payslip.HealthInsurance,
                 payslip.PensionContribution,
                 payslip.LoanDeduction + payslip.OtherDeductions,
-                payslip.NetSalary
+                payslip.NetPay
             ));
         }
 
@@ -1403,12 +1403,12 @@ public class PayrollService : IPayrollService
             payslips.Sum(p => p.HousingAllowance),
             payslips.Sum(p => p.TransportAllowance),
             payslips.Sum(p => p.OtherAllowances),
-            payslips.Sum(p => p.GrossSalary),
+            payslips.Sum(p => p.GrossPay),
             payslips.Sum(p => p.IncomeTax),
             payslips.Sum(p => p.SocialInsurance + p.HealthInsurance),
             payslips.Sum(p => p.PensionContribution),
             payslips.Sum(p => p.LoanDeduction + p.OtherDeductions),
-            payslips.Sum(p => p.NetSalary)
+            payslips.Sum(p => p.NetPay)
         ));
 
         return Encoding.UTF8.GetBytes(sb.ToString());
@@ -1679,10 +1679,10 @@ public class PayrollService : IPayrollService
             PayrollPeriodId = payslip.PayrollPeriodId,
             PeriodName = payslip.PayrollPeriod?.PeriodName ?? "",
             EmployeeId = payslip.EmployeeId,
-            EmployeeNumber = payslip.Employee?.EmployeeNumber ?? "",
+            EmployeeNumber = payslip.Employee?.EmployeeCode ?? "",
             EmployeeName = $"{payslip.Employee?.FirstName} {payslip.Employee?.LastName}",
             Department = payslip.Employee?.Department?.Name,
-            Position = payslip.Employee?.Position,
+            Position = payslip.Employee?.JobPosition?.Title,
             PaymentDate = payslip.PayrollPeriod?.PaymentDate ?? DateTime.MinValue,
             BasicSalary = payslip.BasicSalary,
             HousingAllowance = payslip.HousingAllowance,

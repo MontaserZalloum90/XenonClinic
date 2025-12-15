@@ -412,7 +412,7 @@ public class FinancialService : IFinancialService
     {
         return await _context.Expenses
             .Include(e => e.Branch)
-            .Include(e => e.Category)
+            .Include(e => e.ExpenseCategory)
             .FirstOrDefaultAsync(e => e.Id == id);
     }
 
@@ -420,7 +420,7 @@ public class FinancialService : IFinancialService
     {
         return await _context.Expenses
             .AsNoTracking()
-            .Include(e => e.Category)
+            .Include(e => e.ExpenseCategory)
             .Where(e => e.BranchId == branchId)
             .OrderByDescending(e => e.ExpenseDate)
             .ToListAsync();
@@ -430,7 +430,7 @@ public class FinancialService : IFinancialService
     {
         return await _context.Expenses
             .AsNoTracking()
-            .Where(e => e.BranchId == branchId && e.CategoryId == categoryId)
+            .Where(e => e.BranchId == branchId && e.ExpenseCategoryId == categoryId)
             .OrderByDescending(e => e.ExpenseDate)
             .ToListAsync();
     }
@@ -459,14 +459,11 @@ public class FinancialService : IFinancialService
             throw new KeyNotFoundException($"Branch with ID {expense.BranchId} not found");
         }
 
-        // Validate category exists if specified
-        if (expense.CategoryId.HasValue)
+        // Validate category exists
+        var categoryExists = await _context.ExpenseCategories.AnyAsync(c => c.Id == expense.ExpenseCategoryId);
+        if (!categoryExists)
         {
-            var categoryExists = await _context.ExpenseCategories.AnyAsync(c => c.Id == expense.CategoryId.Value);
-            if (!categoryExists)
-            {
-                throw new KeyNotFoundException($"Expense category with ID {expense.CategoryId.Value} not found");
-            }
+            throw new KeyNotFoundException($"Expense category with ID {expense.ExpenseCategoryId} not found");
         }
 
         _context.Expenses.Add(expense);

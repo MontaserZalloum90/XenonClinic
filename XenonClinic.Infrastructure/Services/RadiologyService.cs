@@ -28,7 +28,7 @@ public class RadiologyService : IRadiologyService
     {
         return await _context.LabOrders
             .Include(o => o.Branch)
-            .Include(o => o.OrderItems)
+            .Include(o => o.Items)
                 .ThenInclude(oi => oi.LabTest)
             .Include(o => o.Results)
             .FirstOrDefaultAsync(o => o.Id == id);
@@ -37,7 +37,7 @@ public class RadiologyService : IRadiologyService
     public async Task<LabOrder?> GetRadiologyOrderByOrderNumberAsync(string orderNumber)
     {
         return await _context.LabOrders
-            .Include(o => o.OrderItems)
+            .Include(o => o.Items)
                 .ThenInclude(oi => oi.LabTest)
             .Include(o => o.Results)
             .FirstOrDefaultAsync(o => o.OrderNumber == orderNumber);
@@ -47,7 +47,7 @@ public class RadiologyService : IRadiologyService
     {
         return await _context.LabOrders
             .AsNoTracking()
-            .Include(o => o.OrderItems)
+            .Include(o => o.Items)
                 .ThenInclude(oi => oi.LabTest)
             .Where(o => o.BranchId == branchId)
             .OrderByDescending(o => o.OrderDate)
@@ -59,7 +59,7 @@ public class RadiologyService : IRadiologyService
         return await _context.LabOrders
             .AsNoTracking()
             .Include(o => o.Branch)
-            .Include(o => o.OrderItems)
+            .Include(o => o.Items)
                 .ThenInclude(oi => oi.LabTest)
             .Where(o => o.PatientId == patientId)
             .OrderByDescending(o => o.OrderDate)
@@ -76,7 +76,7 @@ public class RadiologyService : IRadiologyService
 
         return await _context.LabOrders
             .AsNoTracking()
-            .Include(o => o.OrderItems)
+            .Include(o => o.Items)
                 .ThenInclude(oi => oi.LabTest)
             .Where(o => o.BranchId == branchId &&
                    o.OrderDate >= startDate &&
@@ -89,7 +89,7 @@ public class RadiologyService : IRadiologyService
     {
         return await _context.LabOrders
             .AsNoTracking()
-            .Include(o => o.OrderItems)
+            .Include(o => o.Items)
                 .ThenInclude(oi => oi.LabTest)
             .Where(o => o.BranchId == branchId &&
                    (o.Status == LabOrderStatus.Pending || o.Status == LabOrderStatus.InProgress))
@@ -101,7 +101,7 @@ public class RadiologyService : IRadiologyService
     {
         return await _context.LabOrders
             .AsNoTracking()
-            .Include(o => o.OrderItems)
+            .Include(o => o.Items)
                 .ThenInclude(oi => oi.LabTest)
             .Where(o => o.BranchId == branchId && o.Status == LabOrderStatus.Completed)
             .OrderByDescending(o => o.CompletedDate)
@@ -392,7 +392,7 @@ public class RadiologyService : IRadiologyService
                    o.CompletedDate.HasValue &&
                    o.CompletedDate.Value >= startDate &&
                    o.CompletedDate.Value <= endDate)
-            .SumAsync(o => o.TotalPrice);
+            .SumAsync(o => o.TotalAmount);
     }
 
     public async Task<IEnumerable<(string StudyName, int Count, decimal Revenue)>> GetMostOrderedStudiesAsync(int branchId, int topN = 10)

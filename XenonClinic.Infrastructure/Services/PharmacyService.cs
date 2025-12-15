@@ -434,7 +434,7 @@ public class PharmacyService : IPharmacyService
             {
                 SaleId = sale.Id,
                 InventoryItemId = quotationItem.InventoryItemId,
-                Description = quotationItem.Description,
+                Description = quotationItem.ItemDescription,
                 Quantity = quotationItem.Quantity,
                 UnitPrice = quotationItem.UnitPrice,
                 DiscountPercentage = quotationItem.DiscountPercentage
