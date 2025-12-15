@@ -26,6 +26,12 @@ public class HumanTask
     [MaxLength(100)]
     public string ActivityDefinitionId { get; set; } = string.Empty;
 
+    /// <summary>
+    /// Task definition key (alias for ActivityDefinitionId)
+    /// </summary>
+    [MaxLength(100)]
+    public string? TaskDefinitionKey { get; set; }
+
     [Required]
     [MaxLength(200)]
     public string Name { get; set; } = string.Empty;
@@ -65,9 +71,19 @@ public class HumanTask
     public string? CandidateGroupIdsJson { get; set; }
 
     /// <summary>
+    /// Candidate groups (alias for CandidateGroupIdsJson)
+    /// </summary>
+    public string? CandidateGroupsJson { get; set; }
+
+    /// <summary>
     /// Candidate roles who can claim (JSON array)
     /// </summary>
     public string? CandidateRoleIdsJson { get; set; }
+
+    /// <summary>
+    /// Candidate roles (alias for CandidateRoleIdsJson)
+    /// </summary>
+    public string? CandidateRolesJson { get; set; }
 
     /// <summary>
     /// Original assignee (before delegation)
@@ -107,9 +123,20 @@ public class HumanTask
     public string? Outcome { get; set; }
 
     /// <summary>
+    /// Completion action (alias for Outcome)
+    /// </summary>
+    [MaxLength(100)]
+    public string? CompletionAction { get; set; }
+
+    /// <summary>
     /// Comment provided on completion
     /// </summary>
     public string? CompletionComment { get; set; }
+
+    /// <summary>
+    /// Output variables from task completion (JSON)
+    /// </summary>
+    public string? OutputVariablesJson { get; set; }
 
     // Context
     /// <summary>
@@ -156,12 +183,18 @@ public enum HumanTaskStatus
     Ready,
     /// <summary>Claimed by a user</summary>
     Reserved,
+    /// <summary>Assigned to a specific user</summary>
+    Assigned,
     /// <summary>User actively working on it</summary>
     InProgress,
     /// <summary>Paused</summary>
     Suspended,
+    /// <summary>Delegated to another user</summary>
+    Delegated,
     /// <summary>Successfully completed</summary>
     Completed,
+    /// <summary>Cancelled by user or system</summary>
+    Cancelled,
     /// <summary>Failed</summary>
     Failed,
     /// <summary>Error occurred</summary>
@@ -249,6 +282,7 @@ public static class TaskActionTypes
     public const string Suspend = "suspend";
     public const string Resume = "resume";
     public const string Escalate = "escalate";
+    public const string Comment = "comment";
     public const string AddComment = "addComment";
     public const string AddAttachment = "addAttachment";
     public const string SetPriority = "setPriority";

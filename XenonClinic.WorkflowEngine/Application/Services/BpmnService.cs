@@ -98,6 +98,7 @@ public class BpmnService : IBpmnService
             var tenantId = int.TryParse(request.TenantId, out var tid) ? tid : 0;
 
             // Create process definition
+            var tenantId = int.TryParse(request.TenantId, out var tid) ? tid : 1; // Default to tenant 1 if invalid
             var definition = await _processDefinitionService.CreateAsync(
                 tenantId,
                 new CreateProcessDefinitionRequest
@@ -105,22 +106,22 @@ public class BpmnService : IBpmnService
                     Key = processModel.ProcessDefinitionKey,
                     Name = processModel.Name,
                     Description = processModel.Documentation,
-                    Model = processModel
+                    Model = processModel,
+                    SaveAsDraft = !request.DeployImmediately
                 },
-                "system", // User ID - should be passed from request if available
+                "system", // userId - TODO: get from context
                 cancellationToken);
 
-            if (request.DeployImmediately)
+            if (request.DeployImmediately && definition.Version > 0)
             {
-                var version = definition.LatestVersionDetail?.Version ?? 1;
-                await _processDefinitionService.PublishVersionAsync(definition.Id, version, tenantId, "system", cancellationToken);
+                await _processDefinitionService.PublishVersionAsync(definition.Id, definition.Version, tenantId, "system", cancellationToken);
             }
 
             result.Success = true;
             result.ProcessDefinitionId = definition.Id;
             result.ProcessDefinitionKey = definition.Key;
             result.ProcessName = definition.Name;
-            result.Version = definition.LatestVersion;
+            result.Version = definition.LatestVersionDetail?.Version ?? definition.LatestVersion;
 
             _logger.LogInformation("Successfully imported BPMN process {ProcessKey} as definition {DefinitionId}",
                 processModel.ProcessDefinitionKey, definition.Id);
@@ -146,19 +147,18 @@ public class BpmnService : IBpmnService
 
         try
         {
-            // Note: tenantId should be passed as parameter, using 0 as default for now
-            var definition = await _processDefinitionService.GetByIdAsync(processDefinitionId, 0, cancellationToken);
+            var tenantId = 1; // TODO: get from context or method parameter
+            var definition = await _processDefinitionService.GetByIdAsync(processDefinitionId, tenantId, cancellationToken);
             if (definition == null)
             {
                 result.ErrorMessage = $"Process definition {processDefinitionId} not found";
                 return result;
             }
 
-            // Get the model from the latest version
             var model = definition.LatestVersionDetail?.Model;
             if (model == null)
             {
-                result.ErrorMessage = "Process definition has no model";
+                result.ErrorMessage = "Process model not found";
                 return result;
             }
 
@@ -167,7 +167,7 @@ public class BpmnService : IBpmnService
             result.Success = true;
             result.BpmnXml = bpmnXml;
             result.BpmnFile = Encoding.UTF8.GetBytes(bpmnXml);
-            result.FileName = $"{definition.Key}_v{definition.LatestVersion}.bpmn";
+            result.FileName = $"{definition.Key}_v{definition.LatestVersionDetail?.Version ?? definition.LatestVersion}.bpmn";
 
             _logger.LogInformation("Exported process definition {DefinitionId} to BPMN", processDefinitionId);
         }
@@ -391,7 +391,7 @@ public class BpmnService : IBpmnService
         }
 
         // Update shapes
-        foreach (var shapeUpdate in update.ShapeUpdates ?? Enumerable.Empty<BpmnShapeUpdate>())
+        foreach (var shapeUpdate in update.ShapeUpdates ?? Enumerable.Empty<ShapeUpdate>())
         {
             var shape = plane.Elements()
                 .FirstOrDefault(e => e.Name.LocalName == "BPMNShape" &&
@@ -411,7 +411,7 @@ public class BpmnService : IBpmnService
         }
 
         // Update edges
-        foreach (var edgeUpdate in update.EdgeUpdates ?? Enumerable.Empty<BpmnEdgeUpdate>())
+        foreach (var edgeUpdate in update.EdgeUpdates ?? Enumerable.Empty<EdgeUpdate>())
         {
             var edge = plane.Elements()
                 .FirstOrDefault(e => e.Name.LocalName == "BPMNEdge" &&
