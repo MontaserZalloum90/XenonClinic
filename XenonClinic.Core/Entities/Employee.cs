@@ -11,6 +11,15 @@ public class Employee : IBranchEntity
     public string EmployeeCode { get; set; } = string.Empty;
     public string FullNameEn { get; set; } = string.Empty;
     public string FullNameAr { get; set; } = string.Empty;
+    /// <summary>
+    /// First name - computed from FullNameEn for service compatibility
+    /// </summary>
+    public string FirstName => FullNameEn?.Split(' ').FirstOrDefault() ?? string.Empty;
+    /// <summary>
+    /// Last name - computed from FullNameEn for service compatibility
+    /// </summary>
+    public string LastName => FullNameEn?.Split(' ').Skip(1).FirstOrDefault() ??
+                              (FullNameEn?.Split(' ').Length > 1 ? string.Join(" ", FullNameEn.Split(' ').Skip(1)) : string.Empty);
     public string EmiratesId { get; set; } = string.Empty;
     public DateTime DateOfBirth { get; set; }
     public string Gender { get; set; } = string.Empty; // M/F

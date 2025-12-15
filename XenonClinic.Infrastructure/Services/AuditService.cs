@@ -229,7 +229,14 @@ public class AuditService : IAuditService
             EmergencyAccesses = logs.Count(l => l.IsEmergencyAccess),
             UnauthorizedAttempts = logs.Count(l => !l.IsSuccess),
             AccessByUser = logs.Where(l => l.UserId.HasValue).GroupBy(l => l.UserId!.Value)
-                .Select(g => new PHIAccessByUserDto { UserId = g.Key, UserName = g.First().UserName ?? "", AccessCount = g.Count(), LastAccess = g.Max(l => l.Timestamp) }).ToList()
+                .Select(g => new PHIAccessByUserDto {
+                    UserId = g.Key,
+                    UserName = g.First().UserName ?? "",
+                    Role = g.First().UserRole ?? "",
+                    AccessCount = g.Count(),
+                    UniquePatients = g.Where(l => l.PatientId.HasValue).Select(l => l.PatientId!.Value).Distinct().Count(),
+                    LastAccess = g.Max(l => l.Timestamp)
+                }).ToList()
         };
     }
 
@@ -242,7 +249,15 @@ public class AuditService : IAuditService
         {
             PatientId = patientId, PatientName = patient != null ? $"{patient.FirstName} {patient.LastName}" : "Unknown",
             RequestDate = DateTime.UtcNow, PeriodStart = startDate, PeriodEnd = endDate,
-            AccessEntries = logs.Select(l => new PatientAccessEntryDto { AccessDate = l.Timestamp, AccessedBy = l.UserName ?? "", Role = l.UserRole ?? "", Action = l.Action, ResourceAccessed = l.ResourceType }).ToList()
+            AccessEntries = logs.Select(l => new PatientAccessEntryDto {
+                AccessDate = l.Timestamp,
+                AccessedBy = l.UserName ?? "",
+                Role = l.UserRole ?? "",
+                Department = l.ModuleName ?? "",
+                Action = l.Action,
+                ResourceAccessed = l.ResourceType ?? "",
+                Reason = l.Reason
+            }).ToList()
         };
     }
 
@@ -251,7 +266,14 @@ public class AuditService : IAuditService
         var q = _context.Set<AuditLog>().AsNoTracking().Where(a => a.Timestamp >= startDate && a.Timestamp <= endDate && a.UserId.HasValue);
         if (branchId.HasValue) q = q.Where(a => a.BranchId == branchId.Value);
         var logs = await q.ToListAsync();
-        return logs.GroupBy(l => l.UserId!.Value).Select(g => new PHIAccessByUserDto { UserId = g.Key, UserName = g.First().UserName ?? "", AccessCount = g.Count(), LastAccess = g.Max(l => l.Timestamp) }).ToList();
+        return logs.GroupBy(l => l.UserId!.Value).Select(g => new PHIAccessByUserDto {
+            UserId = g.Key,
+            UserName = g.First().UserName ?? "",
+            Role = g.First().UserRole ?? "",
+            AccessCount = g.Count(),
+            UniquePatients = g.Where(l => l.PatientId.HasValue).Select(l => l.PatientId!.Value).Distinct().Count(),
+            LastAccess = g.Max(l => l.Timestamp)
+        }).ToList();
     }
 
     public async Task<List<SuspiciousActivityDto>> DetectSuspiciousActivitiesAsync(DateTime startDate, DateTime endDate)

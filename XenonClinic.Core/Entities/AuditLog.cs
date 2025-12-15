@@ -13,6 +13,16 @@ public class AuditLog
     public string? CorrelationId { get; set; }
 
     /// <summary>
+    /// The type of event (PHIAccess, DataCreate, DataUpdate, etc.)
+    /// </summary>
+    public string? EventType { get; set; }
+
+    /// <summary>
+    /// The category of the event (PatientData, Authentication, Authorization, etc.)
+    /// </summary>
+    public string? EventCategory { get; set; }
+
+    /// <summary>
     /// The type of action performed (Create, Update, Delete, Read, Login, Logout, etc.)
     /// </summary>
     public string Action { get; set; } = string.Empty;
@@ -23,14 +33,24 @@ public class AuditLog
     public string? EntityType { get; set; }
 
     /// <summary>
+    /// The resource type being acted upon
+    /// </summary>
+    public string? ResourceType { get; set; }
+
+    /// <summary>
     /// The ID of the entity being acted upon
     /// </summary>
     public string? EntityId { get; set; }
 
     /// <summary>
-    /// User ID who performed the action
+    /// The ID of the resource being acted upon
     /// </summary>
-    public string? UserId { get; set; }
+    public string? ResourceId { get; set; }
+
+    /// <summary>
+    /// User ID who performed the action (nullable int for compatibility)
+    /// </summary>
+    public int? UserId { get; set; }
 
     /// <summary>
     /// Username for display purposes
@@ -38,9 +58,39 @@ public class AuditLog
     public string? UserName { get; set; }
 
     /// <summary>
+    /// User's role
+    /// </summary>
+    public string? UserRole { get; set; }
+
+    /// <summary>
     /// User's email address
     /// </summary>
     public string? UserEmail { get; set; }
+
+    /// <summary>
+    /// Patient ID for PHI access tracking
+    /// </summary>
+    public int? PatientId { get; set; }
+
+    /// <summary>
+    /// Whether this access involves Protected Health Information
+    /// </summary>
+    public bool IsPHIAccess { get; set; }
+
+    /// <summary>
+    /// Whether this was emergency access (break-glass)
+    /// </summary>
+    public bool IsEmergencyAccess { get; set; }
+
+    /// <summary>
+    /// Justification for emergency access
+    /// </summary>
+    public string? EmergencyJustification { get; set; }
+
+    /// <summary>
+    /// Reason for access
+    /// </summary>
+    public string? Reason { get; set; }
 
     /// <summary>
     /// IP address of the request
@@ -81,6 +131,11 @@ public class AuditLog
     /// Additional context or description
     /// </summary>
     public string? Description { get; set; }
+
+    /// <summary>
+    /// Additional data as JSON
+    /// </summary>
+    public string? AdditionalData { get; set; }
 
     /// <summary>
     /// Tenant ID for multi-tenancy

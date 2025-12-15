@@ -89,6 +89,7 @@ public class ClinicDbContext : IdentityDbContext<Entities.ApplicationUser>
     public DbSet<Department> Departments => Set<Department>();
     public DbSet<JobPosition> JobPositions => Set<JobPosition>();
     public DbSet<Employee> Employees => Set<Employee>();
+    public DbSet<Doctor> Doctors => Set<Doctor>();
     public DbSet<Attendance> Attendances => Set<Attendance>();
     public DbSet<LeaveRequest> LeaveRequests => Set<LeaveRequest>();
     public DbSet<PerformanceReview> PerformanceReviews => Set<PerformanceReview>();
