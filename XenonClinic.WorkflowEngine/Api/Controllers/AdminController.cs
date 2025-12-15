@@ -47,8 +47,8 @@ public class AdminController : ControllerBase
     [HttpGet("cluster/nodes")]
     public async Task<ActionResult<IList<ClusterNode>>> GetNodes(CancellationToken cancellationToken)
     {
-        var nodes = await _distributedService.GetNodesAsync(cancellationToken);
-        return Ok(nodes);
+        var state = await _distributedService.GetClusterStateAsync(cancellationToken);
+        return Ok(state.Nodes);
     }
 
     /// <summary>
@@ -86,37 +86,17 @@ public class AdminController : ControllerBase
     public async Task<ActionResult<object>> GetLeader(CancellationToken cancellationToken)
     {
         var state = await _distributedService.GetClusterStateAsync(cancellationToken);
-        if (string.IsNullOrEmpty(state.LeaderId))
+        if (string.IsNullOrEmpty(state.LeaderNodeId))
         {
             return Ok(new { hasLeader = false });
         }
 
-        var leader = await _distributedService.GetNodeAsync(state.LeaderId, cancellationToken);
+        var leader = await _distributedService.GetNodeAsync(state.LeaderNodeId, cancellationToken);
         return Ok(new { hasLeader = true, leader });
     }
 
-    /// <summary>
-    /// Gets active distributed locks.
-    /// </summary>
-    [HttpGet("cluster/locks")]
-    public async Task<ActionResult<IList<DistributedLock>>> GetActiveLocks(
-        CancellationToken cancellationToken)
-    {
-        var locks = await _distributedService.GetActiveLocksAsync(cancellationToken);
-        return Ok(locks);
-    }
-
-    /// <summary>
-    /// Force releases a distributed lock.
-    /// </summary>
-    [HttpDelete("cluster/locks/{lockKey}")]
-    public async Task<IActionResult> ForceReleaseLock(
-        string lockKey,
-        CancellationToken cancellationToken)
-    {
-        await _distributedService.ForceReleaseLockAsync(lockKey, cancellationToken);
-        return NoContent();
-    }
+    // Note: Lock management endpoints removed as GetActiveLocksAsync and ForceReleaseLockAsync
+    // are not yet implemented in IDistributedExecutionService
 
     #endregion
 
@@ -329,10 +309,10 @@ public class AdminController : ControllerBase
 
         var health = new HealthStatus
         {
-            Status = clusterState.IsHealthy ? "Healthy" : "Degraded",
-            ClusterHealthy = clusterState.IsHealthy,
+            Status = clusterState.Health == ClusterHealth.Healthy ? "Healthy" : "Degraded",
+            ClusterHealthy = clusterState.Health == ClusterHealth.Healthy,
             NodeCount = clusterState.Nodes?.Count ?? 0,
-            HasLeader = !string.IsNullOrEmpty(clusterState.LeaderId),
+            HasLeader = !string.IsNullOrEmpty(clusterState.LeaderNodeId),
             CacheEntries = cacheStats.TotalEntries,
             CacheHitRatio = cacheStats.TotalHits + cacheStats.TotalMisses > 0
                 ? (double)cacheStats.TotalHits / (cacheStats.TotalHits + cacheStats.TotalMisses)

@@ -1,4 +1,5 @@
 using FluentValidation;
+using Microsoft.Extensions.DependencyInjection;
 using XenonClinic.Core.DTOs;
 using XenonClinic.Core.Enums;
 
