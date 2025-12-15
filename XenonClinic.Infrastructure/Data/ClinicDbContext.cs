@@ -112,12 +112,18 @@ public class ClinicDbContext : IdentityDbContext<Entities.ApplicationUser>
     public DbSet<ExpenseCategory> ExpenseCategories => Set<ExpenseCategory>();
     public DbSet<Expense> Expenses => Set<Expense>();
     public DbSet<FinancialTransaction> FinancialTransactions => Set<FinancialTransaction>();
+    public DbSet<FinancialAccount> FinancialAccounts => Set<FinancialAccount>();
+    public DbSet<Voucher> Vouchers => Set<Voucher>();
+    public DbSet<VoucherLine> VoucherLines => Set<VoucherLine>();
 
     // General medical entities
     public DbSet<Procedure> Procedures => Set<Procedure>();
     public DbSet<Prescription> Prescriptions => Set<Prescription>();
     public DbSet<PrescriptionItem> PrescriptionItems => Set<PrescriptionItem>();
     public DbSet<VitalSign> VitalSigns => Set<VitalSign>();
+    public DbSet<Visit> Visits => Set<Visit>();
+    public DbSet<Immunization> Immunizations => Set<Immunization>();
+    public DbSet<DoctorSchedule> DoctorSchedules => Set<DoctorSchedule>();
 
     // Authentication configuration entities (from Infrastructure)
     public DbSet<Entities.CompanyAuthSettings> CompanyAuthSettings => Set<Entities.CompanyAuthSettings>();
@@ -130,6 +136,14 @@ public class ClinicDbContext : IdentityDbContext<Entities.ApplicationUser>
     public DbSet<CaseStatus> CaseStatuses => Set<CaseStatus>();
     public DbSet<CaseNote> CaseNotes => Set<CaseNote>();
     public DbSet<CaseActivity> CaseActivities => Set<CaseActivity>();
+
+    // CRM/Marketing entities
+    public DbSet<Lead> Leads => Set<Lead>();
+    public DbSet<Campaign> Campaigns => Set<Campaign>();
+    public DbSet<MarketingActivity> MarketingActivities => Set<MarketingActivity>();
+
+    // Tenant Configuration
+    public DbSet<TenantNavigation> TenantNavigations => Set<TenantNavigation>();
 
     // Audit Logging
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();

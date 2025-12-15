@@ -24,14 +24,12 @@ public class InventoryService : IInventoryService
     {
         return await _context.InventoryItems
             .Include(i => i.Branch)
-            .Include(i => i.Category)
             .FirstOrDefaultAsync(i => i.Id == id);
     }
 
     public async Task<InventoryItem?> GetInventoryItemByCodeAsync(string itemCode, int branchId)
     {
         return await _context.InventoryItems
-            .Include(i => i.Category)
             .FirstOrDefaultAsync(i => i.ItemCode == itemCode && i.BranchId == branchId);
     }
 
@@ -39,9 +37,8 @@ public class InventoryService : IInventoryService
     {
         return await _context.InventoryItems
             .AsNoTracking()
-            .Include(i => i.Category)
             .Where(i => i.BranchId == branchId)
-            .OrderBy(i => i.ItemName)
+            .OrderBy(i => i.Name)
             .ToListAsync();
     }
 
@@ -49,9 +46,8 @@ public class InventoryService : IInventoryService
     {
         return await _context.InventoryItems
             .AsNoTracking()
-            .Include(i => i.Category)
             .Where(i => i.BranchId == branchId && i.IsActive)
-            .OrderBy(i => i.ItemName)
+            .OrderBy(i => i.Name)
             .ToListAsync();
     }
 
@@ -59,11 +55,10 @@ public class InventoryService : IInventoryService
     {
         return await _context.InventoryItems
             .AsNoTracking()
-            .Include(i => i.Category)
             .Where(i => i.BranchId == branchId &&
                    i.IsActive &&
-                   i.CurrentStock <= i.ReorderLevel)
-            .OrderBy(i => i.ItemName)
+                   i.QuantityOnHand <= i.ReorderLevel)
+            .OrderBy(i => i.Name)
             .ToListAsync();
     }
 
@@ -80,7 +75,7 @@ public class InventoryService : IInventoryService
         }
 
         // Validate non-negative stock
-        if (item.CurrentStock < 0)
+        if (item.QuantityOnHand < 0)
         {
             throw new InvalidOperationException("Initial stock cannot be negative");
         }
@@ -184,15 +179,15 @@ public class InventoryService : IInventoryService
                 : -transaction.Quantity;
 
             // BUG FIX: Validate stock won't go negative for debits
-            if (transaction.TransactionType == TransactionType.Debit && item.CurrentStock < transaction.Quantity)
+            if (transaction.TransactionType == TransactionType.Debit && item.QuantityOnHand < transaction.Quantity)
             {
-                throw new InvalidOperationException($"Insufficient stock. Available: {item.CurrentStock}, Requested: {transaction.Quantity}");
+                throw new InvalidOperationException($"Insufficient stock. Available: {item.QuantityOnHand}, Requested: {transaction.Quantity}");
             }
 
             _context.InventoryTransactions.Add(transaction);
 
             // Update item stock level
-            item.CurrentStock += stockChange;
+            item.QuantityOnHand += stockChange;
             item.LastRestockDate = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
@@ -250,7 +245,7 @@ public class InventoryService : IInventoryService
                 ? transaction.Quantity
                 : -transaction.Quantity;
 
-            var newStock = item.CurrentStock - oldStockChange + newStockChange;
+            var newStock = item.QuantityOnHand - oldStockChange + newStockChange;
 
             // BUG FIX: Validate stock won't go negative
             if (newStock < 0)
@@ -259,7 +254,7 @@ public class InventoryService : IInventoryService
             }
 
             _context.InventoryTransactions.Update(transaction);
-            item.CurrentStock = newStock;
+            item.QuantityOnHand = newStock;
             item.LastRestockDate = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
@@ -298,7 +293,7 @@ public class InventoryService : IInventoryService
                     ? -transaction.Quantity  // Reverse the credit
                     : transaction.Quantity;  // Reverse the debit
 
-                var newStock = item.CurrentStock + stockChange;
+                var newStock = item.QuantityOnHand + stockChange;
 
                 // BUG FIX: Validate stock won't go negative after reversal
                 if (newStock < 0)
@@ -306,7 +301,7 @@ public class InventoryService : IInventoryService
                     throw new InvalidOperationException($"Cannot delete transaction - would result in negative stock ({newStock})");
                 }
 
-                item.CurrentStock = newStock;
+                item.QuantityOnHand = newStock;
                 item.LastRestockDate = DateTime.UtcNow;
             }
 
@@ -346,22 +341,22 @@ public class InventoryService : IInventoryService
             if (item == null)
                 throw new KeyNotFoundException($"Inventory item with ID {itemId} not found");
 
-            // Validate against MaxStockLevel if set
-            if (item.MaxStockLevel.HasValue && (item.CurrentStock + quantity) > item.MaxStockLevel.Value)
+            // Validate against MaxStockLevel if set (0 means no limit)
+            if (item.MaxStockLevel > 0 && (item.QuantityOnHand + quantity) > item.MaxStockLevel)
             {
                 throw new InvalidOperationException(
-                    $"Adding {quantity} units would exceed maximum stock level of {item.MaxStockLevel.Value}. " +
-                    $"Current stock: {item.CurrentStock}");
+                    $"Adding {quantity} units would exceed maximum stock level of {item.MaxStockLevel}. " +
+                    $"Current stock: {item.QuantityOnHand}");
             }
 
-            var newStockLevel = item.CurrentStock + quantity;
+            var newStockLevel = item.QuantityOnHand + quantity;
             var transaction = new InventoryTransaction
             {
                 InventoryItemId = itemId,
                 TransactionType = TransactionType.Credit,
                 Quantity = quantity,
-                UnitCost = unitCost,
-                TotalCost = quantity * unitCost,
+                UnitPrice = unitCost,
+                TotalAmount = quantity * unitCost,
                 TransactionDate = DateTime.UtcNow,
                 PerformedBy = userId,
                 Notes = notes ?? "Stock added",
@@ -371,8 +366,8 @@ public class InventoryService : IInventoryService
             _context.InventoryTransactions.Add(transaction);
 
             // Update item stock level and unit cost in single save
-            item.CurrentStock = newStockLevel;
-            item.UnitCost = unitCost;
+            item.QuantityOnHand = newStockLevel;
+            item.CostPrice = unitCost;
             item.LastRestockDate = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
@@ -403,8 +398,8 @@ public class InventoryService : IInventoryService
             if (item == null)
                 throw new KeyNotFoundException($"Inventory item with ID {itemId} not found");
 
-            if (item.CurrentStock < quantity)
-                throw new InvalidOperationException($"Insufficient stock. Available: {item.CurrentStock}, Requested: {quantity}");
+            if (item.QuantityOnHand < quantity)
+                throw new InvalidOperationException($"Insufficient stock. Available: {item.QuantityOnHand}, Requested: {quantity}");
 
             // Check for expired items - prevent dispensing expired stock
             if (item.ExpiryDate.HasValue && item.ExpiryDate.Value.Date < DateTime.UtcNow.Date)
@@ -415,7 +410,7 @@ public class InventoryService : IInventoryService
             }
 
             // Warn if stock will fall below reorder level
-            var remainingStock = item.CurrentStock - quantity;
+            var remainingStock = item.QuantityOnHand - quantity;
             var stockWarning = remainingStock <= item.ReorderLevel
                 ? $" Warning: Stock level ({remainingStock}) is at or below reorder level ({item.ReorderLevel})."
                 : "";
@@ -425,8 +420,8 @@ public class InventoryService : IInventoryService
                 InventoryItemId = itemId,
                 TransactionType = TransactionType.Debit,
                 Quantity = quantity,
-                UnitCost = item.UnitCost,
-                TotalCost = quantity * item.UnitCost,
+                UnitPrice = item.CostPrice,
+                TotalAmount = quantity * item.CostPrice,
                 TransactionDate = DateTime.UtcNow,
                 PerformedBy = userId,
                 Notes = (notes ?? "Stock removed") + stockWarning,
@@ -436,7 +431,7 @@ public class InventoryService : IInventoryService
             _context.InventoryTransactions.Add(transaction);
 
             // Update item stock level in single save
-            item.CurrentStock -= quantity;
+            item.QuantityOnHand -= quantity;
 
             await _context.SaveChangesAsync();
             await dbTransaction.CommitAsync();
@@ -466,7 +461,7 @@ public class InventoryService : IInventoryService
             if (item == null)
                 throw new KeyNotFoundException($"Inventory item with ID {itemId} not found");
 
-            var difference = newQuantity - item.CurrentStock;
+            var difference = newQuantity - item.QuantityOnHand;
 
             // No transaction needed if no change
             if (difference == 0)
@@ -489,17 +484,17 @@ public class InventoryService : IInventoryService
                 InventoryItemId = itemId,
                 TransactionType = transactionType,
                 Quantity = absoluteDifference,
-                UnitCost = item.UnitCost,
-                TotalCost = absoluteDifference * item.UnitCost,
+                UnitPrice = item.CostPrice,
+                TotalAmount = absoluteDifference * item.CostPrice,
                 TransactionDate = DateTime.UtcNow,
                 PerformedBy = userId,
-                Notes = notes ?? $"Stock adjusted from {item.CurrentStock} to {newQuantity}"
+                Notes = notes ?? $"Stock adjusted from {item.QuantityOnHand} to {newQuantity}"
             };
 
             _context.InventoryTransactions.Add(transaction);
 
             // Update item stock level in single save
-            item.CurrentStock = newQuantity;
+            item.QuantityOnHand = newQuantity;
 
             await _context.SaveChangesAsync();
             await dbTransaction.CommitAsync();
@@ -516,14 +511,14 @@ public class InventoryService : IInventoryService
     public async Task<int> GetCurrentStockLevelAsync(int itemId)
     {
         var item = await _context.InventoryItems.FindAsync(itemId);
-        return item?.CurrentStock ?? 0;
+        return item?.QuantityOnHand ?? 0;
     }
 
     public async Task<decimal> GetStockValueAsync(int branchId)
     {
         return await _context.InventoryItems
             .Where(i => i.BranchId == branchId && i.IsActive)
-            .SumAsync(i => i.CurrentStock * i.UnitCost);
+            .SumAsync(i => i.QuantityOnHand * i.CostPrice);
     }
 
     #endregion
@@ -541,7 +536,7 @@ public class InventoryService : IInventoryService
         return await _context.InventoryItems
             .CountAsync(i => i.BranchId == branchId &&
                         i.IsActive &&
-                        i.CurrentStock <= i.ReorderLevel);
+                        i.QuantityOnHand <= i.ReorderLevel);
     }
 
     public async Task<int> GetOutOfStockItemsCountAsync(int branchId)
@@ -549,14 +544,14 @@ public class InventoryService : IInventoryService
         return await _context.InventoryItems
             .CountAsync(i => i.BranchId == branchId &&
                         i.IsActive &&
-                        i.CurrentStock == 0);
+                        i.QuantityOnHand == 0);
     }
 
     public async Task<decimal> GetTotalInventoryValueAsync(int branchId)
     {
         return await _context.InventoryItems
             .Where(i => i.BranchId == branchId && i.IsActive)
-            .SumAsync(i => i.CurrentStock * i.UnitCost);
+            .SumAsync(i => i.QuantityOnHand * i.CostPrice);
     }
 
     public async Task<Dictionary<TransactionType, int>> GetTransactionTypeDistributionAsync(int branchId)

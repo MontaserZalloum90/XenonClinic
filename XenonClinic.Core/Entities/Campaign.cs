@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations.Schema;
 using XenonClinic.Core.Enums;
 
 namespace XenonClinic.Core.Entities;
@@ -5,6 +6,7 @@ namespace XenonClinic.Core.Entities;
 /// <summary>
 /// Represents a marketing campaign for clinic outreach and patient engagement
 /// </summary>
+[Table("Campaigns")]
 public class Campaign
 {
     public int Id { get; set; }

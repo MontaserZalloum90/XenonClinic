@@ -155,7 +155,7 @@ public class AppointmentService : IAppointmentService
         // Validate provider exists if specified
         if (appointment.ProviderId.HasValue)
         {
-            var providerExists = await _context.Providers.AnyAsync(p => p.Id == appointment.ProviderId.Value);
+            var providerExists = await _context.Employees.AnyAsync(p => p.Id == appointment.ProviderId.Value);
             if (!providerExists)
             {
                 throw new KeyNotFoundException($"Provider with ID {appointment.ProviderId.Value} not found");

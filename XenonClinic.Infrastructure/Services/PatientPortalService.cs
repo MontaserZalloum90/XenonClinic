@@ -537,7 +537,7 @@ public class PatientPortalService : IPatientPortalService
 
         var pendingInvoices = await _context.Invoices
             .Where(i => i.PatientId == patientId &&
-                (i.Status == "Pending" || i.Status == "Overdue"))
+                (i.Status == InvoiceStatus.Issued || i.Status == InvoiceStatus.Overdue))
             .CountAsync();
 
         var pendingPrescriptions = await _context.PrescriptionItems
@@ -762,7 +762,7 @@ public class PatientPortalService : IPatientPortalService
             EndTime = appointment.EndTime,
             DoctorName = $"Dr. {appointment.Doctor?.FirstName} {appointment.Doctor?.LastName}",
             DoctorSpecialty = appointment.Doctor?.Specialty,
-            DoctorPhotoUrl = appointment.Doctor?.ProfilePhotoUrl,
+            DoctorPhotoUrl = appointment.Doctor?.PhotoPath,
             Department = appointment.Department,
             Location = appointment.Location,
             AppointmentType = appointment.AppointmentType ?? "Regular",
@@ -993,7 +993,7 @@ public class PatientPortalService : IPatientPortalService
             Id = d.Id,
             Name = $"Dr. {d.FirstName} {d.LastName}",
             Specialty = d.Specialty,
-            PhotoUrl = d.ProfilePhotoUrl,
+            PhotoUrl = d.PhotoPath,
             Bio = d.Bio,
             AcceptsNewPatients = d.AcceptsNewPatients,
             OffersTelemedicine = d.OffersTelemedicine,
@@ -1821,9 +1821,11 @@ public class PatientPortalService : IPatientPortalService
             DoctorId = t.DoctorId,
             DoctorName = $"Dr. {t.Doctor?.FirstName} {t.Doctor?.LastName}",
             DoctorSpecialty = t.Doctor?.Specialty,
-            DoctorPhotoUrl = t.Doctor?.ProfilePhotoUrl,
+            DoctorPhotoUrl = t.Doctor?.PhotoPath,
             LastMessageAt = t.LastMessageAt,
-            LastMessagePreview = t.Messages.FirstOrDefault()?.Content?.Substring(0, Math.Min(100, t.Messages.FirstOrDefault()?.Content?.Length ?? 0)) ?? "",
+            LastMessagePreview = (t.Messages.FirstOrDefault()?.Content ?? "").Length > 100
+                ? t.Messages.FirstOrDefault()!.Content!.Substring(0, 100)
+                : t.Messages.FirstOrDefault()?.Content ?? "",
             UnreadCount = t.Messages.Count(m => !m.IsRead && m.SenderType != "Patient"),
             IsClosed = t.IsClosed
         });
@@ -2039,7 +2041,7 @@ public class PatientPortalService : IPatientPortalService
     {
         return await _context.Invoices
             .Where(i => i.PatientId == patientId &&
-                (i.Status == "Pending" || i.Status == "Overdue" || i.Status == "Partial"))
+                (i.Status == InvoiceStatus.Issued || i.Status == InvoiceStatus.Overdue || i.Status == InvoiceStatus.PartiallyPaid))
             .SumAsync(i => i.TotalAmount - i.PaidAmount);
     }
 

@@ -23,6 +23,7 @@ public class Doctor : IBranchEntity
     public string? Title { get; set; } // Dr., Prof., etc.
     public string? Specialty { get; set; }
     public string? SubSpecialty { get; set; }
+    public string? Qualification { get; set; }
     public string? LicenseNumber { get; set; }
     public DateTime? LicenseExpiryDate { get; set; }
     public string? RegistrationNumber { get; set; }
@@ -35,6 +36,8 @@ public class Doctor : IBranchEntity
     public bool CanPrescribe { get; set; } = true;
     public bool CanOrder { get; set; } = true;
     public bool CanRefer { get; set; } = true;
+    public bool AcceptsNewPatients { get; set; } = true;
+    public bool OffersTelemedicine { get; set; } = false;
 
     public string? SignaturePath { get; set; }
     public string? PhotoPath { get; set; }

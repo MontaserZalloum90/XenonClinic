@@ -6,6 +6,7 @@ namespace XenonClinic.Core.Entities;
 /// <summary>
 /// Represents a medical diagnosis for a patient
 /// </summary>
+[Table("Diagnoses")]
 public class Diagnosis
 {
     [Key]
@@ -29,10 +30,18 @@ public class Diagnosis
     [StringLength(500)]
     public string Description { get; set; } = string.Empty;
 
+    [StringLength(200)]
+    public string? DiagnosisName { get; set; } // Friendly name for the diagnosis
+
+    [StringLength(50)]
+    public string Status { get; set; } = "Active"; // Active, Chronic, Resolved, etc.
+
     [StringLength(100)]
     public string? DiagnosisType { get; set; } // primary, secondary, complication, etc.
 
     public int? ClinicalVisitId { get; set; }
+
+    public int? VisitId { get; set; }
 
     public int? DiagnosedByDoctorId { get; set; }
 
@@ -48,6 +57,9 @@ public class Diagnosis
 
     [ForeignKey(nameof(ClinicalVisitId))]
     public virtual ClinicalVisit? ClinicalVisit { get; set; }
+
+    [ForeignKey(nameof(VisitId))]
+    public virtual Visit? Visit { get; set; }
 
     [ForeignKey(nameof(BranchId))]
     public virtual Branch? Branch { get; set; }

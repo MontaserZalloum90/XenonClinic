@@ -26,6 +26,14 @@ public class LabOrder : IBranchEntity
     public int BranchId { get; set; }
     public Branch? Branch { get; set; }
 
+    // Ordering doctor
+    public int? OrderingDoctorId { get; set; }
+    public Doctor? OrderingDoctor { get; set; }
+
+    // Related visit
+    public int? VisitId { get; set; }
+    public Visit? Visit { get; set; }
+
     // External lab if tests are outsourced
     public int? ExternalLabId { get; set; }
     public ExternalLab? ExternalLab { get; set; }

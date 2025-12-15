@@ -56,6 +56,7 @@ public class Payslip
     public decimal SocialInsurance { get; set; }
     public decimal HealthInsurance { get; set; }
     public decimal Tax { get; set; }
+    public decimal PensionContribution { get; set; }
     public decimal LoanDeduction { get; set; }
     public decimal AdvanceDeduction { get; set; }
     public decimal OtherDeductions { get; set; }
