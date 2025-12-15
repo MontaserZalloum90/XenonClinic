@@ -181,12 +181,11 @@ public class CompensationService : ICompensationService
                 request.ProcessInstanceId, execution.Status, execution.CompensatedActivities, execution.FailedActivities);
 
             // Log audit event
-            await _auditService.LogAsync(new AuditLogRequest
+            await _auditService.LogAsync(new AuditEventDto
             {
                 EventType = "Compensation.Completed",
                 EntityType = "ProcessInstance",
-                EntityId = request.ProcessInstanceId,
-                Description = $"Compensation {execution.Status}: {execution.CompensatedActivities} compensated, {execution.FailedActivities} failed",
+                EntityId = request.ProcessInstanceId.ToString(),
                 NewValues = new Dictionary<string, object>
                 {
                     ["executionId"] = execution.Id,

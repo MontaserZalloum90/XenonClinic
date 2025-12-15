@@ -241,7 +241,7 @@ public class WorkflowSerializer
             TenantId = definition.TenantId,
             CreatedAt = definition.CreatedAt,
             ModifiedAt = definition.ModifiedAt,
-            Metadata = definition.Metadata ?? new Dictionary<string, object?>()
+            Metadata = definition.Metadata != null ? new Dictionary<string, object?>(definition.Metadata) : new Dictionary<string, object?>()
         };
 
         // Convert activities to nodes
@@ -315,7 +315,7 @@ public class WorkflowSerializer
             Type = t.Type.ToString().ToLowerInvariant(),
             Name = t.Name,
             IsEnabled = t.IsEnabled,
-            Config = t.Configuration ?? new Dictionary<string, object?>()
+            Config = t.Configuration != null ? new Dictionary<string, object?>(t.Configuration) : new Dictionary<string, object?>()
         }).ToList() ?? new List<TriggerDefinition>();
 
         return design;

@@ -468,7 +468,7 @@ public class EfCoreWorkflowDefinitionStore : IWorkflowDefinitionStore
         entity.IsActive = definition.IsActive;
         entity.IsDraft = definition.IsDraft;
         entity.TenantId = definition.TenantId;
-        entity.CreatedBy = definition.CreatedBy;
+        // Note: CreatedBy is not available in IWorkflowDefinition
         entity.UpdatedAt = DateTime.UtcNow;
         entity.DefinitionJson = JsonSerializer.Serialize(definition, JsonOptions);
 
@@ -585,11 +585,10 @@ public class EfCoreWorkflowDefinitionStore : IWorkflowDefinitionStore
         definition.Description = entity.Description;
         definition.Category = entity.Category;
         definition.IsActive = entity.IsActive;
-        definition.IsDraft = entity.IsDraft;
+        definition.IsDraft = definition.IsDraft;
         definition.TenantId = entity.TenantId;
-        definition.CreatedBy = entity.CreatedBy;
         definition.CreatedAt = entity.CreatedAt;
-        definition.UpdatedAt = entity.UpdatedAt;
+        definition.ModifiedAt = entity.UpdatedAt;
 
         return definition;
     }

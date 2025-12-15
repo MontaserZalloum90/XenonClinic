@@ -42,7 +42,8 @@ public class MonitoringService : IMonitoringService
         {
             Running = processCounts.FirstOrDefault(c => c.Status == ProcessInstanceStatus.Running)?.Count ?? 0,
             Completed = processCounts.FirstOrDefault(c => c.Status == ProcessInstanceStatus.Completed)?.Count ?? 0,
-            Failed = processCounts.FirstOrDefault(c => c.Status == ProcessInstanceStatus.Failed)?.Count ?? 0,
+            Failed = processCounts.FirstOrDefault(c => c.Status == ProcessInstanceStatus.Faulted)?.Count ?? 0
+                   + processCounts.FirstOrDefault(c => c.Status == ProcessInstanceStatus.Terminated)?.Count ?? 0,
             Suspended = processCounts.FirstOrDefault(c => c.Status == ProcessInstanceStatus.Suspended)?.Count ?? 0,
         };
 
@@ -61,17 +62,17 @@ public class MonitoringService : IMonitoringService
             Open = await _context.HumanTasks
                 .CountAsync(t => t.TenantId == tenantId &&
                                 t.Status != HumanTaskStatus.Completed &&
-                                t.Status != HumanTaskStatus.Cancelled, cancellationToken),
+                                t.Status != HumanTaskStatus.Exited, cancellationToken),
 
             Assigned = await _context.HumanTasks
                 .CountAsync(t => t.TenantId == tenantId &&
-                                t.Status == HumanTaskStatus.Assigned, cancellationToken),
+                                (t.Status == HumanTaskStatus.Reserved || t.Status == HumanTaskStatus.InProgress), cancellationToken),
 
             Overdue = await _context.HumanTasks
                 .CountAsync(t => t.TenantId == tenantId &&
                                 t.DueDate < now &&
                                 t.Status != HumanTaskStatus.Completed &&
-                                t.Status != HumanTaskStatus.Cancelled, cancellationToken),
+                                t.Status != HumanTaskStatus.Exited, cancellationToken),
 
             CompletedToday = await _context.HumanTasks
                 .CountAsync(t => t.TenantId == tenantId &&
@@ -83,7 +84,7 @@ public class MonitoringService : IMonitoringService
                                 t.DueDate >= today &&
                                 t.DueDate < today.AddDays(1) &&
                                 t.Status != HumanTaskStatus.Completed &&
-                                t.Status != HumanTaskStatus.Cancelled, cancellationToken)
+                                t.Status != HumanTaskStatus.Exited, cancellationToken)
         };
 
         // Average completion time
@@ -182,7 +183,8 @@ public class MonitoringService : IMonitoringService
             .ToList();
 
         var durations = completedInstances
-            .Select(i => (i.CompletedAt!.Value - i.StartedAt).TotalHours)
+            .Where(i => i.StartedAt.HasValue)
+            .Select(i => (i.CompletedAt!.Value - i.StartedAt!.Value).TotalHours)
             .OrderBy(d => d)
             .ToList();
 
@@ -193,7 +195,7 @@ public class MonitoringService : IMonitoringService
             ProcessName = definition.Name,
             TotalInstances = instances.Count,
             CompletedInstances = completedInstances.Count,
-            FailedInstances = instances.Count(i => i.Status == ProcessInstanceStatus.Failed),
+            FailedInstances = instances.Count(i => i.Status == ProcessInstanceStatus.Faulted || i.Status == ProcessInstanceStatus.Terminated),
             RunningInstances = instances.Count(i => i.Status == ProcessInstanceStatus.Running)
         };
 
@@ -216,16 +218,16 @@ public class MonitoringService : IMonitoringService
         // Activity statistics
         var activityInstances = await _context.ActivityInstances
             .Where(ai => instances.Select(i => i.Id).Contains(ai.ProcessInstanceId))
-            .GroupBy(ai => new { ai.ActivityId, ai.ActivityName, ai.ActivityType })
+            .GroupBy(ai => new { ai.ActivityDefinitionId, ai.ActivityName, ai.ActivityType })
             .Select(g => new
             {
-                g.Key.ActivityId,
+                ActivityId = g.Key.ActivityDefinitionId,
                 g.Key.ActivityName,
                 g.Key.ActivityType,
                 ExecutionCount = g.Count(),
                 FailedCount = g.Count(ai => ai.Status == ActivityInstanceStatus.Failed),
-                TotalDuration = g.Sum(ai => ai.CompletedAt != null
-                    ? (double?)(ai.CompletedAt.Value - ai.StartedAt).TotalSeconds
+                TotalDuration = g.Sum(ai => ai.CompletedAt != null && ai.StartedAt != null
+                    ? (double?)(ai.CompletedAt.Value - ai.StartedAt.Value).TotalSeconds
                     : null)
             })
             .ToListAsync(cancellationToken);
@@ -275,7 +277,7 @@ public class MonitoringService : IMonitoringService
 
         var completedTasks = tasks.Where(t => t.Status == HumanTaskStatus.Completed).ToList();
         var openTasks = tasks.Where(t =>
-            t.Status != HumanTaskStatus.Completed && t.Status != HumanTaskStatus.Cancelled).ToList();
+            t.Status != HumanTaskStatus.Completed && t.Status != HumanTaskStatus.Exited).ToList();
 
         var result = new TaskStatisticsDto
         {
@@ -348,15 +350,15 @@ public class MonitoringService : IMonitoringService
 
         var activities = await _context.ActivityInstances
             .Where(ai => instanceIds.Contains(ai.ProcessInstanceId))
-            .GroupBy(ai => new { ai.ActivityId, ai.ActivityName })
+            .GroupBy(ai => new { ai.ActivityDefinitionId, ai.ActivityName })
             .Select(g => new
             {
-                g.Key.ActivityId,
+                ActivityId = g.Key.ActivityDefinitionId,
                 g.Key.ActivityName,
                 ExecutionCount = g.Count(),
                 FailedCount = g.Count(ai => ai.Status == ActivityInstanceStatus.Failed),
-                TotalDuration = g.Sum(ai => ai.CompletedAt != null
-                    ? (double?)(ai.CompletedAt.Value - ai.StartedAt).TotalSeconds
+                TotalDuration = g.Sum(ai => ai.CompletedAt != null && ai.StartedAt != null
+                    ? (double?)(ai.CompletedAt.Value - ai.StartedAt.Value).TotalSeconds
                     : null)
             })
             .ToListAsync(cancellationToken);
@@ -486,7 +488,7 @@ public class MonitoringService : IMonitoringService
             .CountAsync(j => j.Status == JobStatus.Pending || j.Status == JobStatus.Retrying, cancellationToken);
 
         health.JobProcessor.RunningJobs = await _context.AsyncJobs
-            .CountAsync(j => j.Status == JobStatus.Running, cancellationToken);
+            .CountAsync(j => j.Status == JobStatus.Processing, cancellationToken);
 
         health.JobProcessor.FailedJobsLast24h = await _context.AsyncJobs
             .CountAsync(j => j.Status == JobStatus.Failed &&
@@ -500,15 +502,15 @@ public class MonitoringService : IMonitoringService
 
         // Timer service health
         health.TimerService.ScheduledTimers = await _context.ProcessTimers
-            .CountAsync(t => t.Status == TimerStatus.Scheduled, cancellationToken);
+            .CountAsync(t => t.Status == TimerStatus.Pending, cancellationToken);
 
         health.TimerService.OverdueTimers = await _context.ProcessTimers
-            .CountAsync(t => t.Status == TimerStatus.Scheduled && t.FireAt < now, cancellationToken);
+            .CountAsync(t => t.Status == TimerStatus.Pending && t.FireAt < now, cancellationToken);
 
         health.TimerService.LastFiredAt = await _context.ProcessTimers
-            .Where(t => t.Status == TimerStatus.Fired)
-            .OrderByDescending(t => t.FiredAt)
-            .Select(t => t.FiredAt)
+            .Where(t => t.Status == TimerStatus.Triggered)
+            .OrderByDescending(t => t.LastFiredAt)
+            .Select(t => t.LastFiredAt)
             .FirstOrDefaultAsync(cancellationToken);
 
         // Determine overall status

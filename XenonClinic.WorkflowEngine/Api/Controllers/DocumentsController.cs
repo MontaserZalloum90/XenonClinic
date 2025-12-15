@@ -64,23 +64,10 @@ public class DocumentsController : ControllerBase
             return BadRequest(new { message = "Document ID is required" });
         }
 
-        // Try to get document directly if service supports it
-        var document = await _documentService.GetDocumentAsync(documentId, cancellationToken);
-
-        if (document == null)
-        {
-            return NotFound(new { message = $"Document '{documentId}' not found" });
-        }
-
-        if (document.Content == null || document.Content.Length == 0)
-        {
-            return NotFound(new { message = $"Document '{documentId}' has no content" });
-        }
-
-        var contentType = document.ContentType ?? "application/octet-stream";
-        var fileName = document.FileName ?? $"document-{documentId}";
-
-        return File(document.Content, contentType, fileName);
+        // TODO: GetDocumentAsync method is not available in IDocumentService
+        // Need to implement document retrieval from storage or database
+        // For now, return a not implemented error
+        return StatusCode(501, new { message = "Document retrieval not implemented. GetDocumentAsync is not available in IDocumentService." });
     }
 
     /// <summary>

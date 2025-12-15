@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Linq;
 using Microsoft.Extensions.Logging;
+using XenonClinic.WorkflowEngine.Application.DTOs;
 using XenonClinic.WorkflowEngine.Domain.Models;
 
 namespace XenonClinic.WorkflowEngine.Application.Services;
@@ -93,27 +94,34 @@ public class BpmnService : IBpmnService
             // Parse to process model
             var processModel = await ParseAsync(bpmnXml, cancellationToken);
 
-            // Create process definition
-            var definition = await _processDefinitionService.CreateAsync(new CreateProcessDefinitionRequest
-            {
-                TenantId = request.TenantId,
-                Key = processModel.ProcessDefinitionKey,
-                Name = processModel.Name,
-                Description = processModel.Documentation,
-                Model = processModel,
-                Metadata = request.Metadata
-            }, cancellationToken);
+            // Parse tenant ID
+            var tenantId = int.TryParse(request.TenantId, out var tid) ? tid : 0;
 
-            if (request.DeployImmediately)
+            // Create process definition
+            var tenantId = int.TryParse(request.TenantId, out var tid) ? tid : 1; // Default to tenant 1 if invalid
+            var definition = await _processDefinitionService.CreateAsync(
+                tenantId,
+                new CreateProcessDefinitionRequest
+                {
+                    Key = processModel.ProcessDefinitionKey,
+                    Name = processModel.Name,
+                    Description = processModel.Documentation,
+                    Model = processModel,
+                    SaveAsDraft = !request.DeployImmediately
+                },
+                "system", // userId - TODO: get from context
+                cancellationToken);
+
+            if (request.DeployImmediately && definition.Version > 0)
             {
-                await _processDefinitionService.DeployAsync(definition.Id, cancellationToken);
+                await _processDefinitionService.PublishVersionAsync(definition.Id, definition.Version, tenantId, "system", cancellationToken);
             }
 
             result.Success = true;
             result.ProcessDefinitionId = definition.Id;
             result.ProcessDefinitionKey = definition.Key;
             result.ProcessName = definition.Name;
-            result.Version = definition.Version;
+            result.Version = definition.LatestVersionDetail?.Version ?? definition.LatestVersion;
 
             _logger.LogInformation("Successfully imported BPMN process {ProcessKey} as definition {DefinitionId}",
                 processModel.ProcessDefinitionKey, definition.Id);
@@ -139,19 +147,27 @@ public class BpmnService : IBpmnService
 
         try
         {
-            var definition = await _processDefinitionService.GetByIdAsync(processDefinitionId, cancellationToken);
+            var tenantId = 1; // TODO: get from context or method parameter
+            var definition = await _processDefinitionService.GetByIdAsync(processDefinitionId, tenantId, cancellationToken);
             if (definition == null)
             {
                 result.ErrorMessage = $"Process definition {processDefinitionId} not found";
                 return result;
             }
 
-            var bpmnXml = await SerializeAsync(definition.Model, cancellationToken);
+            var model = definition.LatestVersionDetail?.Model;
+            if (model == null)
+            {
+                result.ErrorMessage = "Process model not found";
+                return result;
+            }
+
+            var bpmnXml = await SerializeAsync(model, cancellationToken);
 
             result.Success = true;
             result.BpmnXml = bpmnXml;
             result.BpmnFile = Encoding.UTF8.GetBytes(bpmnXml);
-            result.FileName = $"{definition.Key}_v{definition.Version}.bpmn";
+            result.FileName = $"{definition.Key}_v{definition.LatestVersionDetail?.Version ?? definition.LatestVersion}.bpmn";
 
             _logger.LogInformation("Exported process definition {DefinitionId} to BPMN", processDefinitionId);
         }
@@ -375,7 +391,7 @@ public class BpmnService : IBpmnService
         }
 
         // Update shapes
-        foreach (var shapeUpdate in update.ShapeUpdates ?? Enumerable.Empty<BpmnShapeUpdate>())
+        foreach (var shapeUpdate in update.ShapeUpdates ?? Enumerable.Empty<ShapeUpdate>())
         {
             var shape = plane.Elements()
                 .FirstOrDefault(e => e.Name.LocalName == "BPMNShape" &&
@@ -395,7 +411,7 @@ public class BpmnService : IBpmnService
         }
 
         // Update edges
-        foreach (var edgeUpdate in update.EdgeUpdates ?? Enumerable.Empty<BpmnEdgeUpdate>())
+        foreach (var edgeUpdate in update.EdgeUpdates ?? Enumerable.Empty<EdgeUpdate>())
         {
             var edge = plane.Elements()
                 .FirstOrDefault(e => e.Name.LocalName == "BPMNEdge" &&

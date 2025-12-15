@@ -534,7 +534,7 @@ public class HumanTaskService : IHumanTaskService
         var comment = new TaskComment
         {
             Id = Guid.NewGuid(),
-            TaskId = task.Id,
+            TaskId = Guid.Parse(taskId),
             Content = content,
             UserId = userId,
             CreatedAt = DateTime.UtcNow
@@ -542,7 +542,7 @@ public class HumanTaskService : IHumanTaskService
 
         _context.TaskComments.Add(comment);
         await AddActionAsync(task, TaskActionTypes.AddComment, userId,
-            new Dictionary<string, object> { ["commentId"] = comment.Id.ToString() }, cancellationToken);
+            new Dictionary<string, object> { ["commentId"] = comment.Id }, cancellationToken);
 
         await _context.SaveChangesAsync(cancellationToken);
 
@@ -597,7 +597,7 @@ public class HumanTaskService : IHumanTaskService
         var attachment = new TaskAttachment
         {
             Id = Guid.NewGuid(),
-            TaskId = task.Id,
+            TaskId = Guid.Parse(taskId),
             Name = fileName,
             ContentType = contentType,
             Url = url,
@@ -640,7 +640,6 @@ public class HumanTaskService : IHumanTaskService
         {
             throw new KeyNotFoundException($"Task '{taskId}' not found.");
         }
-
         var attachments = await _context.TaskAttachments
             .Where(a => a.TaskId == taskGuid)
             .OrderByDescending(a => a.UploadedAt)

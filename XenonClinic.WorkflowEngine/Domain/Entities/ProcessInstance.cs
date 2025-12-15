@@ -51,6 +51,23 @@ public class ProcessInstance
     [MaxLength(100)]
     public string? InitiatorUserId { get; set; }
 
+    /// <summary>
+    /// User who started the process (alias for InitiatorUserId)
+    /// </summary>
+    [MaxLength(100)]
+    public string? StartedBy { get; set; }
+
+    /// <summary>
+    /// Parent activity instance ID if this is a subprocess
+    /// </summary>
+    public Guid? ParentActivityInstanceId { get; set; }
+
+    /// <summary>
+    /// Simple error message (alternative to ErrorJson for simple cases)
+    /// </summary>
+    [MaxLength(2000)]
+    public string? ErrorMessage { get; set; }
+
     public int Priority { get; set; } = 5;
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
@@ -135,6 +152,8 @@ public enum ProcessInstanceStatus
     Completed,
     /// <summary>Cancelled by user/admin</summary>
     Cancelled,
+    /// <summary>Failed due to error</summary>
+    Failed,
     /// <summary>Terminated due to unrecoverable error</summary>
     Terminated,
     /// <summary>In error state, can be retried</summary>
