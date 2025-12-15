@@ -7,7 +7,7 @@ import type { SalaryStructure, SalaryStructureFormData } from '../../types/payro
 // Mock API - Replace with actual API when backend is ready
 const salaryStructureApi = {
   getAll: () => Promise.resolve({ data: [] as SalaryStructure[] }),
-  getById: (_id: number) => Promise.resolve({ data: {} as SalaryStructure }),
+  getById: () => Promise.resolve({ data: {} as SalaryStructure }),
   getActive: () => Promise.resolve({ data: [] as SalaryStructure[] }),
   create: () => Promise.resolve({ data: {} as SalaryStructure }),
   update: () => Promise.resolve({ data: {} as SalaryStructure }),
