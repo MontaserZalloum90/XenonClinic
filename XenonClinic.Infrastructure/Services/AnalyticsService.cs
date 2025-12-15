@@ -4,6 +4,7 @@ using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using XenonClinic.Core.DTOs;
+using XenonClinic.Core.Enums;
 using XenonClinic.Core.Interfaces;
 using XenonClinic.Infrastructure.Data;
 
@@ -471,9 +472,9 @@ public class AnalyticsService : IAnalyticsService
     private async Task<object> GetAppointmentWidgetDataAsync(AnalyticsDashboardWidget widget)
     {
         var today = DateTime.UtcNow.Date;
-        var todayAppointments = await _context.Appointments.CountAsync(a => a.AppointmentDate.Date == today);
+        var todayAppointments = await _context.Appointments.CountAsync(a => a.StartTime.Date == today);
         var weekAppointments = await _context.Appointments
-            .CountAsync(a => a.AppointmentDate >= today.AddDays(-7));
+            .CountAsync(a => a.StartTime >= today.AddDays(-7));
 
         return new
         {
@@ -599,16 +600,16 @@ public class AnalyticsService : IAnalyticsService
         var end = endDate ?? DateTime.UtcNow;
 
         var appointments = await _context.Appointments
-            .Where(a => a.BranchId == branchId && a.AppointmentDate >= start && a.AppointmentDate <= end)
+            .Where(a => a.BranchId == branchId && a.StartTime >= start && a.StartTime <= end)
             .ToListAsync();
 
         var total = appointments.Count;
-        var completed = appointments.Count(a => a.Status == "Completed");
-        var cancelled = appointments.Count(a => a.Status == "Cancelled");
-        var noShow = appointments.Count(a => a.Status == "NoShow");
+        var completed = appointments.Count(a => a.Status == AppointmentStatus.Completed);
+        var cancelled = appointments.Count(a => a.Status == AppointmentStatus.Cancelled);
+        var noShow = appointments.Count(a => a.Status == AppointmentStatus.NoShow);
 
         var hourlyDist = appointments
-            .GroupBy(a => a.AppointmentDate.Hour)
+            .GroupBy(a => a.StartTime.Hour)
             .Select(g => new HourlyDistributionDto
             {
                 Hour = g.Key,
@@ -754,7 +755,7 @@ public class AnalyticsService : IAnalyticsService
     public async Task<OperationalEfficiencyDto> GetOperationalEfficiencyAsync(int branchId, DateTime? startDate = null, DateTime? endDate = null)
     {
         var appointmentCount = await _context.Appointments
-            .Where(a => a.BranchId == branchId && a.AppointmentDate >= DateTime.UtcNow.AddDays(-30))
+            .Where(a => a.BranchId == branchId && a.StartTime >= DateTime.UtcNow.AddDays(-30))
             .CountAsync();
 
         return new OperationalEfficiencyDto
@@ -878,7 +879,7 @@ public class AnalyticsService : IAnalyticsService
         {
             "patient_count" => await _context.Patients.Where(p => p.BranchId == branchId).CountAsync(),
             "new_patients" => await _context.Patients.Where(p => p.BranchId == branchId && p.CreatedAt >= date.AddDays(-30)).CountAsync(),
-            "appointment_count" => await _context.Appointments.Where(a => a.BranchId == branchId && a.AppointmentDate.Month == date.Month).CountAsync(),
+            "appointment_count" => await _context.Appointments.Where(a => a.BranchId == branchId && a.StartTime.Month == date.Month).CountAsync(),
             "total_revenue" => (decimal)await _context.Invoices.Where(i => i.BranchId == branchId && i.InvoiceDate.Month == date.Month).SumAsync(i => i.TotalAmount),
             _ => 0m
         };
@@ -917,7 +918,7 @@ public class AnalyticsService : IAnalyticsService
             var value = metricId switch
             {
                 "patient_count" => await _context.Patients.Where(p => p.BranchId == branchId && p.CreatedAt <= current).CountAsync(),
-                "appointment_count" => await _context.Appointments.Where(a => a.BranchId == branchId && a.AppointmentDate.Date == current.Date).CountAsync(),
+                "appointment_count" => await _context.Appointments.Where(a => a.BranchId == branchId && a.StartTime.Date == current.Date).CountAsync(),
                 _ => new Random().Next(50, 150)
             };
 
@@ -983,8 +984,8 @@ public class AnalyticsService : IAnalyticsService
     public async Task<DemandForecastDto> GetDemandForecastAsync(int branchId, DateTime forecastDate, int daysAhead = 7)
     {
         var historicalAvg = await _context.Appointments
-            .Where(a => a.BranchId == branchId && a.AppointmentDate >= DateTime.UtcNow.AddMonths(-3))
-            .GroupBy(a => a.AppointmentDate.DayOfWeek)
+            .Where(a => a.BranchId == branchId && a.StartTime >= DateTime.UtcNow.AddMonths(-3))
+            .GroupBy(a => a.StartTime.DayOfWeek)
             .Select(g => new { DayOfWeek = g.Key, Avg = g.Count() / 12 }) // ~12 weeks
             .ToListAsync();
 
@@ -1117,7 +1118,7 @@ public class AnalyticsService : IAnalyticsService
     {
         var appointments = await _context.Appointments
             .Include(a => a.Patient)
-            .Where(a => a.BranchId == branchId && a.AppointmentDate >= fromDate && a.AppointmentDate <= toDate && a.Status == "Scheduled")
+            .Where(a => a.BranchId == branchId && a.StartTime >= fromDate && a.StartTime <= toDate && a.Status == AppointmentStatus.Scheduled)
             .ToListAsync();
 
         return appointments.Select(a => new NoShowPredictionDto
@@ -1125,7 +1126,7 @@ public class AnalyticsService : IAnalyticsService
             AppointmentId = a.Id,
             PatientId = a.PatientId,
             PatientName = $"{a.Patient?.FirstName} {a.Patient?.LastName}",
-            AppointmentDate = a.AppointmentDate,
+            AppointmentDate = a.StartTime,
             NoShowProbability = new Random().Next(5, 35) / 100m,
             RiskLevel = "Low",
             RiskFactors = new List<string> { "First appointment", "Monday morning slot" },

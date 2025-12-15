@@ -7,6 +7,7 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using XenonClinic.Core.DTOs;
 using XenonClinic.Core.Entities;
+using XenonClinic.Core.Enums;
 using XenonClinic.Core.Interfaces;
 using XenonClinic.Infrastructure.Data;
 using XenonClinic.Infrastructure.Entities;
@@ -721,7 +722,7 @@ public class PushNotificationService : IPushNotificationService
             .Include(a => a.Doctor)
             .Where(a => a.AppointmentDate >= startTime &&
                         a.AppointmentDate <= endTime &&
-                        a.Status == "Scheduled" &&
+                        a.Status == AppointmentStatus.Scheduled &&
                         !a.ReminderSent)
             .ToListAsync();
 

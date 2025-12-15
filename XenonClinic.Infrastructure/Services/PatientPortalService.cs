@@ -698,7 +698,7 @@ public class PatientPortalService : IPatientPortalService
             .Include(a => a.Doctor)
             .Where(a => a.PatientId == patientId &&
                 a.AppointmentDate >= DateTime.Today &&
-                a.Status != "Cancelled")
+                a.Status != AppointmentStatus.Cancelled)
             .OrderBy(a => a.AppointmentDate)
             .ThenBy(a => a.StartTime)
             .Take(10)
@@ -712,7 +712,7 @@ public class PatientPortalService : IPatientPortalService
             DoctorName = $"Dr. {a.Doctor?.FirstName} {a.Doctor?.LastName}",
             DoctorSpecialty = a.Doctor?.Specialty,
             AppointmentType = a.AppointmentType ?? "Regular",
-            Status = a.Status ?? "Scheduled",
+            Status = a.Status.ToString(),
             IsTelemedicine = a.IsTelemedicine
         });
     }
@@ -736,7 +736,7 @@ public class PatientPortalService : IPatientPortalService
             DoctorName = $"Dr. {a.Doctor?.FirstName} {a.Doctor?.LastName}",
             DoctorSpecialty = a.Doctor?.Specialty,
             AppointmentType = a.AppointmentType ?? "Regular",
-            Status = a.Status ?? "Completed",
+            Status = a.Status.ToString(),
             IsTelemedicine = a.IsTelemedicine
         });
     }
@@ -751,8 +751,8 @@ public class PatientPortalService : IPatientPortalService
             return null;
 
         var canModify = appointment.AppointmentDate > DateTime.Today.AddDays(1) &&
-                        appointment.Status != "Cancelled" &&
-                        appointment.Status != "Completed";
+                        appointment.Status != AppointmentStatus.Cancelled &&
+                        appointment.Status != AppointmentStatus.Completed;
 
         return new PortalAppointmentDto
         {
@@ -792,8 +792,8 @@ public class PatientPortalService : IPatientPortalService
             .Where(a => a.DoctorId == doctorId &&
                 a.AppointmentDate >= startDate &&
                 a.AppointmentDate <= endDate &&
-                a.Status != "Cancelled")
-            .Select(a => new { a.AppointmentDate, a.StartTime })
+                a.Status != AppointmentStatus.Cancelled)
+            .Select(a => new { a.AppointmentDate, StartTimeStr = a.StartTime.ToString("HH:mm") })
             .ToListAsync();
 
         var doctor = await _context.Users
@@ -816,7 +816,7 @@ public class PatientPortalService : IPatientPortalService
 
                 var isBooked = existingAppointments.Any(a =>
                     a.AppointmentDate.Date == date.Date &&
-                    a.StartTime == slotTimeStr);
+                    a.StartTimeStr == slotTimeStr);
 
                 slots.Add(new PortalAppointmentSlotDto
                 {
@@ -860,12 +860,16 @@ public class PatientPortalService : IPatientPortalService
             if (dto.PreferredDate.Date < DateTime.Today)
                 throw new InvalidOperationException("Cannot book appointments in the past");
 
+            // Parse preferred time
+            var preferredTimeSpan = TimeSpan.Parse(dto.PreferredTime ?? "09:00");
+            var preferredDateTime = dto.PreferredDate.Date.Add(preferredTimeSpan);
+
             // Check for double-booking (same doctor, same date, same time)
             var existingAppointment = await _context.Appointments
                 .AnyAsync(a => a.DoctorId == dto.DoctorId &&
                     a.AppointmentDate.Date == dto.PreferredDate.Date &&
-                    a.StartTime == dto.PreferredTime &&
-                    a.Status != "Cancelled");
+                    a.StartTime == preferredDateTime &&
+                    a.Status != AppointmentStatus.Cancelled);
 
             if (existingAppointment)
                 throw new InvalidOperationException("This time slot is no longer available. Please select another time.");
@@ -874,8 +878,8 @@ public class PatientPortalService : IPatientPortalService
             var patientConflict = await _context.Appointments
                 .AnyAsync(a => a.PatientId == patientId &&
                     a.AppointmentDate.Date == dto.PreferredDate.Date &&
-                    a.StartTime == dto.PreferredTime &&
-                    a.Status != "Cancelled");
+                    a.StartTime == preferredDateTime &&
+                    a.Status != AppointmentStatus.Cancelled);
 
             if (patientConflict)
                 throw new InvalidOperationException("You already have an appointment scheduled at this time.");
@@ -886,12 +890,13 @@ public class PatientPortalService : IPatientPortalService
                 DoctorId = dto.DoctorId,
                 BranchId = patient.BranchId,
                 AppointmentDate = dto.PreferredDate,
-                StartTime = dto.PreferredTime,
+                StartTime = preferredDateTime,
+                EndTime = preferredDateTime.AddMinutes(30), // Default 30 min duration
                 AppointmentType = dto.AppointmentType ?? "Regular",
                 Reason = SanitizeInput(dto.Reason),
                 Notes = SanitizeInput(dto.Notes),
                 IsTelemedicine = dto.IsTelemedicine,
-                Status = "Scheduled",
+                Status = AppointmentStatus.Scheduled,
                 CreatedAt = DateTime.UtcNow
             };
 
@@ -939,10 +944,10 @@ public class PatientPortalService : IPatientPortalService
         var appointment = await _context.Appointments
             .FirstOrDefaultAsync(a => a.Id == appointmentId && a.PatientId == patientId);
 
-        if (appointment == null || appointment.Status == "Cancelled")
+        if (appointment == null || appointment.Status == AppointmentStatus.Cancelled)
             return false;
 
-        appointment.Status = "Cancelled";
+        appointment.Status = AppointmentStatus.Cancelled;
         appointment.CancellationReason = reason;
         appointment.CancelledAt = DateTime.UtcNow;
         appointment.CancelledByPatient = true;
@@ -960,8 +965,10 @@ public class PatientPortalService : IPatientPortalService
         if (appointment == null)
             throw new InvalidOperationException("Appointment not found");
 
+        var newTimeSpan = TimeSpan.Parse(newTime ?? "09:00");
         appointment.AppointmentDate = newDate;
-        appointment.StartTime = newTime;
+        appointment.StartTime = newDate.Date.Add(newTimeSpan);
+        appointment.EndTime = newDate.Date.Add(newTimeSpan).AddMinutes(30);
         appointment.RescheduledAt = DateTime.UtcNow;
         appointment.UpdatedAt = DateTime.UtcNow;
         await _context.SaveChangesAsync();

@@ -7,6 +7,7 @@ using System.Text;
 using System.Text.Json;
 using XenonClinic.Core.DTOs;
 using XenonClinic.Core.Entities;
+using XenonClinic.Core.Enums;
 using XenonClinic.Core.Interfaces;
 using XenonClinic.Infrastructure.Data;
 using XenonClinic.Infrastructure.Entities;
@@ -528,9 +529,9 @@ public class CalendarSyncService : ICalendarSyncService
 
             // Get local appointments
             var localAppointments = await _context.Appointments
-                .Where(a => a.DoctorId == connection.UserId &&
-                    a.AppointmentDate >= startDate &&
-                    a.AppointmentDate <= endDate)
+                .Where(a => a.ProviderId == connection.UserId &&
+                    a.StartTime >= startDate &&
+                    a.StartTime <= endDate)
                 .ToListAsync();
 
             // Get existing mappings
@@ -864,9 +865,9 @@ public class CalendarSyncService : ICalendarSyncService
         var result = new SyncOperationResultDto { SyncStartedAt = DateTime.UtcNow };
 
         var appointments = await _context.Appointments
-            .Where(a => a.DoctorId == userId &&
-                a.AppointmentDate >= startDate &&
-                a.AppointmentDate <= endDate)
+            .Where(a => a.ProviderId == userId &&
+                a.StartTime >= startDate &&
+                a.StartTime <= endDate)
             .ToListAsync();
 
         foreach (var appointment in appointments)
@@ -952,10 +953,10 @@ public class CalendarSyncService : ICalendarSyncService
                 {
                     // Check appointments
                     var hasAppointment = await _context.Appointments
-                        .AnyAsync(a => a.DoctorId == userId &&
-                            a.AppointmentDate < slotEnd &&
-                            a.AppointmentDate.AddMinutes(30) > currentTime &&
-                            a.Status != "Cancelled");
+                        .AnyAsync(a => a.ProviderId == userId &&
+                            a.StartTime < slotEnd &&
+                            a.StartTime.AddMinutes(30) > currentTime &&
+                            a.Status != AppointmentStatus.Cancelled);
 
                     if (!hasAppointment)
                     {
@@ -1618,8 +1619,8 @@ public class CalendarSyncService : ICalendarSyncService
         {
             Title = title,
             Description = description,
-            StartDateTime = appointment.AppointmentDate,
-            EndDateTime = appointment.AppointmentDate.AddMinutes(30),
+            StartDateTime = appointment.StartTime,
+            EndDateTime = appointment.EndTime,
             Location = appointment.Location,
             CreateConference = settings.CreateConferenceLinks && appointment.IsTelemedicine,
             ConferenceProvider = settings.DefaultConferenceProvider
