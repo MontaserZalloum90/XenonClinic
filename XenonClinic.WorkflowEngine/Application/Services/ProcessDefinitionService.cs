@@ -52,7 +52,7 @@ public class ProcessDefinitionService : IProcessDefinitionService
             var validation = await ValidateAsync(request.Model, cancellationToken);
             if (!validation.IsValid && !request.SaveAsDraft)
             {
-                var errorMessages = (validation.Errors ?? Enumerable.Empty<ValidationError>())
+                var errorMessages = (validation.Errors ?? Enumerable.Empty<ProcessValidationErrorDto>())
                     .Where(e => e != null)
                     .Select(e => e.Message ?? "Unknown error");
                 throw new InvalidOperationException(
@@ -545,8 +545,11 @@ public class ProcessDefinitionService : IProcessDefinitionService
         var errors = new List<ProcessValidationErrorDto>();
         var warnings = new List<ProcessValidationWarningDto>();
 
+        // Get activities as list (from dictionary values)
+        var activities = model.Activities?.Values.ToList() ?? new List<ActivityDefinition>();
+
         // Check for start event
-        var startEvents = model.Activities?.Where(a => a is StartEventDefinition).ToList() ?? new();
+        var startEvents = activities.Where(a => a is StartEventDefinition).ToList();
         if (startEvents.Count == 0)
         {
             errors.Add(new ProcessValidationErrorDto
@@ -565,7 +568,7 @@ public class ProcessDefinitionService : IProcessDefinitionService
         }
 
         // Check for end event
-        var endEvents = model.Activities?.Where(a => a is EndEventDefinition).ToList() ?? new();
+        var endEvents = activities.Where(a => a is EndEventDefinition).ToList();
         if (endEvents.Count == 0)
         {
             errors.Add(new ProcessValidationErrorDto
@@ -576,7 +579,7 @@ public class ProcessDefinitionService : IProcessDefinitionService
         }
 
         // Check all activities have IDs
-        var activitiesWithoutIds = model.Activities?.Where(a => string.IsNullOrEmpty(a.Id)).ToList() ?? new();
+        var activitiesWithoutIds = activities.Where(a => string.IsNullOrEmpty(a.Id)).ToList();
         foreach (var activity in activitiesWithoutIds)
         {
             errors.Add(new ProcessValidationErrorDto
@@ -588,32 +591,32 @@ public class ProcessDefinitionService : IProcessDefinitionService
         }
 
         // Check sequence flows reference valid activities
-        var activityIds = model.Activities?.Select(a => a.Id).ToHashSet() ?? new HashSet<string?>();
+        var activityIds = activities.Select(a => a.Id).ToHashSet();
         foreach (var flow in model.SequenceFlows ?? new())
         {
-            if (!activityIds.Contains(flow.SourceRef))
+            if (!activityIds.Contains(flow.SourceActivityId))
             {
                 errors.Add(new ProcessValidationErrorDto
                 {
                     Code = "INVALID_FLOW_SOURCE",
-                    Message = $"Sequence flow '{flow.Id}' references non-existent source activity '{flow.SourceRef}'."
+                    Message = $"Sequence flow '{flow.Id}' references non-existent source activity '{flow.SourceActivityId}'."
                 });
             }
 
-            if (!activityIds.Contains(flow.TargetRef))
+            if (!activityIds.Contains(flow.TargetActivityId))
             {
                 errors.Add(new ProcessValidationErrorDto
                 {
                     Code = "INVALID_FLOW_TARGET",
-                    Message = $"Sequence flow '{flow.Id}' references non-existent target activity '{flow.TargetRef}'."
+                    Message = $"Sequence flow '{flow.Id}' references non-existent target activity '{flow.TargetActivityId}'."
                 });
             }
         }
 
         // Check gateway conditions
-        foreach (var gateway in model.Activities?.OfType<ExclusiveGatewayDefinition>() ?? Enumerable.Empty<ExclusiveGatewayDefinition>())
+        foreach (var gateway in activities.OfType<ExclusiveGatewayDefinition>())
         {
-            var outgoingFlows = model.SequenceFlows?.Where(f => f.SourceRef == gateway.Id).ToList() ?? new();
+            var outgoingFlows = model.SequenceFlows?.Where(f => f.SourceActivityId == gateway.Id).ToList() ?? new();
             if (outgoingFlows.Count > 1)
             {
                 var flowsWithConditions = outgoingFlows.Count(f => !string.IsNullOrEmpty(f.ConditionExpression));
@@ -642,14 +645,12 @@ public class ProcessDefinitionService : IProcessDefinitionService
         }
 
         // Check user tasks have assignments
-        foreach (var userTask in model.Activities?.OfType<UserTaskDefinition>() ?? Enumerable.Empty<UserTaskDefinition>())
+        foreach (var userTask in activities.OfType<UserTaskDefinition>())
         {
-            var assignment = userTask.Assignment;
-            if (assignment == null ||
-                (string.IsNullOrEmpty(assignment.AssigneeExpression) &&
-                 (assignment.CandidateUserExpressions == null || assignment.CandidateUserExpressions.Count == 0) &&
-                 (assignment.CandidateGroupExpressions == null || assignment.CandidateGroupExpressions.Count == 0) &&
-                 (assignment.CandidateRoleExpressions == null || assignment.CandidateRoleExpressions.Count == 0)))
+            if (string.IsNullOrEmpty(userTask.AssigneeExpression) &&
+                (userTask.CandidateUsers == null || userTask.CandidateUsers.Count == 0) &&
+                (userTask.CandidateGroups == null || userTask.CandidateGroups.Count == 0) &&
+                (userTask.CandidateRoles == null || userTask.CandidateRoles.Count == 0))
             {
                 warnings.Add(new ProcessValidationWarningDto
                 {
@@ -661,14 +662,14 @@ public class ProcessDefinitionService : IProcessDefinitionService
         }
 
         // Check service tasks have implementation
-        foreach (var serviceTask in model.Activities?.OfType<ServiceTaskDefinition>() ?? Enumerable.Empty<ServiceTaskDefinition>())
+        foreach (var serviceTask in activities.OfType<ServiceTaskDefinition>())
         {
-            if (string.IsNullOrEmpty(serviceTask.ServiceName) && string.IsNullOrEmpty(serviceTask.HttpEndpoint))
+            if (string.IsNullOrEmpty(serviceTask.ConnectorType) && serviceTask.Configuration.Count == 0)
             {
                 errors.Add(new ProcessValidationErrorDto
                 {
                     Code = "SERVICE_TASK_NO_IMPLEMENTATION",
-                    Message = $"Service task '{serviceTask.Id}' has no service name or HTTP endpoint defined.",
+                    Message = $"Service task '{serviceTask.Id}' has no connector type or configuration defined.",
                     ActivityId = serviceTask.Id
                 });
             }

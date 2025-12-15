@@ -1,5 +1,3 @@
-using XenonClinic.Core.Entities;
-
 namespace XenonClinic.Core.Interfaces;
 
 /// <summary>
@@ -8,13 +6,13 @@ namespace XenonClinic.Core.Interfaces;
 public class ExternalAuthResult
 {
     public bool Succeeded { get; set; }
-    public ApplicationUser? User { get; set; }
+    public IApplicationUser? User { get; set; }
     public bool IsNewUser { get; set; }
     public string? ReturnUrl { get; set; }
     public string? Error { get; set; }
     public string? ErrorDescription { get; set; }
 
-    public static ExternalAuthResult Success(ApplicationUser user, bool isNew, string? returnUrl = null)
+    public static ExternalAuthResult Success(IApplicationUser user, bool isNew, string? returnUrl = null)
     {
         return new ExternalAuthResult
         {

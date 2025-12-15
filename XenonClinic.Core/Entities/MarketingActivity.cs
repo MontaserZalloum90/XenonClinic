@@ -39,7 +39,7 @@ public class MarketingActivity
 
     // User who performed the activity
     public string? PerformedByUserId { get; set; }
-    public ApplicationUser? PerformedByUser { get; set; }
+    // Note: ApplicationUser navigation removed to avoid circular dependency with Infrastructure
 
     // Contact details
     public string? ContactMethod { get; set; }

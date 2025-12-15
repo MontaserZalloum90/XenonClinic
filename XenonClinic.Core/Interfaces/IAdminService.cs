@@ -58,27 +58,27 @@ public interface IAdminService
     /// <summary>
     /// Gets all users for a tenant
     /// </summary>
-    Task<List<ApplicationUser>> GetTenantUsersAsync(int tenantId, bool includeInactive = false);
+    Task<List<IApplicationUser>> GetTenantUsersAsync(int tenantId, bool includeInactive = false);
 
     /// <summary>
     /// Gets all users for a company
     /// </summary>
-    Task<List<ApplicationUser>> GetCompanyUsersAsync(int companyId, bool includeInactive = false);
+    Task<List<IApplicationUser>> GetCompanyUsersAsync(int companyId, bool includeInactive = false);
 
     /// <summary>
     /// Gets all users for a branch
     /// </summary>
-    Task<List<ApplicationUser>> GetBranchUsersAsync(int branchId, bool includeInactive = false);
+    Task<List<IApplicationUser>> GetBranchUsersAsync(int branchId, bool includeInactive = false);
 
     /// <summary>
     /// Creates a new user with specified tenant/company/branch
     /// </summary>
-    Task<ApplicationUser> CreateUserAsync(ApplicationUser user, string password, List<string> roles, List<int> branchIds);
+    Task<IApplicationUser> CreateUserAsync(IApplicationUser user, string password, List<string> roles, List<int> branchIds);
 
     /// <summary>
     /// Updates a user's tenant/company/branch assignments
     /// </summary>
-    Task<ApplicationUser> UpdateUserAssignmentsAsync(string userId, int? tenantId, int? companyId, int? primaryBranchId, List<int> branchIds);
+    Task<IApplicationUser> UpdateUserAssignmentsAsync(string userId, int? tenantId, int? companyId, int? primaryBranchId, List<int> branchIds);
 
     /// <summary>
     /// Deactivates a user
