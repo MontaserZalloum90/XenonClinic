@@ -202,11 +202,26 @@ public class WebhookService : IWebhookService
                 case "StartProcess":
                     if (_processExecutionService != null && !string.IsNullOrEmpty(webhook.Action.ProcessDefinitionKey))
                     {
+                        var request = new StartProcessRequest
+                        {
+                            ProcessKey = webhook.Action.ProcessDefinitionKey,
+                            Variables = variables
+                        };
+
+                        // Parse tenantId - webhook system uses string tenantIds, but process execution needs int
+                        if (!int.TryParse(webhook.TenantId, out var tenantId))
+                        {
+                            _logger.LogWarning("Invalid tenantId '{TenantId}' for webhook {WebhookId}, using default tenant 1",
+                                webhook.TenantId, webhookId);
+                            tenantId = 1;
+                        }
+
                         var instance = await _processExecutionService.StartProcessAsync(
-                            webhook.Action.ProcessDefinitionKey,
-                            variables,
+                            request,
+                            tenantId,
+                            "webhook-system",
                             cancellationToken);
-                        result.ProcessInstanceId = instance.Id;
+                        result.ProcessInstanceId = instance.Id.ToString();
                     }
                     break;
 
@@ -582,9 +597,9 @@ public class WebhookService : IWebhookService
                     variables[variableName] = value;
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                _logger.LogDebug(ex, "Could not extract value at path {Path}, skipping", mapping.SourcePath);
+                // Silently skip values that can't be extracted
             }
         }
 

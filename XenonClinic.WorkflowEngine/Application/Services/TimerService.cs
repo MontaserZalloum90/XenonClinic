@@ -42,26 +42,23 @@ public partial class TimerService : ITimerService
 
         var timer = new ProcessTimer
         {
-            Id = Guid.NewGuid().ToString(),
-            TenantId = request.TenantId,
+            Id = Guid.NewGuid(),
             ProcessInstanceId = request.ProcessInstanceId,
-            ActivityInstanceId = request.ActivityInstanceId,
+            ActivityDefinitionId = request.ActivityInstanceId ?? request.TimerDefinitionKey ?? "unknown",
             Type = request.Type,
-            Status = TimerStatus.Scheduled,
+            Status = TimerStatus.Pending,
             FireAt = fireAt,
-            DurationExpression = request.Duration,
-            CycleExpression = request.CycleExpression,
-            TimerDefinitionKey = request.TimerDefinitionKey,
+            RecurrenceExpression = request.CycleExpression,
             DataJson = request.Data != null
                 ? JsonSerializer.Serialize(request.Data, _jsonOptions)
                 : null,
             CreatedAt = DateTime.UtcNow
         };
 
-        // Parse cycle expression for max cycles
+        // Parse cycle expression for max executions
         if (request.Type == TimerType.Cycle && !string.IsNullOrEmpty(request.CycleExpression))
         {
-            timer.MaxCycles = ParseMaxCycles(request.CycleExpression);
+            timer.MaxExecutions = ParseMaxCycles(request.CycleExpression);
         }
 
         _context.ProcessTimers.Add(timer);
@@ -72,7 +69,7 @@ public partial class TimerService : ITimerService
             TenantId = request.TenantId,
             EventType = AuditEventTypes.TimerScheduled,
             EntityType = "ProcessTimer",
-            EntityId = timer.Id,
+            EntityId = timer.Id.ToString(),
             ProcessInstanceId = request.ProcessInstanceId,
             ActivityInstanceId = request.ActivityInstanceId,
             NewValues = new Dictionary<string, object>
@@ -94,8 +91,15 @@ public partial class TimerService : ITimerService
         string timerId,
         CancellationToken cancellationToken = default)
     {
+        if (!Guid.TryParse(timerId, out var timerGuid))
+        {
+            _logger.LogWarning("Invalid timer ID format: {TimerId}", timerId);
+            return;
+        }
+
         var timer = await _context.ProcessTimers
-            .FirstOrDefaultAsync(t => t.Id == timerId, cancellationToken);
+            .Include(t => t.ProcessInstance)
+            .FirstOrDefaultAsync(t => t.Id == timerGuid, cancellationToken);
 
         if (timer == null)
         {
@@ -103,22 +107,21 @@ public partial class TimerService : ITimerService
             return;
         }
 
-        if (timer.Status == TimerStatus.Fired || timer.Status == TimerStatus.Cancelled)
+        if (timer.Status == TimerStatus.Triggered || timer.Status == TimerStatus.Cancelled)
         {
             return;
         }
 
         timer.Status = TimerStatus.Cancelled;
-        timer.CancelledAt = DateTime.UtcNow;
 
         await _context.SaveChangesAsync(cancellationToken);
 
         await _auditService.LogAsync(new AuditEventDto
         {
-            TenantId = timer.TenantId,
+            TenantId = timer.ProcessInstance?.TenantId ?? 1,
             EventType = AuditEventTypes.TimerCancelled,
             EntityType = "ProcessTimer",
-            EntityId = timer.Id,
+            EntityId = timer.Id.ToString(),
             ProcessInstanceId = timer.ProcessInstanceId
         }, cancellationToken);
 
@@ -131,14 +134,12 @@ public partial class TimerService : ITimerService
     {
         var timers = await _context.ProcessTimers
             .Where(t => t.ProcessInstanceId == processInstanceId &&
-                       t.Status == TimerStatus.Scheduled)
+                       t.Status == TimerStatus.Pending)
             .ToListAsync(cancellationToken);
 
-        var now = DateTime.UtcNow;
         foreach (var timer in timers)
         {
             timer.Status = TimerStatus.Cancelled;
-            timer.CancelledAt = now;
         }
 
         await _context.SaveChangesAsync(cancellationToken);
@@ -154,7 +155,7 @@ public partial class TimerService : ITimerService
         CancellationToken cancellationToken = default)
     {
         return await _context.ProcessTimers
-            .Where(t => t.Status == TimerStatus.Scheduled && t.FireAt <= until)
+            .Where(t => t.Status == TimerStatus.Pending && t.FireAt <= until)
             .OrderBy(t => t.FireAt)
             .Take(batchSize)
             .ToListAsync(cancellationToken);
@@ -164,8 +165,15 @@ public partial class TimerService : ITimerService
         string timerId,
         CancellationToken cancellationToken = default)
     {
+        if (!Guid.TryParse(timerId, out var timerGuid))
+        {
+            _logger.LogWarning("Invalid timer ID format: {TimerId}", timerId);
+            return;
+        }
+
         var timer = await _context.ProcessTimers
-            .FirstOrDefaultAsync(t => t.Id == timerId, cancellationToken);
+            .Include(t => t.ProcessInstance)
+            .FirstOrDefaultAsync(t => t.Id == timerGuid, cancellationToken);
 
         if (timer == null)
         {
@@ -173,9 +181,9 @@ public partial class TimerService : ITimerService
             return;
         }
 
-        if (timer.Status != TimerStatus.Scheduled)
+        if (timer.Status != TimerStatus.Pending)
         {
-            _logger.LogWarning("Timer {TimerId} is not in scheduled status", timerId);
+            _logger.LogWarning("Timer {TimerId} is not in pending status", timerId);
             return;
         }
 
@@ -194,15 +202,14 @@ public partial class TimerService : ITimerService
                     timer.ProcessInstanceId, timerId);
 
                 timer.Status = TimerStatus.Cancelled;
-                timer.CancelledAt = now;
                 await _context.SaveChangesAsync(cancellationToken);
                 return;
             }
 
-            // Mark timer as fired
-            timer.Status = TimerStatus.Fired;
-            timer.FiredAt = now;
-            timer.CycleCount++;
+            // Mark timer as triggered
+            timer.Status = TimerStatus.Triggered;
+            timer.LastFiredAt = now;
+            timer.ExecutionCount++;
 
             // Signal the process instance
             var data = !string.IsNullOrEmpty(timer.DataJson)
@@ -210,13 +217,13 @@ public partial class TimerService : ITimerService
                 : new Dictionary<string, object>();
 
             data ??= new Dictionary<string, object>();
-            data["timerId"] = timer.Id;
+            data["timerId"] = timer.Id.ToString();
             data["timerType"] = timer.Type.ToString();
-            data["timerDefinitionKey"] = timer.TimerDefinitionKey ?? "";
+            data["activityDefinitionId"] = timer.ActivityDefinitionId;
 
             await _executionService.SignalAsync(
                 timer.ProcessInstanceId,
-                $"timer-{timer.TimerDefinitionKey ?? timer.Id}",
+                $"timer-{timer.ActivityDefinitionId}",
                 data,
                 instance.TenantId,
                 "system",
@@ -224,16 +231,16 @@ public partial class TimerService : ITimerService
 
             await _auditService.LogAsync(new AuditEventDto
             {
-                TenantId = timer.TenantId,
+                TenantId = instance.TenantId,
                 EventType = AuditEventTypes.TimerFired,
                 EntityType = "ProcessTimer",
-                EntityId = timer.Id,
+                EntityId = timer.Id.ToString(),
                 ProcessInstanceId = timer.ProcessInstanceId,
-                ActivityInstanceId = timer.ActivityInstanceId,
+                ActivityInstanceId = timer.ActivityDefinitionId,
                 NewValues = new Dictionary<string, object>
                 {
                     ["firedAt"] = now.ToString("O"),
-                    ["cycleCount"] = timer.CycleCount
+                    ["executionCount"] = timer.ExecutionCount
                 }
             }, cancellationToken);
 
@@ -247,28 +254,13 @@ public partial class TimerService : ITimerService
                 var nextFireTime = await CalculateNextFireTimeAsync(timer, cancellationToken);
                 if (nextFireTime.HasValue)
                 {
-                    var nextTimer = new ProcessTimer
-                    {
-                        Id = Guid.NewGuid().ToString(),
-                        TenantId = timer.TenantId,
-                        ProcessInstanceId = timer.ProcessInstanceId,
-                        ActivityInstanceId = timer.ActivityInstanceId,
-                        Type = TimerType.Cycle,
-                        Status = TimerStatus.Scheduled,
-                        FireAt = nextFireTime.Value,
-                        CycleExpression = timer.CycleExpression,
-                        CycleCount = timer.CycleCount,
-                        MaxCycles = timer.MaxCycles,
-                        TimerDefinitionKey = timer.TimerDefinitionKey,
-                        DataJson = timer.DataJson,
-                        CreatedAt = now
-                    };
-
-                    _context.ProcessTimers.Add(nextTimer);
+                    timer.NextFireAt = nextFireTime.Value;
+                    timer.FireAt = nextFireTime.Value;
+                    timer.Status = TimerStatus.Pending;
 
                     _logger.LogInformation(
-                        "Scheduled next cycle timer {NextTimerId} to fire at {FireAt}",
-                        nextTimer.Id, nextFireTime.Value);
+                        "Rescheduled cycle timer {TimerId} to fire at {FireAt}",
+                        timer.Id, nextFireTime.Value);
                 }
             }
 
@@ -278,8 +270,7 @@ public partial class TimerService : ITimerService
         {
             _logger.LogError(ex, "Error processing timer {TimerId}", timerId);
 
-            timer.Status = TimerStatus.Failed;
-            timer.ErrorMessage = ex.Message;
+            timer.Status = TimerStatus.Expired;
             await _context.SaveChangesAsync(cancellationToken);
 
             throw;
@@ -290,22 +281,22 @@ public partial class TimerService : ITimerService
         ProcessTimer timer,
         CancellationToken cancellationToken = default)
     {
-        if (timer.Type != TimerType.Cycle || string.IsNullOrEmpty(timer.CycleExpression))
+        if (timer.Type != TimerType.Cycle || string.IsNullOrEmpty(timer.RecurrenceExpression))
         {
             return Task.FromResult<DateTime?>(null);
         }
 
-        // Check if max cycles reached
-        if (timer.MaxCycles.HasValue && timer.CycleCount >= timer.MaxCycles.Value)
+        // Check if max executions reached
+        if (timer.MaxExecutions.HasValue && timer.ExecutionCount >= timer.MaxExecutions.Value)
         {
             return Task.FromResult<DateTime?>(null);
         }
 
         // Parse cycle expression and calculate next fire time
-        var interval = ParseCycleInterval(timer.CycleExpression);
+        var interval = ParseCycleInterval(timer.RecurrenceExpression);
         if (interval.HasValue)
         {
-            var nextFire = (timer.FiredAt ?? DateTime.UtcNow).Add(interval.Value);
+            var nextFire = (timer.LastFiredAt ?? DateTime.UtcNow).Add(interval.Value);
             return Task.FromResult<DateTime?>(nextFire);
         }
 
@@ -318,22 +309,22 @@ public partial class TimerService : ITimerService
         CancellationToken cancellationToken = default)
     {
         var timers = await _context.ProcessTimers
-            .Where(t => t.ProcessInstanceId == processInstanceId && t.TenantId == tenantId)
+            .Where(t => t.ProcessInstanceId == processInstanceId)
             .OrderByDescending(t => t.CreatedAt)
             .ToListAsync(cancellationToken);
 
         return timers.Select(t => new TimerDto
         {
-            Id = t.Id,
+            Id = t.Id.ToString(),
             ProcessInstanceId = t.ProcessInstanceId,
-            ActivityInstanceId = t.ActivityInstanceId,
+            ActivityInstanceId = t.ActivityDefinitionId,
             Type = t.Type,
             Status = t.Status,
             FireAt = t.FireAt,
-            FiredAt = t.FiredAt,
-            CycleExpression = t.CycleExpression,
-            CycleCount = t.CycleCount,
-            MaxCycles = t.MaxCycles,
+            FiredAt = t.LastFiredAt,
+            CycleExpression = t.RecurrenceExpression,
+            CycleCount = t.ExecutionCount,
+            MaxCycles = t.MaxExecutions,
             CreatedAt = t.CreatedAt
         }).ToList();
     }
