@@ -55,6 +55,12 @@ public class PrescriptionItem
     [MaxLength(100)]
     public string? Dosage { get; set; }
 
+    [MaxLength(50)]
+    public string? Frequency { get; set; } // e.g., "Once daily", "Twice daily", "Every 8 hours"
+
+    [MaxLength(50)]
+    public string? Route { get; set; } // e.g., "Oral", "Topical", "Injection"
+
     [MaxLength(500)]
     public string? Instructions { get; set; }
 

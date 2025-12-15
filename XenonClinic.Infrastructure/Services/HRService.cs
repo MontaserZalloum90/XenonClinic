@@ -122,14 +122,11 @@ public class HRService : IHRService
             }
         }
 
-        // Validate job position exists if specified
-        if (employee.JobPositionId.HasValue)
+        // Validate job position exists
+        var positionExists = await _context.JobPositions.AnyAsync(jp => jp.Id == employee.JobPositionId);
+        if (!positionExists)
         {
-            var positionExists = await _context.JobPositions.AnyAsync(jp => jp.Id == employee.JobPositionId.Value);
-            if (!positionExists)
-            {
-                throw new KeyNotFoundException($"Job position with ID {employee.JobPositionId.Value} not found");
-            }
+            throw new KeyNotFoundException($"Job position with ID {employee.JobPositionId} not found");
         }
 
         // Check for duplicate employee code

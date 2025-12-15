@@ -32,6 +32,15 @@ public class ClinicalVisit
     public string? ChiefComplaint { get; set; }
 
     [StringLength(2000)]
+    public string? HistoryOfPresentIllness { get; set; }
+
+    [StringLength(2000)]
+    public string? Assessment { get; set; }
+
+    [StringLength(2000)]
+    public string? Plan { get; set; }
+
+    [StringLength(2000)]
     public string? Notes { get; set; }
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
@@ -49,4 +58,5 @@ public class ClinicalVisit
     public virtual Branch? Branch { get; set; }
 
     public virtual ICollection<Diagnosis> Diagnoses { get; set; } = new List<Diagnosis>();
+    public virtual ICollection<VitalSign> VitalSigns { get; set; } = new List<VitalSign>();
 }

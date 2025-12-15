@@ -353,7 +353,7 @@ public class ConsentService : IConsentService
             .ToListAsync();
 
         // Check for expired consents and update status
-        foreach (var consent in consents.Where(c => c.Status == ConsentStatuses.Active && c.ExpirationDate < DateTime.UtcNow))
+        foreach (var consent in consents.Where(c => c.Status == ConsentStatuses.Active && c.ExpirationDate.HasValue && c.ExpirationDate.Value < DateTime.UtcNow))
         {
             consent.Status = ConsentStatuses.Expired;
         }
@@ -368,15 +368,18 @@ public class ConsentService : IConsentService
             RevokedConsents = consents.Count(c => c.Status == ConsentStatuses.Revoked),
             ExpiredConsents = consents.Count(c => c.Status == ConsentStatuses.Expired),
             PendingConsents = consents.Count(c => c.Status == ConsentStatuses.Pending),
-            ConsentsByType = consents.GroupBy(c => c.ConsentType).Select(g => new ConsentStatusItemDto
-            {
-                ConsentType = g.Key,
-                Status = g.OrderByDescending(c => c.GrantedDate).First().Status,
-                GrantedDate = g.OrderByDescending(c => c.GrantedDate).First().GrantedDate,
-                ExpirationDate = g.OrderByDescending(c => c.GrantedDate).First().ExpirationDate,
-                NeedsRenewal = g.OrderByDescending(c => c.GrantedDate).First().ExpirationDate?.AddDays(-30) < DateTime.UtcNow
+            ConsentsByType = consents.GroupBy(c => c.ConsentType).Select(g => {
+                var latest = g.OrderByDescending(c => c.GrantedDate).FirstOrDefault();
+                return new ConsentStatusItemDto
+                {
+                    ConsentType = g.Key,
+                    Status = latest?.Status ?? string.Empty,
+                    GrantedDate = latest?.GrantedDate,
+                    ExpirationDate = latest?.ExpirationDate,
+                    NeedsRenewal = latest?.ExpirationDate.HasValue == true && latest.ExpirationDate.Value.AddDays(-30) < DateTime.UtcNow
+                };
             }).ToList(),
-            LastConsentDate = consents.Max(c => c.GrantedDate),
+            LastConsentDate = consents.Any() ? consents.Max(c => c.GrantedDate) : null,
             HasTreatmentConsent = consents.Any(c => c.ConsentType == ConsentTypes.TreatmentConsent && c.Status == ConsentStatuses.Active),
             HasHIPAAConsent = consents.Any(c => c.ConsentType == ConsentTypes.HIPAAConsent && c.Status == ConsentStatuses.Active),
             HasResearchConsent = consents.Any(c => c.ConsentType == ConsentTypes.ResearchParticipation && c.Status == ConsentStatuses.Active)

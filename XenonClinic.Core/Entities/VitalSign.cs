@@ -16,6 +16,8 @@ public class VitalSign
 
     public int BranchId { get; set; }
 
+    public int? ClinicalVisitId { get; set; }
+
     public DateTime RecordedAt { get; set; }
 
     /// <summary>
@@ -73,4 +75,20 @@ public class VitalSign
 
     [ForeignKey(nameof(BranchId))]
     public virtual Branch? Branch { get; set; }
+
+    [ForeignKey(nameof(ClinicalVisitId))]
+    public virtual ClinicalVisit? ClinicalVisit { get; set; }
+
+    // Alias properties for service compatibility
+    [NotMapped]
+    public int? BloodPressureSystolic => SystolicBP;
+
+    [NotMapped]
+    public int? BloodPressureDiastolic => DiastolicBP;
+
+    // Computed BMI (Body Mass Index)
+    [NotMapped]
+    public decimal? BMI => (Weight.HasValue && Height.HasValue && Height.Value > 0)
+        ? Math.Round(Weight.Value / ((Height.Value / 100) * (Height.Value / 100)), 1)
+        : null;
 }

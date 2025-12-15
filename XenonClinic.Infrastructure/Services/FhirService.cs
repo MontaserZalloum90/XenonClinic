@@ -209,7 +209,7 @@ public class FhirService : IFhirService
                 var phone = practitioner.Telecom.FirstOrDefault(t => t.System == "phone");
                 var email = practitioner.Telecom.FirstOrDefault(t => t.System == "email");
 
-                if (phone != null) doctor.PhoneNumber = phone.Value;
+                if (phone != null) doctor.Phone = phone.Value;
                 if (email != null) doctor.Email = email.Value;
             }
 

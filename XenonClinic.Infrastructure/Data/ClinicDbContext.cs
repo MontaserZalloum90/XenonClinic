@@ -121,6 +121,9 @@ public class ClinicDbContext : IdentityDbContext<Entities.ApplicationUser>
     public DbSet<Prescription> Prescriptions => Set<Prescription>();
     public DbSet<PrescriptionItem> PrescriptionItems => Set<PrescriptionItem>();
     public DbSet<VitalSign> VitalSigns => Set<VitalSign>();
+    public DbSet<Visit> Visits => Set<Visit>();
+    public DbSet<Immunization> Immunizations => Set<Immunization>();
+    public DbSet<DoctorSchedule> DoctorSchedules => Set<DoctorSchedule>();
 
     // Authentication configuration entities (from Infrastructure)
     public DbSet<Entities.CompanyAuthSettings> CompanyAuthSettings => Set<Entities.CompanyAuthSettings>();

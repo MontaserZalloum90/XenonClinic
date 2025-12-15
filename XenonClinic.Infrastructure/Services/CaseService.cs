@@ -509,7 +509,7 @@ public class CaseService : ICaseService
             c.CaseNumber.Contains(searchTerm) ||
             c.Title.Contains(searchTerm) ||
             c.Patient.FullNameEn.Contains(searchTerm) ||
-            c.Patient.FullNameAr.Contains(searchTerm) ||
+            (c.Patient.FullNameAr != null && c.Patient.FullNameAr.Contains(searchTerm)) ||
             (c.Description != null && c.Description.Contains(searchTerm)));
 
         return await query

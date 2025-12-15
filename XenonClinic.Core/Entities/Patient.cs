@@ -43,6 +43,12 @@ public class Patient : ISoftDelete, IBranchEntity
     public string? Email { get; set; }
     public string? HearingLossType { get; set; }
     public string? Notes { get; set; }
+    public string? ProfilePhotoUrl { get; set; }
+    public string? Address { get; set; }
+    public string? City { get; set; }
+    public string? Country { get; set; }
+    public string? MRN { get; set; } // Medical Record Number
+    public bool IsActive { get; set; } = true;
 
     // Soft delete support for healthcare compliance
     public bool IsDeleted { get; set; }
