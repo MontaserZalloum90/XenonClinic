@@ -98,6 +98,7 @@ public class AllergyCheckRequestDto
 public class AllergyAlertDto
 {
     public int AlertId { get; set; }
+    public string AllergyName { get; set; } = string.Empty;
     public string AllergenName { get; set; } = string.Empty;
     public string AllergenCode { get; set; } = string.Empty;
     public string AllergenType { get; set; } = string.Empty; // Drug, DrugClass, Ingredient, CrossReactive
@@ -112,6 +113,7 @@ public class AllergyAlertDto
     public string Description { get; set; } = string.Empty;
     public string Recommendation { get; set; } = string.Empty;
     public List<string>? AlternativeMedications { get; set; }
+    public bool CrossReactivity { get; set; }
     public bool IsCrossReactivity { get; set; }
     public bool CrossReactivity { get; set; } // Alias for IsCrossReactivity for backward compatibility
     public string? CrossReactivityExplanation { get; set; }
@@ -145,6 +147,7 @@ public class AllergyCheckResultDto
 /// </summary>
 public class ClinicalReminderDto
 {
+    public int Id { get; set; }
     public int ReminderId { get; set; }
     public int Id { get => ReminderId; set => ReminderId = value; } // Alias for ReminderId
     public int PatientId { get; set; }
@@ -165,6 +168,7 @@ public class ClinicalReminderDto
     public List<string>? ExclusionCriteria { get; set; }
     public ClinicalReminderActionDto? SuggestedAction { get; set; }
     public string? PatientEducationLink { get; set; }
+    public string? ActionRequired { get; set; }
     public bool IsAcknowledged { get; set; }
     public DateTime? AcknowledgedAt { get; set; }
     public string? AcknowledgedBy { get; set; }
@@ -249,12 +253,14 @@ public class DiagnosisSuggestionDto
     public string IcdCode { get; set; } = string.Empty;
     public string DiagnosisName { get; set; } = string.Empty;
     public string? Description { get; set; }
+    public double Confidence { get; set; }
     public double ConfidenceScore { get; set; }
     /// <summary>
     /// Alias for ConfidenceScore for backwards compatibility
     /// </summary>
     public double Confidence { get => ConfidenceScore; set => ConfidenceScore = value; }
     public string ConfidenceLevel { get; set; } = string.Empty; // High, Medium, Low
+    public List<string> MatchedSymptoms { get; set; } = new();
     public List<string> MatchingSymptoms { get; set; } = new();
     /// <summary>
     /// Alias for MatchingSymptoms for backwards compatibility
@@ -262,12 +268,14 @@ public class DiagnosisSuggestionDto
     public List<string> MatchedSymptoms { get => MatchingSymptoms; set => MatchingSymptoms = value; }
     public List<string>? SupportingFindings { get; set; }
     public List<string>? ConflictingFindings { get; set; }
+    public List<string>? RecommendedTests { get; set; }
     public List<string>? AdditionalTestsRecommended { get; set; }
     /// <summary>
     /// Alias for AdditionalTestsRecommended for backwards compatibility
     /// </summary>
     public List<string>? RecommendedTests { get => AdditionalTestsRecommended; set => AdditionalTestsRecommended = value; }
     public List<string>? DifferentialDiagnoses { get; set; }
+    public List<string>? RedFlags { get; set; }
     public string? ClinicalPearl { get; set; }
     public string? Urgency { get; set; } // Emergent, Urgent, Routine
     public bool RequiresSpecialistReferral { get; set; }
@@ -756,6 +764,10 @@ public class RiskCalculationResultDto
     public int PatientId { get; set; }
     public string CalculatorId { get; set; } = string.Empty;
     public string CalculatorName { get; set; } = string.Empty;
+    /// <summary>
+    /// Calculator identifier - alias for CalculatorName for service compatibility
+    /// </summary>
+    public string CalculatorId { get => CalculatorName; set => CalculatorName = value; }
     public DateTime CalculatedAt { get; set; }
     public double RiskScore { get; set; }
     public string RiskLevel { get; set; } = string.Empty; // Low, Moderate, High, Very High
@@ -989,6 +1001,35 @@ public class CareGapDto
     public string? Category { get; set; } // Preventive, Chronic, Screening, etc.
     public DateTime? CompletedDate { get; set; }
     public int? CompletedByUserId { get; set; }
+}
+
+#endregion
+
+#region Medication Safety Check
+
+/// <summary>
+/// Comprehensive medication safety check result
+/// </summary>
+public class MedicationSafetyCheckResultDto
+{
+    public int PatientId { get; set; }
+    public string MedicationCode { get; set; } = string.Empty;
+    public string MedicationName { get; set; } = string.Empty;
+    public DateTime CheckedAt { get; set; } = DateTime.UtcNow;
+    public bool IsSafe { get; set; }
+    public string SafetyLevel { get; set; } = string.Empty; // Safe, ProceedWithCaution, NotRecommended, Contraindicated
+
+    // Individual check results
+    public AllergyCheckResultDto? AllergyCheck { get; set; }
+    public DrugInteractionResultDto? InteractionCheck { get; set; }
+    public ContraindicationCheckResultDto? ContraindicationCheck { get; set; }
+    public DosageCheckResultDto? DosageCheck { get; set; }
+
+    // Summary
+    public List<string> Warnings { get; set; } = new();
+    public bool CanPrescribe { get; set; }
+    public bool RequiresOverride { get; set; }
+    public string? OverrideReason { get; set; }
 }
 
 #endregion

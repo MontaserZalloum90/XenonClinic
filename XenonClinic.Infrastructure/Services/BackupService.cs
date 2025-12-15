@@ -5,6 +5,7 @@ using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using XenonClinic.Core.DTOs;
 using XenonClinic.Core.Interfaces;
 using XenonClinic.Infrastructure.Data;
 using System.Net.Http;
