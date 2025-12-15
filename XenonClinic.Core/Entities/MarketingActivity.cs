@@ -1,8 +1,11 @@
+using System.ComponentModel.DataAnnotations.Schema;
+
 namespace XenonClinic.Core.Entities;
 
 /// <summary>
 /// Represents a marketing activity or interaction with a lead/campaign
 /// </summary>
+[Table("MarketingActivities")]
 public class MarketingActivity
 {
     public int Id { get; set; }

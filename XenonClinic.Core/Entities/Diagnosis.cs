@@ -6,6 +6,7 @@ namespace XenonClinic.Core.Entities;
 /// <summary>
 /// Represents a medical diagnosis for a patient
 /// </summary>
+[Table("Diagnoses")]
 public class Diagnosis
 {
     [Key]

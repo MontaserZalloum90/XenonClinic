@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations.Schema;
 using XenonClinic.Core.Interfaces;
 
 namespace XenonClinic.Core.Entities;
@@ -5,6 +6,7 @@ namespace XenonClinic.Core.Entities;
 /// <summary>
 /// Financial voucher for journal entries
 /// </summary>
+[Table("Vouchers")]
 public class Voucher : IBranchEntity
 {
     public int Id { get; set; }
@@ -41,6 +43,7 @@ public class Voucher : IBranchEntity
 /// <summary>
 /// Individual line in a voucher
 /// </summary>
+[Table("VoucherLines")]
 public class VoucherLine
 {
     public int Id { get; set; }

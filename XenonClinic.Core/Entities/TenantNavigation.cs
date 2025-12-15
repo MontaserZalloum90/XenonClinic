@@ -1,8 +1,11 @@
+using System.ComponentModel.DataAnnotations.Schema;
+
 namespace XenonClinic.Core.Entities;
 
 /// <summary>
 /// Tenant-level navigation overrides
 /// </summary>
+[Table("TenantNavigations")]
 public class TenantNavigation
 {
     public int Id { get; set; }

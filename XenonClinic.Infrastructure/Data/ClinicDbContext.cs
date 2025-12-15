@@ -137,6 +137,14 @@ public class ClinicDbContext : IdentityDbContext<Entities.ApplicationUser>
     public DbSet<CaseNote> CaseNotes => Set<CaseNote>();
     public DbSet<CaseActivity> CaseActivities => Set<CaseActivity>();
 
+    // CRM/Marketing entities
+    public DbSet<Lead> Leads => Set<Lead>();
+    public DbSet<Campaign> Campaigns => Set<Campaign>();
+    public DbSet<MarketingActivity> MarketingActivities => Set<MarketingActivity>();
+
+    // Tenant Configuration
+    public DbSet<TenantNavigation> TenantNavigations => Set<TenantNavigation>();
+
     // Audit Logging
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
 

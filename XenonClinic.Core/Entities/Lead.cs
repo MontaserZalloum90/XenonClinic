@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations.Schema;
 using XenonClinic.Core.Enums;
 
 namespace XenonClinic.Core.Entities;
@@ -5,6 +6,7 @@ namespace XenonClinic.Core.Entities;
 /// <summary>
 /// Represents a marketing lead - a potential customer/patient
 /// </summary>
+[Table("Leads")]
 public class Lead
 {
     public int Id { get; set; }
