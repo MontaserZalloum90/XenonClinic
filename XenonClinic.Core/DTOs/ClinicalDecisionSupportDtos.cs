@@ -381,7 +381,13 @@ public class DosageCheckResultDto
     public DosageRangeDto? RecommendedRange { get; set; }
     public DosageRangeDto? MaxDailyDose { get; set; }
     public List<DosageAlertDto> Alerts { get; set; } = new();
+    /// <summary>
+    /// Warnings associated with this dosage
+    /// </summary>
     public List<string> Warnings { get; set; } = new();
+    /// <summary>
+    /// Factors considered in the dosage check
+    /// </summary>
     public List<string> FactorsConsidered { get; set; } = new();
     public bool RequiresRenalAdjustment { get; set; }
     public bool RequiresHepaticAdjustment { get; set; }

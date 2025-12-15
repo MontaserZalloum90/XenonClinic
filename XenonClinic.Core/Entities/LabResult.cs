@@ -33,6 +33,17 @@ public class LabResult : IBranchEntity
 
     public DateTime? ResultDate { get; set; }
 
+    /// <summary>
+    /// Alias for ResultDate for service compatibility.
+    /// NotMapped - computed property that maps to ResultDate.
+    /// </summary>
+    [System.ComponentModel.DataAnnotations.Schema.NotMapped]
+    public DateTime? TestDate
+    {
+        get => ResultDate;
+        set => ResultDate = value;
+    }
+
     [MaxLength(100)]
     public string? ResultValue { get; set; }
 
