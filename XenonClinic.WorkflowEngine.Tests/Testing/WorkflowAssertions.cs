@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using XenonClinic.WorkflowEngine.Domain.Entities;
+using ProcessInstanceState = XenonClinic.WorkflowEngine.Domain.Entities.ProcessInstanceStatus;
 
 namespace XenonClinic.WorkflowEngine.Tests.Testing;
 
@@ -72,14 +73,14 @@ public class ProcessInstanceAssertion
 
     public ProcessInstanceAssertion IsInState(ProcessInstanceState expectedState)
     {
-        if (_instance.State != expectedState)
-            throw new AssertionException($"Expected state '{expectedState}', but was '{_instance.State}'");
+        if (_instance.Status != expectedState)
+            throw new AssertionException($"Expected state '{expectedState}', but was '{_instance.Status}'");
         return this;
     }
 
     public ProcessInstanceAssertion IsActive()
     {
-        return IsInState(ProcessInstanceState.Active);
+        return IsInState(ProcessInstanceState.Running);
     }
 
     public ProcessInstanceAssertion IsCompleted()

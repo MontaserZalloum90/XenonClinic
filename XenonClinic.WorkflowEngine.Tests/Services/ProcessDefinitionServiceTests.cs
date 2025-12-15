@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Xunit;
+using XenonClinic.WorkflowEngine.Application.DTOs;
 using XenonClinic.WorkflowEngine.Application.Services;
 using XenonClinic.WorkflowEngine.Domain.Entities;
 using XenonClinic.WorkflowEngine.Domain.Models;

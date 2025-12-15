@@ -12,6 +12,7 @@ using XenonClinic.WorkflowEngine.Domain.Entities;
 using XenonClinic.WorkflowEngine.Domain.Models;
 using XenonClinic.WorkflowEngine.Extensions;
 using XenonClinic.WorkflowEngine.Persistence.Abstractions;
+using ProcessInstanceState = XenonClinic.WorkflowEngine.Domain.Entities.ProcessInstanceStatus;
 
 namespace XenonClinic.WorkflowEngine.Tests.Testing;
 
@@ -491,25 +492,25 @@ public class MockEmailService : IEmailService
         }
     }
 
-    public Task<SendEmailResult> SendAsync(EmailMessage message, CancellationToken cancellationToken = default)
+    public Task<EmailSendResult> SendAsync(EmailMessage message, CancellationToken cancellationToken = default)
     {
         lock (_lock)
         {
             _sentEmails.Add(message);
         }
 
-        return Task.FromResult(new SendEmailResult
+        return Task.FromResult(new EmailSendResult
         {
             Success = true,
             MessageId = Guid.NewGuid().ToString()
         });
     }
 
-    public Task<SendEmailResult> SendTemplatedAsync(TemplatedEmailRequest request, CancellationToken cancellationToken = default)
+    public Task<EmailSendResult> SendTemplatedAsync(TemplatedEmailRequest request, CancellationToken cancellationToken = default)
     {
         var message = new EmailMessage
         {
-            Subject = request.TemplateId,
+            Subject = request.TemplateKey,
             To = request.To
         };
 
@@ -518,60 +519,101 @@ public class MockEmailService : IEmailService
             _sentEmails.Add(message);
         }
 
-        return Task.FromResult(new SendEmailResult
+        return Task.FromResult(new EmailSendResult
         {
             Success = true,
             MessageId = Guid.NewGuid().ToString()
         });
     }
 
-    public Task<SendEmailResult> SendBulkAsync(BulkEmailRequest request, CancellationToken cancellationToken = default)
+    public Task SendTaskAssignmentAsync(TaskAssignmentEmailRequest request, CancellationToken cancellationToken = default)
     {
-        return Task.FromResult(new SendEmailResult
+        var message = new EmailMessage
         {
-            Success = true,
-            MessageId = Guid.NewGuid().ToString()
-        });
+            Subject = $"Task Assigned: {request.TaskName}",
+            To = new List<EmailAddress> { new EmailAddress(request.AssigneeEmail, request.AssigneeName) }
+        };
+
+        lock (_lock)
+        {
+            _sentEmails.Add(message);
+        }
+
+        return Task.CompletedTask;
     }
 
-    public Task<EmailTemplate> CreateTemplateAsync(CreateEmailTemplateRequest request, CancellationToken cancellationToken = default)
+    public Task SendTaskReminderAsync(TaskReminderEmailRequest request, CancellationToken cancellationToken = default)
     {
-        return Task.FromResult(new EmailTemplate
+        var message = new EmailMessage
         {
-            Id = Guid.NewGuid().ToString(),
-            Key = request.Key,
-            Name = request.Name,
-            Subject = request.Subject,
-            HtmlBody = request.HtmlBody
-        });
+            Subject = $"Task Reminder: {request.TaskName}",
+            To = new List<EmailAddress> { new EmailAddress(request.AssigneeEmail, request.AssigneeName) }
+        };
+
+        lock (_lock)
+        {
+            _sentEmails.Add(message);
+        }
+
+        return Task.CompletedTask;
     }
 
-    public Task<EmailTemplate> UpdateTemplateAsync(string templateId, UpdateEmailTemplateRequest request, CancellationToken cancellationToken = default)
+    public Task SendTaskDueDateWarningAsync(TaskDueDateEmailRequest request, CancellationToken cancellationToken = default)
     {
-        return Task.FromResult(new EmailTemplate
+        var message = new EmailMessage
         {
-            Id = templateId
-        });
+            Subject = $"Task Due Soon: {request.TaskName}",
+            To = new List<EmailAddress> { new EmailAddress(request.AssigneeEmail, request.AssigneeName) }
+        };
+
+        lock (_lock)
+        {
+            _sentEmails.Add(message);
+        }
+
+        return Task.CompletedTask;
     }
 
-    public Task DeleteTemplateAsync(string templateId, CancellationToken cancellationToken = default)
+    public Task SendProcessCompletionAsync(ProcessCompletionEmailRequest request, CancellationToken cancellationToken = default)
+    {
+        var message = new EmailMessage
+        {
+            Subject = $"Process Completed: {request.ProcessName}",
+            To = request.RecipientEmails.Select(e => new EmailAddress(e)).ToList()
+        };
+
+        lock (_lock)
+        {
+            _sentEmails.Add(message);
+        }
+
+        return Task.CompletedTask;
+    }
+
+    public Task SendEscalationAsync(EscalationEmailRequest request, CancellationToken cancellationToken = default)
+    {
+        var message = new EmailMessage
+        {
+            Subject = $"Escalation: {request.TaskName}",
+            To = request.EscalationRecipients.Select(e => new EmailAddress(e)).ToList()
+        };
+
+        lock (_lock)
+        {
+            _sentEmails.Add(message);
+        }
+
+        return Task.CompletedTask;
+    }
+
+    public Task RegisterTemplateAsync(EmailTemplate template, CancellationToken cancellationToken = default)
     {
         return Task.CompletedTask;
     }
 
-    public Task<EmailTemplate?> GetTemplateAsync(string templateId, CancellationToken cancellationToken = default)
+    public Task<EmailTemplate?> GetTemplateAsync(string templateKey, CancellationToken cancellationToken = default)
     {
         return Task.FromResult<EmailTemplate?>(null);
-    }
-
-    public Task<IList<EmailTemplate>> ListTemplatesAsync(string? tenantId = null, CancellationToken cancellationToken = default)
-    {
-        return Task.FromResult<IList<EmailTemplate>>(new List<EmailTemplate>());
-    }
-
-    public Task<EmailTrackingInfo?> GetEmailStatusAsync(string messageId, CancellationToken cancellationToken = default)
-    {
-        return Task.FromResult<EmailTrackingInfo?>(null);
     }
 
     public void Clear()

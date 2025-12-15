@@ -28,7 +28,7 @@ public class StateMachineTests
     [Fact]
     public void Builder_CreatesStateMachineWithStates()
     {
-        var stateMachine = StateMachineBuilder<OrderState, OrderTrigger>.Create()
+        var stateMachine = StateMachineBuilder<OrderState>.Create()
             .DefineState(OrderState.Created)
                 .WithEntry(ctx => { /* log created */ })
                 .WithTransition(OrderTrigger.Submit, OrderState.Pending)
@@ -54,7 +54,7 @@ public class StateMachineTests
     [Fact]
     public void GetAvailableTransitions_ReturnsCorrectTransitions()
     {
-        var stateMachine = StateMachineBuilder<OrderState, OrderTrigger>.Create()
+        var stateMachine = StateMachineBuilder<OrderState>.Create()
             .DefineState(OrderState.Created)
                 .WithTransition(OrderTrigger.Submit, OrderState.Pending)
                 .WithTransition(OrderTrigger.Cancel, OrderState.Cancelled)
@@ -77,7 +77,7 @@ public class StateMachineTests
     [Fact]
     public void GetState_ReturnsCorrectStateDefinition()
     {
-        var stateMachine = StateMachineBuilder<OrderState, OrderTrigger>.Create()
+        var stateMachine = StateMachineBuilder<OrderState>.Create()
             .DefineState(OrderState.Created)
                 .WithTransition(OrderTrigger.Submit, OrderState.Pending)
                 .FinishState()
@@ -94,7 +94,7 @@ public class StateMachineTests
     [Fact]
     public void IsEndState_ReturnsCorrectValue()
     {
-        var stateMachine = StateMachineBuilder<OrderState, OrderTrigger>.Create()
+        var stateMachine = StateMachineBuilder<OrderState>.Create()
             .DefineState(OrderState.Created)
                 .WithTransition(OrderTrigger.Submit, OrderState.Pending)
                 .FinishState()
@@ -118,12 +118,12 @@ public class StateMachineExecutorTests
     public enum TrafficLightState { Red, Yellow, Green }
     public enum TrafficLightTrigger { Timer, Emergency }
 
-    private readonly StateMachine<TrafficLightState, TrafficLightTrigger> _stateMachine;
-    private readonly StateMachineExecutor<TrafficLightState, TrafficLightTrigger> _executor;
+    private readonly StateMachine<TrafficLightState> _stateMachine;
+    private readonly StateMachineExecutor<TrafficLightState> _executor;
 
     public StateMachineExecutorTests()
     {
-        _stateMachine = StateMachineBuilder<TrafficLightState, TrafficLightTrigger>.Create()
+        _stateMachine = StateMachineBuilder<TrafficLightState>.Create()
             .DefineState(TrafficLightState.Red)
                 .WithTransition(TrafficLightTrigger.Timer, TrafficLightState.Green)
                 .WithTransition(TrafficLightTrigger.Emergency, TrafficLightState.Red)
@@ -139,7 +139,7 @@ public class StateMachineExecutorTests
             .WithInitialState(TrafficLightState.Red)
             .Build();
 
-        _executor = new StateMachineExecutor<TrafficLightState, TrafficLightTrigger>(_stateMachine);
+        _executor = new StateMachineExecutor<TrafficLightState>(_stateMachine);
     }
 
     [Fact]
@@ -155,7 +155,7 @@ public class StateMachineExecutorTests
     public async Task FireAsync_InvalidTransition_ReturnsFailure()
     {
         // Create a state machine without a transition from Yellow to Green
-        var stateMachine = StateMachineBuilder<TrafficLightState, TrafficLightTrigger>.Create()
+        var stateMachine = StateMachineBuilder<TrafficLightState>.Create()
             .DefineState(TrafficLightState.Yellow)
                 .WithTransition(TrafficLightTrigger.Timer, TrafficLightState.Red)
                 .FinishState()
@@ -163,7 +163,7 @@ public class StateMachineExecutorTests
             .WithInitialState(TrafficLightState.Yellow)
             .Build();
 
-        var executor = new StateMachineExecutor<TrafficLightState, TrafficLightTrigger>(stateMachine);
+        var executor = new StateMachineExecutor<TrafficLightState>(stateMachine);
 
         // Try an invalid trigger (Emergency not defined for Yellow in this limited machine)
         var result = await executor.FireAsync(TrafficLightState.Yellow, TrafficLightTrigger.Emergency, null);
@@ -202,7 +202,7 @@ public class StateMachineWithGuardsTests
     [Fact]
     public async Task FireAsync_WithPassingGuard_TransitionsSuccessfully()
     {
-        var stateMachine = StateMachineBuilder<DocumentState, DocumentTrigger>.Create()
+        var stateMachine = StateMachineBuilder<DocumentState>.Create()
             .DefineState(DocumentState.Review)
                 .WithTransition(DocumentTrigger.Approve, DocumentState.Approved)
                     .WithGuard((ctx) => Task.FromResult(true)) // Guard passes
@@ -213,7 +213,7 @@ public class StateMachineWithGuardsTests
             .WithInitialState(DocumentState.Review)
             .Build();
 
-        var executor = new StateMachineExecutor<DocumentState, DocumentTrigger>(stateMachine);
+        var executor = new StateMachineExecutor<DocumentState>(stateMachine);
         var result = await executor.FireAsync(DocumentState.Review, DocumentTrigger.Approve, null);
 
         result.IsSuccess.Should().BeTrue();
@@ -223,7 +223,7 @@ public class StateMachineWithGuardsTests
     [Fact]
     public async Task FireAsync_WithFailingGuard_DoesNotTransition()
     {
-        var stateMachine = StateMachineBuilder<DocumentState, DocumentTrigger>.Create()
+        var stateMachine = StateMachineBuilder<DocumentState>.Create()
             .DefineState(DocumentState.Review)
                 .WithTransition(DocumentTrigger.Approve, DocumentState.Approved)
                     .WithGuard((ctx) => Task.FromResult(false)) // Guard fails
@@ -232,7 +232,7 @@ public class StateMachineWithGuardsTests
             .WithInitialState(DocumentState.Review)
             .Build();
 
-        var executor = new StateMachineExecutor<DocumentState, DocumentTrigger>(stateMachine);
+        var executor = new StateMachineExecutor<DocumentState>(stateMachine);
         var result = await executor.FireAsync(DocumentState.Review, DocumentTrigger.Approve, null);
 
         result.IsSuccess.Should().BeFalse();
