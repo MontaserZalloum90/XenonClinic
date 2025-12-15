@@ -126,20 +126,25 @@ public class PatientMedicalHistoryDto
     public string? CurrentMedications { get; set; }
     public string? PastMedicalHistory { get; set; }
     public string? SurgicalHistory { get; set; }
+    public string? PastSurgeries { get => SurgicalHistory; set => SurgicalHistory = value; } // Alias for SurgicalHistory
 
     // History
     public string? FamilyHistory { get; set; }
     public string? OccupationalExposure { get; set; }
+    public string? SocialHistory { get; set; } // Combined social history field
 
     // Hearing-specific (for audiology)
     public string? NoiseExposureHistory { get; set; }
+    public string? NoiseExposure { get => NoiseExposureHistory; set => NoiseExposureHistory = value; } // Alias for NoiseExposureHistory
     public string? PreviousHearingAids { get; set; }
     public string? TinnitusHistory { get; set; }
+    public string? Tinnitus { get => TinnitusHistory; set => TinnitusHistory = value; } // Alias for TinnitusHistory
     public string? BalanceProblems { get; set; }
 
     // Lifestyle
     public bool IsSmoker { get; set; }
     public bool ConsumesAlcohol { get; set; }
+    public bool AlcoholConsumption { get => ConsumesAlcohol; set => ConsumesAlcohol = value; } // Alias for ConsumesAlcohol
 
     // Additional
     public string? AdditionalNotes { get; set; }
@@ -162,14 +167,19 @@ public class CreatePatientMedicalHistoryDto
     public string? CurrentMedications { get; set; }
     public string? PastMedicalHistory { get; set; }
     public string? SurgicalHistory { get; set; }
+    public string? PastSurgeries { get => SurgicalHistory; set => SurgicalHistory = value; } // Alias for SurgicalHistory
     public string? FamilyHistory { get; set; }
     public string? OccupationalExposure { get; set; }
+    public string? SocialHistory { get; set; } // Combined social history field
     public string? NoiseExposureHistory { get; set; }
+    public string? NoiseExposure { get => NoiseExposureHistory; set => NoiseExposureHistory = value; } // Alias for NoiseExposureHistory
     public string? PreviousHearingAids { get; set; }
     public string? TinnitusHistory { get; set; }
+    public string? Tinnitus { get => TinnitusHistory; set => TinnitusHistory = value; } // Alias for TinnitusHistory
     public string? BalanceProblems { get; set; }
     public bool IsSmoker { get; set; }
     public bool ConsumesAlcohol { get; set; }
+    public bool AlcoholConsumption { get => ConsumesAlcohol; set => ConsumesAlcohol = value; } // Alias for ConsumesAlcohol
     public string? AdditionalNotes { get; set; }
 }
 
@@ -196,8 +206,10 @@ public class PatientDocumentDto
     public string FileName { get; set; } = string.Empty;
     public string FileExtension { get; set; } = string.Empty;
     public long FileSizeBytes { get; set; }
+    public long FileSize { get => FileSizeBytes; set => FileSizeBytes = value; } // Alias for FileSizeBytes
     public string ContentType { get; set; } = string.Empty;
     public DateTime UploadDate { get; set; }
+    public DateTime UploadedAt { get => UploadDate; set => UploadDate = value; } // Alias for UploadDate
     public string UploadedBy { get; set; } = string.Empty;
     public DateTime? ExpiryDate { get; set; }
     public bool IsActive { get; set; }
