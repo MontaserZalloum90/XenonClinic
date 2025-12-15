@@ -81,15 +81,6 @@ export const MaskedField = ({
 
   const maskedValue = getMaskedValue(value, type);
 
-  const handleReveal = useCallback(() => {
-    if (requiresJustification) {
-      setShowJustificationModal(true);
-      return;
-    }
-
-    revealValue('Routine access');
-  }, [requiresJustification, revealValue]);
-
   const revealValue = useCallback(
     (justification: string) => {
       setIsRevealed(true);
@@ -112,6 +103,15 @@ export const MaskedField = ({
     },
     [logAccess, resourceType, resourceId, resourceDescription, type, revealDuration]
   );
+
+  const handleReveal = useCallback(() => {
+    if (requiresJustification) {
+      setShowJustificationModal(true);
+      return;
+    }
+
+    revealValue('Routine access');
+  }, [requiresJustification, revealValue]);
 
   const handleHide = useCallback(() => {
     setIsRevealed(false);

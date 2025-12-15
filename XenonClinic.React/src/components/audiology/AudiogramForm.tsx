@@ -126,6 +126,7 @@ export const AudiogramForm = ({
     onSubmit(request);
   };
 
+  // eslint-disable-next-line react-hooks/static-components
   const ThresholdInput = ({
     label,
     name,

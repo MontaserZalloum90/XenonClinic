@@ -271,7 +271,7 @@ const MockDataTable = ({
 };
 
 describe('LoadingSkeleton Component Tests', () => {
-  #region Rendering Tests
+  // Rendering Tests
   describe('Rendering', () => {
     it('renders the loading skeleton', () => {
       render(<MockLoadingSkeleton />);
@@ -339,11 +339,11 @@ describe('LoadingSkeleton Component Tests', () => {
       expect(item).toHaveClass('animate-pulse');
     });
   });
-  #endregion
+  // End
 });
 
 describe('EmptyState Component Tests', () => {
-  #region Rendering Tests
+  // Rendering Tests
   describe('Rendering', () => {
     it('renders the empty state', () => {
       render(<MockEmptyState title="No Data" />);
@@ -385,9 +385,9 @@ describe('EmptyState Component Tests', () => {
       expect(screen.queryByTestId('empty-state-action')).not.toBeInTheDocument();
     });
   });
-  #endregion
+  // End
 
-  #region Interaction Tests
+  // Interaction Tests
   describe('Interactions', () => {
     it('calls onAction when action button is clicked', async () => {
       const onAction = vi.fn();
@@ -405,9 +405,9 @@ describe('EmptyState Component Tests', () => {
       expect(button).not.toBeDisabled();
     });
   });
-  #endregion
+  // End
 
-  #region Content Tests
+  // Content Tests
   describe('Different Content Types', () => {
     it('displays empty patients message', () => {
       render(<MockEmptyState title="No patients found" description="Start by adding a new patient" />);
@@ -434,11 +434,11 @@ describe('EmptyState Component Tests', () => {
       expect(screen.getByText('No items in inventory')).toBeInTheDocument();
     });
   });
-  #endregion
+  // End
 });
 
 describe('Badge Component Tests', () => {
-  #region Rendering Tests
+  // Rendering Tests
   describe('Rendering', () => {
     it('renders the badge', () => {
       render(<MockBadge>Test</MockBadge>);
@@ -490,9 +490,9 @@ describe('Badge Component Tests', () => {
       expect(screen.getByTestId('badge')).toHaveAttribute('data-size', 'lg');
     });
   });
-  #endregion
+  // End
 
-  #region Style Tests
+  // Style Tests
   describe('Styling', () => {
     it('applies default variant classes', () => {
       render(<MockBadge>Default</MockBadge>);
@@ -539,9 +539,9 @@ describe('Badge Component Tests', () => {
       expect(screen.getByTestId('badge')).toHaveClass('inline-flex');
     });
   });
-  #endregion
+  // End
 
-  #region Status Display Tests
+  // Status Display Tests
   describe('Status Display', () => {
     it('displays Active status', () => {
       render(<MockBadge variant="success">Active</MockBadge>);
@@ -573,11 +573,11 @@ describe('Badge Component Tests', () => {
       expect(screen.getByText('In Progress')).toBeInTheDocument();
     });
   });
-  #endregion
+  // End
 });
 
 describe('Toast Component Tests', () => {
-  #region Visibility Tests
+  // Visibility Tests
   describe('Visibility', () => {
     it('renders when isVisible is true', () => {
       render(<MockToast message="Test message" isVisible={true} />);
@@ -589,9 +589,9 @@ describe('Toast Component Tests', () => {
       expect(screen.queryByTestId('toast')).not.toBeInTheDocument();
     });
   });
-  #endregion
+  // End
 
-  #region Content Tests
+  // Content Tests
   describe('Content', () => {
     it('displays message', () => {
       render(<MockToast message="Operation successful" isVisible={true} />);
@@ -608,9 +608,9 @@ describe('Toast Component Tests', () => {
       expect(screen.getByTestId('toast-close')).toBeInTheDocument();
     });
   });
-  #endregion
+  // End
 
-  #region Type Tests
+  // Type Tests
   describe('Types', () => {
     it('renders with default info type', () => {
       render(<MockToast message="Info" isVisible={true} />);
@@ -632,9 +632,9 @@ describe('Toast Component Tests', () => {
       expect(screen.getByTestId('toast')).toHaveAttribute('data-type', 'warning');
     });
   });
-  #endregion
+  // End
 
-  #region Style Tests
+  // Style Tests
   describe('Styling', () => {
     it('applies success background class', () => {
       render(<MockToast message="Success" type="success" isVisible={true} />);
@@ -661,9 +661,9 @@ describe('Toast Component Tests', () => {
       expect(screen.getByTestId('toast')).toHaveClass('text-white');
     });
   });
-  #endregion
+  // End
 
-  #region Interaction Tests
+  // Interaction Tests
   describe('Interactions', () => {
     it('calls onClose when close button is clicked', async () => {
       const onClose = vi.fn();
@@ -673,11 +673,11 @@ describe('Toast Component Tests', () => {
       expect(onClose).toHaveBeenCalledTimes(1);
     });
   });
-  #endregion
+  // End
 });
 
 describe('ConfirmDialog Component Tests', () => {
-  #region Visibility Tests
+  // Visibility Tests
   describe('Visibility', () => {
     it('renders when isOpen is true', () => {
       render(<MockConfirmDialog isOpen={true} title="Confirm" message="Are you sure?" />);
@@ -689,9 +689,9 @@ describe('ConfirmDialog Component Tests', () => {
       expect(screen.queryByTestId('confirm-dialog')).not.toBeInTheDocument();
     });
   });
-  #endregion
+  // End
 
-  #region Content Tests
+  // Content Tests
   describe('Content', () => {
     it('displays title', () => {
       render(<MockConfirmDialog isOpen={true} title="Delete Patient" message="Are you sure?" />);
@@ -723,9 +723,9 @@ describe('ConfirmDialog Component Tests', () => {
       expect(screen.getByTestId('confirm-dialog-cancel')).toHaveTextContent('Go Back');
     });
   });
-  #endregion
+  // End
 
-  #region Interaction Tests
+  // Interaction Tests
   describe('Interactions', () => {
     it('calls onConfirm when confirm button is clicked', async () => {
       const onConfirm = vi.fn();
@@ -751,9 +751,9 @@ describe('ConfirmDialog Component Tests', () => {
       expect(onCancel).toHaveBeenCalledTimes(1);
     });
   });
-  #endregion
+  // End
 
-  #region Variant Tests
+  // Variant Tests
   describe('Variants', () => {
     it('renders with default variant', () => {
       render(<MockConfirmDialog isOpen={true} title="Confirm" message="Are you sure?" />);
@@ -765,20 +765,20 @@ describe('ConfirmDialog Component Tests', () => {
       expect(screen.getByTestId('confirm-dialog-confirm')).toHaveAttribute('data-variant', 'danger');
     });
   });
-  #endregion
+  // End
 
-  #region Dialog Role Tests
+  // Dialog Role Tests
   describe('Accessibility', () => {
     it('has dialog role', () => {
       render(<MockConfirmDialog isOpen={true} title="Confirm" message="Are you sure?" />);
       expect(screen.getByRole('dialog')).toBeInTheDocument();
     });
   });
-  #endregion
+  // End
 });
 
 describe('Pagination Component Tests', () => {
-  #region Rendering Tests
+  // Rendering Tests
   describe('Rendering', () => {
     it('renders pagination', () => {
       render(<MockPagination />);
@@ -808,9 +808,9 @@ describe('Pagination Component Tests', () => {
       }
     });
   });
-  #endregion
+  // End
 
-  #region State Tests
+  // State Tests
   describe('State', () => {
     it('disables previous button on first page', () => {
       render(<MockPagination currentPage={1} totalPages={5} />);
@@ -843,9 +843,9 @@ describe('Pagination Component Tests', () => {
       expect(screen.getByTestId('pagination-page-2')).not.toHaveAttribute('aria-current');
     });
   });
-  #endregion
+  // End
 
-  #region Interaction Tests
+  // Interaction Tests
   describe('Interactions', () => {
     it('calls onPageChange when page button is clicked', async () => {
       const onPageChange = vi.fn();
@@ -880,9 +880,9 @@ describe('Pagination Component Tests', () => {
       expect(onPageChange).toHaveBeenCalledTimes(2);
     });
   });
-  #endregion
+  // End
 
-  #region Accessibility Tests
+  // Accessibility Tests
   describe('Accessibility', () => {
     it('has navigation role', () => {
       render(<MockPagination />);
@@ -894,7 +894,7 @@ describe('Pagination Component Tests', () => {
       expect(screen.getByRole('navigation')).toHaveAttribute('aria-label', 'Pagination');
     });
   });
-  #endregion
+  // End
 });
 
 describe('DataTable Component Tests', () => {
@@ -910,7 +910,7 @@ describe('DataTable Component Tests', () => {
     { name: 'Bob Wilson', email: 'bob@example.com', status: 'Active' }
   ];
 
-  #region Rendering Tests
+  // Rendering Tests
   describe('Rendering', () => {
     it('renders the data table', () => {
       render(<MockDataTable columns={columns} data={data} />);
@@ -952,9 +952,9 @@ describe('DataTable Component Tests', () => {
       expect(screen.getByTestId('data-table-empty')).toHaveTextContent('No patients found');
     });
   });
-  #endregion
+  // End
 
-  #region Sorting Tests
+  // Sorting Tests
   describe('Sorting', () => {
     it('renders sort buttons when sortable is true', () => {
       render(<MockDataTable columns={columns} data={data} sortable={true} />);
@@ -975,9 +975,9 @@ describe('DataTable Component Tests', () => {
       expect(onSort).toHaveBeenCalledWith('name', 'asc');
     });
   });
-  #endregion
+  // End
 
-  #region Selection Tests
+  // Selection Tests
   describe('Selection', () => {
     it('renders select checkboxes when selectable is true', () => {
       render(<MockDataTable columns={columns} data={data} selectable={true} />);
@@ -991,9 +991,9 @@ describe('DataTable Component Tests', () => {
       expect(screen.queryByTestId('select-all')).not.toBeInTheDocument();
     });
   });
-  #endregion
+  // End
 
-  #region Row Click Tests
+  // Row Click Tests
   describe('Row Click', () => {
     it('calls onRowClick when row is clicked', async () => {
       const onRowClick = vi.fn();
@@ -1011,9 +1011,9 @@ describe('DataTable Component Tests', () => {
       expect(onRowClick).toHaveBeenCalledWith(data[1]);
     });
   });
-  #endregion
+  // End
 
-  #region Large Data Tests
+  // Large Data Tests
   describe('Large Data Sets', () => {
     it('renders 50 rows', () => {
       const largeData = Array.from({ length: 50 }, (_, i) => ({
@@ -1037,12 +1037,12 @@ describe('DataTable Component Tests', () => {
       expect(screen.getByTestId('row-99')).toBeInTheDocument();
     });
   });
-  #endregion
+  // End
 });
 
 // Additional UI interaction tests
 describe('UI Component Integration Tests', () => {
-  #region Toast Notification Flow
+  // Toast Notification Flow
   describe('Toast Notification Flow', () => {
     it('shows and hides toast notification', async () => {
       const ToastDemo = () => {
@@ -1065,9 +1065,9 @@ describe('UI Component Integration Tests', () => {
       expect(screen.queryByTestId('toast')).not.toBeInTheDocument();
     });
   });
-  #endregion
+  // End
 
-  #region Confirm Dialog Flow
+  // Confirm Dialog Flow
   describe('Confirm Dialog Flow', () => {
     it('confirms action', async () => {
       const onConfirm = vi.fn();
@@ -1122,9 +1122,9 @@ describe('UI Component Integration Tests', () => {
       expect(onConfirm).not.toHaveBeenCalled();
     });
   });
-  #endregion
+  // End
 
-  #region Pagination with Data Table
+  // Pagination with Data Table
   describe('Pagination with Data Table', () => {
     it('updates table when page changes', async () => {
       const TableWithPagination = () => {
@@ -1164,5 +1164,5 @@ describe('UI Component Integration Tests', () => {
       expect(screen.getByText('User 11')).toBeInTheDocument();
     });
   });
-  #endregion
+  // End
 });

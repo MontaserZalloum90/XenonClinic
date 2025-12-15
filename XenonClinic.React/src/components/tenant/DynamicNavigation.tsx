@@ -72,6 +72,7 @@ const NavItemComponent: React.FC<NavItemComponentProps> = ({
     (hasChildren && item.children?.some(child => location.pathname.startsWith(child.route)));
 
   const label = t(item.label, item.label);
+  // eslint-disable-next-line react-hooks/static-components
   const Icon = getIcon(item.icon);
 
   const handleClick = (e: React.MouseEvent) => {
