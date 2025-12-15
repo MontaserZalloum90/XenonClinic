@@ -79,7 +79,7 @@ public class HumanTaskService : IHumanTaskService
         if (query.Statuses?.Count > 0)
             dbQuery = dbQuery.Where(t => query.Statuses.Contains(t.Status));
         else if (!query.IncludeCompleted)
-            dbQuery = dbQuery.Where(t => t.Status != HumanTaskStatus.Completed && t.Status != HumanTaskStatus.Cancelled);
+            dbQuery = dbQuery.Where(t => t.Status != HumanTaskStatus.Completed && t.Status != HumanTaskStatus.Exited);
 
         if (query.MinPriority.HasValue)
             dbQuery = dbQuery.Where(t => t.Priority >= query.MinPriority.Value);
@@ -169,7 +169,7 @@ public class HumanTaskService : IHumanTaskService
             .Where(t => t.TenantId == tenantId &&
                        t.AssigneeUserId == userId &&
                        t.Status != HumanTaskStatus.Completed &&
-                       t.Status != HumanTaskStatus.Cancelled)
+                       t.Status != HumanTaskStatus.Exited)
             .OrderByDescending(t => t.Priority)
             .ThenBy(t => t.DueDate)
             .Take(50)
@@ -278,7 +278,7 @@ public class HumanTaskService : IHumanTaskService
         // (In a full implementation, would check user's groups and roles)
 
         task.AssigneeUserId = userId;
-        task.Status = HumanTaskStatus.Assigned;
+        task.Status = HumanTaskStatus.Reserved;
         task.ClaimedAt = DateTime.UtcNow;
 
         await AddActionAsync(task, TaskActionTypes.Claim, userId, cancellationToken);
@@ -300,7 +300,7 @@ public class HumanTaskService : IHumanTaskService
     {
         var task = await GetTaskOrThrowAsync(taskId, tenantId, cancellationToken);
 
-        if (task.Status == HumanTaskStatus.Completed || task.Status == HumanTaskStatus.Cancelled)
+        if (task.Status == HumanTaskStatus.Completed || task.Status == HumanTaskStatus.Exited)
         {
             throw new InvalidOperationException($"Cannot unclaim task in status {task.Status}.");
         }
@@ -334,17 +334,17 @@ public class HumanTaskService : IHumanTaskService
     {
         var task = await GetTaskOrThrowAsync(taskId, tenantId, cancellationToken);
 
-        if (task.Status == HumanTaskStatus.Completed || task.Status == HumanTaskStatus.Cancelled)
+        if (task.Status == HumanTaskStatus.Completed || task.Status == HumanTaskStatus.Exited)
         {
             throw new InvalidOperationException($"Cannot assign task in status {task.Status}.");
         }
 
         var previousAssignee = task.AssigneeUserId;
         task.AssigneeUserId = assigneeUserId;
-        task.Status = HumanTaskStatus.Assigned;
+        task.Status = HumanTaskStatus.Reserved;
         task.ClaimedAt ??= DateTime.UtcNow;
 
-        await AddActionAsync(task, TaskActionTypes.Assign, performedBy,
+        await AddActionAsync(task, TaskActionTypes.Claim, performedBy,
             new Dictionary<string, object>
             {
                 ["previousAssignee"] = previousAssignee ?? "",
@@ -371,7 +371,7 @@ public class HumanTaskService : IHumanTaskService
     {
         var task = await GetTaskOrThrowAsync(taskId, tenantId, cancellationToken);
 
-        if (task.Status == HumanTaskStatus.Completed || task.Status == HumanTaskStatus.Cancelled)
+        if (task.Status == HumanTaskStatus.Completed || task.Status == HumanTaskStatus.Exited)
         {
             throw new InvalidOperationException($"Cannot delegate task in status {task.Status}.");
         }
@@ -413,7 +413,7 @@ public class HumanTaskService : IHumanTaskService
     {
         var task = await GetTaskOrThrowAsync(taskId, tenantId, cancellationToken);
 
-        if (task.Status == HumanTaskStatus.Completed || task.Status == HumanTaskStatus.Cancelled)
+        if (task.Status == HumanTaskStatus.Completed || task.Status == HumanTaskStatus.Exited)
         {
             throw new InvalidOperationException($"Cannot complete task in status {task.Status}.");
         }

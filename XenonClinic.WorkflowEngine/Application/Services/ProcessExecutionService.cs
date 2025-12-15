@@ -1207,7 +1207,7 @@ public class ProcessExecutionService : IProcessExecutionService
     {
         var variable = new ProcessVariable
         {
-            Id = Guid.NewGuid().ToString(),
+            Id = Guid.NewGuid(),
             ProcessInstanceId = instanceId,
             Name = name,
             Scope = "process"
@@ -1220,26 +1220,26 @@ public class ProcessExecutionService : IProcessExecutionService
                 variable.StringValue = s;
                 break;
             case int i:
-                variable.Type = VariableType.Number;
+                variable.Type = VariableType.Integer;
                 variable.NumberValue = i;
                 break;
             case long l:
-                variable.Type = VariableType.Number;
+                variable.Type = VariableType.Decimal;
                 variable.NumberValue = l;
                 break;
             case decimal d:
-                variable.Type = VariableType.Number;
+                variable.Type = VariableType.Decimal;
                 variable.NumberValue = d;
                 break;
             case double dbl:
-                variable.Type = VariableType.Number;
+                variable.Type = VariableType.Decimal;
                 // Use Convert.ToDecimal to handle potential precision/overflow issues
                 variable.NumberValue = double.IsNaN(dbl) || double.IsInfinity(dbl)
                     ? 0m
                     : Convert.ToDecimal(Math.Round(dbl, 10));
                 break;
             case float flt:
-                variable.Type = VariableType.Number;
+                variable.Type = VariableType.Decimal;
                 variable.NumberValue = float.IsNaN(flt) || float.IsInfinity(flt)
                     ? 0m
                     : Convert.ToDecimal(flt);
@@ -1253,10 +1253,11 @@ public class ProcessExecutionService : IProcessExecutionService
                 variable.DateTimeValue = dt;
                 break;
             case null:
-                variable.Type = VariableType.Null;
+                variable.Type = VariableType.Object;
+                variable.JsonValue = "null";
                 break;
             default:
-                variable.Type = VariableType.Json;
+                variable.Type = VariableType.Object;
                 variable.JsonValue = JsonSerializer.Serialize(value, _jsonOptions);
                 break;
         }
@@ -1269,11 +1270,17 @@ public class ProcessExecutionService : IProcessExecutionService
         return variable.Type switch
         {
             VariableType.String => variable.StringValue ?? string.Empty,
-            VariableType.Number => variable.NumberValue ?? 0,
+            VariableType.Integer => variable.NumberValue ?? 0,
+            VariableType.Decimal => variable.NumberValue ?? 0,
             VariableType.Boolean => variable.BooleanValue ?? false,
             VariableType.DateTime => variable.DateTimeValue ?? DateTime.MinValue,
-            VariableType.Json => JsonSerializer.Deserialize<object>(variable.JsonValue ?? "{}", _jsonOptions)!,
-            VariableType.Null => null!,
+            VariableType.Date => variable.DateTimeValue ?? DateTime.MinValue,
+            VariableType.Object => variable.JsonValue != null && variable.JsonValue != "null"
+                ? JsonSerializer.Deserialize<object>(variable.JsonValue, _jsonOptions)!
+                : null!,
+            VariableType.Array => variable.JsonValue != null
+                ? JsonSerializer.Deserialize<object>(variable.JsonValue, _jsonOptions)!
+                : new object[0],
             _ => variable.StringValue ?? string.Empty
         };
     }
