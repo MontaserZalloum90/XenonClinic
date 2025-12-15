@@ -59,7 +59,7 @@ public class WorkflowBackgroundService : BackgroundService
 
                     try
                     {
-                        await timerService.ProcessTimerAsync(timer.Id, stoppingToken);
+                        await timerService.ProcessTimerAsync(timer.Id.ToString(), stoppingToken);
                     }
                     catch (Exception ex)
                     {
@@ -111,14 +111,14 @@ public class WorkflowBackgroundService : BackgroundService
                     {
                         // Try to acquire lock
                         var acquired = await jobProcessor.TryAcquireJobLockAsync(
-                            job.Id,
+                            job.Id.ToString(),
                             _workerId,
                             TimeSpan.FromMinutes(5),
                             stoppingToken);
 
                         if (acquired)
                         {
-                            await jobProcessor.ProcessJobAsync(job.Id, stoppingToken);
+                            await jobProcessor.ProcessJobAsync(job.Id.ToString(), stoppingToken);
                         }
                     }
                     catch (Exception ex)

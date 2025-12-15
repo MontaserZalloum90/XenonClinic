@@ -552,47 +552,29 @@ public class BpmnService : IBpmnService
         if (string.IsNullOrEmpty(id))
             return null;
 
-        var activityType = elementType switch
+        var name = element.Attribute("name")?.Value ?? id;
+        var documentation = element.Elements().FirstOrDefault(e => e.Name.LocalName == "documentation")?.Value;
+
+        ActivityDefinition activity = elementType switch
         {
-            BpmnElementTypes.StartEvent => ActivityType.StartEvent,
-            BpmnElementTypes.EndEvent => ActivityType.EndEvent,
-            BpmnElementTypes.UserTask => ActivityType.UserTask,
-            BpmnElementTypes.ServiceTask => ActivityType.ServiceTask,
-            BpmnElementTypes.ScriptTask => ActivityType.ScriptTask,
-            BpmnElementTypes.BusinessRuleTask => ActivityType.BusinessRuleTask,
-            BpmnElementTypes.SendTask => ActivityType.SendTask,
-            BpmnElementTypes.ReceiveTask => ActivityType.ReceiveTask,
-            BpmnElementTypes.ExclusiveGateway => ActivityType.ExclusiveGateway,
-            BpmnElementTypes.ParallelGateway => ActivityType.ParallelGateway,
-            BpmnElementTypes.InclusiveGateway => ActivityType.InclusiveGateway,
-            BpmnElementTypes.SubProcess => ActivityType.SubProcess,
-            BpmnElementTypes.CallActivity => ActivityType.CallActivity,
-            BpmnElementTypes.BoundaryEvent => ActivityType.BoundaryEvent,
-            BpmnElementTypes.IntermediateCatchEvent => ActivityType.IntermediateCatchEvent,
-            BpmnElementTypes.IntermediateThrowEvent => ActivityType.IntermediateThrowEvent,
-            _ => (ActivityType?)null
+            BpmnElementTypes.StartEvent => new StartEventDefinition { Id = id, Name = name, Documentation = documentation },
+            BpmnElementTypes.EndEvent => new EndEventDefinition { Id = id, Name = name, Documentation = documentation },
+            BpmnElementTypes.UserTask => new UserTaskDefinition { Id = id, Name = name, Documentation = documentation },
+            BpmnElementTypes.ServiceTask => new ServiceTaskDefinition { Id = id, Name = name, Documentation = documentation },
+            BpmnElementTypes.ScriptTask => new ScriptTaskDefinition { Id = id, Name = name, Documentation = documentation },
+            BpmnElementTypes.ExclusiveGateway => new ExclusiveGatewayDefinition { Id = id, Name = name, Documentation = documentation },
+            BpmnElementTypes.ParallelGateway => new ParallelGatewayDefinition { Id = id, Name = name, Documentation = documentation },
+            BpmnElementTypes.InclusiveGateway => new InclusiveGatewayDefinition { Id = id, Name = name, Documentation = documentation },
+            BpmnElementTypes.SubProcess => new SubProcessDefinition { Id = id, Name = name, Documentation = documentation },
+            BpmnElementTypes.CallActivity => new CallActivityDefinition { Id = id, Name = name, Documentation = documentation },
+            _ => null
         };
 
-        if (activityType == null)
+        if (activity == null)
             return null;
 
-        var activity = new ActivityDefinition
-        {
-            Id = id,
-            Name = element.Attribute("name")?.Value ?? id,
-            Type = activityType.Value,
-            Documentation = element.Elements().FirstOrDefault(e => e.Name.LocalName == "documentation")?.Value
-        };
-
-        // Parse incoming/outgoing references
-        foreach (var incoming in element.Elements().Where(e => e.Name.LocalName == "incoming"))
-        {
-            activity.Incoming.Add(incoming.Value);
-        }
-        foreach (var outgoing in element.Elements().Where(e => e.Name.LocalName == "outgoing"))
-        {
-            activity.Outgoing.Add(outgoing.Value);
-        }
+        // Initialize properties dictionary if needed
+        activity.Properties ??= new Dictionary<string, object>();
 
         // Parse activity-specific properties
         ParseActivityProperties(element, activity);
@@ -603,39 +585,57 @@ public class BpmnService : IBpmnService
     private static void ParseActivityProperties(XElement element, ActivityDefinition activity)
     {
         // Parse user task properties
-        if (activity.Type == ActivityType.UserTask)
+        if (activity is UserTaskDefinition userTask)
         {
-            activity.Properties["assignee"] = element.Attribute("assignee")?.Value ?? "";
-            activity.Properties["candidateUsers"] = element.Attribute("candidateUsers")?.Value ?? "";
-            activity.Properties["candidateGroups"] = element.Attribute("candidateGroups")?.Value ?? "";
-            activity.Properties["dueDate"] = element.Attribute("dueDate")?.Value ?? "";
-            activity.Properties["priority"] = element.Attribute("priority")?.Value ?? "";
-
-            // Parse form key
             var formKey = element.Attribute("formKey")?.Value;
             if (!string.IsNullOrEmpty(formKey))
             {
-                activity.Properties["formKey"] = formKey;
+                userTask.FormKey = formKey;
+            }
+
+            var assignee = element.Attribute("assignee")?.Value;
+            if (!string.IsNullOrEmpty(assignee))
+            {
+                userTask.AssigneeExpression = assignee;
+            }
+
+            var candidateUsers = element.Attribute("candidateUsers")?.Value;
+            if (!string.IsNullOrEmpty(candidateUsers))
+            {
+                userTask.CandidateUsers = candidateUsers.Split(',').Select(u => u.Trim()).ToList();
+            }
+
+            var candidateGroups = element.Attribute("candidateGroups")?.Value;
+            if (!string.IsNullOrEmpty(candidateGroups))
+            {
+                userTask.CandidateGroups = candidateGroups.Split(',').Select(g => g.Trim()).ToList();
             }
         }
 
         // Parse service task properties
-        if (activity.Type == ActivityType.ServiceTask)
+        if (activity is ServiceTaskDefinition serviceTask)
         {
             activity.Properties["class"] = element.Attribute("class")?.Value ?? "";
             activity.Properties["delegateExpression"] = element.Attribute("delegateExpression")?.Value ?? "";
             activity.Properties["expression"] = element.Attribute("expression")?.Value ?? "";
-            activity.Properties["resultVariable"] = element.Attribute("resultVariable")?.Value ?? "";
+
+            var resultVariable = element.Attribute("resultVariable")?.Value;
+            if (!string.IsNullOrEmpty(resultVariable))
+            {
+                serviceTask.ResultVariable = resultVariable;
+            }
         }
 
         // Parse script task properties
-        if (activity.Type == ActivityType.ScriptTask)
+        if (activity is ScriptTaskDefinition scriptTask)
         {
-            activity.Properties["scriptFormat"] = element.Attribute("scriptFormat")?.Value ?? "javascript";
+            var scriptFormat = element.Attribute("scriptFormat")?.Value ?? "javascript";
+            scriptTask.Language = scriptFormat;
+
             var script = element.Elements().FirstOrDefault(e => e.Name.LocalName == "script");
             if (script != null)
             {
-                activity.Properties["script"] = script.Value;
+                scriptTask.Script = script.Value;
             }
         }
 

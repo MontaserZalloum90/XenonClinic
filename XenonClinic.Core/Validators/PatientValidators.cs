@@ -197,14 +197,11 @@ public class CreatePatientMedicalHistoryValidator : AbstractValidator<CreatePati
         RuleFor(x => x.CurrentMedications)
             .MaximumLength(2000).WithMessage("Current medications cannot exceed 2000 characters");
 
-        RuleFor(x => x.PastSurgeries)
-            .MaximumLength(2000).WithMessage("Past surgeries cannot exceed 2000 characters");
+        RuleFor(x => x.SurgicalHistory)
+            .MaximumLength(2000).WithMessage("Surgical history cannot exceed 2000 characters");
 
         RuleFor(x => x.FamilyHistory)
             .MaximumLength(2000).WithMessage("Family history cannot exceed 2000 characters");
-
-        RuleFor(x => x.SocialHistory)
-            .MaximumLength(2000).WithMessage("Social history cannot exceed 2000 characters");
 
         RuleFor(x => x.OccupationalExposure)
             .MaximumLength(1000).WithMessage("Occupational exposure cannot exceed 1000 characters");

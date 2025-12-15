@@ -1261,6 +1261,7 @@ public class WorkflowActivityNotFoundException : WorkflowException
 public class WorkflowExecutionException : WorkflowException
 {
     public WorkflowExecutionException(string message) : base(message) { }
+    public WorkflowExecutionException(string message, Exception innerException) : base(message, innerException) { }
 }
 
 #endregion
