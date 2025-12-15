@@ -4,7 +4,6 @@ import { api } from '../../lib/api';
 import type { Report, ReportType, CreateReportRequest, AnalyticsStatistics } from '../../types/analytics';
 import { format } from 'date-fns';
 import { useT } from '../../contexts/TenantContext';
-import { Dialog } from '@headlessui/react';
 import { Modal } from '../../components/ui/Modal';
 import { useToast } from '../../components/ui/Toast';
 

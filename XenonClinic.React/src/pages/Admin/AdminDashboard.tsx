@@ -29,7 +29,6 @@ export const AdminDashboard = () => {
   const [selectedClinicType, setSelectedClinicType] = useState<ClinicType>('audiology');
   const [isLoading, setIsLoading] = useState(false);
   const [toast, setToast] = useState<Toast | null>(null);
-  const [showExportModal, setShowExportModal] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
   const [importData, setImportData] = useState('');
 

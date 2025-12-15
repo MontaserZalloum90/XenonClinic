@@ -42,15 +42,6 @@ export const Biopsies = ({ patientId }: BiopsiesProps = {}) => {
     },
   });
 
-  const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: number; data: Partial<SkinBiopsy> }) =>
-      dermatologyApi.updateBiopsy(id, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['skin-biopsies'] });
-      setIsResultModalOpen(false);
-    },
-  });
-
   const updateResultMutation = useMutation({
     mutationFn: (data: UpdateBiopsyResultRequest) => dermatologyApi.updateBiopsy(data.biopsyId, data),
     onSuccess: () => {

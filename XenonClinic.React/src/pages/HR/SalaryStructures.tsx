@@ -7,13 +7,13 @@ import type { SalaryStructure, SalaryStructureFormData } from '../../types/payro
 // Mock API - Replace with actual API when backend is ready
 const salaryStructureApi = {
   getAll: () => Promise.resolve({ data: [] as SalaryStructure[] }),
-  getById: (id: number) => Promise.resolve({ data: {} as SalaryStructure }),
+  getById: (_id: number) => Promise.resolve({ data: {} as SalaryStructure }),
   getActive: () => Promise.resolve({ data: [] as SalaryStructure[] }),
-  create: (data: SalaryStructureFormData) => Promise.resolve({ data: {} as SalaryStructure }),
-  update: (id: number, data: SalaryStructureFormData) => Promise.resolve({ data: {} as SalaryStructure }),
-  delete: (id: number) => Promise.resolve({ data: {} }),
-  activate: (id: number) => Promise.resolve({ data: {} as SalaryStructure }),
-  deactivate: (id: number) => Promise.resolve({ data: {} as SalaryStructure }),
+  create: (_data: SalaryStructureFormData) => Promise.resolve({ data: {} as SalaryStructure }),
+  update: (_id: number, _data: SalaryStructureFormData) => Promise.resolve({ data: {} as SalaryStructure }),
+  delete: (_id: number) => Promise.resolve({ data: {} }),
+  activate: (_id: number) => Promise.resolve({ data: {} as SalaryStructure }),
+  deactivate: (_id: number) => Promise.resolve({ data: {} as SalaryStructure }),
 };
 
 export const SalaryStructures = () => {

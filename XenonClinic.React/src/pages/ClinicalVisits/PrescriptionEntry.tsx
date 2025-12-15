@@ -9,7 +9,6 @@ import {
   PencilIcon,
   PrinterIcon,
   ExclamationTriangleIcon,
-  CheckCircleIcon,
 } from '@heroicons/react/24/outline';
 import { api } from '../../lib/api';
 
@@ -45,13 +44,6 @@ interface PrescriptionMedication {
   refills: number;
   instructions?: string;
   isControlled: boolean;
-}
-
-interface DrugInteraction {
-  drug1: string;
-  drug2: string;
-  severity: 'minor' | 'moderate' | 'major' | 'contraindicated';
-  description: string;
 }
 
 const statusConfig = {

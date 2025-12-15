@@ -37,31 +37,6 @@ export const ECGRecords = ({ patientId }: ECGRecordsProps = {}) => {
     },
   });
 
-  // Create mutation
-  const createMutation = useMutation({
-    mutationFn: (data: CreateECGRequest) => cardiologyApi.createECG(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['ecg-records'] });
-    },
-  });
-
-  // Update mutation
-  const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: number; data: Partial<CreateECGRequest> }) =>
-      cardiologyApi.updateECG(id, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['ecg-records'] });
-    },
-  });
-
-  // Delete mutation
-  const deleteMutation = useMutation({
-    mutationFn: (id: number) => cardiologyApi.deleteECG(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['ecg-records'] });
-    },
-  });
-
   const filteredRecords = records?.filter((record) => {
     const matchesSearch =
       !searchTerm ||

@@ -47,8 +47,6 @@ const dentalApi = {
 };
 
 export const DentalDashboard = () => {
-  const [dateRange, setDateRange] = useState('week');
-
   // Fetch statistics
   const { data: statsData, isLoading: statsLoading } = useQuery({
     queryKey: ['dental-stats'],

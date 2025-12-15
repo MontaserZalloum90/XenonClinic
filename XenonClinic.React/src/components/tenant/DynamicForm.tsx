@@ -473,7 +473,7 @@ const FormField: React.FC<FormFieldProps> = ({
           </select>
         );
 
-      case 'multiselect':
+      case 'multiselect': {
         const selectedValues = (value as unknown[]) ?? [];
         return (
           <div className="space-y-2">
@@ -497,6 +497,7 @@ const FormField: React.FC<FormFieldProps> = ({
             ))}
           </div>
         );
+      }
 
       case 'checkbox':
         return (
