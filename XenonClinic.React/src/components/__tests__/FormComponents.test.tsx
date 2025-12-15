@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, waitFor, fireEvent, within } from '@testing-library/react';
+import { describe, it, expect, vi } from 'vitest';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
@@ -1190,7 +1190,6 @@ describe('Form Validation Tests', () => {
     });
 
     it('accepts zero discount', async () => {
-      const user = userEvent.setup();
       render(<MockInvoiceForm />);
       const input = screen.getByPlaceholderText('Discount %');
       expect(input).toHaveValue(0);

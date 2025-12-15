@@ -51,6 +51,31 @@ interface FormData {
   notes: string;
 }
 
+// Threshold Input Component
+interface ThresholdInputProps {
+  label: string;
+  name: keyof FormData;
+  error?: string;
+  register: ReturnType<typeof useForm<FormData>>['register'];
+}
+
+const ThresholdInput = ({ label, name, error, register }: ThresholdInputProps) => (
+  <div>
+    <label className="block text-xs text-gray-500 mb-1">{label}</label>
+    <input
+      type="number"
+      {...register(name)}
+      min="-10"
+      max="120"
+      step="5"
+      className={`w-full px-2 py-1 text-sm border rounded focus:ring-1 focus:ring-primary-500 ${
+        error ? 'border-red-500' : 'border-gray-300'
+      }`}
+      placeholder="dB"
+    />
+  </div>
+);
+
 export const AudiogramForm = ({
   patientId,
   encounterId,
@@ -126,32 +151,6 @@ export const AudiogramForm = ({
     onSubmit(request);
   };
 
-  // eslint-disable-next-line react-hooks/static-components
-  const ThresholdInput = ({
-    label,
-    name,
-    error,
-  }: {
-    label: string;
-    name: keyof FormData;
-    error?: string;
-  }) => (
-    <div>
-      <label className="block text-xs text-gray-500 mb-1">{label}</label>
-      <input
-        type="number"
-        {...register(name)}
-        min="-10"
-        max="120"
-        step="5"
-        className={`w-full px-2 py-1 text-sm border rounded focus:ring-1 focus:ring-primary-500 ${
-          error ? 'border-red-500' : 'border-gray-300'
-        }`}
-        placeholder="dB"
-      />
-    </div>
-  );
-
   return (
     <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
       {/* Test Date */}
@@ -180,12 +179,12 @@ export const AudiogramForm = ({
               Right Ear
             </h4>
             <div className="grid grid-cols-6 gap-2">
-              <ThresholdInput label="250" name="rightAir250" />
-              <ThresholdInput label="500" name="rightAir500" />
-              <ThresholdInput label="1K" name="rightAir1000" />
-              <ThresholdInput label="2K" name="rightAir2000" />
-              <ThresholdInput label="4K" name="rightAir4000" />
-              <ThresholdInput label="8K" name="rightAir8000" />
+              <ThresholdInput label="250" name="rightAir250" register={register} />
+              <ThresholdInput label="500" name="rightAir500" register={register} />
+              <ThresholdInput label="1K" name="rightAir1000" register={register} />
+              <ThresholdInput label="2K" name="rightAir2000" register={register} />
+              <ThresholdInput label="4K" name="rightAir4000" register={register} />
+              <ThresholdInput label="8K" name="rightAir8000" register={register} />
             </div>
           </div>
 
@@ -196,12 +195,12 @@ export const AudiogramForm = ({
               Left Ear
             </h4>
             <div className="grid grid-cols-6 gap-2">
-              <ThresholdInput label="250" name="leftAir250" />
-              <ThresholdInput label="500" name="leftAir500" />
-              <ThresholdInput label="1K" name="leftAir1000" />
-              <ThresholdInput label="2K" name="leftAir2000" />
-              <ThresholdInput label="4K" name="leftAir4000" />
-              <ThresholdInput label="8K" name="leftAir8000" />
+              <ThresholdInput label="250" name="leftAir250" register={register} />
+              <ThresholdInput label="500" name="leftAir500" register={register} />
+              <ThresholdInput label="1K" name="leftAir1000" register={register} />
+              <ThresholdInput label="2K" name="leftAir2000" register={register} />
+              <ThresholdInput label="4K" name="leftAir4000" register={register} />
+              <ThresholdInput label="8K" name="leftAir8000" register={register} />
             </div>
           </div>
         </div>
@@ -218,10 +217,10 @@ export const AudiogramForm = ({
           <div>
             <h4 className="text-sm font-medium text-red-600 mb-3">Right Ear {'<'}</h4>
             <div className="grid grid-cols-4 gap-2">
-              <ThresholdInput label="500" name="rightBone500" />
-              <ThresholdInput label="1K" name="rightBone1000" />
-              <ThresholdInput label="2K" name="rightBone2000" />
-              <ThresholdInput label="4K" name="rightBone4000" />
+              <ThresholdInput label="500" name="rightBone500" register={register} />
+              <ThresholdInput label="1K" name="rightBone1000" register={register} />
+              <ThresholdInput label="2K" name="rightBone2000" register={register} />
+              <ThresholdInput label="4K" name="rightBone4000" register={register} />
             </div>
           </div>
 
@@ -229,10 +228,10 @@ export const AudiogramForm = ({
           <div>
             <h4 className="text-sm font-medium text-blue-600 mb-3">Left Ear {'>'}</h4>
             <div className="grid grid-cols-4 gap-2">
-              <ThresholdInput label="500" name="leftBone500" />
-              <ThresholdInput label="1K" name="leftBone1000" />
-              <ThresholdInput label="2K" name="leftBone2000" />
-              <ThresholdInput label="4K" name="leftBone4000" />
+              <ThresholdInput label="500" name="leftBone500" register={register} />
+              <ThresholdInput label="1K" name="leftBone1000" register={register} />
+              <ThresholdInput label="2K" name="leftBone2000" register={register} />
+              <ThresholdInput label="4K" name="leftBone4000" register={register} />
             </div>
           </div>
         </div>

@@ -72,8 +72,6 @@ const NavItemComponent: React.FC<NavItemComponentProps> = ({
     (hasChildren && item.children?.some(child => location.pathname.startsWith(child.route)));
 
   const label = t(item.label, item.label);
-  // eslint-disable-next-line react-hooks/static-components
-  const Icon = getIcon(item.icon);
 
   const handleClick = (e: React.MouseEvent) => {
     if (hasChildren) {
@@ -103,7 +101,7 @@ const NavItemComponent: React.FC<NavItemComponentProps> = ({
         title={label}
         onClick={() => onItemClick?.(item)}
       >
-        {Icon && <Icon className="h-5 w-5" />}
+        {renderIcon(item.icon, "h-5 w-5")}
       </NavLink>
     );
   }
@@ -117,7 +115,7 @@ const NavItemComponent: React.FC<NavItemComponentProps> = ({
             className={`${baseClasses} ${activeClasses} w-full justify-between`}
           >
             <div className="flex items-center">
-              {Icon && <Icon className={`h-5 w-5 ${collapsed ? '' : 'mr-3'}`} />}
+              {renderIcon(item.icon, `h-5 w-5 ${collapsed ? '' : 'mr-3'}`)}
               {!collapsed && <span>{label}</span>}
             </div>
             {!collapsed && (
@@ -151,7 +149,7 @@ const NavItemComponent: React.FC<NavItemComponentProps> = ({
           `}
           onClick={() => onItemClick?.(item)}
         >
-          {Icon && <Icon className={`h-5 w-5 ${collapsed ? '' : 'mr-3'}`} />}
+          {renderIcon(item.icon, `h-5 w-5 ${collapsed ? '' : 'mr-3'}`)}
           {!collapsed && (
             <>
               <span className="flex-1">{label}</span>
@@ -195,55 +193,54 @@ const NavBadge: React.FC<NavBadgeProps> = ({ badge }) => {
 // Icon Helper
 // ============================================
 
-type IconComponent = React.FC<{ className?: string }>;
-
-const getIcon = (iconName: string): IconComponent | null => {
-  // Map icon names to Lucide icons
-  const iconMap: Record<string, IconComponent> = {
-    LayoutDashboard: LucideIcons.LayoutDashboard,
-    Users: LucideIcons.Users,
-    Calendar: LucideIcons.Calendar,
-    ClipboardList: LucideIcons.ClipboardList,
-    Receipt: LucideIcons.Receipt,
-    Package: LucideIcons.Package,
-    FlaskConical: LucideIcons.FlaskConical,
-    BarChart: LucideIcons.BarChart,
-    UserCog: LucideIcons.UserCog,
-    Settings: LucideIcons.Settings,
-    Target: LucideIcons.Target,
-    ShoppingCart: LucideIcons.ShoppingCart,
-    FileText: LucideIcons.FileText,
-    Warehouse: LucideIcons.Warehouse,
-    Ear: LucideIcons.Ear,
-    Activity: LucideIcons.Activity,
-    Headphones: LucideIcons.Headphones,
-    Wrench: LucideIcons.Wrench,
-    Mic: LucideIcons.Mic,
-    Smile: LucideIcons.Smile,
-    Grid3x3: LucideIcons.Grid3x3,
-    ListChecks: LucideIcons.ListChecks,
-    Stethoscope: LucideIcons.Stethoscope,
-    Scan: LucideIcons.Scan,
-    LineChart: LucideIcons.LineChart,
-    PawPrint: LucideIcons.PawPrint,
-    Syringe: LucideIcons.Syringe,
-    Scissors: LucideIcons.Scissors,
-    Home: LucideIcons.Home,
-    Eye: LucideIcons.Eye,
-    Sparkles: LucideIcons.Sparkles,
-    Building: LucideIcons.Building,
-    CreditCard: LucideIcons.CreditCard,
-    TrendingUp: LucideIcons.TrendingUp,
-    Plus: LucideIcons.Plus,
-    Pencil: LucideIcons.Pencil,
-    Trash: LucideIcons.Trash,
-    Download: LucideIcons.Download,
-    Upload: LucideIcons.Upload,
-    ChevronDown: LucideIcons.ChevronDown,
-    ChevronRight: LucideIcons.ChevronRight,
-  };
-
-  return iconMap[iconName] || null;
+// Render icon directly by name to avoid creating components during render
+const renderIcon = (iconName: string, className?: string): React.ReactNode => {
+  // Directly render each icon component with className
+  switch (iconName) {
+    case 'LayoutDashboard': return <LucideIcons.LayoutDashboard className={className} />;
+    case 'Users': return <LucideIcons.Users className={className} />;
+    case 'Calendar': return <LucideIcons.Calendar className={className} />;
+    case 'ClipboardList': return <LucideIcons.ClipboardList className={className} />;
+    case 'Receipt': return <LucideIcons.Receipt className={className} />;
+    case 'Package': return <LucideIcons.Package className={className} />;
+    case 'FlaskConical': return <LucideIcons.FlaskConical className={className} />;
+    case 'BarChart': return <LucideIcons.BarChart className={className} />;
+    case 'UserCog': return <LucideIcons.UserCog className={className} />;
+    case 'Settings': return <LucideIcons.Settings className={className} />;
+    case 'Target': return <LucideIcons.Target className={className} />;
+    case 'ShoppingCart': return <LucideIcons.ShoppingCart className={className} />;
+    case 'FileText': return <LucideIcons.FileText className={className} />;
+    case 'Warehouse': return <LucideIcons.Warehouse className={className} />;
+    case 'Ear': return <LucideIcons.Ear className={className} />;
+    case 'Activity': return <LucideIcons.Activity className={className} />;
+    case 'Headphones': return <LucideIcons.Headphones className={className} />;
+    case 'Wrench': return <LucideIcons.Wrench className={className} />;
+    case 'Mic': return <LucideIcons.Mic className={className} />;
+    case 'Smile': return <LucideIcons.Smile className={className} />;
+    case 'Grid3x3': return <LucideIcons.Grid3x3 className={className} />;
+    case 'ListChecks': return <LucideIcons.ListChecks className={className} />;
+    case 'Stethoscope': return <LucideIcons.Stethoscope className={className} />;
+    case 'Scan': return <LucideIcons.Scan className={className} />;
+    case 'LineChart': return <LucideIcons.LineChart className={className} />;
+    case 'PawPrint': return <LucideIcons.PawPrint className={className} />;
+    case 'Syringe': return <LucideIcons.Syringe className={className} />;
+    case 'Scissors': return <LucideIcons.Scissors className={className} />;
+    case 'Home': return <LucideIcons.Home className={className} />;
+    case 'Eye': return <LucideIcons.Eye className={className} />;
+    case 'Sparkles': return <LucideIcons.Sparkles className={className} />;
+    case 'Building': return <LucideIcons.Building className={className} />;
+    case 'CreditCard': return <LucideIcons.CreditCard className={className} />;
+    case 'TrendingUp': return <LucideIcons.TrendingUp className={className} />;
+    case 'Plus': return <LucideIcons.Plus className={className} />;
+    case 'Pencil': return <LucideIcons.Pencil className={className} />;
+    case 'Trash': return <LucideIcons.Trash className={className} />;
+    case 'Download': return <LucideIcons.Download className={className} />;
+    case 'Upload': return <LucideIcons.Upload className={className} />;
+    case 'ChevronDown': return <LucideIcons.ChevronDown className={className} />;
+    case 'ChevronRight': return <LucideIcons.ChevronRight className={className} />;
+    case 'ChevronLeft': return <LucideIcons.ChevronLeft className={className} />;
+    default: return null;
+  }
 };
 
 // ============================================

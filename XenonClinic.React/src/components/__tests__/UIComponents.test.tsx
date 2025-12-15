@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import { describe, it, expect, vi } from 'vitest';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React, { useState } from 'react';
 
@@ -89,7 +89,6 @@ const MockToast = ({
   type = 'info',
   isVisible = true,
   onClose,
-  duration = 5000
 }: {
   message: string;
   type?: 'success' | 'error' | 'warning' | 'info';
@@ -171,7 +170,6 @@ const MockPagination = ({
   currentPage = 1,
   totalPages = 1,
   onPageChange,
-  siblingCount = 1
 }: {
   currentPage?: number;
   totalPages?: number;
@@ -221,7 +219,6 @@ const MockDataTable = ({
   sortable = false,
   selectable = false,
   onSort,
-  onSelect
 }: {
   columns?: Array<{ key: string; label: string; sortable?: boolean }>;
   data?: Record<string, unknown>[];
@@ -399,7 +396,6 @@ describe('EmptyState Component Tests', () => {
 
     it('action button is clickable', async () => {
       const onAction = vi.fn();
-      const user = userEvent.setup();
       render(<MockEmptyState title="No Data" actionLabel="Click Me" onAction={onAction} />);
       const button = screen.getByTestId('empty-state-action');
       expect(button).not.toBeDisabled();
