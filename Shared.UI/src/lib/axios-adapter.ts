@@ -3,8 +3,13 @@
  * Provides axios configuration that integrates with shared token storage
  */
 
-import type { AxiosInstance, AxiosError, InternalAxiosRequestConfig } from 'axios';
-import { tokenStorage } from './api-base';
+import type {
+  AxiosInstance,
+  AxiosError,
+  InternalAxiosRequestConfig,
+  AxiosResponse,
+} from "axios";
+import { tokenStorage } from "./api-base";
 
 export interface AxiosAdapterOptions {
   baseURL: string;
@@ -17,11 +22,11 @@ export interface AxiosAdapterOptions {
  */
 export function configureAxiosInstance(
   axios: AxiosInstance,
-  options: AxiosAdapterOptions
+  options: AxiosAdapterOptions,
 ): AxiosInstance {
   // Set base configuration
   axios.defaults.baseURL = options.baseURL;
-  axios.defaults.headers.common['Content-Type'] = 'application/json';
+  axios.defaults.headers.common["Content-Type"] = "application/json";
   axios.defaults.withCredentials = options.withCredentials ?? false;
 
   // Request interceptor - Add auth token
@@ -33,12 +38,12 @@ export function configureAxiosInstance(
       }
       return config;
     },
-    (error: AxiosError) => Promise.reject(error)
+    (error: AxiosError) => Promise.reject(error),
   );
 
   // Response interceptor - Handle 401 errors
   axios.interceptors.response.use(
-    (response) => response,
+    (response: AxiosResponse) => response,
     async (error: AxiosError) => {
       if (error.response?.status === 401) {
         tokenStorage.clearToken();
@@ -46,7 +51,7 @@ export function configureAxiosInstance(
         options.onUnauthorized?.();
       }
       return Promise.reject(error);
-    }
+    },
   );
 
   return axios;
@@ -57,14 +62,17 @@ export function configureAxiosInstance(
  */
 export function getAxiosErrorMessage(error: unknown): string {
   if (error instanceof Error) {
-    const axiosError = error as AxiosError<{ message?: string; error?: string }>;
+    const axiosError = error as AxiosError<{
+      message?: string;
+      error?: string;
+    }>;
     if (axiosError.response?.data) {
       const data = axiosError.response.data;
       return data.message || data.error || axiosError.message;
     }
     return axiosError.message;
   }
-  return 'An unexpected error occurred';
+  return "An unexpected error occurred";
 }
 
 /**
@@ -72,9 +80,9 @@ export function getAxiosErrorMessage(error: unknown): string {
  */
 export function isAxiosError(error: unknown): error is AxiosError {
   return (
-    typeof error === 'object' &&
+    typeof error === "object" &&
     error !== null &&
-    'isAxiosError' in error &&
+    "isAxiosError" in error &&
     (error as AxiosError).isAxiosError === true
   );
 }
