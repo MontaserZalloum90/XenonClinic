@@ -52,16 +52,28 @@ public class WorkflowContext : IWorkflowContext
             {
                 return (T)Convert.ChangeType(value, typeof(T));
             }
-            catch (InvalidCastException)
+            catch (InvalidCastException ex)
             {
+                // BUG FIX: Log conversion failures instead of silently swallowing them
+                _logger?.LogWarning(ex,
+                    "Failed to convert variable '{VariableName}' from type {FromType} to {ToType} in workflow {WorkflowId}",
+                    name, value?.GetType().Name ?? "null", typeof(T).Name, WorkflowId);
                 return default;
             }
-            catch (FormatException)
+            catch (FormatException ex)
             {
+                // BUG FIX: Log conversion failures instead of silently swallowing them
+                _logger?.LogWarning(ex,
+                    "Format error converting variable '{VariableName}' to {ToType} in workflow {WorkflowId}",
+                    name, typeof(T).Name, WorkflowId);
                 return default;
             }
-            catch (OverflowException)
+            catch (OverflowException ex)
             {
+                // BUG FIX: Log conversion failures instead of silently swallowing them
+                _logger?.LogWarning(ex,
+                    "Overflow error converting variable '{VariableName}' to {ToType} in workflow {WorkflowId}",
+                    name, typeof(T).Name, WorkflowId);
                 return default;
             }
         }
@@ -90,16 +102,28 @@ public class WorkflowContext : IWorkflowContext
             {
                 return (T)Convert.ChangeType(value, typeof(T));
             }
-            catch (InvalidCastException)
+            catch (InvalidCastException ex)
             {
+                // BUG FIX: Log conversion failures instead of silently swallowing them
+                _logger?.LogWarning(ex,
+                    "Failed to convert input '{InputName}' from type {FromType} to {ToType} in workflow {WorkflowId}",
+                    name, value?.GetType().Name ?? "null", typeof(T).Name, WorkflowId);
                 return default;
             }
-            catch (FormatException)
+            catch (FormatException ex)
             {
+                // BUG FIX: Log conversion failures instead of silently swallowing them
+                _logger?.LogWarning(ex,
+                    "Format error converting input '{InputName}' to {ToType} in workflow {WorkflowId}",
+                    name, typeof(T).Name, WorkflowId);
                 return default;
             }
-            catch (OverflowException)
+            catch (OverflowException ex)
             {
+                // BUG FIX: Log conversion failures instead of silently swallowing them
+                _logger?.LogWarning(ex,
+                    "Overflow error converting input '{InputName}' to {ToType} in workflow {WorkflowId}",
+                    name, typeof(T).Name, WorkflowId);
                 return default;
             }
         }

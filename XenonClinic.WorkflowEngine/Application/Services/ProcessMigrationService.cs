@@ -475,6 +475,128 @@ public class ProcessMigrationService : IProcessMigrationService
         return Task.FromResult<IList<MigrationRecord>>(new List<MigrationRecord>());
     }
 
+    public Task<MigrationPlan?> GetMigrationPlanAsync(string planId, CancellationToken cancellationToken = default)
+    {
+        _migrationPlans.TryGetValue(planId, out var plan);
+        return Task.FromResult(plan);
+    }
+
+    public async Task<IList<ActivityMapping>> GenerateActivityMappingsAsync(
+        string sourceDefinitionId,
+        string targetDefinitionId,
+        CancellationToken cancellationToken = default)
+    {
+        var sourceDefinition = await _definitionService.GetByIdAsync(sourceDefinitionId, cancellationToken);
+        var targetDefinition = await _definitionService.GetByIdAsync(targetDefinitionId, cancellationToken);
+
+        if (sourceDefinition == null || targetDefinition == null)
+        {
+            return new List<ActivityMapping>();
+        }
+
+        var sourceActivities = sourceDefinition.Model?.Activities ?? new Dictionary<string, ActivityDefinition>();
+        var targetActivities = targetDefinition.Model?.Activities ?? new Dictionary<string, ActivityDefinition>();
+
+        var mappings = new List<ActivityMapping>();
+
+        // Auto-map activities with matching IDs
+        foreach (var sourceActivity in sourceActivities)
+        {
+            if (targetActivities.ContainsKey(sourceActivity.Key))
+            {
+                mappings.Add(new ActivityMapping
+                {
+                    SourceActivityId = sourceActivity.Key,
+                    TargetActivityId = sourceActivity.Key,
+                    UpdateEventTrigger = true
+                });
+            }
+        }
+
+        _logger.LogDebug("Generated {Count} activity mappings between {SourceId} and {TargetId}",
+            mappings.Count, sourceDefinitionId, targetDefinitionId);
+
+        return mappings;
+    }
+
+    public Task<IList<MigrationPlan>> ListMigrationPlansAsync(string? tenantId, CancellationToken cancellationToken = default)
+    {
+        // Return all plans (tenant filtering would be applied in production)
+        var plans = _migrationPlans.Values.ToList();
+        return Task.FromResult<IList<MigrationPlan>>(plans);
+    }
+
+    public Task<IList<MigrationExecution>> ListMigrationExecutionsAsync(
+        string? planId,
+        MigrationStatus? status,
+        CancellationToken cancellationToken = default)
+    {
+        var query = _migrationExecutions.Values.AsEnumerable();
+
+        if (!string.IsNullOrEmpty(planId))
+        {
+            query = query.Where(e => e.MigrationPlanId == planId);
+        }
+
+        if (status.HasValue)
+        {
+            var executionStatus = status.Value switch
+            {
+                MigrationStatus.Pending => MigrationExecutionStatus.Pending,
+                MigrationStatus.Running => MigrationExecutionStatus.Running,
+                MigrationStatus.Completed => MigrationExecutionStatus.Completed,
+                MigrationStatus.Failed => MigrationExecutionStatus.Failed,
+                MigrationStatus.Cancelled => MigrationExecutionStatus.Cancelled,
+                MigrationStatus.RolledBack => MigrationExecutionStatus.RolledBack,
+                _ => MigrationExecutionStatus.Pending
+            };
+            query = query.Where(e => e.Status == executionStatus);
+        }
+
+        return Task.FromResult<IList<MigrationExecution>>(query.OrderByDescending(e => e.CreatedAt).ToList());
+    }
+
+    public Task<MigrationStatistics> GetMigrationStatisticsAsync(string? tenantId, CancellationToken cancellationToken = default)
+    {
+        var executions = _migrationExecutions.Values.ToList();
+
+        var stats = new MigrationStatistics
+        {
+            TenantId = tenantId,
+            AsOf = DateTime.UtcNow,
+            TotalMigrationPlans = _migrationPlans.Count,
+            TotalMigrationExecutions = executions.Count,
+            SuccessfulMigrations = executions.Count(e => e.Status == MigrationExecutionStatus.Completed),
+            FailedMigrations = executions.Count(e => e.Status == MigrationExecutionStatus.Failed),
+            PendingMigrations = executions.Count(e => e.Status == MigrationExecutionStatus.Pending || e.Status == MigrationExecutionStatus.Running),
+            TotalInstancesMigrated = executions.Sum(e => e.SuccessfulMigrations),
+            AverageMigrationDurationSeconds = executions
+                .Where(e => e.Duration.HasValue)
+                .Select(e => e.Duration!.Value.TotalSeconds)
+                .DefaultIfEmpty(0)
+                .Average(),
+            LastMigrationAt = executions
+                .Where(e => e.CompletedAt.HasValue)
+                .OrderByDescending(e => e.CompletedAt)
+                .Select(e => e.CompletedAt)
+                .FirstOrDefault()
+        };
+
+        return Task.FromResult(stats);
+    }
+
+    public Task DeleteMigrationPlanAsync(string planId, CancellationToken cancellationToken = default)
+    {
+        if (!_migrationPlans.TryRemove(planId, out _))
+        {
+            throw new InvalidOperationException($"Migration plan '{planId}' not found");
+        }
+
+        _logger.LogInformation("Deleted migration plan {PlanId}", planId);
+
+        return Task.CompletedTask;
+    }
+
     #region Private Methods
 
     private void GenerateAutoMappings(MigrationPlan plan, Domain.Entities.ProcessDefinition sourceDefinition, Domain.Entities.ProcessDefinition targetDefinition)

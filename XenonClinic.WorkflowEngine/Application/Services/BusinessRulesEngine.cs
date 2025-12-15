@@ -233,6 +233,236 @@ public class BusinessRulesEngine : IBusinessRulesEngine
         return Task.FromResult<IList<RuleSetDto>>(query.ToList());
     }
 
+    // In-memory storage for RuleSet entities (using key-based access)
+    private readonly System.Collections.Concurrent.ConcurrentDictionary<string, RuleSet> _ruleSetsByKey = new();
+    private long _totalEvaluations;
+    private long _successfulEvaluations;
+    private long _failedEvaluations;
+    private DateTime? _lastEvaluationAt;
+
+    public Task<RuleSet> CreateRuleSetAsync(
+        CreateRuleSetRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(request.Key))
+        {
+            throw new ArgumentException("Rule set key is required", nameof(request));
+        }
+
+        if (_ruleSetsByKey.ContainsKey(request.Key))
+        {
+            throw new InvalidOperationException($"Rule set with key '{request.Key}' already exists");
+        }
+
+        var ruleSet = new RuleSet
+        {
+            Id = Guid.NewGuid().ToString(),
+            Key = request.Key,
+            Name = request.Name,
+            Description = request.Description,
+            Category = request.Category,
+            Rules = request.Rules ?? new List<RuleDefinition>(),
+            IsActive = true,
+            Version = 1,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
+
+        _ruleSetsByKey[request.Key] = ruleSet;
+
+        _logger.LogInformation("Created rule set {Key} with ID {RuleSetId}", request.Key, ruleSet.Id);
+
+        return Task.FromResult(ruleSet);
+    }
+
+    public Task<RuleSet> UpdateRuleSetAsync(
+        string key,
+        UpdateRuleSetRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        if (!_ruleSetsByKey.TryGetValue(key, out var ruleSet))
+        {
+            throw new InvalidOperationException($"Rule set with key '{key}' not found");
+        }
+
+        if (request.Name != null) ruleSet.Name = request.Name;
+        if (request.Description != null) ruleSet.Description = request.Description;
+        if (request.Category != null) ruleSet.Category = request.Category;
+        if (request.IsActive.HasValue) ruleSet.IsActive = request.IsActive.Value;
+        if (request.Rules != null) ruleSet.Rules = request.Rules;
+
+        ruleSet.UpdatedAt = DateTime.UtcNow;
+        ruleSet.Version++;
+
+        _logger.LogInformation("Updated rule set {Key} to version {Version}", key, ruleSet.Version);
+
+        return Task.FromResult(ruleSet);
+    }
+
+    public Task<RuleSet?> GetRuleSetAsync(
+        string key,
+        CancellationToken cancellationToken = default)
+    {
+        _ruleSetsByKey.TryGetValue(key, out var ruleSet);
+        return Task.FromResult(ruleSet);
+    }
+
+    public Task DeleteRuleSetAsync(
+        string key,
+        CancellationToken cancellationToken = default)
+    {
+        if (!_ruleSetsByKey.TryRemove(key, out _))
+        {
+            throw new InvalidOperationException($"Rule set with key '{key}' not found");
+        }
+
+        _logger.LogInformation("Deleted rule set {Key}", key);
+
+        return Task.CompletedTask;
+    }
+
+    public Task<IList<RuleSet>> ListRuleSetsAsync(
+        string? tenantId,
+        CancellationToken cancellationToken = default)
+    {
+        // For now, return all rule sets (tenant filtering would be applied in production)
+        var ruleSets = _ruleSetsByKey.Values.ToList();
+        return Task.FromResult<IList<RuleSet>>(ruleSets);
+    }
+
+    public Task<RuleValidationResult> ValidateRuleSetAsync(
+        string key,
+        CancellationToken cancellationToken = default)
+    {
+        if (!_ruleSetsByKey.TryGetValue(key, out var ruleSet))
+        {
+            return Task.FromResult(new RuleValidationResult
+            {
+                IsValid = false,
+                Issues = new List<RuleValidationIssue>
+                {
+                    new RuleValidationIssue
+                    {
+                        Code = "RULE_SET_NOT_FOUND",
+                        Message = $"Rule set with key '{key}' not found",
+                        Severity = ValidationIssueSeverity.Error
+                    }
+                }
+            });
+        }
+
+        var issues = new List<RuleValidationIssue>();
+
+        // Validate each rule
+        foreach (var rule in ruleSet.Rules ?? Enumerable.Empty<RuleDefinition>())
+        {
+            if (string.IsNullOrWhiteSpace(rule.Condition))
+            {
+                issues.Add(new RuleValidationIssue
+                {
+                    RuleId = rule.Id,
+                    Code = "EMPTY_CONDITION",
+                    Message = $"Rule '{rule.Name}' has no condition defined",
+                    Severity = ValidationIssueSeverity.Warning
+                });
+            }
+
+            if ((rule.Actions == null || rule.Actions.Count == 0) && !rule.StopOnMatch)
+            {
+                issues.Add(new RuleValidationIssue
+                {
+                    RuleId = rule.Id,
+                    Code = "NO_ACTIONS",
+                    Message = $"Rule '{rule.Name}' has no actions defined",
+                    Severity = ValidationIssueSeverity.Info
+                });
+            }
+        }
+
+        return Task.FromResult(new RuleValidationResult
+        {
+            IsValid = !issues.Any(i => i.Severity == ValidationIssueSeverity.Error),
+            Issues = issues
+        });
+    }
+
+    public async Task<RuleEvaluationResult> EvaluateAsync(
+        RuleEvaluationContext context,
+        CancellationToken cancellationToken = default)
+    {
+        Interlocked.Increment(ref _totalEvaluations);
+        _lastEvaluationAt = DateTime.UtcNow;
+
+        if (!_ruleSetsByKey.TryGetValue(context.RuleSetKey, out var ruleSet))
+        {
+            Interlocked.Increment(ref _failedEvaluations);
+            return new RuleEvaluationResult
+            {
+                Success = false,
+                ErrorMessage = $"Rule set '{context.RuleSetKey}' not found"
+            };
+        }
+
+        // Convert RuleSet to RuleSetDto for evaluation
+        var ruleSetDto = new RuleSetDto
+        {
+            Id = ruleSet.Key,
+            Name = ruleSet.Name,
+            IsActive = ruleSet.IsActive,
+            Rules = ruleSet.Rules?.Select(r => new RuleDto
+            {
+                Id = r.Id,
+                Name = r.Name,
+                Priority = r.Priority,
+                Condition = r.Condition,
+                Actions = r.Actions,
+                StopOnMatch = context.StopOnFirstMatch || r.StopOnMatch,
+                IsEnabled = r.IsEnabled
+            }).ToList() ?? new List<RuleDto>()
+        };
+
+        // Store temporarily and evaluate
+        var originalRuleSet = _ruleSets.GetValueOrDefault(ruleSet.Key);
+        _ruleSets[ruleSet.Key] = ruleSetDto;
+
+        try
+        {
+            var result = await EvaluateAsync(ruleSet.Key, context.Facts, cancellationToken);
+            if (result.Success)
+                Interlocked.Increment(ref _successfulEvaluations);
+            else
+                Interlocked.Increment(ref _failedEvaluations);
+            return result;
+        }
+        finally
+        {
+            // Restore original or remove
+            if (originalRuleSet != null)
+                _ruleSets[ruleSet.Key] = originalRuleSet;
+            else
+                _ruleSets.TryRemove(ruleSet.Key, out _);
+        }
+    }
+
+    public Task<RuleStatistics> GetStatisticsAsync(
+        string? tenantId,
+        CancellationToken cancellationToken = default)
+    {
+        var stats = new RuleStatistics
+        {
+            TotalRuleSets = _ruleSetsByKey.Count + _ruleSets.Count,
+            TotalRules = _ruleSetsByKey.Values.Sum(r => r.Rules?.Count ?? 0) +
+                         _ruleSets.Values.Sum(r => r.Rules?.Count ?? 0),
+            TotalEvaluations = Interlocked.Read(ref _totalEvaluations),
+            SuccessfulEvaluations = Interlocked.Read(ref _successfulEvaluations),
+            FailedEvaluations = Interlocked.Read(ref _failedEvaluations),
+            AverageEvaluationTimeMs = 0, // Would need to track this over time
+            LastEvaluationAt = _lastEvaluationAt
+        };
+
+        return Task.FromResult(stats);
+    }
+
     #region Private Methods
 
     private async Task ExecuteActionAsync(

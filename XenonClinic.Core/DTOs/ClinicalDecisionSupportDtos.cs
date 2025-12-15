@@ -632,16 +632,16 @@ public class RiskCalculationResultDto
     public string RiskPercentage { get; set; } = string.Empty;
     public string TimeFrame { get; set; } = string.Empty; // e.g., "10-year risk"
     public string Interpretation { get; set; } = string.Empty;
-    public List<RiskFactorDto> ContributingFactors { get; set; } = new();
+    public List<ClinicalRiskFactorDto> ContributingFactors { get; set; } = new();
     public List<string> Recommendations { get; set; } = new();
     public List<RiskModificationDto> ModifiableFactors { get; set; } = new();
     public Dictionary<string, object> InputsUsed { get; set; } = new();
 }
 
 /// <summary>
-/// Risk factor contribution
+/// Risk factor contribution for clinical risk calculations
 /// </summary>
-public class RiskFactorDto
+public class ClinicalRiskFactorDto
 {
     public string FactorName { get; set; } = string.Empty;
     public object CurrentValue { get; set; } = new();

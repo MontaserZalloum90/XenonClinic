@@ -400,6 +400,8 @@ public class StateMachineExecutor<TState> : IStateMachineExecutor<TState> where 
                     }
                     catch (Exception ex)
                     {
+                        // BUG FIX: Log guard evaluation exceptions instead of silently catching
+                        _logger.LogWarning(ex, "Guard {GuardName} threw an exception during available transitions check", guard.Name);
                         guardResults.Add(new GuardEvaluationResult
                         {
                             GuardId = guard.Id,
@@ -480,6 +482,8 @@ public class StateMachineExecutor<TState> : IStateMachineExecutor<TState> where 
             }
             catch (Exception ex)
             {
+                // BUG FIX: Log guard evaluation exceptions instead of silently catching
+                _logger.LogWarning(ex, "Guard {GuardName} threw an exception during transition validation", guard.Name);
                 guardResults.Add(new GuardEvaluationResult
                 {
                     GuardId = guard.Id,
