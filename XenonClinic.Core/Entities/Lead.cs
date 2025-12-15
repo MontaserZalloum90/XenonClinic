@@ -52,7 +52,7 @@ public class Lead
 
     // Assignment
     public string? AssignedToUserId { get; set; }
-    public ApplicationUser? AssignedToUser { get; set; }
+    // Note: ApplicationUser navigation removed to avoid circular dependency with Infrastructure
 
     // Follow-up
     public DateTime? NextFollowUpDate { get; set; }

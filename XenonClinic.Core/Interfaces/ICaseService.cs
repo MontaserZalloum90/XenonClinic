@@ -1,3 +1,5 @@
+using XenonClinic.Core.Entities;
+
 namespace XenonClinic.Core.Interfaces;
 
 /// <summary>

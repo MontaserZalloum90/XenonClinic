@@ -2,6 +2,7 @@ namespace XenonClinic.WorkflowEngine.Domain.Entities;
 
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json;
 
 /// <summary>
 /// Represents a process definition (workflow template).
@@ -49,7 +50,7 @@ public class ProcessDefinition
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
-    public DateTime? UpdatedAt { get; set; }
+    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
     [MaxLength(100)]
     public string? UpdatedBy { get; set; }
@@ -58,6 +59,20 @@ public class ProcessDefinition
     /// Tags for categorization (JSON array)
     /// </summary>
     public string? TagsJson { get; set; }
+
+    /// <summary>
+    /// Tags as a list (computed from TagsJson)
+    /// </summary>
+    [NotMapped]
+    public List<string> Tags
+    {
+        get => string.IsNullOrEmpty(TagsJson)
+            ? new List<string>()
+            : JsonSerializer.Deserialize<List<string>>(TagsJson) ?? new List<string>();
+        set => TagsJson = value == null || value.Count == 0
+            ? null
+            : JsonSerializer.Serialize(value);
+    }
 
     /// <summary>
     /// Additional metadata (JSON object)
@@ -80,7 +95,8 @@ public enum ProcessDefinitionStatus
     Draft,
     Active,
     Deprecated,
-    Archived
+    Archived,
+    Deleted
 }
 
 /// <summary>
@@ -90,7 +106,8 @@ public enum ProcessDefinitionStatus
 public class ProcessVersion
 {
     [Key]
-    public Guid Id { get; set; } = Guid.NewGuid();
+    [MaxLength(100)]
+    public string Id { get; set; } = Guid.NewGuid().ToString();
 
     [Required]
     [MaxLength(100)]
@@ -105,8 +122,11 @@ public class ProcessVersion
     [MaxLength(2000)]
     public string? Description { get; set; }
 
+    /// <summary>
+    /// Description of changes in this version
+    /// </summary>
     [MaxLength(2000)]
-    public string? ChangeNotes { get; set; }
+    public string? ChangeDescription { get; set; }
 
     public ProcessVersionStatus Status { get; set; } = ProcessVersionStatus.Draft;
 

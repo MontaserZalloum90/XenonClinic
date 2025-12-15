@@ -9,12 +9,12 @@ namespace XenonClinic.Core.Interfaces;
 public class ExternalUserMappingResult
 {
     public bool Succeeded { get; set; }
-    public ApplicationUser? User { get; set; }
+    public IApplicationUser? User { get; set; }
     public bool IsNewUser { get; set; }
     public string? ErrorMessage { get; set; }
     public IList<string> Errors { get; set; } = new List<string>();
 
-    public static ExternalUserMappingResult Success(ApplicationUser user, bool isNew)
+    public static ExternalUserMappingResult Success(IApplicationUser user, bool isNew)
     {
         return new ExternalUserMappingResult
         {
@@ -71,7 +71,7 @@ public interface IExternalUserMapper
     /// <param name="externalUserId">The external user ID</param>
     /// <param name="companyId">The company ID</param>
     /// <returns>The user if found</returns>
-    Task<ApplicationUser?> FindUserByExternalIdAsync(
+    Task<IApplicationUser?> FindUserByExternalIdAsync(
         string providerName,
         string externalUserId,
         int companyId);
@@ -82,7 +82,7 @@ public interface IExternalUserMapper
     /// <param name="email">The email address</param>
     /// <param name="companyId">The company ID</param>
     /// <returns>The user if found</returns>
-    Task<ApplicationUser?> FindUserByEmailAsync(string email, int companyId);
+    Task<IApplicationUser?> FindUserByEmailAsync(string email, int companyId);
 
     /// <summary>
     /// Extracts claims from the principal using the provider's claim mappings
