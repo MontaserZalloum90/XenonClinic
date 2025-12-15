@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations.Schema;
+
 namespace XenonClinic.Core.Entities;
 
 public class PatientDocument
@@ -15,10 +17,18 @@ public class PatientDocument
     public string FileName { get; set; } = string.Empty;
     public string FileExtension { get; set; } = string.Empty;
     public long FileSizeBytes { get; set; }
+
+    [NotMapped]
+    public long FileSize { get => FileSizeBytes; set => FileSizeBytes = value; } // Alias for FileSizeBytes
+
     public string ContentType { get; set; } = string.Empty;
 
     // Metadata
     public DateTime UploadDate { get; set; } = DateTime.UtcNow;
+
+    [NotMapped]
+    public DateTime UploadedAt { get => UploadDate; set => UploadDate = value; } // Alias for UploadDate
+
     public string UploadedBy { get; set; } = string.Empty;
     public DateTime? ExpiryDate { get; set; }
     public bool IsActive { get; set; } = true;
