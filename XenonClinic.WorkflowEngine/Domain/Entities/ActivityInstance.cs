@@ -18,6 +18,12 @@ public class ActivityInstance
     [MaxLength(100)]
     public string ActivityDefinitionId { get; set; } = string.Empty;
 
+    /// <summary>
+    /// Alias for ActivityDefinitionId
+    /// </summary>
+    [MaxLength(100)]
+    public string? ActivityId { get; set; }
+
     [Required]
     [MaxLength(50)]
     public string ActivityType { get; set; } = string.Empty;
@@ -31,6 +37,11 @@ public class ActivityInstance
     /// Number of execution attempts (for retries)
     /// </summary>
     public int ExecutionCount { get; set; }
+
+    /// <summary>
+    /// Number of retry attempts (alias for ExecutionCount)
+    /// </summary>
+    public int RetryCount { get; set; }
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 

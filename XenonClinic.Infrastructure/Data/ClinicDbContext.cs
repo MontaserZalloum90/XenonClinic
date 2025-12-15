@@ -254,7 +254,7 @@ public class ClinicDbContext : IdentityDbContext<Entities.ApplicationUser>
     public DbSet<Permission> Permissions => Set<Permission>();
     public DbSet<Role> Roles => Set<Role>();
     public DbSet<RolePermission> RolePermissions => Set<RolePermission>();
-    public DbSet<UserRole> UserRoles => Set<UserRole>();
+    public new DbSet<UserRole> UserRoles => Set<UserRole>();
     public DbSet<UserPermission> UserPermissions => Set<UserPermission>();
     public DbSet<DataAccessRule> DataAccessRules => Set<DataAccessRule>();
 

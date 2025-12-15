@@ -28,17 +28,59 @@ public class AuditService : IAuditService
         };
     }
 
+    public async Task LogAsync(AuditLogRequest request, CancellationToken cancellationToken = default)
+    {
+        var auditEvent = new AuditEvent
+        {
+            Id = Guid.NewGuid(),
+            TenantId = request.TenantId,
+            EventType = request.EventType,
+            EntityType = request.EntityType,
+            EntityId = request.EntityId,
+            ProcessInstanceId = request.ProcessInstanceId,
+            TaskId = request.TaskId,
+            ActivityId = request.ActivityId,
+            UserId = request.UserId,
+            UserDisplayName = request.UserDisplayName,
+            Timestamp = request.Timestamp,
+            Action = request.Action,
+            Summary = request.Summary,
+            OldValuesJson = request.OldValues != null
+                ? JsonSerializer.Serialize(request.OldValues, _jsonOptions)
+                : null,
+            NewValuesJson = request.NewValues != null
+                ? JsonSerializer.Serialize(request.NewValues, _jsonOptions)
+                : null,
+            IpAddress = request.IpAddress,
+            UserAgent = request.UserAgent,
+            CorrelationId = request.CorrelationId ?? Guid.NewGuid().ToString(),
+            AdditionalDataJson = request.AdditionalData != null
+                ? JsonSerializer.Serialize(request.AdditionalData, _jsonOptions)
+                : null,
+            DurationMs = request.DurationMs,
+            IsError = request.IsError,
+            ErrorCode = request.ErrorCode,
+            ErrorMessage = request.ErrorMessage
+        };
+
+        _context.AuditEvents.Add(auditEvent);
+        await _context.SaveChangesAsync(cancellationToken);
+
+        _logger.LogDebug("Logged audit event {EventType} for {EntityType} {EntityId}",
+            request.EventType, request.EntityType, request.EntityId);
+    }
+
     public async Task LogAsync(AuditEventDto eventData, CancellationToken cancellationToken = default)
     {
         var auditEvent = new AuditEvent
         {
-            Id = string.IsNullOrEmpty(eventData.Id) ? Guid.NewGuid().ToString() : eventData.Id,
+            Id = string.IsNullOrEmpty(eventData.Id) ? Guid.NewGuid() : Guid.Parse(eventData.Id),
             TenantId = eventData.TenantId,
             EventType = eventData.EventType,
             EntityType = eventData.EntityType,
             EntityId = eventData.EntityId,
             ProcessInstanceId = eventData.ProcessInstanceId,
-            ActivityInstanceId = eventData.ActivityInstanceId,
+            ActivityId = eventData.ActivityInstanceId,
             UserId = eventData.UserId,
             CorrelationId = eventData.CorrelationId ?? Guid.NewGuid().ToString(),
             Timestamp = eventData.Timestamp == default ? DateTime.UtcNow : eventData.Timestamp,
