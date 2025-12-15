@@ -243,7 +243,7 @@ public class AdminController : ControllerBase
         [FromQuery] string? scope,
         CancellationToken cancellationToken)
     {
-        await _authService.RevokeRoleAsync(userId, roleId, scope, cancellationToken);
+        await _authService.RemoveRoleAsync(userId, roleId, scope, cancellationToken);
         return NoContent();
     }
 
@@ -251,7 +251,7 @@ public class AdminController : ControllerBase
     /// Gets roles for a user.
     /// </summary>
     [HttpGet("users/{userId}/roles")]
-    public async Task<ActionResult<IList<WorkflowRole>>> GetUserRoles(
+    public async Task<ActionResult<IList<UserRoleAssignment>>> GetUserRoles(
         string userId,
         CancellationToken cancellationToken)
     {
@@ -368,7 +368,7 @@ public class AuthorizationResult
     public string UserId { get; set; } = string.Empty;
     public Permission Permission { get; set; }
     public ResourceType ResourceType { get; set; }
-    public string ResourceId { get; set; } = string.Empty;
+    public string? ResourceId { get; set; }
 }
 
 public class HealthStatus
