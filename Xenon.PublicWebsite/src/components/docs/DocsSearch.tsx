@@ -1,7 +1,7 @@
-import { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Search, X, FileText, Users, Route, LayoutGrid } from 'lucide-react';
-import { buildSearchIndex } from '@/lib/docs/docsData';
+import { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
+import { Search, X, FileText, Users, Route, LayoutGrid } from "lucide-react";
+import { buildSearchIndex } from "@/lib/docs/docsData";
 
 interface SearchResult {
   title: string;
@@ -18,7 +18,7 @@ const typeIcons: Record<string, React.ComponentType<{ className?: string }>> = {
 };
 
 export function DocsSearch() {
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -35,13 +35,18 @@ export function DocsSearch() {
     }
 
     const lowerQuery = query.toLowerCase();
-    const filtered = searchIndex
+    const filtered = Array.from(searchIndex.values())
       .filter(
-        (item) =>
-          item.title.toLowerCase().includes(lowerQuery) ||
-          item.content.toLowerCase().includes(lowerQuery)
+        (item: { type: string; id: string; title: string; path: string }) =>
+          item.title.toLowerCase().includes(lowerQuery),
       )
-      .slice(0, 8);
+      .slice(0, 8)
+      .map((item) => ({
+        title: item.title,
+        path: item.path,
+        content: item.title,
+        type: item.type,
+      }));
 
     setResults(filtered);
     setSelectedIndex(0);
@@ -50,42 +55,44 @@ export function DocsSearch() {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Cmd/Ctrl + K to focus search
-      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
         e.preventDefault();
         inputRef.current?.focus();
         setIsOpen(true);
       }
 
       // Escape to close
-      if (e.key === 'Escape') {
+      if (e.key === "Escape") {
         setIsOpen(false);
-        setQuery('');
+        setQuery("");
         inputRef.current?.blur();
       }
     };
 
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
   }, []);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (!isOpen || results.length === 0) return;
 
     switch (e.key) {
-      case 'ArrowDown':
+      case "ArrowDown":
         e.preventDefault();
         setSelectedIndex((prev) => (prev + 1) % results.length);
         break;
-      case 'ArrowUp':
+      case "ArrowUp":
         e.preventDefault();
-        setSelectedIndex((prev) => (prev - 1 + results.length) % results.length);
+        setSelectedIndex(
+          (prev) => (prev - 1 + results.length) % results.length,
+        );
         break;
-      case 'Enter':
+      case "Enter":
         e.preventDefault();
         if (results[selectedIndex]) {
           navigate(results[selectedIndex].path);
           setIsOpen(false);
-          setQuery('');
+          setQuery("");
         }
         break;
     }
@@ -94,12 +101,12 @@ export function DocsSearch() {
   const handleResultClick = (path: string) => {
     navigate(path);
     setIsOpen(false);
-    setQuery('');
+    setQuery("");
   };
 
   const highlightMatch = (text: string, query: string) => {
     if (!query) return text;
-    const parts = text.split(new RegExp(`(${query})`, 'gi'));
+    const parts = text.split(new RegExp(`(${query})`, "gi"));
     return parts.map((part, i) =>
       part.toLowerCase() === query.toLowerCase() ? (
         <mark key={i} className="bg-yellow-200 text-gray-900">
@@ -107,7 +114,7 @@ export function DocsSearch() {
         </mark>
       ) : (
         part
-      )
+      ),
     );
   };
 
@@ -132,7 +139,7 @@ export function DocsSearch() {
           {query ? (
             <button
               onClick={() => {
-                setQuery('');
+                setQuery("");
                 setResults([]);
               }}
               className="p-1 hover:bg-gray-200 rounded"
@@ -154,7 +161,7 @@ export function DocsSearch() {
           className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden z-50"
         >
           <div className="p-2 text-xs text-gray-500 border-b border-gray-100">
-            {results.length} result{results.length !== 1 ? 's' : ''} found
+            {results.length} result{results.length !== 1 ? "s" : ""} found
           </div>
           <ul className="max-h-80 overflow-y-auto">
             {results.map((result, index) => {
@@ -165,17 +172,23 @@ export function DocsSearch() {
                     onClick={() => handleResultClick(result.path)}
                     onMouseEnter={() => setSelectedIndex(index)}
                     className={`w-full flex items-start gap-3 px-4 py-3 text-left transition-colors ${
-                      index === selectedIndex ? 'bg-primary-50' : 'hover:bg-gray-50'
+                      index === selectedIndex
+                        ? "bg-primary-50"
+                        : "hover:bg-gray-50"
                     }`}
                   >
                     <div
                       className={`flex-shrink-0 p-1.5 rounded ${
-                        index === selectedIndex ? 'bg-primary-100' : 'bg-gray-100'
+                        index === selectedIndex
+                          ? "bg-primary-100"
+                          : "bg-gray-100"
                       }`}
                     >
                       <Icon
                         className={`h-4 w-4 ${
-                          index === selectedIndex ? 'text-primary-600' : 'text-gray-500'
+                          index === selectedIndex
+                            ? "text-primary-600"
+                            : "text-gray-500"
                         }`}
                       />
                     </div>
@@ -189,13 +202,13 @@ export function DocsSearch() {
                       <div className="mt-1">
                         <span
                           className={`inline-flex px-1.5 py-0.5 text-xs font-medium rounded ${
-                            result.type === 'module'
-                              ? 'bg-blue-100 text-blue-700'
-                              : result.type === 'persona'
-                              ? 'bg-green-100 text-green-700'
-                              : result.type === 'journey'
-                              ? 'bg-purple-100 text-purple-700'
-                              : 'bg-gray-100 text-gray-700'
+                            result.type === "module"
+                              ? "bg-blue-100 text-blue-700"
+                              : result.type === "persona"
+                                ? "bg-green-100 text-green-700"
+                                : result.type === "journey"
+                                  ? "bg-purple-100 text-purple-700"
+                                  : "bg-gray-100 text-gray-700"
                           }`}
                         >
                           {result.type}
@@ -209,13 +222,19 @@ export function DocsSearch() {
           </ul>
           <div className="p-2 text-xs text-gray-500 border-t border-gray-100 flex items-center justify-between">
             <span>
-              <kbd className="px-1 py-0.5 bg-gray-100 border border-gray-200 rounded text-xs">↑</kbd>
-              <kbd className="px-1 py-0.5 bg-gray-100 border border-gray-200 rounded text-xs mx-1">↓</kbd>
+              <kbd className="px-1 py-0.5 bg-gray-100 border border-gray-200 rounded text-xs">
+                ↑
+              </kbd>
+              <kbd className="px-1 py-0.5 bg-gray-100 border border-gray-200 rounded text-xs mx-1">
+                ↓
+              </kbd>
               to navigate
             </span>
             <span>
-              <kbd className="px-1 py-0.5 bg-gray-100 border border-gray-200 rounded text-xs">↵</kbd>
-              {' '}to select
+              <kbd className="px-1 py-0.5 bg-gray-100 border border-gray-200 rounded text-xs">
+                ↵
+              </kbd>{" "}
+              to select
             </span>
           </div>
         </div>
@@ -224,7 +243,9 @@ export function DocsSearch() {
       {/* No results */}
       {isOpen && query.length >= 2 && results.length === 0 && (
         <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg p-4 text-center z-50">
-          <p className="text-gray-500 text-sm">No results found for "{query}"</p>
+          <p className="text-gray-500 text-sm">
+            No results found for "{query}"
+          </p>
         </div>
       )}
 
