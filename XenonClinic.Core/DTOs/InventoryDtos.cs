@@ -58,12 +58,23 @@ public class InventoryItemDto
 
 /// <summary>
 /// DTO for creating a new inventory item.
+/// NOTE: BranchId may be set by service layer from authenticated user context if not provided.
 /// </summary>
 public class CreateInventoryItemDto
 {
+    /// <summary>
+    /// FIX: Branch ID. If not provided, will be set from authenticated user's context.
+    /// </summary>
+    public int? BranchId { get; set; }
+
     public string ItemCode { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
-    public string? Description { get; set; }
+
+    /// <summary>
+    /// FIX: Changed to non-null to match Entity definition.
+    /// </summary>
+    public string Description { get; set; } = string.Empty;
+
     public InventoryCategory Category { get; set; }
 
     // Stock Information

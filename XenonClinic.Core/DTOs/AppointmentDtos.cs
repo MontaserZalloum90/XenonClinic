@@ -67,14 +67,27 @@ public class AppointmentDto
 
 /// <summary>
 /// DTO for creating a new appointment.
+/// NOTE: BranchId can be overridden by service layer from authenticated user context if not provided.
 /// </summary>
 public class CreateAppointmentDto
 {
     public int PatientId { get; set; }
+
+    /// <summary>
+    /// Branch ID. If not provided, will be set from authenticated user's context.
+    /// </summary>
+    public int? BranchId { get; set; }
+
     public int? ProviderId { get; set; }
     public DateTime StartTime { get; set; }
     public DateTime EndTime { get; set; }
     public AppointmentType Type { get; set; } = AppointmentType.Consultation;
+
+    /// <summary>
+    /// Initial appointment status. Defaults to Scheduled.
+    /// </summary>
+    public AppointmentStatus Status { get; set; } = AppointmentStatus.Scheduled;
+
     public string? Notes { get; set; }
 }
 
@@ -85,10 +98,22 @@ public class UpdateAppointmentDto
 {
     public int Id { get; set; }
     public int PatientId { get; set; }
+
+    /// <summary>
+    /// Branch ID. Allows rescheduling to different branch.
+    /// </summary>
+    public int? BranchId { get; set; }
+
     public int? ProviderId { get; set; }
     public DateTime StartTime { get; set; }
     public DateTime EndTime { get; set; }
     public AppointmentType Type { get; set; }
+
+    /// <summary>
+    /// Appointment status. Allows status updates via this DTO.
+    /// </summary>
+    public AppointmentStatus Status { get; set; }
+
     public string? Notes { get; set; }
 }
 

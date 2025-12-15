@@ -13,7 +13,7 @@ public class PatientDto
     public string? FullNameAr { get; set; }
     public DateTime DateOfBirth { get; set; }
     public int Age => CalculateAge(DateOfBirth);
-    public string Gender { get; set; } = string.Empty;
+    public string Gender { get; set; } = "M";  // FIX: Align with Entity default
     public string GenderDisplay => Gender switch
     {
         "M" => "Male",
@@ -28,6 +28,11 @@ public class PatientDto
     public string? CreatedBy { get; set; }
     public DateTime? UpdatedAt { get; set; }
     public string? UpdatedBy { get; set; }
+
+    // FIX: Add soft delete fields for audit trail and admin interfaces
+    public bool IsDeleted { get; set; }
+    public DateTime? DeletedAt { get; set; }
+    public string? DeletedBy { get; set; }
 
     // Related data counts (for summary view)
     public int AppointmentsCount { get; set; }
@@ -45,9 +50,15 @@ public class PatientDto
 
 /// <summary>
 /// DTO for creating a new patient.
+/// NOTE: BranchId can be overridden by service layer from authenticated user context if not provided.
 /// </summary>
 public class CreatePatientDto
 {
+    /// <summary>
+    /// Branch ID. If not provided, will be set from authenticated user's context.
+    /// </summary>
+    public int? BranchId { get; set; }
+
     public string EmiratesId { get; set; } = string.Empty;
     public string FullNameEn { get; set; } = string.Empty;
     public string? FullNameAr { get; set; }
@@ -68,6 +79,12 @@ public class CreatePatientDto
 public class UpdatePatientDto
 {
     public int Id { get; set; }
+
+    /// <summary>
+    /// Branch ID. Allows transferring patient between branches.
+    /// </summary>
+    public int? BranchId { get; set; }
+
     public string EmiratesId { get; set; } = string.Empty;
     public string FullNameEn { get; set; } = string.Empty;
     public string? FullNameAr { get; set; }
@@ -186,6 +203,15 @@ public class PatientDocumentDto
     public bool IsActive { get; set; }
     public bool IsExpired => ExpiryDate.HasValue && ExpiryDate.Value < DateTime.UtcNow;
     public string? Tags { get; set; }
+
+    // FIX: Add FilePath for backend/admin use (consider security when exposing)
+    public string FilePath { get; set; } = string.Empty;
+
+    // FIX: Add audit fields
+    public DateTime CreatedAt { get; set; }
+    public string? CreatedBy { get; set; }
+    public DateTime? UpdatedAt { get; set; }
+    public string? UpdatedBy { get; set; }
 }
 
 /// <summary>
