@@ -356,6 +356,7 @@ export const TenantContextProvider: React.FC<TenantContextProviderProps> = ({ ch
 /**
  * Main hook to access tenant context
  */
+// eslint-disable-next-line react-refresh/only-export-components
 export const useTenant = (): TenantContextValue => {
   const context = useContext(TenantContextContext);
   if (!context) {
@@ -368,6 +369,7 @@ export const useTenant = (): TenantContextValue => {
  * Hook for terminology/translations
  * Returns the t() function directly
  */
+// eslint-disable-next-line react-refresh/only-export-components
 export const useT = (): ((key: string, fallback?: string) => string) => {
   const { t } = useTenant();
   return t;
@@ -376,6 +378,7 @@ export const useT = (): ((key: string, fallback?: string) => string) => {
 /**
  * Hook for feature checks
  */
+// eslint-disable-next-line react-refresh/only-export-components
 export const useFeature = (featureCode: string): {
   enabled: boolean;
   settings: Record<string, unknown> | undefined
@@ -390,6 +393,7 @@ export const useFeature = (featureCode: string): {
 /**
  * Hook for multiple feature checks
  */
+// eslint-disable-next-line react-refresh/only-export-components
 export const useFeatures = (featureCodes: string[]): Record<string, boolean> => {
   const { hasFeature } = useTenant();
   return useMemo(() => {
@@ -404,6 +408,7 @@ export const useFeatures = (featureCodes: string[]): Record<string, boolean> => 
 /**
  * Hook for navigation items
  */
+// eslint-disable-next-line react-refresh/only-export-components
 export const useNavigation = (): NavItem[] => {
   const { navigation } = useTenant();
   return navigation;
@@ -412,6 +417,7 @@ export const useNavigation = (): NavItem[] => {
 /**
  * Hook for entity schema
  */
+// eslint-disable-next-line react-refresh/only-export-components
 export const useSchema = (entityName: string): UISchema | undefined => {
   const { getSchema } = useTenant();
   return getSchema(entityName);
@@ -420,6 +426,7 @@ export const useSchema = (entityName: string): UISchema | undefined => {
 /**
  * Hook for form layout
  */
+// eslint-disable-next-line react-refresh/only-export-components
 export const useFormLayout = (entityName: string): FormLayout | undefined => {
   const { getFormLayout } = useTenant();
   return getFormLayout(entityName);
@@ -428,6 +435,7 @@ export const useFormLayout = (entityName: string): FormLayout | undefined => {
 /**
  * Hook for list layout
  */
+// eslint-disable-next-line react-refresh/only-export-components
 export const useListLayout = (entityName: string): ListLayout | undefined => {
   const { getListLayout } = useTenant();
   return getListLayout(entityName);
@@ -436,6 +444,7 @@ export const useListLayout = (entityName: string): ListLayout | undefined => {
 /**
  * Hook for company type checks
  */
+// eslint-disable-next-line react-refresh/only-export-components
 export const useCompanyType = (): {
   isClinic: boolean;
   isTrading: boolean;

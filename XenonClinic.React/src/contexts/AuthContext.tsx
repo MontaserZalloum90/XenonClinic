@@ -12,6 +12,7 @@ interface AuthContextType extends AuthState {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
@@ -43,7 +44,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         try {
           const response = await authApi.getCurrentUser();
           setUser(response.data);
-        } catch (error) {
+        } catch {
           // Token is invalid, clear everything
           localStorage.removeItem('token');
           localStorage.removeItem('user');

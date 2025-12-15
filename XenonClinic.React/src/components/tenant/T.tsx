@@ -44,6 +44,7 @@ export const T: React.FC<TProps> = ({
  * // If terminology has "greeting.welcome": "Hello, {name}!"
  * // Result: "Hello, John!"
  */
+// eslint-disable-next-line react-refresh/only-export-components
 export const interpolateTerminology = (
   template: string,
   values: Record<string, string | number>

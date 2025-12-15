@@ -88,7 +88,7 @@ export const MaskedField = ({
     }
 
     revealValue('Routine access');
-  }, [requiresJustification]);
+  }, [requiresJustification, revealValue]);
 
   const revealValue = useCallback(
     (justification: string) => {
@@ -168,7 +168,7 @@ interface JustificationModalProps {
   fieldType: MaskType;
 }
 
-const JustificationModal = ({ onSubmit, onCancel, fieldType }: JustificationModalProps) => {
+const JustificationModal = ({ onSubmit, onCancel }: JustificationModalProps) => {
   const [justification, setJustification] = useState('');
   const [selectedReason, setSelectedReason] = useState('');
 
@@ -342,6 +342,7 @@ interface UseMaskedDataOptions {
   logAccess?: boolean;
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useMaskedData = <T extends Record<string, unknown>>(
   data: T,
   fieldsToMask: Array<{ field: keyof T; type: MaskType }>,
