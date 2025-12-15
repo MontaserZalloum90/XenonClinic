@@ -302,9 +302,19 @@ public class DosageCheckRequestDto
     [Range(0.001, 100000, ErrorMessage = "Proposed dose must be between 0.001 and 100000")]
     public decimal ProposedDose { get; set; }
 
+    /// <summary>
+    /// Alias for ProposedDose for service compatibility
+    /// </summary>
+    public decimal Dose { get => ProposedDose; set => ProposedDose = value; }
+
     [Required(ErrorMessage = "Dose unit is required")]
     [StringLength(20, ErrorMessage = "Dose unit cannot exceed 20 characters")]
     public string DoseUnit { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Alias for DoseUnit for service compatibility
+    /// </summary>
+    public string Unit { get => DoseUnit; set => DoseUnit = value; }
 
     [Required(ErrorMessage = "Frequency is required")]
     [StringLength(50, ErrorMessage = "Frequency cannot exceed 50 characters")]
@@ -324,11 +334,25 @@ public class DosageCheckRequestDto
 public class DosageCheckResultDto
 {
     public int PatientId { get; set; }
+    public string MedicationCode { get; set; } = string.Empty;
     public string MedicationName { get; set; } = string.Empty;
     public decimal ProposedDose { get; set; }
     public string DoseUnit { get; set; } = string.Empty;
     public bool IsDoseAppropriate { get; set; }
     public string DoseStatus { get; set; } = string.Empty; // Normal, Low, High, Excessive, SubTherapeutic
+
+    // Service compatibility properties
+    public decimal RequestedDose { get => ProposedDose; set => ProposedDose = value; }
+    public string RequestedUnit { get => DoseUnit; set => DoseUnit = value; }
+    public string RequestedFrequency { get; set; } = string.Empty;
+    public bool IsWithinRange { get => IsDoseAppropriate; set => IsDoseAppropriate = value; }
+    public string DosageStatus { get => DoseStatus; set => DoseStatus = value; }
+    public decimal RecommendedDose { get; set; }
+    public string RecommendedUnit { get; set; } = string.Empty;
+    public string RecommendedFrequency { get; set; } = string.Empty;
+    public List<string> Warnings { get; set; } = new();
+    public List<string> FactorsConsidered { get; set; } = new();
+
     public DosageRangeDto? RecommendedRange { get; set; }
     public DosageRangeDto? MaxDailyDose { get; set; }
     public List<DosageAlertDto> Alerts { get; set; } = new();
@@ -369,9 +393,19 @@ public class DosageAlertDto
 /// </summary>
 public class DosageRecommendationDto
 {
+    public int PatientId { get; set; }
+    public string MedicationCode { get; set; } = string.Empty;
     public decimal RecommendedDose { get; set; }
     public string Unit { get; set; } = string.Empty;
+    /// <summary>
+    /// Alias for Unit for service compatibility
+    /// </summary>
+    public string RecommendedUnit { get => Unit; set => Unit = value; }
     public string Frequency { get; set; } = string.Empty;
+    /// <summary>
+    /// Alias for Frequency for service compatibility
+    /// </summary>
+    public string RecommendedFrequency { get => Frequency; set => Frequency = value; }
     public string Rationale { get; set; } = string.Empty;
     public List<string> AdjustmentFactors { get; set; } = new();
 }

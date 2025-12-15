@@ -1,3 +1,5 @@
+using XenonClinic.Core.Interfaces;
+
 namespace XenonClinic.Core.Entities;
 
 /// <summary>
@@ -65,9 +67,9 @@ public class Case
     public Lookups.CasePriorityLookup CasePriority { get; set; } = null!;
     /// <summary>
     /// Assigned user navigation property - configured in DbContext
-    /// Uses object type to avoid circular dependency with Infrastructure's ApplicationUser
+    /// Uses IApplicationUser interface to avoid circular dependency with Infrastructure's ApplicationUser
     /// </summary>
-    public object? AssignedToUser { get; set; }
+    public IApplicationUser? AssignedToUser { get; set; }
 
     public ICollection<CaseNote> Notes { get; set; } = new List<CaseNote>();
     public ICollection<CaseActivity> Activities { get; set; } = new List<CaseActivity>();
