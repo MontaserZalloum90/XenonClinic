@@ -162,14 +162,12 @@ const MockAppointmentsList = ({
   onAdd,
   onCancel,
   onCheckin,
-  selectedDate: _selectedDate
 }: {
   appointments?: AppointmentData[];
   isLoading?: boolean;
   onAdd?: () => void;
   onCancel?: (appointment: AppointmentData) => void;
   onCheckin?: (appointment: AppointmentData) => void;
-  selectedDate?: Date;
 }) => {
   if (isLoading) {
     return <div data-testid="appointments-loading">Loading appointments...</div>;
