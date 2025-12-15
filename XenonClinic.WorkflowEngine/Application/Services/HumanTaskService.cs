@@ -641,20 +641,21 @@ public class HumanTaskService : IHumanTaskService
             throw new KeyNotFoundException($"Task '{taskId}' not found.");
         }
 
+        var taskGuid = Guid.Parse(taskId);
         var attachments = await _context.TaskAttachments
-            .Where(a => a.TaskId == taskId)
-            .OrderByDescending(a => a.CreatedAt)
+            .Where(a => a.TaskId == taskGuid)
+            .OrderByDescending(a => a.UploadedAt)
             .ToListAsync(cancellationToken);
 
         return attachments.Select(a => new TaskAttachmentDto
         {
-            Id = a.Id,
-            FileName = a.FileName,
+            Id = a.Id.ToString(),
+            FileName = a.Name,
             ContentType = a.ContentType,
             Url = a.Url,
             SizeBytes = a.SizeBytes,
-            UserId = a.UserId,
-            CreatedAt = a.CreatedAt
+            UserId = a.UploadedBy,
+            CreatedAt = a.UploadedAt
         }).ToList();
     }
 
@@ -663,8 +664,9 @@ public class HumanTaskService : IHumanTaskService
         int tenantId,
         CancellationToken cancellationToken = default)
     {
+        var taskGuid = Guid.Parse(taskId);
         var task = await _context.HumanTasks
-            .FirstOrDefaultAsync(t => t.Id == taskId && t.TenantId == tenantId, cancellationToken);
+            .FirstOrDefaultAsync(t => t.Id == taskGuid && t.TenantId == tenantId, cancellationToken);
 
         if (task == null)
             return null;
@@ -690,8 +692,9 @@ public class HumanTaskService : IHumanTaskService
         int tenantId,
         CancellationToken cancellationToken = default)
     {
+        var taskGuid = Guid.Parse(taskId);
         var exists = await _context.HumanTasks
-            .AnyAsync(t => t.Id == taskId && t.TenantId == tenantId, cancellationToken);
+            .AnyAsync(t => t.Id == taskGuid && t.TenantId == tenantId, cancellationToken);
 
         if (!exists)
         {
@@ -699,19 +702,19 @@ public class HumanTaskService : IHumanTaskService
         }
 
         var actions = await _context.TaskActions
-            .Where(a => a.TaskId == taskId)
+            .Where(a => a.TaskId == taskGuid)
             .OrderBy(a => a.Timestamp)
             .ToListAsync(cancellationToken);
 
         return actions.Select(a => new TaskActionDto
         {
-            Id = a.Id,
+            Id = a.Id.ToString(),
             ActionType = a.ActionType,
             UserId = a.UserId,
             Timestamp = a.Timestamp,
             Comment = a.Comment,
-            Data = !string.IsNullOrEmpty(a.DataJson)
-                ? JsonSerializer.Deserialize<Dictionary<string, object>>(a.DataJson, _jsonOptions)
+            Data = !string.IsNullOrEmpty(a.VariablesJson)
+                ? JsonSerializer.Deserialize<Dictionary<string, object>>(a.VariablesJson, _jsonOptions)
                 : null
         }).ToList();
     }
@@ -725,7 +728,7 @@ public class HumanTaskService : IHumanTaskService
     {
         var task = await GetTaskOrThrowAsync(taskId, tenantId, cancellationToken);
 
-        if (task.Status == HumanTaskStatus.Completed || task.Status == HumanTaskStatus.Cancelled)
+        if (task.Status == HumanTaskStatus.Completed || task.Status == HumanTaskStatus.Exited)
         {
             throw new InvalidOperationException($"Cannot update task in status {task.Status}.");
         }
@@ -733,7 +736,7 @@ public class HumanTaskService : IHumanTaskService
         var previousPriority = task.Priority;
         task.Priority = priority;
 
-        await AddActionAsync(task, TaskActionTypes.UpdatePriority, userId,
+        await AddActionAsync(task, TaskActionTypes.SetPriority, userId,
             new Dictionary<string, object>
             {
                 ["previousPriority"] = previousPriority.ToString(),
@@ -757,7 +760,7 @@ public class HumanTaskService : IHumanTaskService
     {
         var task = await GetTaskOrThrowAsync(taskId, tenantId, cancellationToken);
 
-        if (task.Status == HumanTaskStatus.Completed || task.Status == HumanTaskStatus.Cancelled)
+        if (task.Status == HumanTaskStatus.Completed || task.Status == HumanTaskStatus.Exited)
         {
             throw new InvalidOperationException($"Cannot update task in status {task.Status}.");
         }
@@ -765,7 +768,7 @@ public class HumanTaskService : IHumanTaskService
         var previousDueDate = task.DueDate;
         task.DueDate = dueDate;
 
-        await AddActionAsync(task, TaskActionTypes.UpdateDueDate, userId,
+        await AddActionAsync(task, TaskActionTypes.SetDueDate, userId,
             new Dictionary<string, object>
             {
                 ["previousDueDate"] = previousDueDate?.ToString("O") ?? "",
@@ -784,8 +787,9 @@ public class HumanTaskService : IHumanTaskService
 
     private async Task<HumanTask> GetTaskOrThrowAsync(string taskId, int tenantId, CancellationToken cancellationToken)
     {
+        var taskGuid = Guid.Parse(taskId);
         var task = await _context.HumanTasks
-            .FirstOrDefaultAsync(t => t.Id == taskId && t.TenantId == tenantId, cancellationToken);
+            .FirstOrDefaultAsync(t => t.Id == taskGuid && t.TenantId == tenantId, cancellationToken);
 
         if (task == null)
         {
@@ -819,12 +823,12 @@ public class HumanTaskService : IHumanTaskService
 
         var action = new TaskAction
         {
-            Id = Guid.NewGuid().ToString(),
+            Id = Guid.NewGuid(),
             TaskId = task.Id,
             ActionType = actionType,
             UserId = userId,
             Timestamp = DateTime.UtcNow,
-            DataJson = data != null ? JsonSerializer.Serialize(data, _jsonOptions) : null
+            VariablesJson = data != null ? JsonSerializer.Serialize(data, _jsonOptions) : null
         };
 
         _context.TaskActions.Add(action);
@@ -861,13 +865,13 @@ public class HumanTaskService : IHumanTaskService
     {
         return new HumanTaskListDto
         {
-            Id = task.Id,
+            Id = task.Id.ToString(),
             Name = task.Name,
             Description = task.Description,
             Status = task.Status,
             Priority = task.Priority,
             AssigneeUserId = task.AssigneeUserId,
-            CandidateGroups = DeserializeList(task.CandidateGroupsJson),
+            CandidateGroups = DeserializeList(task.CandidateGroupIdsJson),
             CreatedAt = task.CreatedAt,
             DueDate = task.DueDate,
             BusinessKey = task.BusinessKey,
@@ -901,15 +905,15 @@ public class HumanTaskService : IHumanTaskService
 
         return new HumanTaskDetailDto
         {
-            Id = task.Id,
+            Id = task.Id.ToString(),
             Name = task.Name,
             Description = task.Description,
             Status = task.Status,
             Priority = task.Priority,
             AssigneeUserId = task.AssigneeUserId,
             CandidateUsers = DeserializeList(task.CandidateUserIdsJson),
-            CandidateGroups = DeserializeList(task.CandidateGroupsJson),
-            CandidateRoles = DeserializeList(task.CandidateRolesJson),
+            CandidateGroups = DeserializeList(task.CandidateGroupIdsJson),
+            CandidateRoles = DeserializeList(task.CandidateRoleIdsJson),
             CreatedAt = task.CreatedAt,
             DueDate = task.DueDate,
             BusinessKey = task.BusinessKey,
@@ -917,7 +921,7 @@ public class HumanTaskService : IHumanTaskService
             ProcessDefinitionName = definition?.Name ?? "",
             ProcessInstanceId = task.ProcessInstanceId,
             TenantId = task.TenantId,
-            ActivityInstanceId = task.ActivityInstanceId,
+            ActivityInstanceId = task.ActivityInstanceId.ToString(),
             TaskDefinitionKey = task.ActivityDefinitionId,
             FormKey = task.FormKey,
             HasForm = !string.IsNullOrEmpty(task.FormKey) || !string.IsNullOrEmpty(task.FormDefinitionJson),
