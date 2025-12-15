@@ -537,7 +537,7 @@ public class PatientPortalService : IPatientPortalService
 
         var pendingInvoices = await _context.Invoices
             .Where(i => i.PatientId == patientId &&
-                (i.Status == "Pending" || i.Status == "Overdue"))
+                (i.Status == InvoiceStatus.Issued || i.Status == InvoiceStatus.Overdue))
             .CountAsync();
 
         var pendingPrescriptions = await _context.PrescriptionItems
@@ -2041,7 +2041,7 @@ public class PatientPortalService : IPatientPortalService
     {
         return await _context.Invoices
             .Where(i => i.PatientId == patientId &&
-                (i.Status == "Pending" || i.Status == "Overdue" || i.Status == "Partial"))
+                (i.Status == InvoiceStatus.Issued || i.Status == InvoiceStatus.Overdue || i.Status == InvoiceStatus.PartiallyPaid))
             .SumAsync(i => i.TotalAmount - i.PaidAmount);
     }
 

@@ -68,6 +68,13 @@ public class PrescriptionItem
 
     public int? DurationDays { get; set; }
 
+    public DateTime? StartDate { get; set; }
+
+    public DateTime? EndDate { get; set; }
+
+    [MaxLength(50)]
+    public string Status { get; set; } = "Active"; // Active, Pending, Processing, Awaiting Pickup, Completed, Cancelled
+
     [ForeignKey(nameof(PrescriptionId))]
     public virtual Prescription? Prescription { get; set; }
 }

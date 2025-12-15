@@ -82,6 +82,14 @@ public interface IRepository<T> where T : class
         params Expression<Func<T, object>>[] includes);
 
     /// <summary>
+    /// Gets the first entity matching the predicate, or null, without tracking.
+    /// Use for read-only operations to improve performance.
+    /// </summary>
+    Task<T?> FirstOrDefaultReadOnlyAsync(
+        Expression<Func<T, bool>> predicate,
+        params Expression<Func<T, object>>[] includes);
+
+    /// <summary>
     /// Checks if any entity matches the predicate.
     /// </summary>
     Task<bool> AnyAsync(Expression<Func<T, bool>> predicate);

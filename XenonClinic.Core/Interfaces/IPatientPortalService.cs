@@ -292,6 +292,16 @@ public interface IPatientPortalService
     Task<PortalNotificationPreferencesDto> UpdateNotificationPreferencesAsync(int patientId, PortalNotificationPreferencesDto dto);
 
     #endregion
+
+    #region Cache Management
+
+    /// <summary>
+    /// Invalidates the dashboard cache for a specific patient.
+    /// Call this when patient data changes (appointments, prescriptions, payments, etc.)
+    /// </summary>
+    Task InvalidateDashboardCacheAsync(int patientId);
+
+    #endregion
 }
 
 /// <summary>
