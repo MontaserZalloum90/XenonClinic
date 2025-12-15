@@ -142,6 +142,7 @@ public class AllergyCheckResultDto
 /// </summary>
 public class ClinicalReminderDto
 {
+    public int Id { get; set; }
     public int ReminderId { get; set; }
     public int PatientId { get; set; }
     public string ReminderType { get; set; } = string.Empty; // Screening, Vaccination, LabTest, Assessment, Follow-up
@@ -161,6 +162,7 @@ public class ClinicalReminderDto
     public List<string>? ExclusionCriteria { get; set; }
     public ClinicalReminderActionDto? SuggestedAction { get; set; }
     public string? PatientEducationLink { get; set; }
+    public string? ActionRequired { get; set; }
     public bool IsAcknowledged { get; set; }
     public DateTime? AcknowledgedAt { get; set; }
     public string? AcknowledgedBy { get; set; }
