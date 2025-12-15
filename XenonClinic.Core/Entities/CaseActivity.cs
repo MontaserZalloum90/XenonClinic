@@ -44,5 +44,9 @@ public class CaseActivity
     public Lookups.CaseActivityTypeLookup CaseActivityType { get; set; } = null!;
     public Lookups.CaseActivityStatusLookup CaseActivityStatus { get; set; } = null!;
     public Lookups.CasePriorityLookup CasePriority { get; set; } = null!;
-    // Note: ApplicationUser navigation removed to avoid circular dependency with Infrastructure
+    /// <summary>
+    /// Assigned user navigation property - configured in DbContext
+    /// Uses object type to avoid circular dependency with Infrastructure's ApplicationUser
+    /// </summary>
+    public object? AssignedToUser { get; set; }
 }

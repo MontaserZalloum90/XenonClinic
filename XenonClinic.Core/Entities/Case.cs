@@ -63,7 +63,11 @@ public class Case
     public CaseType CaseType { get; set; } = null!;
     public CaseStatus CaseStatus { get; set; } = null!;
     public Lookups.CasePriorityLookup CasePriority { get; set; } = null!;
-    // Note: ApplicationUser navigation removed to avoid circular dependency with Infrastructure
+    /// <summary>
+    /// Assigned user navigation property - configured in DbContext
+    /// Uses object type to avoid circular dependency with Infrastructure's ApplicationUser
+    /// </summary>
+    public object? AssignedToUser { get; set; }
 
     public ICollection<CaseNote> Notes { get; set; } = new List<CaseNote>();
     public ICollection<CaseActivity> Activities { get; set; } = new List<CaseActivity>();

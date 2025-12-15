@@ -462,6 +462,10 @@ public class ContraindicationCheckResultDto
     public bool HasRelativeContraindication { get; set; }
     public bool HasPrecautions { get; set; }
     public List<ContraindicationAlertDto> Alerts { get; set; } = new();
+    /// <summary>
+    /// Alias for Alerts - provides compatibility with services expecting Contraindications property
+    /// </summary>
+    public List<ContraindicationAlertDto> Contraindications => Alerts;
     public bool CanPrescribe { get; set; }
     public string PrescribingDecision { get; set; } = string.Empty; // Safe, ProceedWithCaution, NotRecommended, Contraindicated
     public List<string>? RecommendedAlternatives { get; set; }
@@ -517,6 +521,26 @@ public class LabInterpretationResultDto
     public bool IsCritical { get; set; }
     public string? CriticalAction { get; set; }
     public TrendAnalysisDto? TrendAnalysis { get; set; }
+
+    // Additional properties for service compatibility
+    public DateTime InterpretedAt { get; set; } = DateTime.UtcNow;
+    public string OverallAssessment { get; set; } = string.Empty;
+    public List<LabValueInterpretationDto> Interpretations { get; set; } = new();
+    public List<string> Recommendations { get; set; } = new();
+}
+
+/// <summary>
+/// Individual lab value interpretation
+/// </summary>
+public class LabValueInterpretationDto
+{
+    public string LabCode { get; set; } = string.Empty;
+    public string LabName { get; set; } = string.Empty;
+    public decimal Value { get; set; }
+    public string Unit { get; set; } = string.Empty;
+    public string Status { get; set; } = string.Empty;
+    public string Interpretation { get; set; } = string.Empty;
+    public bool IsCritical { get; set; }
 }
 
 /// <summary>
@@ -674,9 +698,17 @@ public class RiskCalculationResultDto
 {
     public int PatientId { get; set; }
     public string CalculatorName { get; set; } = string.Empty;
+    /// <summary>
+    /// Calculator identifier - alias for CalculatorName for service compatibility
+    /// </summary>
+    public string CalculatorId { get => CalculatorName; set => CalculatorName = value; }
     public DateTime CalculatedAt { get; set; }
     public double RiskScore { get; set; }
     public string RiskLevel { get; set; } = string.Empty; // Low, Moderate, High, Very High
+    /// <summary>
+    /// Risk category - alias for RiskLevel for service compatibility
+    /// </summary>
+    public string RiskCategory { get => RiskLevel; set => RiskLevel = value; }
     public string RiskPercentage { get; set; } = string.Empty;
     public string TimeFrame { get; set; } = string.Empty; // e.g., "10-year risk"
     public string Interpretation { get; set; } = string.Empty;
@@ -906,6 +938,35 @@ public class CareGapDto
     public string? Category { get; set; } // Preventive, Chronic, Screening, etc.
     public DateTime? CompletedDate { get; set; }
     public int? CompletedByUserId { get; set; }
+}
+
+#endregion
+
+#region Medication Safety Check
+
+/// <summary>
+/// Comprehensive medication safety check result
+/// </summary>
+public class MedicationSafetyCheckResultDto
+{
+    public int PatientId { get; set; }
+    public string MedicationCode { get; set; } = string.Empty;
+    public string MedicationName { get; set; } = string.Empty;
+    public DateTime CheckedAt { get; set; } = DateTime.UtcNow;
+    public bool IsSafe { get; set; }
+    public string SafetyLevel { get; set; } = string.Empty; // Safe, ProceedWithCaution, NotRecommended, Contraindicated
+
+    // Individual check results
+    public AllergyCheckResultDto? AllergyCheck { get; set; }
+    public DrugInteractionResultDto? InteractionCheck { get; set; }
+    public ContraindicationCheckResultDto? ContraindicationCheck { get; set; }
+    public DosageCheckResultDto? DosageCheck { get; set; }
+
+    // Summary
+    public List<string> Warnings { get; set; } = new();
+    public bool CanPrescribe { get; set; }
+    public bool RequiresOverride { get; set; }
+    public string? OverrideReason { get; set; }
 }
 
 #endregion
