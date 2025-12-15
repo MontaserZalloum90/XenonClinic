@@ -3,7 +3,7 @@
  * Provides axios configuration that integrates with shared token storage
  */
 
-import type { AxiosInstance, AxiosError, InternalAxiosRequestConfig } from 'axios';
+import type { AxiosInstance, AxiosError, InternalAxiosRequestConfig, AxiosResponse } from 'axios';
 import { tokenStorage } from './api-base';
 
 export interface AxiosAdapterOptions {
@@ -38,7 +38,7 @@ export function configureAxiosInstance(
 
   // Response interceptor - Handle 401 errors
   axios.interceptors.response.use(
-    (response) => response,
+    (response: AxiosResponse) => response,
     async (error: AxiosError) => {
       if (error.response?.status === 401) {
         tokenStorage.clearToken();
