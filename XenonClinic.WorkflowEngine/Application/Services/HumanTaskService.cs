@@ -38,10 +38,11 @@ public class HumanTaskService : IHumanTaskService
         int tenantId,
         CancellationToken cancellationToken = default)
     {
+        var taskGuid = Guid.Parse(taskId);
         var task = await _context.HumanTasks
             .Include(t => t.Comments)
             .Include(t => t.Attachments)
-            .FirstOrDefaultAsync(t => t.Id == taskId && t.TenantId == tenantId, cancellationToken);
+            .FirstOrDefaultAsync(t => t.Id == taskGuid && t.TenantId == tenantId, cancellationToken);
 
         if (task == null)
             return null;
@@ -535,22 +536,22 @@ public class HumanTaskService : IHumanTaskService
 
         var comment = new TaskComment
         {
-            Id = Guid.NewGuid().ToString(),
-            TaskId = taskId,
+            Id = Guid.NewGuid(),
+            TaskId = Guid.Parse(taskId),
             Content = content,
             UserId = userId,
             CreatedAt = DateTime.UtcNow
         };
 
         _context.TaskComments.Add(comment);
-        await AddActionAsync(task, TaskActionTypes.Comment, userId,
+        await AddActionAsync(task, TaskActionTypes.AddComment, userId,
             new Dictionary<string, object> { ["commentId"] = comment.Id }, cancellationToken);
 
         await _context.SaveChangesAsync(cancellationToken);
 
         return new TaskCommentDto
         {
-            Id = comment.Id,
+            Id = comment.Id.ToString(),
             Content = comment.Content,
             UserId = comment.UserId,
             CreatedAt = comment.CreatedAt
@@ -562,8 +563,9 @@ public class HumanTaskService : IHumanTaskService
         int tenantId,
         CancellationToken cancellationToken = default)
     {
+        var taskGuid = Guid.Parse(taskId);
         var exists = await _context.HumanTasks
-            .AnyAsync(t => t.Id == taskId && t.TenantId == tenantId, cancellationToken);
+            .AnyAsync(t => t.Id == taskGuid && t.TenantId == tenantId, cancellationToken);
 
         if (!exists)
         {
@@ -571,13 +573,13 @@ public class HumanTaskService : IHumanTaskService
         }
 
         var comments = await _context.TaskComments
-            .Where(c => c.TaskId == taskId)
+            .Where(c => c.TaskId == taskGuid)
             .OrderByDescending(c => c.CreatedAt)
             .ToListAsync(cancellationToken);
 
         return comments.Select(c => new TaskCommentDto
         {
-            Id = c.Id,
+            Id = c.Id.ToString(),
             Content = c.Content,
             UserId = c.UserId,
             CreatedAt = c.CreatedAt
@@ -597,13 +599,13 @@ public class HumanTaskService : IHumanTaskService
 
         var attachment = new TaskAttachment
         {
-            Id = Guid.NewGuid().ToString(),
-            TaskId = taskId,
-            FileName = fileName,
+            Id = Guid.NewGuid(),
+            TaskId = Guid.Parse(taskId),
+            Name = fileName,
             ContentType = contentType,
             Url = url,
-            UserId = userId,
-            CreatedAt = DateTime.UtcNow
+            UploadedBy = userId,
+            UploadedAt = DateTime.UtcNow
         };
 
         _context.TaskAttachments.Add(attachment);
@@ -618,13 +620,13 @@ public class HumanTaskService : IHumanTaskService
 
         return new TaskAttachmentDto
         {
-            Id = attachment.Id,
-            FileName = attachment.FileName,
+            Id = attachment.Id.ToString(),
+            FileName = attachment.Name,
             ContentType = attachment.ContentType,
             Url = attachment.Url,
             SizeBytes = attachment.SizeBytes,
-            UserId = attachment.UserId,
-            CreatedAt = attachment.CreatedAt
+            UserId = attachment.UploadedBy,
+            CreatedAt = attachment.UploadedAt
         };
     }
 
@@ -633,15 +635,14 @@ public class HumanTaskService : IHumanTaskService
         int tenantId,
         CancellationToken cancellationToken = default)
     {
+        var taskGuid = Guid.Parse(taskId);
         var exists = await _context.HumanTasks
-            .AnyAsync(t => t.Id == taskId && t.TenantId == tenantId, cancellationToken);
+            .AnyAsync(t => t.Id == taskGuid && t.TenantId == tenantId, cancellationToken);
 
         if (!exists)
         {
             throw new KeyNotFoundException($"Task '{taskId}' not found.");
         }
-
-        var taskGuid = Guid.Parse(taskId);
         var attachments = await _context.TaskAttachments
             .Where(a => a.TaskId == taskGuid)
             .OrderByDescending(a => a.UploadedAt)
