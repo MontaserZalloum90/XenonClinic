@@ -110,6 +110,12 @@ public class ClinicDbContext : IdentityDbContext<Entities.ApplicationUser>
     public DbSet<Expense> Expenses => Set<Expense>();
     public DbSet<FinancialTransaction> FinancialTransactions => Set<FinancialTransaction>();
 
+    // General medical entities
+    public DbSet<Procedure> Procedures => Set<Procedure>();
+    public DbSet<Prescription> Prescriptions => Set<Prescription>();
+    public DbSet<PrescriptionItem> PrescriptionItems => Set<PrescriptionItem>();
+    public DbSet<VitalSign> VitalSigns => Set<VitalSign>();
+
     // Authentication configuration entities (from Infrastructure)
     public DbSet<Entities.CompanyAuthSettings> CompanyAuthSettings => Set<Entities.CompanyAuthSettings>();
     public DbSet<Entities.CompanyIdentityProvider> CompanyIdentityProviders => Set<Entities.CompanyIdentityProvider>();
@@ -241,7 +247,6 @@ public class ClinicDbContext : IdentityDbContext<Entities.ApplicationUser>
     // Security & Compliance Entities
     // ========================================
     // Audit Trail
-    public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
     public DbSet<AuditRetentionPolicy> AuditRetentionPolicies => Set<AuditRetentionPolicy>();
     public DbSet<AuditAlertConfig> AuditAlertConfigs => Set<AuditAlertConfig>();
 

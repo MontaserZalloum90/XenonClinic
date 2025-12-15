@@ -1,9 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using XenonClinic.Core.Entities;
 using XenonClinic.Core.Interfaces;
 using XenonClinic.Infrastructure.Data;
-using XenonClinic.Infrastructure.Entities;
+using CoreEntities = XenonClinic.Core.Entities;
 
 namespace XenonClinic.Infrastructure.Services;
 
@@ -24,7 +23,7 @@ public class CompanyAuthConfigService : ICompanyAuthConfigService
     }
 
     /// <inheritdoc />
-    public async Task<CompanyAuthSettings?> GetAuthSettingsAsync(int companyId)
+    public async Task<CoreEntities.CompanyAuthSettings?> GetAuthSettingsAsync(int companyId)
     {
         return await _dbContext.CompanyAuthSettings
             .Include(s => s.IdentityProviders.Where(p => p.IsEnabled))
@@ -32,7 +31,7 @@ public class CompanyAuthConfigService : ICompanyAuthConfigService
     }
 
     /// <inheritdoc />
-    public async Task<CompanyAuthSettings?> GetAuthSettingsByCodeAsync(string companyCode)
+    public async Task<CoreEntities.CompanyAuthSettings?> GetAuthSettingsByCodeAsync(string companyCode)
     {
         var company = await _dbContext.Companies
             .FirstOrDefaultAsync(c => c.Code == companyCode && c.IsActive);
@@ -44,7 +43,7 @@ public class CompanyAuthConfigService : ICompanyAuthConfigService
     }
 
     /// <inheritdoc />
-    public async Task<IList<CompanyIdentityProvider>> GetIdentityProvidersAsync(int companyId)
+    public async Task<IList<CoreEntities.CompanyIdentityProvider>> GetIdentityProvidersAsync(int companyId)
     {
         return await _dbContext.CompanyIdentityProviders
             .Where(p => p.CompanyId == companyId && p.IsEnabled)
@@ -54,7 +53,7 @@ public class CompanyAuthConfigService : ICompanyAuthConfigService
     }
 
     /// <inheritdoc />
-    public async Task<CompanyIdentityProvider?> GetIdentityProviderAsync(int companyId, string providerName)
+    public async Task<CoreEntities.CompanyIdentityProvider?> GetIdentityProviderAsync(int companyId, string providerName)
     {
         return await _dbContext.CompanyIdentityProviders
             .Include(p => p.Company)
@@ -64,7 +63,7 @@ public class CompanyAuthConfigService : ICompanyAuthConfigService
     }
 
     /// <inheritdoc />
-    public async Task<CompanyIdentityProvider?> GetIdentityProviderByIdAsync(int providerId)
+    public async Task<CoreEntities.CompanyIdentityProvider?> GetIdentityProviderByIdAsync(int providerId)
     {
         return await _dbContext.CompanyIdentityProviders
             .Include(p => p.Company)
@@ -72,7 +71,7 @@ public class CompanyAuthConfigService : ICompanyAuthConfigService
     }
 
     /// <inheritdoc />
-    public async Task<CompanyIdentityProvider?> GetDefaultIdentityProviderAsync(int companyId)
+    public async Task<CoreEntities.CompanyIdentityProvider?> GetDefaultIdentityProviderAsync(int companyId)
     {
         // First try to find the default provider
         var defaultProvider = await _dbContext.CompanyIdentityProviders
@@ -117,7 +116,7 @@ public class CompanyAuthConfigService : ICompanyAuthConfigService
     }
 
     /// <inheritdoc />
-    public async Task<CompanyAuthSettings> SaveAuthSettingsAsync(CompanyAuthSettings settings)
+    public async Task<CoreEntities.CompanyAuthSettings> SaveAuthSettingsAsync(CoreEntities.CompanyAuthSettings settings)
     {
         var existing = await _dbContext.CompanyAuthSettings
             .FirstOrDefaultAsync(s => s.CompanyId == settings.CompanyId);
@@ -156,7 +155,7 @@ public class CompanyAuthConfigService : ICompanyAuthConfigService
     }
 
     /// <inheritdoc />
-    public async Task<CompanyIdentityProvider> SaveIdentityProviderAsync(CompanyIdentityProvider provider)
+    public async Task<CoreEntities.CompanyIdentityProvider> SaveIdentityProviderAsync(CoreEntities.CompanyIdentityProvider provider)
     {
         var existing = provider.Id > 0
             ? await _dbContext.CompanyIdentityProviders.FindAsync(provider.Id)
@@ -256,13 +255,13 @@ public class CompanyAuthConfigService : ICompanyAuthConfigService
     }
 
     /// <inheritdoc />
-    public async Task<AuthMode> GetEffectiveAuthModeAsync(int companyId)
+    public async Task<CoreEntities.AuthMode> GetEffectiveAuthModeAsync(int companyId)
     {
         var settings = await GetAuthSettingsAsync(companyId);
 
         // Default to LocalOnly if no settings configured
         if (settings == null || !settings.IsEnabled)
-            return AuthMode.LocalOnly;
+            return CoreEntities.AuthMode.LocalOnly;
 
         return settings.AuthMode;
     }
