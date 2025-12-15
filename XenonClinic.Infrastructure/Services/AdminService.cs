@@ -219,7 +219,7 @@ public class AdminService : IAdminService
 
     // ==================== User Management ====================
 
-    public async Task<List<ApplicationUser>> GetTenantUsersAsync(int tenantId, bool includeInactive = false)
+    public async Task<List<IApplicationUser>> GetTenantUsersAsync(int tenantId, bool includeInactive = false)
     {
         if (!await _tenantService.HasAccessToTenantAsync(tenantId))
         {
@@ -236,10 +236,11 @@ public class AdminService : IAdminService
             query = query.Where(u => u.IsActive);
         }
 
-        return await query.OrderBy(u => u.DisplayName ?? u.UserName).ToListAsync();
+        var users = await query.OrderBy(u => u.DisplayName ?? u.UserName).ToListAsync();
+        return users.Cast<IApplicationUser>().ToList();
     }
 
-    public async Task<List<ApplicationUser>> GetCompanyUsersAsync(int companyId, bool includeInactive = false)
+    public async Task<List<IApplicationUser>> GetCompanyUsersAsync(int companyId, bool includeInactive = false)
     {
         if (!await _companyService.HasAccessToCompanyAsync(companyId))
         {
@@ -255,15 +256,16 @@ public class AdminService : IAdminService
             query = query.Where(u => u.IsActive);
         }
 
-        return await query.OrderBy(u => u.DisplayName ?? u.UserName).ToListAsync();
+        var users = await query.OrderBy(u => u.DisplayName ?? u.UserName).ToListAsync();
+        return users.Cast<IApplicationUser>().ToList();
     }
 
-    public async Task<List<ApplicationUser>> GetBranchUsersAsync(int branchId, bool includeInactive = false)
+    public async Task<List<IApplicationUser>> GetBranchUsersAsync(int branchId, bool includeInactive = false)
     {
         var branch = await _context.Branches.FindAsync(branchId);
         if (branch == null)
         {
-            return new List<ApplicationUser>();
+            return new List<IApplicationUser>();
         }
 
         if (!await _companyService.HasAccessToCompanyAsync(branch.CompanyId))
@@ -284,35 +286,39 @@ public class AdminService : IAdminService
             query = query.Where(u => u.IsActive);
         }
 
-        return await query.OrderBy(u => u.DisplayName ?? u.UserName).ToListAsync();
+        var users = await query.OrderBy(u => u.DisplayName ?? u.UserName).ToListAsync();
+        return users.Cast<IApplicationUser>().ToList();
     }
 
-    public async Task<ApplicationUser> CreateUserAsync(ApplicationUser user, string password, List<string> roles, List<int> branchIds)
+    public async Task<IApplicationUser> CreateUserAsync(IApplicationUser user, string password, List<string> roles, List<int> branchIds)
     {
+        // Cast to ApplicationUser for UserManager operations
+        var appUser = user as ApplicationUser ?? throw new ArgumentException("User must be of type ApplicationUser", nameof(user));
+
         // Verify tenant access
-        if (user.TenantId.HasValue && !await _tenantService.HasAccessToTenantAsync(user.TenantId.Value))
+        if (appUser.TenantId.HasValue && !await _tenantService.HasAccessToTenantAsync(appUser.TenantId.Value))
         {
             throw new UnauthorizedAccessException("You don't have access to this tenant");
         }
 
         // Verify company access
-        if (user.CompanyId.HasValue && !await _companyService.HasAccessToCompanyAsync(user.CompanyId.Value))
+        if (appUser.CompanyId.HasValue && !await _companyService.HasAccessToCompanyAsync(appUser.CompanyId.Value))
         {
             throw new UnauthorizedAccessException("You don't have access to this company");
         }
 
         // Check user limit
-        if (user.TenantId.HasValue && !await _tenantService.CanCreateUserAsync(user.TenantId.Value))
+        if (appUser.TenantId.HasValue && !await _tenantService.CanCreateUserAsync(appUser.TenantId.Value))
         {
             throw new InvalidOperationException("Tenant has reached the maximum number of users allowed");
         }
 
         var currentUser = await GetCurrentUserAsync();
-        user.CreatedAt = DateTime.UtcNow;
-        user.CreatedBy = currentUser?.Id;
-        user.IsActive = true;
+        appUser.CreatedAt = DateTime.UtcNow;
+        appUser.CreatedBy = currentUser?.Id;
+        appUser.IsActive = true;
 
-        var result = await _userManager.CreateAsync(user, password);
+        var result = await _userManager.CreateAsync(appUser, password);
         if (!result.Succeeded)
         {
             throw new InvalidOperationException(string.Join(", ", result.Errors.Select(e => e.Description)));
@@ -321,7 +327,7 @@ public class AdminService : IAdminService
         // Assign roles
         if (roles.Any())
         {
-            await _userManager.AddToRolesAsync(user, roles);
+            await _userManager.AddToRolesAsync(appUser, roles);
         }
 
         // Assign branches
@@ -329,17 +335,17 @@ public class AdminService : IAdminService
         {
             _context.UserBranches.Add(new UserBranch
             {
-                UserId = user.Id,
+                UserId = appUser.Id,
                 BranchId = branchId
             });
         }
 
         await _context.SaveChangesAsync();
 
-        return user;
+        return appUser;
     }
 
-    public async Task<ApplicationUser> UpdateUserAssignmentsAsync(string userId, int? tenantId, int? companyId, int? primaryBranchId, List<int> branchIds)
+    public async Task<IApplicationUser> UpdateUserAssignmentsAsync(string userId, int? tenantId, int? companyId, int? primaryBranchId, List<int> branchIds)
     {
         var user = await _context.Users.FindAsync(userId);
         if (user == null)

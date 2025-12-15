@@ -27,7 +27,7 @@ public class ConsentService : IConsentService
 
     #region Consent CRUD
 
-    public async Task<PatientConsentDto> GetConsentAsync(int consentId)
+    public async Task<PatientConsentDto?> GetConsentByIdAsync(int consentId)
     {
         var consent = await _context.Set<PatientConsent>()
             .Include(c => c.Patient)
@@ -40,18 +40,26 @@ public class ConsentService : IConsentService
         return MapToDto(consent);
     }
 
-    public async Task<List<PatientConsentDto>> GetPatientConsentsAsync(int patientId)
+    public async Task<List<PatientConsentDto>> GetPatientConsentsAsync(int patientId, string? consentType = null, bool activeOnly = false)
     {
-        var consents = await _context.Set<PatientConsent>()
+        var query = _context.Set<PatientConsent>()
             .Include(c => c.Patient)
-            .Where(c => c.PatientId == patientId)
+            .Where(c => c.PatientId == patientId);
+
+        if (!string.IsNullOrEmpty(consentType))
+            query = query.Where(c => c.ConsentType == consentType);
+
+        if (activeOnly)
+            query = query.Where(c => c.Status == ConsentStatuses.Active);
+
+        var consents = await query
             .OrderByDescending(c => c.GrantedDate)
             .ToListAsync();
 
         return consents.Select(MapToDto).ToList();
     }
 
-    public async Task<PatientConsentDto> CreateConsentAsync(SaveConsentDto request, int createdByUserId)
+    public async Task<PatientConsentDto> GrantConsentAsync(SaveConsentDto request, int grantedByUserId)
     {
         var consent = new PatientConsent
         {
@@ -61,7 +69,7 @@ public class ConsentService : IConsentService
             Description = request.Description,
             Status = ConsentStatuses.Active,
             GrantedDate = DateTime.UtcNow,
-            GrantedByUserId = createdByUserId,
+            GrantedByUserId = grantedByUserId,
             ExpirationDate = request.ExpirationDate,
             DocumentPath = request.DocumentPath,
             SignatureData = request.SignatureData,
@@ -80,18 +88,18 @@ public class ConsentService : IConsentService
             Action = "CREATED",
             NewStatus = ConsentStatuses.Active,
             ActionDate = DateTime.UtcNow,
-            ActionByUserId = createdByUserId
+            ActionByUserId = grantedByUserId
         };
         _context.Set<ConsentHistory>().Add(history);
         await _context.SaveChangesAsync();
 
-        await _auditService.LogPHIAccessAsync(createdByUserId, request.PatientId, "CONSENT", "CREATE", consent.Id.ToString());
+        await _auditService.LogPHIAccessAsync(grantedByUserId, request.PatientId, "CONSENT", "CREATE", consent.Id.ToString());
         _logger.LogInformation("Created consent {ConsentId} for patient {PatientId}", consent.Id, request.PatientId);
 
-        return await GetConsentAsync(consent.Id);
+        return await GetConsentByIdAsync(consent.Id);
     }
 
-    public async Task<PatientConsentDto> UpdateConsentAsync(int consentId, SaveConsentDto request, int updatedByUserId)
+    public async Task<PatientConsentDto?> UpdateConsentAsync(int consentId, SaveConsentDto request, int updatedByUserId)
     {
         var consent = await _context.Set<PatientConsent>().FindAsync(consentId);
         if (consent == null)
@@ -119,14 +127,14 @@ public class ConsentService : IConsentService
         await _context.SaveChangesAsync();
 
         await _auditService.LogPHIAccessAsync(updatedByUserId, consent.PatientId, "CONSENT", "UPDATE", consentId.ToString());
-        return await GetConsentAsync(consentId);
+        return await GetConsentByIdAsync(consentId);
     }
 
-    public async Task<bool> RevokeConsentAsync(RevokeConsentDto request, int revokedByUserId)
+    public async Task<PatientConsentDto> RevokeConsentAsync(RevokeConsentDto request, int revokedByUserId)
     {
         var consent = await _context.Set<PatientConsent>().FindAsync(request.ConsentId);
         if (consent == null)
-            return false;
+            throw new InvalidOperationException("Consent not found");
 
         var oldStatus = consent.Status;
         consent.Status = ConsentStatuses.Revoked;
@@ -150,14 +158,33 @@ public class ConsentService : IConsentService
         await _auditService.LogPHIAccessAsync(revokedByUserId, consent.PatientId, "CONSENT", "REVOKE", request.ConsentId.ToString(), request.Reason);
         _logger.LogInformation("Revoked consent {ConsentId} for patient {PatientId}: {Reason}", consent.Id, consent.PatientId, request.Reason);
 
-        return true;
+        return await GetConsentByIdAsync(consent.Id);
+    }
+
+    public async Task<List<ConsentHistoryDto>> GetConsentHistoryAsync(int consentId)
+    {
+        var history = await _context.Set<ConsentHistory>()
+            .Where(h => h.ConsentId == consentId)
+            .OrderByDescending(h => h.ActionDate)
+            .ToListAsync();
+
+        return history.Select(h => new ConsentHistoryDto
+        {
+            Id = h.Id,
+            Action = h.Action,
+            PreviousStatus = h.PreviousStatus,
+            NewStatus = h.NewStatus,
+            ActionDate = h.ActionDate,
+            ActionByUserId = h.ActionByUserId,
+            Reason = h.Reason
+        }).ToList();
     }
 
     #endregion
 
     #region Consent Verification
 
-    public async Task<ConsentVerificationDto> VerifyConsentAsync(int patientId, string consentType, string? purpose = null)
+    public async Task<ConsentVerificationDto> VerifyConsentAsync(int patientId, string consentType)
     {
         var consent = await _context.Set<PatientConsent>()
             .Where(c => c.PatientId == patientId && c.ConsentType == consentType && c.Status == ConsentStatuses.Active)
@@ -176,7 +203,7 @@ public class ConsentService : IConsentService
         }
 
         var isExpired = consent.ExpirationDate.HasValue && consent.ExpirationDate.Value < DateTime.UtcNow;
-        
+
         if (isExpired)
         {
             // Update status to expired
@@ -184,26 +211,67 @@ public class ConsentService : IConsentService
             await _context.SaveChangesAsync();
         }
 
-        var scope = consent.ScopeJson != null 
-            ? JsonSerializer.Deserialize<ConsentScopeDto>(consent.ScopeJson) 
+        var scope = consent.ScopeJson != null
+            ? JsonSerializer.Deserialize<ConsentScopeDto>(consent.ScopeJson)
             : null;
 
-        // Check purpose if specified
-        if (!string.IsNullOrEmpty(purpose) && scope?.AllowedPurposes != null)
+        return new ConsentVerificationDto
         {
-            if (!scope.AllowedPurposes.Contains(purpose))
+            HasConsent = !isExpired,
+            ConsentType = consentType,
+            Status = consent.Status,
+            GrantedDate = consent.GrantedDate,
+            ExpirationDate = consent.ExpirationDate,
+            IsExpired = isExpired,
+            AllowedPurposes = scope?.AllowedPurposes,
+            DenialReason = isExpired ? "Consent has expired" : null
+        };
+    }
+
+    public async Task<ConsentVerificationDto> VerifyConsentForPurposeAsync(int patientId, string consentType, string purpose)
+    {
+        var consent = await _context.Set<PatientConsent>()
+            .Where(c => c.PatientId == patientId && c.ConsentType == consentType && c.Status == ConsentStatuses.Active)
+            .OrderByDescending(c => c.GrantedDate)
+            .FirstOrDefaultAsync();
+
+        if (consent == null)
+        {
+            return new ConsentVerificationDto
             {
-                return new ConsentVerificationDto
-                {
-                    HasConsent = false,
-                    ConsentType = consentType,
-                    Status = consent.Status,
-                    GrantedDate = consent.GrantedDate,
-                    ExpirationDate = consent.ExpirationDate,
-                    IsExpired = isExpired,
-                    DenialReason = $"Purpose '{purpose}' not covered by consent"
-                };
-            }
+                HasConsent = false,
+                ConsentType = consentType,
+                Status = "NOT_FOUND",
+                DenialReason = $"No active {consentType} consent found for patient"
+            };
+        }
+
+        var isExpired = consent.ExpirationDate.HasValue && consent.ExpirationDate.Value < DateTime.UtcNow;
+
+        if (isExpired)
+        {
+            // Update status to expired
+            consent.Status = ConsentStatuses.Expired;
+            await _context.SaveChangesAsync();
+        }
+
+        var scope = consent.ScopeJson != null
+            ? JsonSerializer.Deserialize<ConsentScopeDto>(consent.ScopeJson)
+            : null;
+
+        // Check purpose
+        if (scope?.AllowedPurposes != null && !scope.AllowedPurposes.Contains(purpose))
+        {
+            return new ConsentVerificationDto
+            {
+                HasConsent = false,
+                ConsentType = consentType,
+                Status = consent.Status,
+                GrantedDate = consent.GrantedDate,
+                ExpirationDate = consent.ExpirationDate,
+                IsExpired = isExpired,
+                DenialReason = $"Purpose '{purpose}' not covered by consent"
+            };
         }
 
         return new ConsentVerificationDto
@@ -217,6 +285,19 @@ public class ConsentService : IConsentService
             AllowedPurposes = scope?.AllowedPurposes,
             DenialReason = isExpired ? "Consent has expired" : null
         };
+    }
+
+    public async Task<Dictionary<string, ConsentVerificationDto>> VerifyMultipleConsentsAsync(int patientId, List<string> consentTypes)
+    {
+        var results = new Dictionary<string, ConsentVerificationDto>();
+
+        foreach (var consentType in consentTypes)
+        {
+            var verification = await VerifyConsentAsync(patientId, consentType);
+            results[consentType] = verification;
+        }
+
+        return results;
     }
 
     public async Task<bool> HasActiveConsentAsync(int patientId, string consentType)
@@ -264,7 +345,7 @@ public class ConsentService : IConsentService
 
     #region Consent Summary
 
-    public async Task<PatientConsentSummaryDto> GetConsentSummaryAsync(int patientId)
+    public async Task<PatientConsentSummaryDto> GetPatientConsentSummaryAsync(int patientId)
     {
         var patient = await _context.Patients.FindAsync(patientId);
         var consents = await _context.Set<PatientConsent>()
@@ -302,12 +383,12 @@ public class ConsentService : IConsentService
         };
     }
 
-    public async Task<List<PatientConsentDto>> GetExpiringConsentsAsync(int daysAhead = 30)
+    public async Task<List<PatientConsentDto>> GetExpiringConsentsAsync(int branchId, int daysAhead = 30)
     {
         var cutoffDate = DateTime.UtcNow.AddDays(daysAhead);
         var consents = await _context.Set<PatientConsent>()
             .Include(c => c.Patient)
-            .Where(c => c.Status == ConsentStatuses.Active && c.ExpirationDate != null && c.ExpirationDate <= cutoffDate)
+            .Where(c => c.Patient.BranchId == branchId && c.Status == ConsentStatuses.Active && c.ExpirationDate != null && c.ExpirationDate <= cutoffDate)
             .OrderBy(c => c.ExpirationDate)
             .ToListAsync();
 
@@ -327,15 +408,57 @@ public class ConsentService : IConsentService
         return consents.Select(MapToDto).ToList();
     }
 
+    public async Task<object> GetComplianceReportAsync(int branchId, DateTime startDate, DateTime endDate)
+    {
+        var consents = await _context.Set<PatientConsent>()
+            .Include(c => c.Patient)
+            .Where(c => c.Patient.BranchId == branchId && c.CreatedAt >= startDate && c.CreatedAt <= endDate)
+            .ToListAsync();
+
+        var totalConsents = consents.Count;
+        var activeConsents = consents.Count(c => c.Status == ConsentStatuses.Active);
+        var revokedConsents = consents.Count(c => c.Status == ConsentStatuses.Revoked);
+        var expiredConsents = consents.Count(c => c.Status == ConsentStatuses.Expired);
+        var pendingConsents = consents.Count(c => c.Status == ConsentStatuses.Pending);
+
+        var consentsByType = consents.GroupBy(c => c.ConsentType)
+            .Select(g => new
+            {
+                ConsentType = g.Key,
+                Total = g.Count(),
+                Active = g.Count(c => c.Status == ConsentStatuses.Active),
+                Revoked = g.Count(c => c.Status == ConsentStatuses.Revoked),
+                Expired = g.Count(c => c.Status == ConsentStatuses.Expired)
+            })
+            .ToList();
+
+        return new
+        {
+            BranchId = branchId,
+            StartDate = startDate,
+            EndDate = endDate,
+            TotalConsents = totalConsents,
+            ActiveConsents = activeConsents,
+            RevokedConsents = revokedConsents,
+            ExpiredConsents = expiredConsents,
+            PendingConsents = pendingConsents,
+            ComplianceRate = totalConsents > 0 ? (double)activeConsents / totalConsents * 100 : 0,
+            ConsentsByType = consentsByType,
+            GeneratedAt = DateTime.UtcNow
+        };
+    }
+
     #endregion
 
     #region Templates
 
-    public async Task<List<ConsentFormTemplateDto>> GetConsentTemplatesAsync(string? consentType = null)
+    public async Task<List<ConsentFormTemplateDto>> GetConsentFormTemplatesAsync(string? consentType = null, string? language = null)
     {
         var query = _context.Set<ConsentFormTemplate>().Where(t => t.IsActive);
         if (!string.IsNullOrEmpty(consentType))
             query = query.Where(t => t.ConsentType == consentType);
+        if (!string.IsNullOrEmpty(language))
+            query = query.Where(t => t.Language == language);
 
         var templates = await query.OrderBy(t => t.TemplateName).ToListAsync();
         return templates.Select(t => new ConsentFormTemplateDto
@@ -354,7 +477,7 @@ public class ConsentService : IConsentService
         }).ToList();
     }
 
-    public async Task<ConsentFormTemplateDto> GetTemplateAsync(int templateId)
+    public async Task<ConsentFormTemplateDto?> GetConsentFormTemplateAsync(int templateId)
     {
         var t = await _context.Set<ConsentFormTemplate>().FindAsync(templateId);
         if (t == null) throw new InvalidOperationException("Template not found");
@@ -375,17 +498,35 @@ public class ConsentService : IConsentService
         };
     }
 
-    public async Task<ConsentFormTemplateDto> SaveTemplateAsync(ConsentFormTemplateDto template, int userId)
+    public async Task<ConsentFormTemplateDto> CreateConsentFormTemplateAsync(ConsentFormTemplateDto template)
     {
-        var entity = template.Id > 0 
-            ? await _context.Set<ConsentFormTemplate>().FindAsync(template.Id) 
-            : null;
-
-        if (entity == null)
+        var entity = new ConsentFormTemplate
         {
-            entity = new ConsentFormTemplate { CreatedAt = DateTime.UtcNow };
-            _context.Set<ConsentFormTemplate>().Add(entity);
-        }
+            TemplateName = template.TemplateName,
+            ConsentType = template.ConsentType,
+            ConsentCategory = template.ConsentCategory,
+            Description = template.Description,
+            TemplateContent = template.TemplateContent,
+            Language = template.Language,
+            Version = template.Version,
+            IsActive = template.IsActive,
+            RequiresWitness = template.RequiresWitness,
+            ValidityDays = template.ValidityDays,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        _context.Set<ConsentFormTemplate>().Add(entity);
+        await _context.SaveChangesAsync();
+
+        template.Id = entity.Id;
+        return template;
+    }
+
+    public async Task<ConsentFormTemplateDto?> UpdateConsentFormTemplateAsync(ConsentFormTemplateDto template)
+    {
+        var entity = await _context.Set<ConsentFormTemplate>().FindAsync(template.Id);
+        if (entity == null)
+            return null;
 
         entity.TemplateName = template.TemplateName;
         entity.ConsentType = template.ConsentType;
@@ -400,13 +541,12 @@ public class ConsentService : IConsentService
         entity.UpdatedAt = DateTime.UtcNow;
 
         await _context.SaveChangesAsync();
-        template.Id = entity.Id;
         return template;
     }
 
     public async Task<string> GenerateConsentDocumentAsync(int templateId, int patientId)
     {
-        var template = await GetTemplateAsync(templateId);
+        var template = await GetConsentFormTemplateAsync(templateId);
         var patient = await _context.Patients.FindAsync(patientId);
         
         if (patient == null)
@@ -463,27 +603,22 @@ public class ConsentService : IConsentService
         };
     }
 
-    public async Task<object> ExportToFhirConsentAsync(int consentId)
+    public async Task<ConsentDirectiveDto?> ExportToFhirAsync(int consentId)
     {
-        var consent = await GetConsentAsync(consentId);
-        
-        // Return FHIR R4 Consent resource structure
-        return new
+        var consent = await GetConsentByIdAsync(consentId);
+        if (consent == null) return null;
+
+        return new ConsentDirectiveDto
         {
-            resourceType = "Consent",
-            id = consent.Id.ToString(),
-            status = consent.Status == ConsentStatuses.Active ? "active" : consent.Status == ConsentStatuses.Revoked ? "rejected" : "inactive",
-            scope = new { coding = new[] { new { system = "http://terminology.hl7.org/CodeSystem/consentscope", code = "patient-privacy" } } },
-            category = new[] { new { coding = new[] { new { system = "http://loinc.org", code = "59284-0" } } } },
-            patient = new { reference = $"Patient/{consent.PatientId}" },
-            dateTime = consent.GrantedDate?.ToString("yyyy-MM-ddTHH:mm:ssZ"),
-            provision = new
-            {
-                type = consent.Scope?.AllowDataSharing == true ? "permit" : "deny",
-                period = new { start = consent.GrantedDate?.ToString("yyyy-MM-dd"), end = consent.ExpirationDate?.ToString("yyyy-MM-dd") },
-                actor = consent.Scope?.AllowedRecipients?.Select(r => new { role = new { coding = new[] { new { code = r } } } }),
-                purpose = consent.Scope?.AllowedPurposes?.Select(p => new { coding = new[] { new { code = p } } })
-            }
+            PatientId = consent.PatientId,
+            DirectiveType = consent.Scope?.AllowDataSharing == true ? "permit" : "deny",
+            Status = consent.Status == ConsentStatuses.Active ? "active" : consent.Status == ConsentStatuses.Revoked ? "rejected" : "inactive",
+            StartDate = consent.GrantedDate,
+            EndDate = consent.ExpirationDate,
+            Actors = consent.Scope?.AllowedRecipients,
+            Actions = new List<string> { "access", "collect" },
+            Purposes = consent.Scope?.AllowedPurposes,
+            DataCategories = consent.Scope?.DataCategories
         };
     }
 
@@ -502,7 +637,7 @@ public class ConsentService : IConsentService
             Scope = new ConsentScopeDto { AllowDataSharing = true }
         };
 
-        return await CreateConsentAsync(request, 0);
+        return await GrantConsentAsync(request, 0);
     }
 
     #endregion
@@ -511,17 +646,25 @@ public class ConsentService : IConsentService
 
     public async Task SendConsentReminderAsync(int consentId)
     {
-        var consent = await GetConsentAsync(consentId);
+        var consent = await GetConsentByIdAsync(consentId);
         _logger.LogInformation("Sending consent renewal reminder for consent {ConsentId} to patient {PatientId}", consentId, consent.PatientId);
         // Integration with notification service would go here
     }
 
     public async Task ProcessExpiringConsentsAsync()
     {
-        var expiringConsents = await GetExpiringConsentsAsync(30);
-        foreach (var consent in expiringConsents)
+        // Get all expiring consents across all branches
+        var cutoffDate = DateTime.UtcNow.AddDays(30);
+        var expiringConsents = await _context.Set<PatientConsent>()
+            .Include(c => c.Patient)
+            .Where(c => c.Status == ConsentStatuses.Active && c.ExpirationDate != null && c.ExpirationDate <= cutoffDate)
+            .OrderBy(c => c.ExpirationDate)
+            .Select(c => c.Id)
+            .ToListAsync();
+
+        foreach (var consentId in expiringConsents)
         {
-            await SendConsentReminderAsync(consent.Id);
+            await SendConsentReminderAsync(consentId);
         }
         _logger.LogInformation("Processed {Count} expiring consents", expiringConsents.Count);
     }

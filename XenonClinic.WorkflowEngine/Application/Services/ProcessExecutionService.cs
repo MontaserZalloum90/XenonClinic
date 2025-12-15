@@ -93,7 +93,7 @@ public class ProcessExecutionService : IProcessExecutionService
             StartedAt = now,
             StartedBy = userId,
             ParentInstanceId = request.ParentInstanceId,
-            ParentActivityInstanceId = request.ParentActivityInstanceId,
+            ParentActivityInstanceId = !string.IsNullOrEmpty(request.ParentActivityInstanceId) && Guid.TryParse(request.ParentActivityInstanceId, out var parentActivityGuid) ? parentActivityGuid : (Guid?)null,
             LockHolder = lockHolder,
             LockExpiry = now.Add(LockDuration)
         };
@@ -113,8 +113,8 @@ public class ProcessExecutionService : IProcessExecutionService
         await _context.SaveChangesAsync(cancellationToken);
 
         // Find and execute start event - check both Activities and Elements
-        var startEvent = model.Activities?.OfType<StartEventDefinition>().FirstOrDefault()
-            ?? model.Elements?.OfType<StartEventDefinition>().FirstOrDefault();
+        var startEvent = model.Activities?.Values.OfType<StartEventDefinition>().FirstOrDefault()
+            ?? model.Elements?.Values.OfType<StartEventDefinition>().FirstOrDefault();
         if (startEvent == null)
         {
             throw new InvalidOperationException("Process model has no start event.");
@@ -425,9 +425,14 @@ public class ProcessExecutionService : IProcessExecutionService
 
         try
         {
+            if (!Guid.TryParse(activityInstanceId, out var activityInstanceGuid))
+            {
+                throw new ArgumentException($"Invalid activity instance ID format: '{activityInstanceId}'.");
+            }
+
             var activityInstance = await _context.ActivityInstances
                 .FirstOrDefaultAsync(ai =>
-                    ai.Id == activityInstanceId &&
+                    ai.Id == activityInstanceGuid &&
                     ai.ProcessInstanceId == instanceId, cancellationToken);
 
             if (activityInstance == null)
@@ -559,7 +564,7 @@ public class ProcessExecutionService : IProcessExecutionService
         // Create activity instance
         var activityInstance = new ActivityInstance
         {
-            Id = Guid.NewGuid().ToString(),
+            Id = Guid.NewGuid(),
             ProcessInstanceId = instance.Id,
             ActivityId = activity.Id,
             ActivityName = activity.Name ?? activity.Id,
@@ -664,7 +669,7 @@ public class ProcessExecutionService : IProcessExecutionService
 
                 var job = new AsyncJob
                 {
-                    Id = Guid.NewGuid().ToString(),
+                    Id = Guid.NewGuid(),
                     TenantId = instance.TenantId,
                     ProcessInstanceId = instance.Id,
                     ActivityInstanceId = activityInstance.Id,
@@ -786,7 +791,7 @@ public class ProcessExecutionService : IProcessExecutionService
 
         var task = new HumanTask
         {
-            Id = Guid.NewGuid().ToString(),
+            Id = Guid.NewGuid(),
             TenantId = instance.TenantId,
             ProcessInstanceId = instance.Id,
             ActivityInstanceId = activityInstance.Id,
@@ -796,36 +801,33 @@ public class ProcessExecutionService : IProcessExecutionService
                 ? EvaluateExpression(userTask.Description, variables)
                 : null,
             Status = HumanTaskStatus.Created,
-            Priority = userTask.Priority,
+            Priority = userTask.Priority.HasValue ? (TaskPriority)userTask.Priority.Value : TaskPriority.Normal,
             BusinessKey = instance.BusinessKey,
             CreatedAt = DateTime.UtcNow,
             FormKey = userTask.FormKey
         };
 
         // Handle assignment
-        if (userTask.Assignment != null)
+        if (!string.IsNullOrEmpty(userTask.AssigneeExpression))
         {
-            if (!string.IsNullOrEmpty(userTask.Assignment.AssigneeExpression))
-            {
-                task.AssigneeUserId = EvaluateExpression(userTask.Assignment.AssigneeExpression, variables);
-                task.Status = HumanTaskStatus.Assigned;
-            }
+            task.AssigneeUserId = EvaluateExpression(userTask.AssigneeExpression, variables);
+            task.Status = HumanTaskStatus.Assigned;
+        }
 
-            if (userTask.Assignment.CandidateUserExpressions?.Count > 0)
-            {
-                task.CandidateUserIdsJson = JsonSerializer.Serialize(
-                    userTask.Assignment.CandidateUserExpressions
-                        .Select(e => EvaluateExpression(e, variables))
-                        .ToList());
-            }
+        if (userTask.CandidateUsers?.Count > 0)
+        {
+            task.CandidateUserIdsJson = JsonSerializer.Serialize(
+                userTask.CandidateUsers
+                    .Select(e => EvaluateExpression(e, variables))
+                    .ToList());
+        }
 
-            if (userTask.Assignment.CandidateGroupExpressions?.Count > 0)
-            {
-                task.CandidateGroupsJson = JsonSerializer.Serialize(
-                    userTask.Assignment.CandidateGroupExpressions
-                        .Select(e => EvaluateExpression(e, variables))
-                        .ToList());
-            }
+        if (userTask.CandidateGroups?.Count > 0)
+        {
+            task.CandidateGroupsJson = JsonSerializer.Serialize(
+                userTask.CandidateGroups
+                    .Select(e => EvaluateExpression(e, variables))
+                    .ToList());
         }
 
         // Calculate due date
@@ -1064,14 +1066,14 @@ public class ProcessExecutionService : IProcessExecutionService
         CancellationToken cancellationToken)
     {
         // For embedded sub-process, execute the start event within it
-        var startEvent = subProcess.Activities?.OfType<StartEventDefinition>().FirstOrDefault()
-            ?? subProcess.Elements?.OfType<StartEventDefinition>().FirstOrDefault();
+        var startEvent = subProcess.Activities?.Values.OfType<StartEventDefinition>().FirstOrDefault()
+            ?? subProcess.Elements?.Values.OfType<StartEventDefinition>().FirstOrDefault();
         if (startEvent != null)
         {
             // Create a nested process model context
             var subModel = new ProcessModel
             {
-                Activities = subProcess.Activities ?? subProcess.Elements?.ToList(),
+                Activities = subProcess.Activities ?? subProcess.Elements ?? new(),
                 Elements = subProcess.Elements,
                 SequenceFlows = subProcess.SequenceFlows
             };
@@ -1095,8 +1097,8 @@ public class ProcessExecutionService : IProcessExecutionService
         {
             foreach (var mapping in callActivity.InputMappings)
             {
-                var value = await _expressionEvaluator.EvaluateAsync(mapping.Source, variables);
-                inputVariables[mapping.Target] = value;
+                var value = await _expressionEvaluator.EvaluateAsync(mapping.Key, variables);
+                inputVariables[mapping.Value] = value;
             }
         }
 
@@ -1106,7 +1108,7 @@ public class ProcessExecutionService : IProcessExecutionService
             ProcessKey = callActivity.CalledElement,
             Variables = inputVariables,
             ParentInstanceId = instance.Id,
-            ParentActivityInstanceId = activityInstance.Id
+            ParentActivityInstanceId = activityInstance.Id.ToString()
         };
 
         await StartProcessAsync(startRequest, instance.TenantId, userId, cancellationToken);
@@ -1306,12 +1308,14 @@ public class ProcessExecutionService : IProcessExecutionService
             return null;
 
         // Check Activities collection first
-        var activity = model.Activities?.FirstOrDefault(a => a.Id == activityId);
-        if (activity != null)
+        if (model.Activities?.TryGetValue(activityId, out var activity) == true)
             return activity;
 
         // Fall back to Elements collection
-        return model.Elements?.FirstOrDefault(e => e.Id == activityId);
+        if (model.Elements?.TryGetValue(activityId, out var element) == true)
+            return element;
+
+        return null;
     }
 
     private ProcessInstanceDto MapToDto(ProcessInstance instance, ProcessDefinition? definition)
@@ -1325,7 +1329,7 @@ public class ProcessExecutionService : IProcessExecutionService
             ProcessVersion = instance.ProcessVersion,
             Status = instance.Status,
             BusinessKey = instance.BusinessKey,
-            StartedAt = instance.StartedAt,
+            StartedAt = instance.StartedAt ?? instance.CreatedAt,
             CompletedAt = instance.CompletedAt,
             StartedBy = instance.StartedBy,
             ActiveActivityIds = JsonSerializer.Deserialize<List<string>>(instance.ActiveActivityIdsJson) ?? new()
@@ -1334,6 +1338,7 @@ public class ProcessExecutionService : IProcessExecutionService
 
     private ProcessInstanceSummaryDto MapToSummaryDto(ProcessInstance instance, ProcessDefinition? definition, int activeTaskCount)
     {
+        var activeActivityIds = JsonSerializer.Deserialize<List<string>>(instance.ActiveActivityIdsJson) ?? new();
         return new ProcessInstanceSummaryDto
         {
             Id = instance.Id,
@@ -1346,7 +1351,8 @@ public class ProcessExecutionService : IProcessExecutionService
             StartedAt = instance.StartedAt ?? instance.CreatedAt,
             CompletedAt = instance.CompletedAt,
             StartedBy = instance.InitiatorUserId,
-            ActiveTaskCount = activeTaskCount
+            ActiveTaskCount = activeTaskCount,
+            CurrentActivityId = activeActivityIds.FirstOrDefault()
         };
     }
 
@@ -1366,21 +1372,21 @@ public class ProcessExecutionService : IProcessExecutionService
             CompletedAt = instance.CompletedAt,
             StartedBy = instance.InitiatorUserId,
             ParentInstanceId = instance.ParentInstanceId,
-            ParentActivityInstanceId = instance.ParentActivityId,
-            ErrorMessage = instance.ErrorJson,
+            ParentActivityInstanceId = instance.ParentActivityInstanceId?.ToString(),
+            ErrorMessage = instance.ErrorMessage,
             ActiveActivityIds = JsonSerializer.Deserialize<List<string>>(instance.ActiveActivityIdsJson) ?? new(),
             Variables = instance.Variables.ToDictionary(v => v.Name, v => GetVariableValue(v)),
             ActivityInstances = instance.ActivityInstances.Select(ai => new ActivityInstanceDto
             {
                 Id = ai.Id.ToString(),
-                ActivityId = ai.ActivityDefinitionId,
+                ActivityId = ai.ActivityId,
                 ActivityName = ai.ActivityName,
                 ActivityType = ai.ActivityType,
                 Status = ai.Status,
                 StartedAt = ai.StartedAt ?? DateTime.MinValue,
                 CompletedAt = ai.CompletedAt,
                 ErrorMessage = ai.ErrorMessage,
-                RetryCount = ai.ExecutionCount
+                RetryCount = ai.RetryCount
             }).ToList(),
             ActiveTasks = activeTasks.Select(t => new HumanTaskSummaryDto
             {

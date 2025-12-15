@@ -55,13 +55,13 @@ public class TenantService : ITenantService
         return await GetTenantByIdAsync(tenantId.Value);
     }
 
-    public async Task<TenantSettings?> GetCurrentTenantSettingsAsync()
+    public async Task<XenonClinic.Core.Entities.TenantSettings?> GetCurrentTenantSettingsAsync()
     {
         var tenantId = await GetCurrentTenantIdAsync();
         if (tenantId == null) return null;
 
         var cacheKey = $"tenant_settings_{tenantId}";
-        if (_cache.TryGetValue(cacheKey, out TenantSettings? settings))
+        if (_cache.TryGetValue(cacheKey, out XenonClinic.Core.Entities.TenantSettings? settings))
         {
             return settings;
         }
@@ -147,7 +147,7 @@ public class TenantService : ITenantService
         tenant.CreatedBy = user?.Id;
 
         // Create default settings for the tenant
-        tenant.Settings = new TenantSettings
+        tenant.Settings = new XenonClinic.Core.Entities.TenantSettings
         {
             TenantId = tenant.Id,
             DefaultLanguage = "en",
@@ -267,7 +267,7 @@ public class TenantService : ITenantService
         return true;
     }
 
-    public async Task<TenantSettings> UpdateTenantSettingsAsync(TenantSettings settings)
+    public async Task<XenonClinic.Core.Entities.TenantSettings> UpdateTenantSettingsAsync(XenonClinic.Core.Entities.TenantSettings settings)
     {
         if (!await HasAccessToTenantAsync(settings.TenantId))
         {
@@ -293,7 +293,7 @@ public class TenantService : ITenantService
         // Audit log
         await _auditService.LogAsync(new AuditEntry
         {
-            EntityType = nameof(TenantSettings),
+            EntityType = nameof(XenonClinic.Core.Entities.TenantSettings),
             EntityId = settings.Id.ToString(),
             Action = AuditAction.Update,
             UserId = user?.Id,

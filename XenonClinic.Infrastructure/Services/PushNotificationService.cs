@@ -9,6 +9,7 @@ using XenonClinic.Core.DTOs;
 using XenonClinic.Core.Entities;
 using XenonClinic.Core.Interfaces;
 using XenonClinic.Infrastructure.Data;
+using XenonClinic.Infrastructure.Entities;
 
 namespace XenonClinic.Infrastructure.Services;
 
@@ -2315,7 +2316,7 @@ public class PushDevice
     public DateTime? LastActiveAt { get; set; }
     public DateTime? UnregisteredAt { get; set; }
 
-    public User? User { get; set; }
+    public ApplicationUser? User { get; set; }
     public Patient? Patient { get; set; }
 }
 

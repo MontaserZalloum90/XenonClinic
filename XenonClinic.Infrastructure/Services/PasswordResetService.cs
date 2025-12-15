@@ -159,13 +159,19 @@ public class PasswordResetService : IPasswordResetService
         return new PasswordResetResult(true);
     }
 
-    public PasswordValidationResult ValidatePassword(string password)
+    public XenonClinic.Core.Interfaces.PasswordValidationResult ValidatePassword(string password)
     {
         var errors = new List<string>();
 
         if (string.IsNullOrEmpty(password))
         {
-            return new PasswordValidationResult(false, new List<string> { "Password is required." }, 0);
+            return new XenonClinic.Core.Interfaces.PasswordValidationResult
+            {
+                IsValid = false,
+                Errors = new List<string> { "Password is required." },
+                StrengthScore = 0,
+                StrengthLabel = "Very Weak"
+            };
         }
 
         if (password.Length < _policy.MinimumLength)
@@ -209,8 +215,15 @@ public class PasswordResetService : IPasswordResetService
         }
 
         var strength = CalculatePasswordStrength(password);
+        var strengthLabel = GetStrengthLabel(strength);
 
-        return new PasswordValidationResult(errors.Count == 0, errors, strength);
+        return new XenonClinic.Core.Interfaces.PasswordValidationResult
+        {
+            IsValid = errors.Count == 0,
+            Errors = errors,
+            StrengthScore = strength,
+            StrengthLabel = strengthLabel
+        };
     }
 
     public async Task<bool> IsPasswordCompromisedAsync(string password)
@@ -337,6 +350,18 @@ public class PasswordResetService : IPasswordResetService
     </div>
 </body>
 </html>";
+    }
+
+    private static string GetStrengthLabel(int score)
+    {
+        return score switch
+        {
+            >= 80 => "Strong",
+            >= 60 => "Good",
+            >= 40 => "Fair",
+            >= 20 => "Weak",
+            _ => "Very Weak"
+        };
     }
 
     #endregion

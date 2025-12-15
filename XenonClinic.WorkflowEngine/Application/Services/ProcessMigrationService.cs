@@ -418,7 +418,7 @@ public class ProcessMigrationService : IProcessMigrationService
 
         // Get all active instances for the source definition
         // TODO: QueryInstancesAsync method signature needs to be verified
-        var instances = new PagedResultDto<ProcessInstanceSummary> { Items = new List<ProcessInstanceSummary>(), TotalCount = 0, PageNumber = 1, PageSize = 100 };
+        var instances = new PagedResultDto<ProcessInstanceSummaryDto> { Items = new List<ProcessInstanceSummaryDto>(), TotalCount = 0, PageNumber = 1, PageSize = 100 };
 
         var sourceDefinition = await _definitionService.GetByIdAsync(sourceDefinitionId, tenantId, cancellationToken);
         var targetDefinition = await _definitionService.GetByIdAsync(targetDefinitionId, tenantId, cancellationToken);
@@ -431,7 +431,7 @@ public class ProcessMigrationService : IProcessMigrationService
         {
             var migratable = new MigratableInstance
             {
-                InstanceId = instance.Id,
+                InstanceId = instance.Id.ToString(),
                 BusinessKey = instance.BusinessKey ?? "",
                 CurrentActivityId = instance.CurrentActivityId ?? "",
                 CurrentActivityName = sourceDefinition?.LatestVersionDetail?.Model?.Activities?
@@ -707,9 +707,9 @@ public class ProcessMigrationService : IProcessMigrationService
                     EventType = "ProcessInstance.Migrated",
                     EntityType = "ProcessInstance",
                     EntityId = instance.InstanceId,
-                    Description = $"Migrated from {plan.SourceProcessDefinitionId} v{plan.SourceVersion} to {plan.TargetProcessDefinitionId} v{plan.TargetVersion}",
                     NewValues = new Dictionary<string, object>
                     {
+                        ["description"] = $"Migrated from {plan.SourceProcessDefinitionId} v{plan.SourceVersion} to {plan.TargetProcessDefinitionId} v{plan.TargetVersion}",
                         ["migrationPlanId"] = plan.Id,
                         ["sourceActivity"] = instance.CurrentActivityId,
                         ["targetActivity"] = mapping.TargetActivityId

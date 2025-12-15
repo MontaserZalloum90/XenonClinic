@@ -1,5 +1,4 @@
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Versioning;
+using Asp.Versioning;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace XenonClinic.Infrastructure.Configuration;

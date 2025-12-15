@@ -12,6 +12,7 @@ using XenonClinic.Core.Enums;
 using XenonClinic.Core.Interfaces;
 using XenonClinic.Core.Utilities;
 using XenonClinic.Infrastructure.Data;
+using XenonClinic.Infrastructure.Entities;
 
 namespace XenonClinic.Infrastructure.Services;
 
@@ -2788,7 +2789,7 @@ public class MessageThread
     public bool IsClosed { get; set; }
 
     public Patient? Patient { get; set; }
-    public User? Doctor { get; set; }
+    public ApplicationUser? Doctor { get; set; }
     public ICollection<Message> Messages { get; set; } = new List<Message>();
 }
 

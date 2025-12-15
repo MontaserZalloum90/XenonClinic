@@ -66,7 +66,7 @@ public class ClinicDbContext : IdentityDbContext<Entities.ApplicationUser>
     // Multi-tenancy entities
     public DbSet<Tenant> Tenants => Set<Tenant>();
     public DbSet<Company> Companies => Set<Company>();
-    public DbSet<TenantSettings> TenantSettings => Set<TenantSettings>();
+    public DbSet<XenonClinic.Core.Entities.TenantSettings> TenantSettings => Set<XenonClinic.Core.Entities.TenantSettings>();
     public DbSet<CompanySettings> CompanySettings => Set<CompanySettings>();
 
     // Existing entities
@@ -78,6 +78,8 @@ public class ClinicDbContext : IdentityDbContext<Entities.ApplicationUser>
     public DbSet<PatientDocument> PatientDocuments => Set<PatientDocument>();
     public DbSet<Appointment> Appointments => Set<Appointment>();
     public DbSet<AudiologyVisit> AudiologyVisits => Set<AudiologyVisit>();
+    public DbSet<ClinicalVisit> ClinicalVisits => Set<ClinicalVisit>();
+    public DbSet<Diagnosis> Diagnoses => Set<Diagnosis>();
     public DbSet<Audiogram> Audiograms => Set<Audiogram>();
     public DbSet<HearingDevice> HearingDevices => Set<HearingDevice>();
     public DbSet<Invoice> Invoices => Set<Invoice>();

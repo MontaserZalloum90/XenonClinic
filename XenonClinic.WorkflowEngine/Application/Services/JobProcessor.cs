@@ -158,7 +158,7 @@ public class JobProcessor : IJobProcessor
                 case JobTypes.HttpCall:
                     result = await _serviceTaskExecutor.ExecuteAsync(
                         job.ProcessInstanceId,
-                        job.ActivityInstanceId,
+                        job.ActivityInstanceId?.ToString(),
                         payload ?? new Dictionary<string, object>(),
                         cancellationToken);
                     break;
@@ -178,7 +178,7 @@ public class JobProcessor : IJobProcessor
                     break;
 
                 case JobTypes.RetryActivity:
-                    if (job.ProcessInstanceId.HasValue && !string.IsNullOrEmpty(job.ActivityInstanceId))
+                    if (job.ProcessInstanceId.HasValue && job.ActivityInstanceId.HasValue)
                     {
                         var instance = await _context.ProcessInstances
                             .FirstOrDefaultAsync(i => i.Id == job.ProcessInstanceId, cancellationToken);
@@ -198,7 +198,7 @@ public class JobProcessor : IJobProcessor
                     break;
             }
 
-            await CompleteJobAsync(jobId, cancellationToken);
+            await CompleteJobAsync(jobId, result?.ToString(), cancellationToken);
         }
         catch (Exception ex)
         {

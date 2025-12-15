@@ -843,3 +843,57 @@ public class AlertOverrideAuditDto
 }
 
 #endregion
+
+#region Pregnancy & Lactation
+
+/// <summary>
+/// Pregnancy/lactation check request
+/// </summary>
+public class PregnancyLactationCheckRequestDto
+{
+    [Required]
+    public string MedicationCode { get; set; } = string.Empty;
+
+    public string? MedicationName { get; set; }
+}
+
+/// <summary>
+/// Pregnancy/lactation check result
+/// </summary>
+public class PregnancyLactationCheckResultDto
+{
+    public string MedicationCode { get; set; } = string.Empty;
+    public string MedicationName { get; set; } = string.Empty;
+    public string PregnancyCategory { get; set; } = string.Empty; // A, B, C, D, X
+    public string PregnancyRiskDescription { get; set; } = string.Empty;
+    public bool IsSafeInPregnancy { get; set; }
+    public bool IsSafeWhileBreastfeeding { get; set; }
+    public string LactationRiskDescription { get; set; } = string.Empty;
+    public List<string> Recommendations { get; set; } = new();
+    public string? SourceReference { get; set; }
+}
+
+#endregion
+
+#region Care Gaps
+
+/// <summary>
+/// Care gap DTO for tracking patient care gaps
+/// </summary>
+public class CareGapDto
+{
+    public int Id { get; set; }
+    public int PatientId { get; set; }
+    public string GapType { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
+    public string Priority { get; set; } = string.Empty; // High, Medium, Low
+    public DateTime DueDate { get; set; }
+    public string Status { get; set; } = string.Empty; // Open, Completed, Dismissed
+    public string Recommendation { get; set; } = string.Empty;
+    public string? EvidenceLevel { get; set; } // A, B, C
+    public string? Category { get; set; } // Preventive, Chronic, Screening, etc.
+    public DateTime? CompletedDate { get; set; }
+    public int? CompletedByUserId { get; set; }
+}
+
+#endregion
