@@ -511,7 +511,7 @@ public class InventoryService : IInventoryService
     public async Task<int> GetCurrentStockLevelAsync(int itemId)
     {
         var item = await _context.InventoryItems.FindAsync(itemId);
-        return item?.CurrentStock ?? 0;
+        return item?.QuantityOnHand ?? 0;
     }
 
     public async Task<decimal> GetStockValueAsync(int branchId)
