@@ -2441,7 +2441,7 @@ public class PatientPortalService : IPatientPortalService
                     col.Item().PaddingTop(15).Column(patient =>
                     {
                         patient.Item().Text("RECEIVED FROM:").Bold().FontSize(10);
-                        patient.Item().PaddingTop(5).Text($"{payment.Patient?.FirstName} {payment.Patient?.LastName}");
+                        patient.Item().PaddingTop(5).Text(payment.Patient?.FullNameEn ?? "");
                         patient.Item().Text($"MRN: {payment.Patient?.MRN}");
                     });
 

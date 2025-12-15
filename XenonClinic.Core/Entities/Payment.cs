@@ -27,6 +27,14 @@ public class Payment : IBranchEntity
     public int SaleId { get; set; }
     public Sale Sale { get; set; } = null!;
 
+    // Patient Reference (for easier querying)
+    public int PatientId { get; set; }
+    public Patient Patient { get; set; } = null!;
+
+    // Invoice Reference (optional, for invoice-based payments)
+    public int? InvoiceId { get; set; }
+    public Invoice? Invoice { get; set; }
+
     // Payment Details
     public string? ReferenceNumber { get; set; } // Transaction ID, Check Number, etc.
     public string? BankName { get; set; }
