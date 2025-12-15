@@ -1,9 +1,9 @@
+/* Import shared component styles - must be before @tailwind directives */
+@import "@xenon/ui/styles";
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-/* Import shared component styles */
-@import '@xenon/ui/styles';
 
 @layer base {
   body {
