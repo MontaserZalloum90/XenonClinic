@@ -672,15 +672,15 @@ public class BpmnService : IBpmnService
 
     private static XElement CreateProcessElement(ProcessModel model)
     {
-        var process = new XElement(BpmnNs + "process",
-            new XAttribute("id", model.ProcessDefinitionKey),
-            new XAttribute("name", model.Name ?? ""),
-            new XAttribute("isExecutable", "true"));
+        // Generate a process ID from the start activity or use a default
+        var processId = !string.IsNullOrEmpty(model.StartActivityId)
+            ? $"Process_{model.StartActivityId}"
+            : $"Process_{Guid.NewGuid().ToString("N")[..8]}";
 
-        if (!string.IsNullOrEmpty(model.Documentation))
-        {
-            process.Add(new XElement(BpmnNs + "documentation", model.Documentation));
-        }
+        var process = new XElement(BpmnNs + "process",
+            new XAttribute("id", processId),
+            new XAttribute("name", model.Settings?.Category ?? "Workflow"),
+            new XAttribute("isExecutable", "true"));
 
         // Add activities
         var activities = model.Activities ?? new Dictionary<string, ActivityDefinition>();
@@ -751,9 +751,14 @@ public class BpmnService : IBpmnService
         var diagram = new XElement(BpmndiNs + "BPMNDiagram",
             new XAttribute("id", "BPMNDiagram_1"));
 
+        // Generate a process ID from the start activity or use a default
+        var processId = !string.IsNullOrEmpty(model.StartActivityId)
+            ? $"Process_{model.StartActivityId}"
+            : $"Process_{Guid.NewGuid().ToString("N")[..8]}";
+
         var plane = new XElement(BpmndiNs + "BPMNPlane",
             new XAttribute("id", "BPMNPlane_1"),
-            new XAttribute("bpmnElement", model.ProcessDefinitionKey));
+            new XAttribute("bpmnElement", processId));
 
         // Add shapes for activities
         int x = 150;
