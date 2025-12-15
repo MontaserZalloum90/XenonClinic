@@ -366,6 +366,42 @@ public class DosageRecommendationDto
 
 #endregion
 
+#region Diagnosis Support - Additional DTOs
+
+/// <summary>
+/// Diagnosis request DTO (alias for DiagnosisSuggestionRequestDto for backwards compatibility)
+/// </summary>
+public class DiagnosisRequestDto
+{
+    public List<string>? Symptoms { get; set; }
+}
+
+/// <summary>
+/// Differential diagnosis DTO
+/// </summary>
+public class DifferentialDiagnosisDto
+{
+    public string IcdCode { get; set; } = string.Empty;
+    public string DiagnosisName { get; set; } = string.Empty;
+    public double Probability { get; set; }
+    public List<string> DistinguishingFeatures { get; set; } = new();
+}
+
+/// <summary>
+/// Red flag alert DTO
+/// </summary>
+public class RedFlagAlertDto
+{
+    public string Symptom { get; set; } = string.Empty;
+    public string AlertLevel { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
+    public string RecommendedAction { get; set; } = string.Empty;
+    public bool RequiresImmediateAttention { get; set; }
+    public bool EscalationRequired { get; set; }
+}
+
+#endregion
+
 #region Contraindication Checking
 
 /// <summary>
@@ -698,6 +734,112 @@ public class AlertOverrideDto
     public bool WasReviewed { get; set; }
     public DateTime? ReviewedAt { get; set; }
     public int? ReviewedByUserId { get; set; }
+}
+
+#endregion
+
+#region Additional DTOs for Service Compatibility
+
+/// <summary>
+/// Lab trend analysis DTO (alias for TrendAnalysisDto)
+/// </summary>
+public class LabTrendAnalysisDto
+{
+    public int PatientId { get; set; }
+    public string LabCode { get; set; } = string.Empty;
+    public int AnalysisPeriodMonths { get; set; }
+    public string TrendDirection { get; set; } = string.Empty;
+    public List<LabTrendDataPointDto> DataPoints { get; set; } = new();
+}
+
+/// <summary>
+/// Lab trend data point
+/// </summary>
+public class LabTrendDataPointDto
+{
+    public DateTime Date { get; set; }
+    public decimal Value { get; set; }
+    public string Unit { get; set; } = string.Empty;
+}
+
+/// <summary>
+/// Order set DTO (alias for ClinicalOrderSetDto)
+/// </summary>
+public class OrderSetDto
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string Category { get; set; } = string.Empty;
+    public string? Description { get; set; }
+    public List<OrderSetItemDto> Items { get; set; } = new();
+}
+
+/// <summary>
+/// Create order set DTO
+/// </summary>
+public class CreateOrderSetDto
+{
+    public string Name { get; set; } = string.Empty;
+    public string Category { get; set; } = string.Empty;
+    public string? Description { get; set; }
+    public List<OrderSetItemDto> Items { get; set; } = new();
+}
+
+/// <summary>
+/// Update order set DTO
+/// </summary>
+public class UpdateOrderSetDto
+{
+    public string Name { get; set; } = string.Empty;
+    public string Category { get; set; } = string.Empty;
+    public string? Description { get; set; }
+    public List<OrderSetItemDto> Items { get; set; } = new();
+}
+
+/// <summary>
+/// Risk calculation history DTO
+/// </summary>
+public class RiskCalculationHistoryDto
+{
+    public int Id { get; set; }
+    public int PatientId { get; set; }
+    public string CalculatorId { get; set; } = string.Empty;
+    public DateTime CalculatedAt { get; set; }
+    public double RiskScore { get; set; }
+    public string RiskCategory { get; set; } = string.Empty;
+    public string Interpretation { get; set; } = string.Empty;
+}
+
+/// <summary>
+/// Alert configuration DTO (alias for ClinicalAlertConfigDto)
+/// </summary>
+public class AlertConfigurationDto
+{
+    public int UserId { get; set; }
+    public Dictionary<string, bool> EnabledAlerts { get; set; } = new();
+}
+
+/// <summary>
+/// Update alert configuration DTO
+/// </summary>
+public class UpdateAlertConfigurationDto
+{
+    public Dictionary<string, bool> EnabledAlerts { get; set; } = new();
+}
+
+/// <summary>
+/// Alert override audit DTO (alias for AlertOverrideDto)
+/// </summary>
+public class AlertOverrideAuditDto
+{
+    public int OverrideId { get; set; }
+    public int AlertId { get; set; }
+    public string AlertType { get; set; } = string.Empty;
+    public string OverrideReason { get; set; } = string.Empty;
+    public int OverriddenByUserId { get; set; }
+    public string OverriddenByUserName { get; set; } = string.Empty;
+    public DateTime OverriddenAt { get; set; }
+    public int PatientId { get; set; }
 }
 
 #endregion

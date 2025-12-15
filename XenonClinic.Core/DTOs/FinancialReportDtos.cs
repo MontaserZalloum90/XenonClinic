@@ -525,3 +525,100 @@ public class AgingReportRequestDto
 }
 
 #endregion
+
+#region Additional DTOs for Service Compatibility
+
+/// <summary>
+/// Income Statement DTO
+/// </summary>
+public class IncomeStatementDto
+{
+    public DateTime PeriodStart { get; set; }
+    public DateTime PeriodEnd { get; set; }
+    public string Currency { get; set; } = "AED";
+    public List<IncomeStatementLineDto>? RevenueItems { get; set; }
+    public decimal TotalRevenue { get; set; }
+    public List<IncomeStatementLineDto>? ExpenseItems { get; set; }
+    public decimal TotalExpenses { get; set; }
+    public decimal NetIncome { get; set; }
+    public DateTime GeneratedAt { get; set; } = DateTime.UtcNow;
+}
+
+/// <summary>
+/// Income Statement Line Item DTO
+/// </summary>
+public class IncomeStatementLineDto
+{
+    public string AccountCode { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
+    public decimal Amount { get; set; }
+    public string? Category { get; set; }
+}
+
+/// <summary>
+/// Balance Sheet DTO (alias for BalanceSheetReportDto)
+/// </summary>
+public class BalanceSheetDto
+{
+    public DateTime AsOfDate { get; set; }
+    public string Currency { get; set; } = "AED";
+    public List<BalanceSheetLineDto>? CurrentAssets { get; set; }
+    public decimal TotalCurrentAssets { get; set; }
+    public List<BalanceSheetLineDto>? NonCurrentAssets { get; set; }
+    public decimal TotalNonCurrentAssets { get; set; }
+    public decimal TotalAssets { get; set; }
+    public List<BalanceSheetLineDto>? CurrentLiabilities { get; set; }
+    public decimal TotalCurrentLiabilities { get; set; }
+    public List<BalanceSheetLineDto>? NonCurrentLiabilities { get; set; }
+    public decimal TotalNonCurrentLiabilities { get; set; }
+    public decimal TotalLiabilities { get; set; }
+    public decimal TotalEquity { get; set; }
+    public DateTime GeneratedAt { get; set; } = DateTime.UtcNow;
+}
+
+/// <summary>
+/// Balance Sheet Line DTO (alias for BalanceSheetLineItemDto)
+/// </summary>
+public class BalanceSheetLineDto
+{
+    public string AccountCode { get; set; } = string.Empty;
+    public string AccountName { get; set; } = string.Empty;
+    public decimal Balance { get; set; }
+    public decimal? PriorPeriodBalance { get; set; }
+}
+
+/// <summary>
+/// Cash Flow Line DTO (alias for CashFlowLineItemDto)
+/// </summary>
+public class CashFlowLineDto
+{
+    public string Description { get; set; } = string.Empty;
+    public decimal Amount { get; set; }
+    public bool IsInflow { get; set; }
+    public string? Category { get; set; }
+}
+
+/// <summary>
+/// Revenue Report DTO
+/// </summary>
+public class RevenueReportDto
+{
+    public DateTime PeriodStart { get; set; }
+    public DateTime PeriodEnd { get; set; }
+    public string Currency { get; set; } = "AED";
+    public decimal TotalRevenue { get; set; }
+    public List<RevenueLineDto> RevenueLines { get; set; } = new();
+    public DateTime GeneratedAt { get; set; } = DateTime.UtcNow;
+}
+
+/// <summary>
+/// Revenue Line DTO
+/// </summary>
+public class RevenueLineDto
+{
+    public string Source { get; set; } = string.Empty;
+    public decimal Amount { get; set; }
+    public decimal Percentage { get; set; }
+}
+
+#endregion
