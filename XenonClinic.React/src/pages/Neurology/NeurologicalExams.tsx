@@ -17,7 +17,6 @@ interface NeurologicalExamsProps {
 }
 
 export const NeurologicalExams = ({ patientId }: NeurologicalExamsProps = {}) => {
-  const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [isModalOpen, setIsModalOpen] = useState(false);

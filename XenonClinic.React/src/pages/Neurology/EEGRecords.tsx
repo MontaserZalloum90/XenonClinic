@@ -18,7 +18,6 @@ interface EEGRecordsProps {
 }
 
 export const EEGRecords = ({ patientId }: EEGRecordsProps = {}) => {
-  const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("");
   const [isModalOpen, setIsModalOpen] = useState(false);

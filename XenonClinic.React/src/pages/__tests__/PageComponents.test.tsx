@@ -465,7 +465,7 @@ const MockLoginPage = ({
 
 // Tests
 describe('Dashboard Page Tests', () => {
-  #region Rendering Tests
+  // Rendering Tests
   describe('Rendering', () => {
     it('renders dashboard', () => {
       render(<MockDashboard />);

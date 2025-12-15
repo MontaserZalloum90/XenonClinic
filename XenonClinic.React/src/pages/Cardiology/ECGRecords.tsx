@@ -17,7 +17,6 @@ interface ECGRecordsProps {
 }
 
 export const ECGRecords = ({ patientId }: ECGRecordsProps = {}) => {
-  const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [isModalOpen, setIsModalOpen] = useState(false);

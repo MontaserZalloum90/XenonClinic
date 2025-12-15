@@ -7,7 +7,6 @@ import {
   CalendarIcon,
   DocumentTextIcon,
   ExclamationTriangleIcon,
-  PlusIcon,
 } from '@heroicons/react/24/outline';
 import { format } from 'date-fns';
 import type { PediatricStatistics } from '../../types/pediatrics';

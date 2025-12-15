@@ -161,7 +161,7 @@ const DiagnosisForm = ({
 
   const updateMutation = useMutation({
     mutationFn: (data: DiagnosisFormData) =>
-      diagnosisApi.update(diagnosis!.id, { ...data, id: diagnosis!.id } as any),
+      diagnosisApi.update(diagnosis!.id, { ...data, id: diagnosis!.id } as Partial<CancerDiagnosis>),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cancer-diagnoses'] });
       onSuccess();

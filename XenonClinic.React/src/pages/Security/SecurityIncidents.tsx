@@ -36,7 +36,6 @@ export function SecurityIncidents() {
   const [searchTerm, setSearchTerm] = useState('');
   const [severityFilter, setSeverityFilter] = useState<SecurityAlertSeverity | 'all'>('all');
   const [statusFilter, setStatusFilter] = useState<SecurityIncident['status'] | 'all'>('all');
-  const queryClient = useQueryClient();
 
   const { data: incidents = [], isLoading } = useQuery({
     queryKey: ['security-incidents'],

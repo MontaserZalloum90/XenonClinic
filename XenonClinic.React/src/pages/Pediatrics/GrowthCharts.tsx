@@ -5,8 +5,6 @@ import {
   MagnifyingGlassIcon,
   PlusIcon,
   ChartBarIcon,
-  ArrowTrendingUpIcon,
-  ExclamationTriangleIcon,
 } from '@heroicons/react/24/outline';
 import { format } from 'date-fns';
 import type { GrowthMeasurement, CreateGrowthMeasurementRequest } from '../../types/pediatrics';

@@ -15,6 +15,7 @@ export const PortalLogin = () => {
   useEffect(() => {
     // Show success message if coming from registration
     if (location.state?.message) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSuccessMessage(location.state.message);
     }
   }, [location]);
