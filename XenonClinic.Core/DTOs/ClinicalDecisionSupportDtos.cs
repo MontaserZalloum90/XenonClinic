@@ -94,11 +94,14 @@ public class AllergyCheckRequestDto
 public class AllergyAlertDto
 {
     public int AlertId { get; set; }
+    public string AllergyName { get; set; } = string.Empty;
     public string AllergenName { get; set; } = string.Empty;
+    public string AllergenCode { get; set; } = string.Empty;
     public string AllergenType { get; set; } = string.Empty; // Drug, DrugClass, Ingredient, CrossReactive
     public string MedicationName { get; set; } = string.Empty;
     public string MedicationCode { get; set; } = string.Empty;
-    public string Severity { get; set; } = string.Empty; // Contraindicated, Warning, Caution
+    public string Severity { get; set; } = string.Empty; // Contraindicated, Warning, Caution, High, Moderate, Severe
+    public string ReactionType { get; set; } = string.Empty;
     public string PreviousReaction { get; set; } = string.Empty;
     public string PreviousReactionSeverity { get; set; } = string.Empty;
     public DateTime? ReactionDate { get; set; }
@@ -106,8 +109,11 @@ public class AllergyAlertDto
     public string Description { get; set; } = string.Empty;
     public string Recommendation { get; set; } = string.Empty;
     public List<string>? AlternativeMedications { get; set; }
+    public bool CrossReactivity { get; set; }
     public bool IsCrossReactivity { get; set; }
     public string? CrossReactivityExplanation { get; set; }
+    public bool CanOverride { get; set; }
+    public bool RequiresDocumentation { get; set; }
 }
 
 /// <summary>
