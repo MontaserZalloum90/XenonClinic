@@ -1068,6 +1068,7 @@ public class FinancialController : BaseApiController
             InvoiceDate = invoice.InvoiceDate,
             DueDate = invoice.DueDate,
             Status = invoice.Status,
+            PaymentStatus = invoice.PaymentStatus,
             SubTotal = invoice.SubTotal,
             DiscountPercentage = invoice.DiscountPercentage,
             DiscountAmount = invoice.DiscountAmount,

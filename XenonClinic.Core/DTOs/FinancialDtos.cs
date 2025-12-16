@@ -92,6 +92,17 @@ public class InvoiceDto
         InvoiceStatus.Refunded => "Refunded",
         _ => "Unknown"
     };
+    public PaymentStatus PaymentStatus { get; set; }
+    public string PaymentStatusDisplay => PaymentStatus switch
+    {
+        Enums.PaymentStatus.Pending => "Pending",
+        Enums.PaymentStatus.Partial => "Partial",
+        Enums.PaymentStatus.Paid => "Paid",
+        Enums.PaymentStatus.Refunded => "Refunded",
+        Enums.PaymentStatus.Overdue => "Overdue",
+        Enums.PaymentStatus.Cancelled => "Cancelled",
+        _ => "Unknown"
+    };
     public decimal SubTotal { get; set; }
     public decimal? DiscountPercentage { get; set; }
     public decimal? DiscountAmount { get; set; }

@@ -554,6 +554,7 @@ public static class SeedData
                 visits.Add(visit);
                 audiograms.Add(new Audiogram
                 {
+                    PatientId = patient.Id,
                     RawDataJson = "{\"500\":30,\"1000\":35,\"2000\":40,\"4000\":45}",
                     Notes = "Seeded audiogram",
                     Visit = visit
