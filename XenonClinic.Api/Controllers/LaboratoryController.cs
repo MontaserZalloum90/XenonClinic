@@ -1286,8 +1286,7 @@ public class LaboratoryController : BaseApiController
 
     private bool HasBranchAccess(int branchId)
     {
-        return _currentUserService.BranchId == branchId ||
-               _currentUserService.HasRole("SuperAdmin");
+        return _currentUserService.BranchId == branchId;
     }
 
     private static LabTestDto MapToLabTestDto(LabTest test)

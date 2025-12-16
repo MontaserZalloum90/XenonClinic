@@ -781,8 +781,8 @@ public class RadiologyController : BaseApiController
             CompletedDate = order.CompletedDate,
             ApprovedDate = order.ApprovedDate,
             ApprovedBy = order.ApprovedBy,
-            ItemCount = order.OrderItems.Count,
-            Items = order.OrderItems.Select(MapToRadiologyOrderItemDto).ToList(),
+            ItemCount = order.Items.Count,
+            Items = order.Items.Select(MapToRadiologyOrderItemDto).ToList(),
             Results = order.Results.Select(MapToImagingResultDto).ToList(),
             CreatedAt = order.CreatedAt,
             CreatedBy = order.CreatedBy,
@@ -800,7 +800,7 @@ public class RadiologyController : BaseApiController
             ImagingStudyId = item.LabTestId,
             StudyCode = item.LabTest?.TestCode,
             StudyName = item.LabTest?.TestName,
-            Modality = Enum.TryParse<ImagingModality>(item.LabTest?.Category, out var modality) ? modality : ImagingModality.Other,
+            Modality = item.LabTest?.Category == TestCategory.Imaging ? ImagingModality.XRay : ImagingModality.Other,
             Price = item.Price,
             FinalPrice = item.Price,
             Notes = item.Notes
@@ -817,8 +817,7 @@ public class RadiologyController : BaseApiController
             RadiologyOrderItemId = result.LabOrderItemId,
             ImagingStudyId = result.LabTestId,
             StudyName = result.LabTest?.TestName,
-            Modality = result.LabTest != null && Enum.TryParse<ImagingModality>(result.LabTest.Category, out var modality)
-                ? modality : ImagingModality.Other,
+            Modality = result.LabTest?.Category == TestCategory.Imaging ? ImagingModality.XRay : ImagingModality.Other,
             Status = MapToImagingResultStatus(result.Status),
             ResultDate = result.ResultDate,
             Findings = result.Interpretation,
@@ -860,7 +859,7 @@ public class RadiologyController : BaseApiController
             LabResultStatus.InProgress => ImagingResultStatus.InProgress,
             LabResultStatus.Completed => ImagingResultStatus.Final,
             LabResultStatus.Verified => ImagingResultStatus.Verified,
-            LabResultStatus.Cancelled => ImagingResultStatus.Cancelled,
+            // LabResultStatus doesn't have Cancelled, map to default
             _ => ImagingResultStatus.Pending
         };
     }

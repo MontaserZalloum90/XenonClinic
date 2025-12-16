@@ -791,7 +791,7 @@ public class InventoryController : BaseApiController
             var transaction = new InventoryTransaction
             {
                 InventoryItemId = dto.InventoryItemId,
-                TransactionType = dto.TransactionType,
+                TransactionType = (TransactionType)(int)dto.TransactionType,
                 Quantity = dto.Quantity,
                 UnitPrice = dto.UnitPrice,
                 TotalAmount = dto.Quantity * dto.UnitPrice,
@@ -930,8 +930,7 @@ public class InventoryController : BaseApiController
 
     private bool HasBranchAccess(int branchId)
     {
-        return _currentUserService.BranchId == branchId ||
-               _currentUserService.HasRole("SuperAdmin");
+        return _currentUserService.BranchId == branchId;
     }
 
     private static InventoryItemDto MapToInventoryItemDto(InventoryItem item)
@@ -973,7 +972,7 @@ public class InventoryController : BaseApiController
             InventoryItemId = transaction.InventoryItemId,
             ItemCode = item?.ItemCode ?? string.Empty,
             ItemName = item?.Name ?? string.Empty,
-            TransactionType = transaction.TransactionType,
+            TransactionType = (InventoryTransactionType)(int)transaction.TransactionType,
             Quantity = transaction.Quantity,
             UnitPrice = transaction.UnitPrice,
             TotalAmount = transaction.TotalAmount,
