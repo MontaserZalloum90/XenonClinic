@@ -320,7 +320,10 @@ public class RadiologyController : BaseApiController
     public async Task<IActionResult> CreateRadiologyOrder([FromBody] CreateRadiologyOrderDto dto)
     {
         var branchId = _currentUserService.BranchId;
-        var orderNumber = await _radiologyService.GenerateRadiologyOrderNumberAsync(branchId);
+        if (branchId == null)
+            return ApiBadRequest("Branch context is required");
+
+        var orderNumber = await _radiologyService.GenerateRadiologyOrderNumberAsync(branchId.Value);
 
         var order = new LabOrder
         {
@@ -570,6 +573,10 @@ public class RadiologyController : BaseApiController
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> CreateImagingResult([FromBody] CreateImagingResultDto dto)
     {
+        var branchId = _currentUserService.BranchId;
+        if (branchId == null)
+            return ApiBadRequest("Branch context is required");
+
         var result = new LabResult
         {
             LabOrderId = dto.RadiologyOrderId,
@@ -579,7 +586,7 @@ public class RadiologyController : BaseApiController
             Interpretation = dto.Findings,
             Notes = dto.Notes,
             AttachmentPath = dto.ImagePath,
-            BranchId = _currentUserService.BranchId,
+            BranchId = branchId.Value,
             CreatedAt = DateTime.UtcNow,
             CreatedBy = _currentUserService.UserId
         };
@@ -694,15 +701,18 @@ public class RadiologyController : BaseApiController
         [FromQuery] DateTime? endDate = null)
     {
         var branchId = _currentUserService.BranchId;
+        if (branchId == null)
+            return ApiBadRequest("Branch context is required");
+
         var start = startDate ?? DateTime.UtcNow.AddMonths(-1);
         var end = endDate ?? DateTime.UtcNow;
 
-        var totalOrders = await _radiologyService.GetTotalRadiologyOrdersCountAsync(branchId);
-        var pendingOrders = await _radiologyService.GetPendingRadiologyOrdersCountAsync(branchId);
-        var completedOrders = await _radiologyService.GetCompletedRadiologyOrdersCountAsync(branchId, start, end);
-        var totalRevenue = await _radiologyService.GetTotalRadiologyRevenueAsync(branchId, start, end);
-        var topStudies = await _radiologyService.GetMostOrderedStudiesAsync(branchId, 10);
-        var modalityDistribution = await _radiologyService.GetOrdersByModalityDistributionAsync(branchId);
+        var totalOrders = await _radiologyService.GetTotalRadiologyOrdersCountAsync(branchId.Value);
+        var pendingOrders = await _radiologyService.GetPendingRadiologyOrdersCountAsync(branchId.Value);
+        var completedOrders = await _radiologyService.GetCompletedRadiologyOrdersCountAsync(branchId.Value, start, end);
+        var totalRevenue = await _radiologyService.GetTotalRadiologyRevenueAsync(branchId.Value, start, end);
+        var topStudies = await _radiologyService.GetMostOrderedStudiesAsync(branchId.Value, 10);
+        var modalityDistribution = await _radiologyService.GetOrdersByModalityDistributionAsync(branchId.Value);
 
         var statistics = new RadiologyStatisticsDto
         {
@@ -732,7 +742,10 @@ public class RadiologyController : BaseApiController
     public async Task<IActionResult> GetModalityDistribution()
     {
         var branchId = _currentUserService.BranchId;
-        var distribution = await _radiologyService.GetOrdersByModalityDistributionAsync(branchId);
+        if (branchId == null)
+            return ApiBadRequest("Branch context is required");
+
+        var distribution = await _radiologyService.GetOrdersByModalityDistributionAsync(branchId.Value);
         return ApiOk(distribution);
     }
 
@@ -744,7 +757,10 @@ public class RadiologyController : BaseApiController
     public async Task<IActionResult> GetTopStudies([FromQuery] int count = 10)
     {
         var branchId = _currentUserService.BranchId;
-        var topStudies = await _radiologyService.GetMostOrderedStudiesAsync(branchId, count);
+        if (branchId == null)
+            return ApiBadRequest("Branch context is required");
+
+        var topStudies = await _radiologyService.GetMostOrderedStudiesAsync(branchId.Value, count);
 
         var topStudyDtos = topStudies.Select(t => new TopImagingStudyDto
         {
