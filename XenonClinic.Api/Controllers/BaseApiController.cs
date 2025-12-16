@@ -14,7 +14,7 @@ public abstract class BaseApiController : ControllerBase
     /// </summary>
     protected IActionResult ApiOk<T>(T data, string? message = null)
     {
-        return Ok(ApiResponse<T>.Success(data, message));
+        return Ok(ApiResponse<T>.SuccessResult(data, message));
     }
 
     /// <summary>
@@ -30,7 +30,7 @@ public abstract class BaseApiController : ControllerBase
     /// </summary>
     protected IActionResult ApiCreated<T>(T data, string? location = null, string? message = null)
     {
-        var response = ApiResponse<T>.Success(data, message ?? "Resource created successfully");
+        var response = ApiResponse<T>.SuccessResult(data, message ?? "Resource created successfully");
         if (!string.IsNullOrEmpty(location))
         {
             return Created(location, response);
@@ -150,7 +150,7 @@ public abstract class BaseApiController : ControllerBase
             PageSize = pageSize
         };
 
-        return Ok(ApiResponse<PaginatedResponse<T>>.Success(paginatedResponse, message));
+        return Ok(ApiResponse<PaginatedResponse<T>>.SuccessResult(paginatedResponse, message));
     }
 }
 
@@ -187,7 +187,7 @@ public class ApiResponse<T> : ApiResponse
 {
     public T? Data { get; set; }
 
-    public static ApiResponse<T> Success(T data, string? message = null) => new()
+    public static ApiResponse<T> SuccessResult(T data, string? message = null) => new()
     {
         Success = true,
         Data = data,

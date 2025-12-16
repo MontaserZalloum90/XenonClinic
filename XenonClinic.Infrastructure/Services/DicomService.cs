@@ -554,7 +554,7 @@ public class DicomService : IDicomService
         var response = new DicomExportResponseDto();
 
         var studies = await _context.DicomStudies
-            .Include(s => s.Series)
+            .Include(s => s.Series!)
             .ThenInclude(ser => ser.Instances)
             .Where(s => s.BranchId == branchId && request.StudyInstanceUids.Contains(s.StudyInstanceUid))
             .ToListAsync();
