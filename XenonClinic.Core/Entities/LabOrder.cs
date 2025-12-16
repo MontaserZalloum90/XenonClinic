@@ -73,6 +73,12 @@ public class LabOrder : IBranchEntity
 
     public bool IsUrgent { get; set; } = false;
 
+    public string? TestName { get; set; }
+    public string? TestCode { get; set; }
+    public DateTime? ResultDate { get; set; }
+    public bool IsAbnormal { get; set; } = false;
+    public string? Comments { get; set; }
+
     public string? ClinicalNotes { get; set; }
 
     public string? Notes { get; set; }

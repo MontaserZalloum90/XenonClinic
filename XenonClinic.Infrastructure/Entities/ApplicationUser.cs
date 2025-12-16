@@ -13,12 +13,18 @@ public class ApplicationUser : IdentityUser, IApplicationUser
     public int? TenantId { get; set; }
     public int? CompanyId { get; set; }
     public int? PrimaryBranchId { get; set; }
+    public int? BranchId { get; set; } // Alias for PrimaryBranchId for compatibility
 
     /// <summary>
     /// The default branch for this user when no specific branch is selected.
     /// Falls back to PrimaryBranchId if not set.
     /// </summary>
     public int? DefaultBranchId { get; set; }
+
+    /// <summary>
+    /// User's primary role (for compatibility with legacy code)
+    /// </summary>
+    public string? Role { get; set; }
 
     /// <summary>
     /// Whether this user is a company administrator with access to all branches
@@ -60,6 +66,37 @@ public class ApplicationUser : IdentityUser, IApplicationUser
     /// Last external login timestamp
     /// </summary>
     public DateTime? LastExternalLoginAt { get; set; }
+
+    // Doctor/Medical Professional properties (for users who are also doctors)
+    /// <summary>
+    /// Medical specialty (if user is a doctor)
+    /// </summary>
+    public string? Specialty { get; set; }
+
+    /// <summary>
+    /// Profile photo path (if user is a doctor)
+    /// </summary>
+    public string? PhotoPath { get; set; }
+
+    /// <summary>
+    /// Biography/profile text (if user is a doctor)
+    /// </summary>
+    public string? Bio { get; set; }
+
+    /// <summary>
+    /// Whether this doctor accepts new patients
+    /// </summary>
+    public bool AcceptsNewPatients { get; set; } = true;
+
+    /// <summary>
+    /// Whether this doctor offers telemedicine
+    /// </summary>
+    public bool OffersTelemedicine { get; set; } = false;
+
+    /// <summary>
+    /// Consultation fee (if user is a doctor)
+    /// </summary>
+    public decimal? ConsultationFee { get; set; }
 
     // Navigation properties - these reference Core entities
     // Note: These are configured in DbContext, not using attributes to avoid circular references

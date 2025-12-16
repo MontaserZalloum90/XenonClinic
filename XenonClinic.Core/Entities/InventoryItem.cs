@@ -8,6 +8,13 @@ public class InventoryItem : IBranchEntity
     public int Id { get; set; }
     public string ItemCode { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Alias for Name for compatibility
+    /// </summary>
+    [System.ComponentModel.DataAnnotations.Schema.NotMapped]
+    public string ItemName { get => Name; set => Name = value; }
+
     public string Description { get; set; } = string.Empty;
     public InventoryCategory Category { get; set; }
     public int BranchId { get; set; }
@@ -16,6 +23,7 @@ public class InventoryItem : IBranchEntity
     public int QuantityOnHand { get; set; }
     public int ReorderLevel { get; set; }
     public int MaxStockLevel { get; set; }
+    public DateTime? LastRestockDate { get; set; }
 
     // Pricing
     public decimal CostPrice { get; set; }

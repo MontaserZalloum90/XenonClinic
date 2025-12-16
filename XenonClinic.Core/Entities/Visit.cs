@@ -21,7 +21,21 @@ public class Visit : IBranchEntity
     public string Status { get; set; } = "Scheduled"; // Scheduled, InProgress, Completed, Cancelled
 
     public string? ChiefComplaint { get; set; }
+    public string? HistoryOfPresentIllness { get; set; }
+    public string? Assessment { get; set; }
+    public string? Plan { get; set; }
+    public string? FollowUpInstructions { get; set; }
+    public DateTime? NextFollowUpDate { get; set; }
     public string? Notes { get; set; }
+    public string? VitalSigns { get; set; }
+
+    // Visit flags
+    public bool HasDiagnosis { get; set; }
+    public bool HasPrescription { get; set; }
+    public bool HasLabOrders { get; set; }
+
+    // Diagnoses (stored as JSON or separate collection)
+    public string? Diagnoses { get; set; }
 
     // Audit fields
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

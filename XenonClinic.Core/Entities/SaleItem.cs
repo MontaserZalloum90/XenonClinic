@@ -18,6 +18,7 @@ public class SaleItem
     // Item Details (stored for history even if inventory item is deleted)
     public string ItemName { get; set; } = string.Empty;
     public string? ItemDescription { get; set; }
+    public string? Description { get; set; } // Alias for ItemDescription for compatibility
     public string? ItemCode { get; set; }
 
     // Pricing

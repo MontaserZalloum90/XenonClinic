@@ -21,6 +21,7 @@ public class Employee : IBranchEntity
     public string LastName => FullNameEn?.Split(' ').Skip(1).FirstOrDefault() ??
                               (FullNameEn?.Split(' ').Length > 1 ? string.Join(" ", FullNameEn.Split(' ').Skip(1)) : string.Empty);
     public string EmiratesId { get; set; } = string.Empty;
+    public string? LaborCardNumber { get; set; }
     public DateTime DateOfBirth { get; set; }
     public string Gender { get; set; } = string.Empty; // M/F
     public string Nationality { get; set; } = string.Empty;
@@ -47,6 +48,13 @@ public class Employee : IBranchEntity
     public decimal? HousingAllowance { get; set; }
     public decimal? TransportAllowance { get; set; }
     public decimal? OtherAllowances { get; set; }
+
+    // Banking Information
+    public string? BankName { get; set; }
+    public string? BankCode { get; set; }
+    public string? BankAccountNumber { get; set; }
+    public string? IbanNumber { get; set; }
+    public string? IBAN { get; set; } // Alias for IbanNumber for compatibility
 
     // Leave Balances
     public int AnnualLeaveBalance { get; set; } = 30; // Days per year

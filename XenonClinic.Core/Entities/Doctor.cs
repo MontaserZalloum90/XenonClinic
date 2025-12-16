@@ -21,6 +21,7 @@ public class Doctor : IBranchEntity
     public string FullName => $"{FirstName} {MiddleName} {LastName}".Replace("  ", " ").Trim();
 
     public string? Title { get; set; } // Dr., Prof., etc.
+    public string? Gender { get; set; }
     public string? Specialty { get; set; }
     public string? SubSpecialty { get; set; }
     public string? Qualification { get; set; }

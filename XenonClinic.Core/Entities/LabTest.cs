@@ -11,9 +11,18 @@ public class LabTest
     [MaxLength(50)]
     public string TestCode { get; set; } = string.Empty;
 
+    [MaxLength(50)]
+    public string? LoincCode { get; set; }
+
     [Required]
     [MaxLength(200)]
     public string TestName { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Alias for TestName for compatibility
+    /// </summary>
+    [System.ComponentModel.DataAnnotations.Schema.NotMapped]
+    public string Name { get => TestName; set => TestName = value; }
 
     [MaxLength(500)]
     public string? Description { get; set; }

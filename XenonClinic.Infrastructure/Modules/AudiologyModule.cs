@@ -59,6 +59,12 @@ public class AudiologyModule : ModuleBase
             entity.ToTable("Audiograms");
             entity.HasKey(e => e.Id);
             entity.HasIndex(e => e.AudiologyVisitId);
+            entity.HasIndex(e => e.PatientId);
+
+            entity.HasOne(e => e.Patient)
+                .WithMany()
+                .HasForeignKey(e => e.PatientId)
+                .OnDelete(DeleteBehavior.Restrict);
 
             entity.HasOne(e => e.Visit)
                 .WithOne(v => v.Audiogram)

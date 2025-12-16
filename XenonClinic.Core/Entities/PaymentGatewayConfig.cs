@@ -52,9 +52,19 @@ public class PaymentGatewayConfig : IBranchEntity
     public string? ApiSecret { get; set; }
 
     /// <summary>
+    /// Encrypted secret key (alias for ApiSecret for compatibility)
+    /// </summary>
+    public string? EncryptedSecretKey { get => ApiSecret; set => ApiSecret = value; }
+
+    /// <summary>
     /// Webhook secret for verifying callbacks
     /// </summary>
     public string? WebhookSecret { get; set; }
+
+    /// <summary>
+    /// Encrypted webhook secret (alias for WebhookSecret for compatibility)
+    /// </summary>
+    public string? EncryptedWebhookSecret { get => WebhookSecret; set => WebhookSecret = value; }
 
     /// <summary>
     /// Merchant ID (for providers that require it)

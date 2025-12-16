@@ -48,9 +48,21 @@ public class Payslip
     public decimal FoodAllowance { get; set; }
     public decimal OtherAllowances { get; set; }
     public decimal Overtime { get; set; }
+    public decimal OvertimePay { get; set; }
     public decimal Bonus { get; set; }
     public decimal Commission { get; set; }
     public decimal GrossPay { get; set; }
+
+    /// <summary>
+    /// Alias for GrossPay for compatibility
+    /// </summary>
+    [System.ComponentModel.DataAnnotations.Schema.NotMapped]
+    public decimal GrossSalary { get => GrossPay; set => GrossPay = value; }
+
+    // Year-to-Date Totals
+    public decimal YtdGross { get; set; }
+    public decimal YtdTax { get; set; }
+    public decimal YtdNet { get; set; }
 
     // Deductions
     public decimal SocialInsurance { get; set; }
@@ -65,10 +77,26 @@ public class Payslip
     // Net Pay
     public decimal NetPay { get; set; }
 
+    /// <summary>
+    /// Alias for NetPay for compatibility
+    /// </summary>
+    [System.ComponentModel.DataAnnotations.Schema.NotMapped]
+    public decimal NetSalary { get => NetPay; set => NetPay = value; }
+
+    /// <summary>
+    /// Alias for TotalDeductions for compatibility
+    /// </summary>
+    [System.ComponentModel.DataAnnotations.Schema.NotMapped]
+    public decimal Deductions { get => TotalDeductions; set => TotalDeductions = value; }
+
     // Work info
     public int DaysWorked { get; set; }
     public int AbsentDays { get; set; }
     public int LeaveDaysTaken { get; set; }
+
+    // Leave Balances
+    public int AnnualLeaveBalance { get; set; }
+    public int SickLeaveBalance { get; set; }
 
     public string Status { get; set; } = "Calculated"; // Calculated, Approved, Paid
     public DateTime? PaidDate { get; set; }

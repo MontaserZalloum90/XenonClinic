@@ -528,7 +528,7 @@ public static class SeedData
                     PatientId = patient.Id,
                     InvoiceDate = DateTime.UtcNow.AddDays(-random.Next(90)).Date,
                     TotalAmount = random.Next(300, 8000),
-                    PaymentStatus = new[] { "Paid", "Pending", "Cancelled" }[random.Next(3)],
+                    PaymentStatus = new[] { PaymentStatus.Paid, PaymentStatus.Pending, PaymentStatus.Cancelled }[random.Next(3)],
                     Notes = "Seeded invoice"
                 });
             }
@@ -554,6 +554,7 @@ public static class SeedData
                 visits.Add(visit);
                 audiograms.Add(new Audiogram
                 {
+                    PatientId = patient.Id,
                     RawDataJson = "{\"500\":30,\"1000\":35,\"2000\":40,\"4000\":45}",
                     Notes = "Seeded audiogram",
                     Visit = visit

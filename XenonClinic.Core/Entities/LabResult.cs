@@ -16,6 +16,9 @@ public class LabResult : IBranchEntity
     public int BranchId { get; set; }
     public Branch? Branch { get; set; }
 
+    public int? PatientId { get; set; }
+    public Patient? Patient { get; set; }
+
     [Required]
     public int LabOrderId { get; set; }
     public LabOrder? LabOrder { get; set; }
@@ -47,12 +50,35 @@ public class LabResult : IBranchEntity
     [MaxLength(100)]
     public string? ResultValue { get; set; }
 
+    /// <summary>
+    /// Alias for ResultValue for compatibility
+    /// </summary>
+    [System.ComponentModel.DataAnnotations.Schema.NotMapped]
+    public string? Result { get => ResultValue; set => ResultValue = value; }
+
+    /// <summary>
+    /// Alias for ResultValue for compatibility
+    /// </summary>
+    [System.ComponentModel.DataAnnotations.Schema.NotMapped]
+    public string? Value { get => ResultValue; set => ResultValue = value; }
+
+    /// <summary>
+    /// Component name (derived from LabTest)
+    /// </summary>
+    public string? ComponentName { get; set; }
+
     [MaxLength(50)]
     public string? Unit { get; set; }
 
     public string? ReferenceRange { get; set; }
 
     public bool IsAbnormal { get; set; } = false;
+
+    /// <summary>
+    /// Alias for IsAbnormal for compatibility
+    /// </summary>
+    [System.ComponentModel.DataAnnotations.Schema.NotMapped]
+    public string? Flag { get => IsAbnormal ? "Abnormal" : "Normal"; set => IsAbnormal = value == "Abnormal"; }
 
     public string? Interpretation { get; set; }
 

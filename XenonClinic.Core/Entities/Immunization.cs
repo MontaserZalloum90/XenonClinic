@@ -27,6 +27,7 @@ public class Immunization : IBranchEntity
     public int? TotalDoses { get; set; } // Total doses in series
 
     public string? AdministeredBy { get; set; }
+    public string? AdministeredByUser { get; set; }
     public int? AdministeredByEmployeeId { get; set; }
     public Employee? AdministeredByEmployee { get; set; }
 

@@ -39,4 +39,11 @@ public class OrthoVisit
     public ICollection<OrthoInjury> Injuries { get; set; } = new List<OrthoInjury>();
     public ICollection<OrthoProcedure> Procedures { get; set; } = new List<OrthoProcedure>();
     public ICollection<OrthoImaging> ImagingStudies { get; set; } = new List<OrthoImaging>();
+    public ICollection<JointAssessment> JointAssessments { get; set; } = new List<JointAssessment>();
+
+    /// <summary>
+    /// Alias for ImagingStudies for compatibility
+    /// </summary>
+    [System.ComponentModel.DataAnnotations.Schema.NotMapped]
+    public ICollection<OrthoImaging> Imagings { get => ImagingStudies; set => ImagingStudies = value; }
 }

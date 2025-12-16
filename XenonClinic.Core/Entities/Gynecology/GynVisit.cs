@@ -43,4 +43,10 @@ public class GynVisit
     public ICollection<GynProcedure> Procedures { get; set; } = new List<GynProcedure>();
     public ICollection<PapSmearRecord> PapSmears { get; set; } = new List<PapSmearRecord>();
     public ICollection<ObUltrasound> Ultrasounds { get; set; } = new List<ObUltrasound>();
+
+    /// <summary>
+    /// Alias for PapSmears for compatibility
+    /// </summary>
+    [System.ComponentModel.DataAnnotations.Schema.NotMapped]
+    public ICollection<PapSmearRecord> PapSmearRecords { get => PapSmears; set => PapSmears = value; }
 }

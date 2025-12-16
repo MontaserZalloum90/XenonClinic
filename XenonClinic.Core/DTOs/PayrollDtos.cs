@@ -177,6 +177,7 @@ public class WpsRecordDto
 {
     public string RecordType { get; set; } = "SAL"; // SAL = Salary
     public string EmployeeNumber { get; set; } = string.Empty;
+    public string EmployeeCode { get; set; } = string.Empty; // Alias for EmployeeNumber
     public string EmployeeName { get; set; } = string.Empty;
     public string? EmiratesId { get; set; }
     public string? LaborCardNumber { get; set; }

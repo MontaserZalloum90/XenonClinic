@@ -55,17 +55,17 @@ public class EmailService : IEmailService
             _logger.LogInformation("Email sent successfully to {Email} for company {CompanyId}", LoggingHelpers.MaskEmail(toEmail), companyId);
             return true;
         }
-        catch (SmtpException ex)
-        {
-            // BUG FIX: Mask email in logs to prevent PII exposure
-            _logger.LogError(ex, "SMTP error sending email to {Email} for company {CompanyId}. Status: {StatusCode}",
-                LoggingHelpers.MaskEmail(toEmail), companyId, ex.StatusCode);
-            return false;
-        }
         catch (SmtpFailedRecipientException ex)
         {
             // BUG FIX: Mask email in logs to prevent PII exposure
             _logger.LogError(ex, "Failed recipient error sending email to {Email} for company {CompanyId}. Status: {StatusCode}",
+                LoggingHelpers.MaskEmail(toEmail), companyId, ex.StatusCode);
+            return false;
+        }
+        catch (SmtpException ex)
+        {
+            // BUG FIX: Mask email in logs to prevent PII exposure
+            _logger.LogError(ex, "SMTP error sending email to {Email} for company {CompanyId}. Status: {StatusCode}",
                 LoggingHelpers.MaskEmail(toEmail), companyId, ex.StatusCode);
             return false;
         }

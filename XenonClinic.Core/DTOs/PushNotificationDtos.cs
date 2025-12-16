@@ -22,6 +22,8 @@ public class PushNotificationRequestDto
     public int? Badge { get; set; }
     public string? ClickAction { get; set; }
     public string? ActionUrl { get; set; }
+    public string? Category { get; set; }
+    public string? CollapseKey { get; set; }
     public bool Silent { get; set; }
     public DateTime? ScheduledFor { get; set; }
 }

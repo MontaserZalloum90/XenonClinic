@@ -11,6 +11,7 @@ public class LeaveRequest
     public DateTime EndDate { get; set; }
     public int TotalDays { get; set; }
     public string Reason { get; set; } = string.Empty;
+    public string? Remarks { get; set; }
     public LeaveStatus Status { get; set; } = LeaveStatus.Pending;
     public string? ApprovedBy { get; set; } // User who approved/rejected
     public DateTime? ApprovedDate { get; set; }

@@ -146,6 +146,12 @@ public class PaymentGatewayTransaction : IBranchEntity
     public string? ErrorMessage { get; set; }
 
     /// <summary>
+    /// Alias for ErrorMessage for compatibility
+    /// </summary>
+    [System.ComponentModel.DataAnnotations.Schema.NotMapped]
+    public string? FailureReason { get => ErrorMessage; set => ErrorMessage = value; }
+
+    /// <summary>
     /// Raw response from gateway (JSON)
     /// </summary>
     public string? GatewayResponse { get; set; }

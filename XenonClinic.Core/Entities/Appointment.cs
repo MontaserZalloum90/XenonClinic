@@ -6,6 +6,7 @@ namespace XenonClinic.Core.Entities;
 public class Appointment : IBranchEntity
 {
     public int Id { get; set; }
+    public string? ReferenceNumber { get; set; }
     public int PatientId { get; set; }
     public int BranchId { get; set; }
     public int? ProviderId { get; set; } // Optional: Healthcare provider/employee assigned to this appointment
@@ -19,7 +20,10 @@ public class Appointment : IBranchEntity
     public string? Notes { get; set; }
     public string? Reason { get; set; }
     public string? Location { get; set; }
+    public string? Department { get; set; }
     public bool IsTelemedicine { get; set; }
+    public string? TelemedicineLink { get; set; }
+    public string? PreVisitInstructions { get; set; }
     public DateTime? RescheduledAt { get; set; }
     public string? CancellationReason { get; set; }
     public DateTime? CancelledAt { get; set; }

@@ -567,6 +567,7 @@ public class PortalRegistrationResponseDto
     public int? PatientId { get; set; }
     public string? Message { get; set; }
     public bool RequiresVerification { get; set; }
+    public string? VerificationToken { get; set; }
 }
 
 /// <summary>

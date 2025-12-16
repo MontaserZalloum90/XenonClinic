@@ -13,6 +13,7 @@ public class PatientAllergy
     public string? Reaction { get; set; }
     public bool IsActive { get; set; } = true;
     public DateTime? OnsetDate { get; set; }
+    public DateTime? RecordedDate { get; set; }
     public string? Notes { get; set; }
 
     // Audit fields

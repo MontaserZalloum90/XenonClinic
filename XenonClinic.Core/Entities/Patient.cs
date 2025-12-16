@@ -49,6 +49,13 @@ public class Patient : ISoftDelete, IBranchEntity
     public string? Country { get; set; }
     public string? MRN { get; set; } // Medical Record Number
     public string? EncryptedSSN { get; set; } // Encrypted Social Security Number for compliance
+    public string? EncryptedInsuranceId { get; set; } // Encrypted Insurance ID for compliance
+    public string? BloodType { get; set; }
+    public string? Allergies { get; set; }
+    public string? EmergencyContactName { get; set; }
+    public string? EmergencyContactPhone { get; set; }
+    public bool IsSmsOptIn { get; set; } = true;
+    public bool IsEmailOptIn { get; set; } = true;
     public bool IsActive { get; set; } = true;
 
     // Soft delete support for healthcare compliance

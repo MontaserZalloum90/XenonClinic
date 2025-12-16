@@ -56,6 +56,11 @@ public class InsuranceClaim : IBranchEntity
     public string ClaimType { get; set; } = "Professional";
 
     /// <summary>
+    /// Date of service (for single-day services)
+    /// </summary>
+    public DateTime? ServiceDate { get; set; }
+
+    /// <summary>
     /// Date of service (start)
     /// </summary>
     public DateTime ServiceDateFrom { get; set; }
@@ -74,6 +79,11 @@ public class InsuranceClaim : IBranchEntity
     /// Total billed amount
     /// </summary>
     public decimal TotalBilledAmount { get; set; }
+
+    /// <summary>
+    /// Billed amount (alias for TotalBilledAmount)
+    /// </summary>
+    public decimal BilledAmount { get => TotalBilledAmount; set => TotalBilledAmount = value; }
 
     /// <summary>
     /// Amount approved by insurance

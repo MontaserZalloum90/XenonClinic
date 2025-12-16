@@ -554,7 +554,7 @@ public class ClinicDbContext : IdentityDbContext<Entities.ApplicationUser>
             !ShouldFilterByTenant || u.TenantId == CurrentTenantId || u.TenantId == null);
 
         // TenantSettings: Filter by tenant
-        builder.Entity<TenantSettings>().HasQueryFilter(ts =>
+        builder.Entity<XenonClinic.Core.Entities.TenantSettings>().HasQueryFilter(ts =>
             !ShouldFilterByTenant || ts.TenantId == CurrentTenantId);
 
         // TenantFeature: Filter by tenant
@@ -609,7 +609,7 @@ public class ClinicDbContext : IdentityDbContext<Entities.ApplicationUser>
         builder.Entity<Tenant>()
             .HasOne(t => t.Settings)
             .WithOne(s => s.Tenant)
-            .HasForeignKey<TenantSettings>(s => s.TenantId)
+            .HasForeignKey<XenonClinic.Core.Entities.TenantSettings>(s => s.TenantId)
             .OnDelete(DeleteBehavior.Cascade);
 
         // Company configuration
@@ -640,15 +640,15 @@ public class ClinicDbContext : IdentityDbContext<Entities.ApplicationUser>
             .HasIndex(u => u.CompanyId);
 
         // TenantSettings configuration
-        builder.Entity<TenantSettings>()
+        builder.Entity<XenonClinic.Core.Entities.TenantSettings>()
             .HasIndex(ts => ts.TenantId)
             .IsUnique();
 
-        builder.Entity<TenantSettings>()
+        builder.Entity<XenonClinic.Core.Entities.TenantSettings>()
             .Property(ts => ts.ExpenseApprovalThreshold)
             .HasPrecision(18, 2);
 
-        builder.Entity<TenantSettings>()
+        builder.Entity<XenonClinic.Core.Entities.TenantSettings>()
             .Property(ts => ts.DefaultTaxRate)
             .HasPrecision(5, 2);
 

@@ -7,8 +7,22 @@ public class EchoResult
     public int BranchId { get; set; }
     public int? CardioVisitId { get; set; }
     public DateTime StudyDate { get; set; }
+
+    /// <summary>
+    /// Alias for StudyDate for compatibility
+    /// </summary>
+    [System.ComponentModel.DataAnnotations.Schema.NotMapped]
+    public DateTime ExamDate { get => StudyDate; set => StudyDate = value; }
+
     public string? StudyType { get; set; }
     public decimal? LeftVentricleEF { get; set; }
+
+    /// <summary>
+    /// Alias for LeftVentricleEF for compatibility
+    /// </summary>
+    [System.ComponentModel.DataAnnotations.Schema.NotMapped]
+    public decimal? EjectionFraction { get => LeftVentricleEF; set => LeftVentricleEF = value; }
+
     public decimal? LeftVentricleEDD { get; set; }
     public decimal? LeftVentricleESD { get; set; }
     public decimal? InterventricularSeptum { get; set; }

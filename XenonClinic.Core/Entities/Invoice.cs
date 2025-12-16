@@ -27,6 +27,7 @@ public class Invoice : IBranchEntity
 
     // Status
     public InvoiceStatus Status { get; set; } = InvoiceStatus.Draft;
+    public PaymentStatus PaymentStatus { get; set; } = PaymentStatus.Pending;
 
     // Financial Details
     public decimal SubTotal { get; set; }

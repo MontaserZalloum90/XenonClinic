@@ -13,6 +13,7 @@ public class Attendance
     public bool IsLate { get; set; }
     public int? LateMinutes { get; set; }
     public decimal? WorkedHours { get; set; }
+    public decimal? TotalHours { get; set; } // Alias for WorkedHours for compatibility
     public decimal? OvertimeHours { get; set; }
     public string? Notes { get; set; }
 
