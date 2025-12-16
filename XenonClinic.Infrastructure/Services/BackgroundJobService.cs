@@ -466,7 +466,7 @@ public class BackgroundJobService : IBackgroundJobService
         }
     }
 
-    private async Task ExecuteJobAsync<T>(string jobId, Expression<Func<T, Task>> methodCall)
+    private async Task ExecuteJobAsync<T>(string jobId, Expression<Func<T, Task>> methodCall) where T : notnull
     {
         if (!_jobs.TryGetValue(jobId, out var job) || job.State == JobState.Deleted)
             return;

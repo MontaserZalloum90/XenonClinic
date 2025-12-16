@@ -196,9 +196,10 @@ public class LabService : ILabService
         if (!validTransitions.TryGetValue(currentStatus, out var allowedStatuses) ||
             !allowedStatuses.Contains(newStatus))
         {
+            var allowedList = allowedStatuses != null ? string.Join(", ", allowedStatuses) : "none";
             throw new InvalidOperationException(
                 $"Invalid status transition from {currentStatus} to {newStatus}. " +
-                $"Allowed transitions from {currentStatus}: {string.Join(", ", allowedStatuses)}");
+                $"Allowed transitions from {currentStatus}: {allowedList}");
         }
     }
 

@@ -280,10 +280,10 @@ public class PayrollService : IPayrollService
             .Where(p => p.EmployeeId == employeeId);
 
         if (year.HasValue)
-            query = query.Where(p => p.PayrollPeriod.StartDate.Year == year.Value);
+            query = query.Where(p => p.PayrollPeriod != null && p.PayrollPeriod.StartDate.Year == year.Value);
 
         var payslips = await query
-            .OrderByDescending(p => p.PayrollPeriod.StartDate)
+            .OrderByDescending(p => p.PayrollPeriod != null ? p.PayrollPeriod.StartDate : DateTime.MinValue)
             .ToListAsync();
 
         return payslips.Select(p => new PayslipSummaryDto
@@ -307,7 +307,7 @@ public class PayrollService : IPayrollService
             .ThenInclude(e => e.Department)
             .Include(p => p.PayrollPeriod)
             .Where(p => p.EmployeeId == employeeId)
-            .OrderByDescending(p => p.PayrollPeriod.EndDate)
+            .OrderByDescending(p => p.PayrollPeriod != null ? p.PayrollPeriod.EndDate : DateTime.MinValue)
             .FirstOrDefaultAsync();
 
         if (payslip == null) return null;
