@@ -90,7 +90,7 @@ public class PasswordResetService : IPasswordResetService
     {
         var tokenKey = $"reset_token_{email}";
 
-        if (!_cache.TryGetValue<ResetTokenData>(tokenKey, out var tokenData))
+        if (!_cache.TryGetValue<ResetTokenData>(tokenKey, out var tokenData) || tokenData == null)
         {
             return Task.FromResult(false);
         }

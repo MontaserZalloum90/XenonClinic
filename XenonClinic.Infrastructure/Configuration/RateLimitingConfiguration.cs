@@ -105,11 +105,11 @@ public static class RateLimitingConfiguration
             // On rejected - add headers
             options.OnRejected = async (context, token) =>
             {
-                context.HttpContext.Response.Headers.Add("X-RateLimit-RetryAfter", "60");
+                context.HttpContext.Response.Headers.Append("X-RateLimit-RetryAfter", "60");
 
                 if (context.Lease.TryGetMetadata(MetadataName.RetryAfter, out var retryAfter))
                 {
-                    context.HttpContext.Response.Headers.Add("Retry-After", retryAfter.TotalSeconds.ToString());
+                    context.HttpContext.Response.Headers.Append("Retry-After", retryAfter.TotalSeconds.ToString());
                 }
 
                 await context.HttpContext.Response.WriteAsync(

@@ -1386,7 +1386,7 @@ public class PatientPortalService : IPatientPortalService
                                 section.Item().Row(r =>
                                 {
                                     r.ConstantItem(80).Text($"{imm.AdministeredDate:MM/dd/yyyy}");
-                                    r.RelativeItem().Text($"{imm.VaccineName} (Dose {imm.DoseNumber ?? 1})");
+                                    r.RelativeItem().Text($"{imm.VaccineName} (Dose {imm.DoseNumber ?? "1"})");
                                 });
                             }
                         }

@@ -68,7 +68,7 @@ public class EncryptionService : IEncryptionService
     public string Encrypt(string plainText)
     {
         if (string.IsNullOrEmpty(plainText))
-            return plainText;
+            return plainText ?? string.Empty;
 
         try
         {
@@ -86,7 +86,7 @@ public class EncryptionService : IEncryptionService
     public string Decrypt(string cipherText)
     {
         if (string.IsNullOrEmpty(cipherText))
-            return cipherText;
+            return cipherText ?? string.Empty;
 
         try
         {
@@ -104,7 +104,7 @@ public class EncryptionService : IEncryptionService
     public byte[] EncryptBytes(byte[] data)
     {
         if (data == null || data.Length == 0)
-            return data;
+            return data ?? Array.Empty<byte>();
 
         // Generate random salt and IV
         var salt = RandomNumberGenerator.GetBytes(SaltSize);
@@ -132,7 +132,7 @@ public class EncryptionService : IEncryptionService
     public byte[] DecryptBytes(byte[] encryptedData)
     {
         if (encryptedData == null || encryptedData.Length < SaltSize + 12 + 16)
-            return encryptedData;
+            return encryptedData ?? Array.Empty<byte>();
 
         // Extract components
         var salt = new byte[SaltSize];
@@ -159,7 +159,7 @@ public class EncryptionService : IEncryptionService
     public string Hash(string value)
     {
         if (string.IsNullOrEmpty(value))
-            return value;
+            return value ?? string.Empty;
 
         // Use HMAC-SHA256 for deterministic hashing (allows searching)
         using var hmac = new HMACSHA256(_hmacKey);
@@ -176,7 +176,7 @@ public class EncryptionService : IEncryptionService
     public string EncryptForPatient(string plainText, int patientId)
     {
         if (string.IsNullOrEmpty(plainText))
-            return plainText;
+            return plainText ?? string.Empty;
 
         // SECURITY FIX: Use cryptographically random salt combined with deterministic component
         // This maintains key derivation consistency for the same patient while adding entropy
@@ -207,7 +207,7 @@ public class EncryptionService : IEncryptionService
     public string DecryptForPatient(string cipherText, int patientId)
     {
         if (string.IsNullOrEmpty(cipherText))
-            return cipherText;
+            return cipherText ?? string.Empty;
 
         var encryptedData = Convert.FromBase64String(cipherText);
         
