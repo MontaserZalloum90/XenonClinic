@@ -316,18 +316,19 @@ public class RadiologyController : BaseApiController
             OrderDate = DateTime.UtcNow,
             Status = LabOrderStatus.Pending,
             PatientId = dto.PatientId,
-            AppointmentId = dto.AppointmentId,
+            VisitId = dto.AppointmentId, // Using VisitId as appointment reference
             OrderingDoctorId = dto.ReferringDoctorId,
             IsUrgent = dto.IsUrgent || dto.IsStat,
             ClinicalNotes = dto.ClinicalIndication,
             Notes = dto.Notes,
-            BranchId = branchId,
+            BranchId = branchId ?? 0,
             CreatedAt = DateTime.UtcNow,
-            CreatedBy = _currentUserService.UserId
+            CreatedBy = _currentUserService.UserId ?? string.Empty
         };
 
         // Add order items
         decimal total = 0;
+        decimal discountAmount = 0;
         foreach (var itemDto in dto.Items)
         {
             var study = await _radiologyService.GetImagingStudyByIdAsync(itemDto.ImagingStudyId);
@@ -336,14 +337,15 @@ public class RadiologyController : BaseApiController
                 var price = study.Price - (itemDto.DiscountAmount ?? 0);
                 total += price;
 
-                order.OrderItems.Add(new LabOrderItem
+                order.Items.Add(new LabOrderItem
                 {
                     LabTestId = itemDto.ImagingStudyId,
+                    TestCode = study.TestCode,
+                    TestName = study.TestName,
                     Price = price,
                     Notes = itemDto.Notes,
-                    BranchId = branchId,
                     CreatedAt = DateTime.UtcNow,
-                    CreatedBy = _currentUserService.UserId
+                    CreatedBy = _currentUserService.UserId ?? string.Empty
                 });
             }
         }
@@ -351,8 +353,8 @@ public class RadiologyController : BaseApiController
         // Apply order-level discount
         if (dto.DiscountPercentage.HasValue && dto.DiscountPercentage.Value > 0)
         {
-            order.DiscountAmount = total * (dto.DiscountPercentage.Value / 100);
-            total -= order.DiscountAmount ?? 0;
+            discountAmount = total * (dto.DiscountPercentage.Value / 100);
+            total -= discountAmount;
         }
 
         order.TotalAmount = total;
@@ -778,16 +780,16 @@ public class RadiologyController : BaseApiController
             OrderDate = order.OrderDate,
             Status = MapToRadiologyOrderStatus(order.Status),
             PatientId = order.PatientId,
-            PatientName = order.Patient?.FullName,
-            AppointmentId = order.AppointmentId,
+            PatientName = order.Patient?.FullNameEn,
+            AppointmentId = order.VisitId, // Using VisitId as appointment reference
             ReferringDoctorId = order.OrderingDoctorId,
             IsUrgent = order.IsUrgent,
             IsStat = order.IsUrgent, // Using IsUrgent for STAT as well
             ClinicalIndication = order.ClinicalNotes,
             Notes = order.Notes,
-            SubTotal = order.OrderItems.Sum(oi => oi.Price),
-            DiscountAmount = order.DiscountAmount,
-            TotalPrice = order.TotalPrice,
+            SubTotal = order.Items.Sum(oi => oi.Price),
+            DiscountAmount = 0, // LabOrder doesn't have DiscountAmount
+            TotalPrice = order.TotalAmount,
             BranchId = order.BranchId,
             BranchName = order.Branch?.Name,
             ReceivedDate = order.ReceivedDate,
@@ -797,8 +799,8 @@ public class RadiologyController : BaseApiController
             CompletedDate = order.CompletedDate,
             ApprovedDate = order.ApprovedDate,
             ApprovedBy = order.ApprovedBy,
-            ItemCount = order.OrderItems.Count,
-            Items = order.OrderItems.Select(MapToRadiologyOrderItemDto).ToList(),
+            ItemCount = order.Items.Count,
+            Items = order.Items.Select(MapToRadiologyOrderItemDto).ToList(),
             Results = order.Results.Select(MapToImagingResultDto).ToList(),
             CreatedAt = order.CreatedAt,
             CreatedBy = order.CreatedBy,

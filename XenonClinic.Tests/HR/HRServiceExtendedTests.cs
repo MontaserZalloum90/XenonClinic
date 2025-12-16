@@ -403,24 +403,24 @@ public class HRServiceExtendedTests : IAsyncLifetime
     public async Task UpdateEmployeeAsync_UpdateName_UpdatesSuccessfully()
     {
         var employee = await _hrService.GetEmployeeByIdAsync(1);
-        employee!.FullName = "Updated Name";
+        employee!.FullNameEn = "Updated Name";
 
         await _hrService.UpdateEmployeeAsync(employee);
 
         var updated = await _hrService.GetEmployeeByIdAsync(1);
-        updated!.FullName.Should().Be("Updated Name");
+        updated!.FullNameEn.Should().Be("Updated Name");
     }
 
     [Fact]
     public async Task UpdateEmployeeAsync_UpdateSalary_UpdatesSuccessfully()
     {
         var employee = await _hrService.GetEmployeeByIdAsync(2);
-        employee!.BaseSalary = 10000;
+        employee!.BasicSalary = 10000;
 
         await _hrService.UpdateEmployeeAsync(employee);
 
         var updated = await _hrService.GetEmployeeByIdAsync(2);
-        updated!.BaseSalary.Should().Be(10000);
+        updated!.BasicSalary.Should().Be(10000);
     }
 
     [Fact]

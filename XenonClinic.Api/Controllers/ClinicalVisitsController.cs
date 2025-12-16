@@ -580,7 +580,7 @@ public class ClinicalVisitsController : BaseApiController
         PatientId = session.PatientId,
         PatientName = session.Patient?.FullNameEn,
         BranchId = session.BranchId,
-        BranchName = session.Branch?.NameEn,
+        BranchName = session.Branch?.Name,
         ProviderName = session.PhysiotherapistId,
         VisitDate = session.SessionDate,
         Notes = session.Notes,
