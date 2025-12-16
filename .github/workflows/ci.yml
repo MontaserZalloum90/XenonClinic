@@ -29,25 +29,30 @@ jobs:
       - name: Restore dependencies
         run: dotnet restore XenonClinic.sln
 
-      - name: Build
+      - name: Build Core
         run: |
-          echo "=== Starting Build ==="
-          echo "=== Solution contents ==="
-          cat XenonClinic.sln
-          echo ""
-          echo "=== Building with detailed output ==="
-          dotnet build XenonClinic.sln --configuration Release --no-restore /p:TreatWarningsAsErrors=false -v detailed 2>&1 | tee build.log
-          BUILD_EXIT_CODE=${PIPESTATUS[0]}
-          echo "=== Build Exit Code: $BUILD_EXIT_CODE ==="
-          if [ $BUILD_EXIT_CODE -ne 0 ]; then
-            echo "=== Build Errors ==="
-            grep -E "(error CS|Error:|MSBUILD : error|error :|: error)" build.log || echo "No specific error pattern found"
-            echo "=== All error lines ==="
-            grep -i "error" build.log | head -50
-            echo "=== Last 200 lines of build log ==="
-            tail -200 build.log
-            exit $BUILD_EXIT_CODE
-          fi
+          echo "=== Building XenonClinic.Core ==="
+          dotnet build XenonClinic.Core/XenonClinic.Core.csproj --configuration Release --no-restore 2>&1 || true
+
+      - name: Build Infrastructure
+        run: |
+          echo "=== Building XenonClinic.Infrastructure ==="
+          dotnet build XenonClinic.Infrastructure/XenonClinic.Infrastructure.csproj --configuration Release --no-restore 2>&1 || true
+
+      - name: Build Api
+        run: |
+          echo "=== Building XenonClinic.Api ==="
+          dotnet build XenonClinic.Api/XenonClinic.Api.csproj --configuration Release --no-restore 2>&1 || true
+
+      - name: Build Tests
+        run: |
+          echo "=== Building XenonClinic.Tests ==="
+          dotnet build XenonClinic.Tests/XenonClinic.Tests.csproj --configuration Release --no-restore 2>&1 || true
+
+      - name: Full Build
+        run: |
+          echo "=== Full Solution Build ==="
+          dotnet build XenonClinic.sln --configuration Release --no-restore /p:TreatWarningsAsErrors=false 2>&1
 
       - name: Run tests
         run: dotnet test XenonClinic.sln --configuration Release --no-build --verbosity normal --collect:"XPlat Code Coverage"
