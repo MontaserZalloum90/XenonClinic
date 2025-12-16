@@ -863,7 +863,7 @@ public class InventoryController : BaseApiController
                     .GroupBy(i => i.Category)
                     .ToDictionary(g => g.Key, g => g.Count()),
                 TransactionsByType = transactionDistribution
-                    .ToDictionary(kvp => (InventoryTransactionType)Enum.Parse(typeof(InventoryTransactionType), kvp.Key.ToString()), kvp => kvp.Value),
+                    .ToDictionary(kvp => (InventoryTransactionType)(int)kvp.Key, kvp => kvp.Value),
                 TopLowStockItems = itemsList
                     .Where(i => i.IsLowStock)
                     .OrderBy(i => i.QuantityOnHand)

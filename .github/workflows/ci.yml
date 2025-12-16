@@ -30,7 +30,18 @@ jobs:
         run: dotnet restore XenonClinic.sln
 
       - name: Build
-        run: dotnet build XenonClinic.sln --configuration Release --no-restore /p:TreatWarningsAsErrors=false
+        run: |
+          echo "=== Starting Build ==="
+          dotnet build XenonClinic.sln --configuration Release --no-restore /p:TreatWarningsAsErrors=false -v normal 2>&1 | tee build.log
+          BUILD_EXIT_CODE=${PIPESTATUS[0]}
+          echo "=== Build Exit Code: $BUILD_EXIT_CODE ==="
+          if [ $BUILD_EXIT_CODE -ne 0 ]; then
+            echo "=== Build Errors ==="
+            grep -E "(error CS|Error:|MSBUILD : error)" build.log || echo "No specific error pattern found"
+            echo "=== Last 100 lines of build log ==="
+            tail -100 build.log
+            exit $BUILD_EXIT_CODE
+          fi
 
       - name: Run tests
         run: dotnet test XenonClinic.sln --configuration Release --no-build --verbosity normal --collect:"XPlat Code Coverage"
