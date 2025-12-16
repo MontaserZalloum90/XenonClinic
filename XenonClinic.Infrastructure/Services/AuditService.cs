@@ -198,10 +198,10 @@ public class AuditService : IAuditService
         {
             Items = items.Select(l => new AuditLogDto
             {
-                Id = l.Id, Timestamp = l.Timestamp, EventType = l.EventType, EventCategory = l.EventCategory,
-                Action = l.Action, ResourceType = l.ResourceType, ResourceId = l.ResourceId, UserId = l.UserId,
+                Id = l.Id, Timestamp = l.Timestamp, EventType = l.EventType ?? string.Empty, EventCategory = l.EventCategory ?? string.Empty,
+                Action = l.Action, ResourceType = l.ResourceType ?? string.Empty, ResourceId = l.ResourceId, UserId = l.UserId,
                 UserName = l.UserName, PatientId = l.PatientId, IsPHIAccess = l.IsPHIAccess, IpAddress = l.IpAddress,
-                IsEmergencyAccess = l.IsEmergencyAccess, BranchId = l.BranchId, IsSuccess = l.IsSuccess
+                IsEmergencyAccess = l.IsEmergencyAccess, BranchId = l.BranchId ?? 0, IsSuccess = l.IsSuccess
             }).ToList(),
             TotalCount = total, Page = query.Page, PageSize = query.PageSize,
             TotalPages = (int)Math.Ceiling((double)total / query.PageSize)
@@ -212,7 +212,7 @@ public class AuditService : IAuditService
     {
         var log = await _context.Set<AuditLog>().FindAsync(id);
         if (log == null) return null;
-        return new AuditLogDto { Id = log.Id, Timestamp = log.Timestamp, EventType = log.EventType, Action = log.Action, ResourceType = log.ResourceType, UserId = log.UserId, PatientId = log.PatientId, IsPHIAccess = log.IsPHIAccess, IsSuccess = log.IsSuccess };
+        return new AuditLogDto { Id = log.Id, Timestamp = log.Timestamp, EventType = log.EventType ?? string.Empty, Action = log.Action, ResourceType = log.ResourceType ?? string.Empty, UserId = log.UserId, PatientId = log.PatientId, IsPHIAccess = log.IsPHIAccess, IsSuccess = log.IsSuccess };
     }
 
     public async Task<PHIAccessReportDto> GetPHIAccessReportAsync(DateTime startDate, DateTime endDate, int? branchId = null)
