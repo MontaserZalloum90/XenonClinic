@@ -16,6 +16,7 @@ public class InventoryItem : IBranchEntity
     public int QuantityOnHand { get; set; }
     public int ReorderLevel { get; set; }
     public int MaxStockLevel { get; set; }
+    public DateTime? LastRestockDate { get; set; }
 
     // Pricing
     public decimal CostPrice { get; set; }

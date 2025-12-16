@@ -528,7 +528,7 @@ public static class SeedData
                     PatientId = patient.Id,
                     InvoiceDate = DateTime.UtcNow.AddDays(-random.Next(90)).Date,
                     TotalAmount = random.Next(300, 8000),
-                    PaymentStatus = new[] { "Paid", "Pending", "Cancelled" }[random.Next(3)],
+                    PaymentStatus = new[] { PaymentStatus.Paid, PaymentStatus.Pending, PaymentStatus.Cancelled }[random.Next(3)],
                     Notes = "Seeded invoice"
                 });
             }

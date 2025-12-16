@@ -48,6 +48,11 @@ public class Employee : IBranchEntity
     public decimal? TransportAllowance { get; set; }
     public decimal? OtherAllowances { get; set; }
 
+    // Banking Information
+    public string? BankName { get; set; }
+    public string? BankAccountNumber { get; set; }
+    public string? IbanNumber { get; set; }
+
     // Leave Balances
     public int AnnualLeaveBalance { get; set; } = 30; // Days per year
     public int SickLeaveBalance { get; set; } = 90; // Days per year

@@ -13,12 +13,18 @@ public class ApplicationUser : IdentityUser, IApplicationUser
     public int? TenantId { get; set; }
     public int? CompanyId { get; set; }
     public int? PrimaryBranchId { get; set; }
+    public int? BranchId { get; set; } // Alias for PrimaryBranchId for compatibility
 
     /// <summary>
     /// The default branch for this user when no specific branch is selected.
     /// Falls back to PrimaryBranchId if not set.
     /// </summary>
     public int? DefaultBranchId { get; set; }
+
+    /// <summary>
+    /// User's primary role (for compatibility with legacy code)
+    /// </summary>
+    public string? Role { get; set; }
 
     /// <summary>
     /// Whether this user is a company administrator with access to all branches

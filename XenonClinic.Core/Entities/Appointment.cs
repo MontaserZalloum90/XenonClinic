@@ -20,7 +20,10 @@ public class Appointment : IBranchEntity
     public string? Notes { get; set; }
     public string? Reason { get; set; }
     public string? Location { get; set; }
+    public string? Department { get; set; }
     public bool IsTelemedicine { get; set; }
+    public string? TelemedicineLink { get; set; }
+    public string? PreVisitInstructions { get; set; }
     public DateTime? RescheduledAt { get; set; }
     public string? CancellationReason { get; set; }
     public DateTime? CancelledAt { get; set; }

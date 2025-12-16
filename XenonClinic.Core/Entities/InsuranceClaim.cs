@@ -56,6 +56,11 @@ public class InsuranceClaim : IBranchEntity
     public string ClaimType { get; set; } = "Professional";
 
     /// <summary>
+    /// Date of service (for single-day services)
+    /// </summary>
+    public DateTime? ServiceDate { get; set; }
+
+    /// <summary>
     /// Date of service (start)
     /// </summary>
     public DateTime ServiceDateFrom { get; set; }
