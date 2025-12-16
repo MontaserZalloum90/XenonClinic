@@ -51,6 +51,9 @@ jobs:
 
       - name: Check build result
         run: |
+          echo "=== FULL BUILD LOG ==="
+          cat build.log
+          echo "=== END BUILD LOG ==="
           if [ "$BUILD_EXIT_CODE" != "0" ]; then
             echo "Build failed with exit code $BUILD_EXIT_CODE"
             exit 1
