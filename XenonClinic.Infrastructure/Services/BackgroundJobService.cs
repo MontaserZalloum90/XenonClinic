@@ -81,7 +81,7 @@ public class BackgroundJobService : IBackgroundJobService
         {
             JobId = jobId,
             State = JobState.Enqueued,
-            JobType = typeof(T).FullName,
+            JobType = typeof(T).FullName ?? typeof(T).Name,
             MethodExpression = methodCall,
             CreatedAt = DateTime.UtcNow
         };
@@ -124,7 +124,7 @@ public class BackgroundJobService : IBackgroundJobService
         {
             JobId = jobId,
             State = JobState.Scheduled,
-            JobType = typeof(T).FullName,
+            JobType = typeof(T).FullName ?? typeof(T).Name,
             MethodExpression = methodCall,
             CreatedAt = DateTime.UtcNow
         };
@@ -187,7 +187,7 @@ public class BackgroundJobService : IBackgroundJobService
         {
             JobId = jobId,
             CronExpression = cronExpression,
-            JobType = typeof(T).FullName,
+            JobType = typeof(T).FullName ?? typeof(T).Name,
             MethodExpression = methodCall,
             CreatedAt = DateTime.UtcNow
         };
@@ -259,7 +259,7 @@ public class BackgroundJobService : IBackgroundJobService
             JobId = jobId,
             State = JobState.Awaiting,
             ParentJobId = parentJobId,
-            JobType = typeof(T).FullName,
+            JobType = typeof(T).FullName ?? typeof(T).Name,
             MethodExpression = methodCall,
             CreatedAt = DateTime.UtcNow
         };

@@ -301,7 +301,7 @@ public class DicomService : IDicomService
             // Find the DICOM instance
             var instance = await _context.DicomInstances
                 .Include(i => i.Series)
-                .ThenInclude(s => s!.Study)
+                .ThenInclude(s => s.Study)
                 .FirstOrDefaultAsync(i => i.SopInstanceUid == request.SopInstanceUid);
 
             if (instance == null)

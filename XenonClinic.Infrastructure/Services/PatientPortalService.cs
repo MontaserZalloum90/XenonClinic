@@ -541,7 +541,7 @@ public class PatientPortalService : IPatientPortalService
             .CountAsync();
 
         var pendingPrescriptions = await _context.PrescriptionItems
-            .Where(pi => pi.Prescription!.PatientId == patientId &&
+            .Where(pi => pi.Prescription != null && pi.Prescription.PatientId == patientId &&
                 (pi.Status == "Pending" || pi.Status == "Processing" || pi.Status == "Awaiting Pickup"))
             .CountAsync();
 
@@ -1113,7 +1113,7 @@ public class PatientPortalService : IPatientPortalService
     {
         var diagnoses = await _context.Diagnoses
             .Include(d => d.Visit)
-                .ThenInclude(v => v!.Doctor)
+                .ThenInclude(v => v.Doctor)
             .Where(d => d.PatientId == patientId &&
                 (d.Status == "Active" || d.Status == "Chronic"))
             .OrderByDescending(d => d.DiagnosisDate)
@@ -1655,8 +1655,8 @@ public class PatientPortalService : IPatientPortalService
     {
         var medications = await _context.PrescriptionItems
             .Include(pi => pi.Prescription)
-                .ThenInclude(p => p!.Doctor)
-            .Where(pi => pi.Prescription!.PatientId == patientId &&
+                .ThenInclude(p => p.Doctor)
+            .Where(pi => pi.Prescription != null && pi.Prescription.PatientId == patientId &&
                 pi.Status == "Active" &&
                 (pi.EndDate == null || pi.EndDate > DateTime.Today))
             .OrderBy(pi => pi.MedicationName)
@@ -1669,7 +1669,7 @@ public class PatientPortalService : IPatientPortalService
             Dosage = m.Dosage,
             Frequency = m.Frequency,
             Route = m.Route,
-            StartDate = m.StartDate ?? m.Prescription!.PrescriptionDate,
+            StartDate = m.StartDate ?? (m.Prescription != null ? m.Prescription.PrescriptionDate : DateTime.MinValue),
             EndDate = m.EndDate,
             Status = m.Status ?? "Active",
             PrescribingDoctor = m.Prescription?.Doctor != null
@@ -1934,7 +1934,7 @@ public class PatientPortalService : IPatientPortalService
     {
         return await _context.Messages
             .Include(m => m.Thread)
-            .Where(m => m.Thread!.PatientId == patientId &&
+            .Where(m => m.Thread != null && m.Thread.PatientId == patientId &&
                 !m.IsRead &&
                 m.SenderType != "Patient")
             .CountAsync();
@@ -2371,7 +2371,7 @@ public class PatientPortalService : IPatientPortalService
     {
         var payment = await _context.InvoicePayments
             .Include(p => p.Patient)
-            .ThenInclude(p => p!.Branch)
+            .ThenInclude(p => p.Branch)
             .Include(p => p.Invoice)
             .FirstOrDefaultAsync(p => p.Id == paymentId && p.PatientId == patientId);
 
