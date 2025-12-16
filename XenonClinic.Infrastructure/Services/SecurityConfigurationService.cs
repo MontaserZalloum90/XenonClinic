@@ -6,7 +6,9 @@ using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using XenonClinic.Core.Interfaces;
 using XenonClinic.Infrastructure.Data;
+using CoreInterfaces = XenonClinic.Core.Interfaces;
 
 namespace XenonClinic.Infrastructure.Services;
 
@@ -177,7 +179,7 @@ public class SecurityCheckResult
 /// <summary>
 /// Security configuration service implementation
 /// </summary>
-public class SecurityConfigurationService : ISecurityConfigurationService
+public class SecurityConfigurationService : ISecurityConfigurationService, XenonClinic.Core.Interfaces.ISecurityConfigurationService
 {
     private readonly ClinicDbContext _context;
     private readonly IConfiguration _configuration;
@@ -605,6 +607,196 @@ public class SecurityConfigurationService : ISecurityConfigurationService
             report.Recommendations.Add("Enable backup encryption for data protection");
 
         return report;
+    }
+
+    #endregion
+
+    #region Core Interface Implementation
+
+    async Task<SecuritySettingsDto> CoreInterfaces.ISecurityConfigurationService.GetSecuritySettingsAsync(int branchId)
+    {
+        var settings = await GetSecuritySettingsAsync();
+        return new SecuritySettingsDto
+        {
+            BranchId = branchId,
+            SessionTimeoutMinutes = settings.SessionTimeoutMinutes,
+            MaxLoginAttempts = settings.MaxFailedLoginAttempts,
+            LockoutDurationMinutes = settings.LockoutDurationMinutes,
+            RequireMfa = settings.RequireMfaForAdmin,
+            EnableAuditLogging = settings.EnableAuditLogging,
+            EnablePHIEncryption = settings.EncryptPHIAtRest
+        };
+    }
+
+    async Task<SecuritySettingsDto> CoreInterfaces.ISecurityConfigurationService.UpdateSecuritySettingsAsync(int branchId, SecuritySettingsDto settings)
+    {
+        var currentSettings = await GetSecuritySettingsAsync();
+        currentSettings.SessionTimeoutMinutes = settings.SessionTimeoutMinutes;
+        currentSettings.MaxFailedLoginAttempts = settings.MaxLoginAttempts;
+        currentSettings.LockoutDurationMinutes = settings.LockoutDurationMinutes;
+        currentSettings.RequireMfaForAdmin = settings.RequireMfa;
+        currentSettings.EnableAuditLogging = settings.EnableAuditLogging;
+        currentSettings.EncryptPHIAtRest = settings.EnablePHIEncryption;
+        await UpdateSecuritySettingsAsync(currentSettings, 0);
+        settings.LastUpdated = DateTime.UtcNow;
+        return settings;
+    }
+
+    async Task CoreInterfaces.ISecurityConfigurationService.StoreSecretAsync(string key, string value, int branchId, DateTime? expiresAt)
+    {
+        await SetSecretAsync(key, value, SecretType.Custom, 0, expiresAt);
+    }
+
+    async Task<string?> CoreInterfaces.ISecurityConfigurationService.GetSecretAsync(string key, int branchId)
+    {
+        try
+        {
+            return await GetSecretAsync(key);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    async Task CoreInterfaces.ISecurityConfigurationService.DeleteSecretAsync(string key, int branchId)
+    {
+        await DeleteSecretAsync(key, 0);
+    }
+
+    async Task CoreInterfaces.ISecurityConfigurationService.RotateSecretAsync(string key, string newValue, int branchId)
+    {
+        await SetSecretAsync(key, newValue, SecretType.Custom, 0);
+    }
+
+    async Task<List<SecretMetadataDto>> CoreInterfaces.ISecurityConfigurationService.GetSecretKeysAsync(int branchId)
+    {
+        var secrets = await GetSecretsInfoAsync();
+        return secrets.Select(s => new SecretMetadataDto
+        {
+            Key = s.Name,
+            CreatedAt = s.CreatedAt,
+            ExpiresAt = s.ExpiresAt,
+            IsExpired = s.IsExpired
+        }).ToList();
+    }
+
+    async Task<ApiKeyDto> CoreInterfaces.ISecurityConfigurationService.CreateApiKeyAsync(CreateApiKeyDto request)
+    {
+        var info = await GenerateApiKeyAsync(request.Name, request.Permissions.ToArray(), 0, request.ExpiresAt.HasValue ? (int?)(request.ExpiresAt.Value - DateTime.UtcNow).Days : null);
+        return new ApiKeyDto
+        {
+            Id = info.Id,
+            Name = info.Name,
+            KeyPrefix = info.KeyPrefix,
+            BranchId = request.BranchId,
+            Permissions = info.Scopes.ToList(),
+            CreatedAt = info.CreatedAt,
+            ExpiresAt = info.ExpiresAt,
+            IsActive = info.IsActive
+        };
+    }
+
+    async Task<ApiKeyDto?> CoreInterfaces.ISecurityConfigurationService.GetApiKeyAsync(string apiKey)
+    {
+        var validation = await ValidateApiKeyAsync(apiKey);
+        if (!validation.IsValid || !validation.ApiKeyId.HasValue) return null;
+
+        var keys = await GetApiKeysAsync();
+        var key = keys.FirstOrDefault(k => k.Id == validation.ApiKeyId);
+        if (key == null) return null;
+
+        return new ApiKeyDto
+        {
+            Id = key.Id,
+            Name = key.Name,
+            KeyPrefix = key.KeyPrefix,
+            Permissions = key.Scopes.ToList(),
+            CreatedAt = key.CreatedAt,
+            ExpiresAt = key.ExpiresAt,
+            LastUsedAt = key.LastUsedAt,
+            IsActive = key.IsActive
+        };
+    }
+
+    async Task<List<ApiKeyDto>> CoreInterfaces.ISecurityConfigurationService.GetApiKeysAsync(int branchId)
+    {
+        var keys = await GetApiKeysAsync();
+        return keys.Select(k => new ApiKeyDto
+        {
+            Id = k.Id,
+            Name = k.Name,
+            KeyPrefix = k.KeyPrefix,
+            BranchId = branchId,
+            Permissions = k.Scopes.ToList(),
+            CreatedAt = k.CreatedAt,
+            ExpiresAt = k.ExpiresAt,
+            LastUsedAt = k.LastUsedAt,
+            IsActive = k.IsActive
+        }).ToList();
+    }
+
+    async Task CoreInterfaces.ISecurityConfigurationService.RevokeApiKeyAsync(int apiKeyId)
+    {
+        await RevokeApiKeyAsync(apiKeyId, 0);
+    }
+
+    async Task<ApiKeyValidationResult> CoreInterfaces.ISecurityConfigurationService.ValidateApiKeyAsync(string apiKey)
+    {
+        var result = await ValidateApiKeyAsync(apiKey);
+        return new ApiKeyValidationResult
+        {
+            IsValid = result.IsValid,
+            Permissions = result.Scopes.ToList(),
+            InvalidReason = result.ErrorMessage
+        };
+    }
+
+    async Task<PasswordPolicyDto> CoreInterfaces.ISecurityConfigurationService.GetPasswordPolicyAsync(int branchId)
+    {
+        var settings = await GetSecuritySettingsAsync();
+        return new PasswordPolicyDto
+        {
+            BranchId = branchId,
+            MinLength = settings.PasswordMinLength,
+            RequireUppercase = settings.RequireUppercase,
+            RequireLowercase = settings.RequireLowercase,
+            RequireDigit = settings.RequireDigit,
+            RequireSpecialChar = settings.RequireSpecialChar,
+            PasswordHistoryCount = settings.PasswordHistoryCount,
+            MaxAgeDays = settings.PasswordExpirationDays
+        };
+    }
+
+    async Task<PasswordPolicyDto> CoreInterfaces.ISecurityConfigurationService.UpdatePasswordPolicyAsync(int branchId, PasswordPolicyDto policy)
+    {
+        var settings = await GetSecuritySettingsAsync();
+        settings.PasswordMinLength = policy.MinLength;
+        settings.RequireUppercase = policy.RequireUppercase;
+        settings.RequireLowercase = policy.RequireLowercase;
+        settings.RequireDigit = policy.RequireDigit;
+        settings.RequireSpecialChar = policy.RequireSpecialChar;
+        settings.PasswordHistoryCount = policy.PasswordHistoryCount;
+        settings.PasswordExpirationDays = policy.MaxAgeDays;
+        await UpdateSecuritySettingsAsync(settings, 0);
+        return policy;
+    }
+
+    async Task<CoreInterfaces.PasswordValidationResult> CoreInterfaces.ISecurityConfigurationService.ValidatePasswordAsync(string password, int branchId, int? userId)
+    {
+        var result = await ValidatePasswordAsync(password, userId);
+        return new CoreInterfaces.PasswordValidationResult
+        {
+            IsValid = result.IsValid,
+            Errors = result.Errors,
+            StrengthScore = result.StrengthScore,
+            StrengthLabel = result.StrengthScore >= 80 ? "Strong" : result.StrengthScore >= 60 ? "Good" : result.StrengthScore >= 40 ? "Fair" : "Weak"
+        };
+    }
+
+    async Task CoreInterfaces.ISecurityConfigurationService.RecordPasswordHistoryAsync(int userId, string passwordHash)
+    {
+        await AddPasswordToHistoryAsync(userId, passwordHash);
     }
 
     #endregion

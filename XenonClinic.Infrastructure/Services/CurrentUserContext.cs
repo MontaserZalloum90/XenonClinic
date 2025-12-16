@@ -12,7 +12,7 @@ namespace XenonClinic.Infrastructure.Services;
 /// Provides centralized access to current user context.
 /// Eliminates code duplication across services that need user information.
 /// </summary>
-public class CurrentUserContext : ICurrentUserContext
+public class CurrentUserContext : ICurrentUserContext, ICurrentUserService
 {
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly UserManager<ApplicationUser> _userManager;
