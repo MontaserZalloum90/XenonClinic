@@ -325,7 +325,7 @@ public class LabService : ILabService
     {
         return await _context.LabResults
             .Include(lr => lr.LabOrder)
-                .ThenInclude(lo => lo.Patient)
+                .ThenInclude(lo => lo!.Patient)
             .Include(lr => lr.LabTest)
             .FirstOrDefaultAsync(lr => lr.Id == id);
     }

@@ -81,7 +81,7 @@ public class CompanyContextService : ICompanyContext
         return await _dbContext.Companies
             .Include(c => c.Tenant)
             .Include(c => c.AuthSettings)
-                .ThenInclude(a => a.IdentityProviders)
+                .ThenInclude(a => a!.IdentityProviders)
             .FirstOrDefaultAsync(c => c.Code == companyCode && c.IsActive);
     }
 
@@ -91,7 +91,7 @@ public class CompanyContextService : ICompanyContext
         return await _dbContext.Companies
             .Include(c => c.Tenant)
             .Include(c => c.AuthSettings)
-                .ThenInclude(a => a.IdentityProviders)
+                .ThenInclude(a => a!.IdentityProviders)
             .FirstOrDefaultAsync(c => c.Id == companyId && c.IsActive);
     }
 

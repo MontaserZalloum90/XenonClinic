@@ -98,7 +98,7 @@ public class DicomService : IDicomService
     {
         var study = await _context.DicomStudies
             .Include(s => s.Patient)
-            .Include(s => s.Series)
+            .Include(s => s.Series!)
             .ThenInclude(ser => ser.Instances)
             .FirstOrDefaultAsync(s => s.Id == id);
 
@@ -109,7 +109,7 @@ public class DicomService : IDicomService
     {
         var study = await _context.DicomStudies
             .Include(s => s.Patient)
-            .Include(s => s.Series)
+            .Include(s => s.Series!)
             .ThenInclude(ser => ser.Instances)
             .FirstOrDefaultAsync(s => s.BranchId == branchId && s.StudyInstanceUid == studyInstanceUid);
 
@@ -181,7 +181,7 @@ public class DicomService : IDicomService
     public async Task DeleteStudyAsync(int studyId)
     {
         var study = await _context.DicomStudies
-            .Include(s => s.Series)
+            .Include(s => s.Series!)
             .ThenInclude(ser => ser.Instances)
             .FirstOrDefaultAsync(s => s.Id == studyId)
             ?? throw new KeyNotFoundException($"Study with ID {studyId} not found");
@@ -554,7 +554,7 @@ public class DicomService : IDicomService
         var response = new DicomExportResponseDto();
 
         var studies = await _context.DicomStudies
-            .Include(s => s.Series)
+            .Include(s => s.Series!)
             .ThenInclude(ser => ser.Instances)
             .Where(s => s.BranchId == branchId && request.StudyInstanceUids.Contains(s.StudyInstanceUid))
             .ToListAsync();
