@@ -30,17 +30,7 @@ jobs:
         run: dotnet restore XenonClinic.sln
 
       - name: Build
-        run: |
-          dotnet build XenonClinic.sln --configuration Release --no-restore /p:TreatWarningsAsErrors=false 2>&1 | tee build_output.txt
-          BUILD_EXIT=$?
-          if [ $BUILD_EXIT -ne 0 ]; then
-            echo "::group::Build Output"
-            cat build_output.txt
-            echo "::endgroup::"
-            echo ""
-            echo "::error::Build failed with errors above"
-            exit $BUILD_EXIT
-          fi
+        run: dotnet build XenonClinic.sln --configuration Release --no-restore --verbosity normal /p:TreatWarningsAsErrors=false
 
       - name: Run tests
         run: dotnet test XenonClinic.sln --configuration Release --no-build --verbosity normal --collect:"XPlat Code Coverage"
