@@ -77,6 +77,14 @@ public abstract class BaseApiController : ControllerBase
     }
 
     /// <summary>
+    /// Returns a not found response (generic version for typed responses).
+    /// </summary>
+    protected ActionResult<ApiResponse<T>> ApiNotFound<T>(string error = "Resource not found")
+    {
+        return NotFound(ApiResponse<T>.Failure(error));
+    }
+
+    /// <summary>
     /// Returns an unauthorized response.
     /// </summary>
     protected ActionResult<ApiResponse> ApiUnauthorized(string error = "Unauthorized access")
@@ -85,11 +93,27 @@ public abstract class BaseApiController : ControllerBase
     }
 
     /// <summary>
+    /// Returns an unauthorized response (generic version for typed responses).
+    /// </summary>
+    protected ActionResult<ApiResponse<T>> ApiUnauthorized<T>(string error = "Unauthorized access")
+    {
+        return Unauthorized(ApiResponse<T>.Failure(error));
+    }
+
+    /// <summary>
     /// Returns a forbidden response.
     /// </summary>
     protected ActionResult<ApiResponse> ApiForbidden(string error = "Access denied")
     {
         return StatusCode(403, ApiResponse.Failure(error));
+    }
+
+    /// <summary>
+    /// Returns a forbidden response (generic version for typed responses).
+    /// </summary>
+    protected ActionResult<ApiResponse<T>> ApiForbidden<T>(string error = "Access denied")
+    {
+        return StatusCode(403, ApiResponse<T>.Failure(error));
     }
 
     /// <summary>
