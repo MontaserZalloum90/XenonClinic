@@ -18,6 +18,8 @@ public class Procedure
 
     public int? DoctorId { get; set; }
 
+    public int BranchId { get; set; }
+
     [MaxLength(50)]
     public string? CPTCode { get; set; }
 
@@ -43,4 +45,10 @@ public class Procedure
 
     [ForeignKey(nameof(DoctorId))]
     public virtual Doctor? Doctor { get; set; }
+
+    [ForeignKey(nameof(ClinicalVisitId))]
+    public virtual ClinicalVisit? ClinicalVisit { get; set; }
+
+    [ForeignKey(nameof(BranchId))]
+    public virtual Branch? Branch { get; set; }
 }

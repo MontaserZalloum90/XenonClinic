@@ -15,6 +15,7 @@ public class JobPosition : IBranchEntity
 
     public string Title { get; set; } = string.Empty;
     public string? Description { get; set; }
+    public int? DepartmentId { get; set; }
     public decimal MinSalary { get; set; }
     public decimal MaxSalary { get; set; }
     public bool IsActive { get; set; } = true;

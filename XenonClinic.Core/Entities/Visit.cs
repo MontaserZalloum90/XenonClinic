@@ -22,6 +22,7 @@ public class Visit : IBranchEntity
 
     public string? ChiefComplaint { get; set; }
     public string? Notes { get; set; }
+    public string? VitalSigns { get; set; }
 
     // Visit flags
     public bool HasDiagnosis { get; set; }

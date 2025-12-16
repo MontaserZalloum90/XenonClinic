@@ -114,6 +114,7 @@ public class DicomInstanceDto
     public double? SliceLocation { get; set; }
     public double? WindowCenter { get; set; }
     public double? WindowWidth { get; set; }
+    public int? NumberOfFrames { get; set; }
     public string? ContentDate { get; set; }
     public string? ContentTime { get; set; }
     public long? FileSizeBytes { get; set; }
@@ -166,6 +167,7 @@ public class DicomImageRequestDto
     public string? SopInstanceUid { get; set; }
     public int? Frame { get; set; }
     public string? Quality { get; set; } // thumbnail, preview, full
+    public string? OutputFormat { get; set; } // jpeg, png, dicom
     public int? Width { get; set; }
     public int? Height { get; set; }
 }

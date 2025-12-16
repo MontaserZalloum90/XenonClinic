@@ -28,6 +28,10 @@ public class Prescription
     [MaxLength(50)]
     public string Status { get; set; } = "Active";
 
+    public int? VisitId { get; set; }
+    public string? DiagnosisRelated { get; set; }
+    public string? Instructions { get; set; }
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     public DateTime? UpdatedAt { get; set; }
@@ -72,6 +76,12 @@ public class PrescriptionItem
     [MaxLength(500)]
     public string? Instructions { get; set; }
 
+    public string? GenericName { get; set; }
+    public string? Strength { get; set; }
+    public decimal? Duration { get; set; }
+    public int? Refills { get; set; }
+    public int? RefillsRemaining { get; set; }
+
     public decimal? Quantity { get; set; }
 
     public int? DurationDays { get; set; }
@@ -79,6 +89,8 @@ public class PrescriptionItem
     public DateTime? StartDate { get; set; }
 
     public DateTime? EndDate { get; set; }
+
+    public DateTime? CreatedAt { get; set; }
 
     [MaxLength(50)]
     public string Status { get; set; } = "Active"; // Active, Pending, Processing, Awaiting Pickup, Completed, Cancelled
