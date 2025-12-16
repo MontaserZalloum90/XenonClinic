@@ -23,6 +23,14 @@ public class Visit : IBranchEntity
     public string? ChiefComplaint { get; set; }
     public string? Notes { get; set; }
 
+    // Visit flags
+    public bool HasDiagnosis { get; set; }
+    public bool HasPrescription { get; set; }
+    public bool HasLabOrders { get; set; }
+
+    // Diagnoses (stored as JSON or separate collection)
+    public string? Diagnoses { get; set; }
+
     // Audit fields
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public string? CreatedBy { get; set; }

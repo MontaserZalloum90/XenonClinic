@@ -67,6 +67,37 @@ public class ApplicationUser : IdentityUser, IApplicationUser
     /// </summary>
     public DateTime? LastExternalLoginAt { get; set; }
 
+    // Doctor/Medical Professional properties (for users who are also doctors)
+    /// <summary>
+    /// Medical specialty (if user is a doctor)
+    /// </summary>
+    public string? Specialty { get; set; }
+
+    /// <summary>
+    /// Profile photo path (if user is a doctor)
+    /// </summary>
+    public string? PhotoPath { get; set; }
+
+    /// <summary>
+    /// Biography/profile text (if user is a doctor)
+    /// </summary>
+    public string? Bio { get; set; }
+
+    /// <summary>
+    /// Whether this doctor accepts new patients
+    /// </summary>
+    public bool AcceptsNewPatients { get; set; } = true;
+
+    /// <summary>
+    /// Whether this doctor offers telemedicine
+    /// </summary>
+    public bool OffersTelemedicine { get; set; } = false;
+
+    /// <summary>
+    /// Consultation fee (if user is a doctor)
+    /// </summary>
+    public decimal? ConsultationFee { get; set; }
+
     // Navigation properties - these reference Core entities
     // Note: These are configured in DbContext, not using attributes to avoid circular references
     public Company? Company { get; set; }

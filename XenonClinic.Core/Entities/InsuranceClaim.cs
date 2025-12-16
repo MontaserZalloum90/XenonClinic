@@ -81,6 +81,11 @@ public class InsuranceClaim : IBranchEntity
     public decimal TotalBilledAmount { get; set; }
 
     /// <summary>
+    /// Billed amount (alias for TotalBilledAmount)
+    /// </summary>
+    public decimal BilledAmount { get => TotalBilledAmount; set => TotalBilledAmount = value; }
+
+    /// <summary>
     /// Amount approved by insurance
     /// </summary>
     public decimal ApprovedAmount { get; set; }

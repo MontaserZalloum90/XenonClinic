@@ -248,6 +248,16 @@ public class DicomInstance
     public string? FilePath { get; set; }
 
     /// <summary>
+    /// Storage path (alias for FilePath for compatibility)
+    /// </summary>
+    public string? StoragePath { get => FilePath; set => FilePath = value; }
+
+    /// <summary>
+    /// Number of frames in this instance (for multi-frame images)
+    /// </summary>
+    public int? NumberOfFrames { get; set; }
+
+    /// <summary>
     /// Transfer Syntax UID (DICOM tag 0002,0010)
     /// </summary>
     public string? TransferSyntaxUid { get; set; }

@@ -26,6 +26,7 @@ public class DoctorSchedule : IBranchEntity
     // Schedule type
     public string ScheduleType { get; set; } = "Regular"; // Regular, OnCall, Emergency
     public bool IsActive { get; set; } = true;
+    public bool AllowsTelemedicine { get; set; } = false;
 
     // Override dates (for holidays, vacations, etc.)
     public DateTime? EffectiveFrom { get; set; }
