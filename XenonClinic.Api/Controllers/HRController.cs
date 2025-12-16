@@ -879,7 +879,7 @@ public class HRController : BaseApiController
         }
 
         // BUG FIX: Validate checkout time is after checkin time
-        if (attendance.CheckInTime.HasValue && dto.CheckOutTime < attendance.CheckInTime.Value)
+        if (attendance.CheckInTime.HasValue && dto.CheckOutTime.ToTimeSpan() < attendance.CheckInTime.Value.ToTimeSpan())
         {
             return ApiBadRequest("Check-out time cannot be before check-in time");
         }

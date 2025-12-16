@@ -701,7 +701,7 @@ public class RadiologyController : BaseApiController
     [ProducesResponseType(typeof(ApiResponse<Dictionary<string, int>>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetModalityDistribution()
     {
-        var branchId = _currentUserService.BranchId;
+        var branchId = _currentUserService.BranchId ?? 0;
         var distribution = await _radiologyService.GetOrdersByModalityDistributionAsync(branchId);
         return ApiOk(distribution);
     }
@@ -713,7 +713,7 @@ public class RadiologyController : BaseApiController
     [ProducesResponseType(typeof(ApiResponse<IEnumerable<TopImagingStudyDto>>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetTopStudies([FromQuery] int count = 10)
     {
-        var branchId = _currentUserService.BranchId;
+        var branchId = _currentUserService.BranchId ?? 0;
         var topStudies = await _radiologyService.GetMostOrderedStudiesAsync(branchId, count);
 
         var topStudyDtos = topStudies.Select(t => new TopImagingStudyDto
@@ -738,8 +738,8 @@ public class RadiologyController : BaseApiController
             StudyCode = study.TestCode,
             StudyName = study.TestName,
             Description = study.Description,
-            Modality = Enum.TryParse<ImagingModality>(study.Category, out var modality) ? modality : ImagingModality.Other,
-            EstimatedDurationMinutes = study.TurnaroundTime,
+            Modality = study.Category == TestCategory.Imaging ? ImagingModality.XRay : ImagingModality.Other,
+            EstimatedDurationMinutes = (study.TurnaroundTimeHours ?? 0) * 60,
             Price = study.Price,
             PatientPreparation = study.PreparationInstructions,
             IsActive = study.IsActive,
@@ -762,16 +762,16 @@ public class RadiologyController : BaseApiController
             OrderDate = order.OrderDate,
             Status = MapToRadiologyOrderStatus(order.Status),
             PatientId = order.PatientId,
-            PatientName = order.Patient?.FullName,
-            AppointmentId = order.AppointmentId,
+            PatientName = order.Patient?.FullNameEn,
+            AppointmentId = order.VisitId,
             ReferringDoctorId = order.OrderingDoctorId,
             IsUrgent = order.IsUrgent,
             IsStat = order.IsUrgent, // Using IsUrgent for STAT as well
             ClinicalIndication = order.ClinicalNotes,
             Notes = order.Notes,
-            SubTotal = order.OrderItems.Sum(oi => oi.Price),
-            DiscountAmount = order.DiscountAmount,
-            TotalPrice = order.TotalPrice,
+            SubTotal = order.Items.Sum(oi => oi.Price),
+            DiscountAmount = 0,
+            TotalPrice = order.TotalAmount,
             BranchId = order.BranchId,
             BranchName = order.Branch?.Name,
             ReceivedDate = order.ReceivedDate,

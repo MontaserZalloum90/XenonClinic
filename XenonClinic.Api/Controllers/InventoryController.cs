@@ -656,7 +656,7 @@ public class InventoryController : BaseApiController
 
             if (request.TransactionType.HasValue)
             {
-                filteredTransactions = filteredTransactions.Where(t => t.TransactionType == request.TransactionType.Value);
+                filteredTransactions = filteredTransactions.Where(t => (int)t.TransactionType == (int)request.TransactionType.Value);
             }
 
             if (request.PatientId.HasValue)

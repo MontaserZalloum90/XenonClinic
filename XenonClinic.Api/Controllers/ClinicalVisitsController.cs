@@ -278,7 +278,7 @@ public class ClinicalVisitsController : BaseApiController
             VisitDate = dto.VisitDate,
             ChiefComplaint = dto.ChiefComplaint,
             Notes = dto.Notes,
-            ProviderId = dto.ProviderId?.ToString(),
+            ProviderId = dto.ProviderId,
             CreatedBy = _userContext.UserId
         };
 
@@ -361,7 +361,7 @@ public class ClinicalVisitsController : BaseApiController
             VisitDate = dto.VisitDate,
             ChiefComplaint = dto.ChiefComplaint,
             Notes = dto.Notes,
-            ProviderId = dto.ProviderId?.ToString(),
+            ProviderId = dto.ProviderId,
             CreatedBy = _userContext.UserId
         };
 
