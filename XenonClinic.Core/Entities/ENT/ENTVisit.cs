@@ -49,4 +49,6 @@ public class ENTVisit
     public ICollection<HearingScreening> HearingScreenings { get; set; } = new List<HearingScreening>();
     public ICollection<SinusAssessment> SinusAssessments { get; set; } = new List<SinusAssessment>();
     public ICollection<ENTProcedure> Procedures { get; set; } = new List<ENTProcedure>();
+    public ICollection<ThroatExam> ThroatExams { get; set; } = new List<ThroatExam>();
+    public ICollection<AllergyTest> AllergyTests { get; set; } = new List<AllergyTest>();
 }

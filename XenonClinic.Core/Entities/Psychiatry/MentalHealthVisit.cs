@@ -47,4 +47,5 @@ public class MentalHealthVisit
     public Branch? Branch { get; set; }
     public Appointment? Appointment { get; set; }
     public ICollection<TherapySession> TherapySessions { get; set; } = new List<TherapySession>();
+    public ICollection<PsychAssessment> Assessments { get; set; } = new List<PsychAssessment>();
 }

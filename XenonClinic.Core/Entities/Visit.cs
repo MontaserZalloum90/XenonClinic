@@ -21,6 +21,11 @@ public class Visit : IBranchEntity
     public string Status { get; set; } = "Scheduled"; // Scheduled, InProgress, Completed, Cancelled
 
     public string? ChiefComplaint { get; set; }
+    public string? HistoryOfPresentIllness { get; set; }
+    public string? Assessment { get; set; }
+    public string? Plan { get; set; }
+    public string? FollowUpInstructions { get; set; }
+    public DateTime? NextFollowUpDate { get; set; }
     public string? Notes { get; set; }
     public string? VitalSigns { get; set; }
 

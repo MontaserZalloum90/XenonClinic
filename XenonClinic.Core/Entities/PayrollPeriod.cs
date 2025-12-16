@@ -53,6 +53,12 @@ public class Payslip
     public decimal Commission { get; set; }
     public decimal GrossPay { get; set; }
 
+    /// <summary>
+    /// Alias for GrossPay for compatibility
+    /// </summary>
+    [System.ComponentModel.DataAnnotations.Schema.NotMapped]
+    public decimal GrossSalary { get => GrossPay; set => GrossPay = value; }
+
     // Year-to-Date Totals
     public decimal YtdGross { get; set; }
     public decimal YtdTax { get; set; }
@@ -70,6 +76,18 @@ public class Payslip
 
     // Net Pay
     public decimal NetPay { get; set; }
+
+    /// <summary>
+    /// Alias for NetPay for compatibility
+    /// </summary>
+    [System.ComponentModel.DataAnnotations.Schema.NotMapped]
+    public decimal NetSalary { get => NetPay; set => NetPay = value; }
+
+    /// <summary>
+    /// Alias for TotalDeductions for compatibility
+    /// </summary>
+    [System.ComponentModel.DataAnnotations.Schema.NotMapped]
+    public decimal Deductions { get => TotalDeductions; set => TotalDeductions = value; }
 
     // Work info
     public int DaysWorked { get; set; }

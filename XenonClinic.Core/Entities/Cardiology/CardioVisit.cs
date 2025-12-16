@@ -42,4 +42,10 @@ public class CardioVisit
     public ICollection<EchoResult> EchoResults { get; set; } = new List<EchoResult>();
     public ICollection<StressTest> StressTests { get; set; } = new List<StressTest>();
     public ICollection<CardiacProcedure> CardiacProcedures { get; set; } = new List<CardiacProcedure>();
+
+    /// <summary>
+    /// Alias for CardiacProcedures for compatibility
+    /// </summary>
+    [System.ComponentModel.DataAnnotations.Schema.NotMapped]
+    public ICollection<CardiacProcedure> Procedures { get => CardiacProcedures; set => CardiacProcedures = value; }
 }
