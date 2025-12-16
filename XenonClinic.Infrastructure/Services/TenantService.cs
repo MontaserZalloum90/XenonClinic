@@ -159,12 +159,13 @@ public class TenantService : ITenantService
         await _context.SaveChangesAsync();
 
         // Audit log
-        await _auditService.LogAsync(new AuditEntry
+        await _auditService.LogAsync(new AuditLogEntry
         {
-            EntityType = nameof(Tenant),
-            EntityId = tenant.Id.ToString(),
-            Action = AuditAction.Create,
-            UserId = user?.Id,
+            EventType = "TenantManagement",
+            EventCategory = "Tenant",
+            ResourceType = nameof(Tenant),
+            ResourceId = tenant.Id.ToString(),
+            Action = "Create",
             UserName = user?.UserName,
             NewValues = new Dictionary<string, object?>
             {
@@ -204,12 +205,13 @@ public class TenantService : ITenantService
         _cache.Remove($"tenant_{tenant.Id}");
 
         // Audit log
-        await _auditService.LogAsync(new AuditEntry
+        await _auditService.LogAsync(new AuditLogEntry
         {
-            EntityType = nameof(Tenant),
-            EntityId = tenant.Id.ToString(),
-            Action = AuditAction.Update,
-            UserId = user?.Id,
+            EventType = "TenantManagement",
+            EventCategory = "Tenant",
+            ResourceType = nameof(Tenant),
+            ResourceId = tenant.Id.ToString(),
+            Action = "Update",
             UserName = user?.UserName,
             OldValues = oldTenant != null ? new Dictionary<string, object?>
             {
@@ -251,12 +253,13 @@ public class TenantService : ITenantService
         _cache.Remove($"tenant_{tenantId}");
 
         // Audit log
-        await _auditService.LogAsync(new AuditEntry
+        await _auditService.LogAsync(new AuditLogEntry
         {
-            EntityType = nameof(Tenant),
-            EntityId = tenantId.ToString(),
-            Action = AuditAction.SoftDelete,
-            UserId = user?.Id,
+            EventType = "TenantManagement",
+            EventCategory = "Tenant",
+            ResourceType = nameof(Tenant),
+            ResourceId = tenantId.ToString(),
+            Action = "Deactivate",
             UserName = user?.UserName,
             OldValues = new Dictionary<string, object?> { ["IsActive"] = wasActive },
             NewValues = new Dictionary<string, object?> { ["IsActive"] = false }
@@ -291,12 +294,13 @@ public class TenantService : ITenantService
         _cache.Remove($"tenant_{settings.TenantId}");
 
         // Audit log
-        await _auditService.LogAsync(new AuditEntry
+        await _auditService.LogAsync(new AuditLogEntry
         {
-            EntityType = nameof(XenonClinic.Core.Entities.TenantSettings),
-            EntityId = settings.Id.ToString(),
-            Action = AuditAction.Update,
-            UserId = user?.Id,
+            EventType = "TenantManagement",
+            EventCategory = "TenantSettings",
+            ResourceType = nameof(XenonClinic.Core.Entities.TenantSettings),
+            ResourceId = settings.Id.ToString(),
+            Action = "Update",
             UserName = user?.UserName,
             OldValues = oldSettings != null ? new Dictionary<string, object?>
             {

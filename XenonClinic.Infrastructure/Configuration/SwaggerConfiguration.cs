@@ -82,9 +82,6 @@ public static class SwaggerConfiguration
                 }
             }
 
-            // Custom operation filters
-            options.EnableAnnotations();
-
             // Group by controller/tag with friendly names
             options.TagActionsBy(api =>
             {

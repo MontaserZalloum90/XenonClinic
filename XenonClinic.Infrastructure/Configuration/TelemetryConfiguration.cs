@@ -73,7 +73,6 @@ public static class TelemetryConfiguration
                     .SetResourceBuilder(resourceBuilder)
                     .AddAspNetCoreInstrumentation()
                     .AddHttpClientInstrumentation()
-                    .AddProcessInstrumentation()
                     .AddMeter("XenonClinic.*");
 
                 // Custom metrics
