@@ -63,7 +63,8 @@ public enum SecretType
     DatabasePassword,
     SmtpPassword,
     WebhookSecret,
-    IntegrationCredential
+    IntegrationCredential,
+    Custom
 }
 
 /// <summary>
