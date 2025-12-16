@@ -927,13 +927,13 @@ public class CustomReportService : ICustomReportService
         return (items, totalCount);
     }
 
-    public async Task<Dictionary<string, object>> GetReportStatisticsAsync(int branchId, int reportId)
+    public async Task<Dictionary<string, object?>> GetReportStatisticsAsync(int branchId, int reportId)
     {
         var history = await _context.ReportExecutionHistory
             .Where(h => h.BranchId == branchId && h.ReportId == reportId)
             .ToListAsync();
 
-        return new Dictionary<string, object>
+        return new Dictionary<string, object?>
         {
             ["TotalExecutions"] = history.Count,
             ["SuccessfulExecutions"] = history.Count(h => h.Status == "Success"),

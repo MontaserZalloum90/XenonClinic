@@ -351,9 +351,9 @@ public class AnalyticsService : IAnalyticsService
         if (entity == null)
             return null;
 
-        entity.Title = widget.Title;
-        entity.WidgetType = widget.WidgetType;
-        entity.DataSource = widget.DataSource;
+        entity.Title = widget.Title ?? entity.Title;
+        entity.WidgetType = widget.WidgetType ?? entity.WidgetType;
+        entity.DataSource = widget.DataSource ?? entity.DataSource;
         entity.ConfigurationJson = widget.Configuration != null ? JsonSerializer.Serialize(widget.Configuration) : null;
         entity.PositionJson = widget.Position != null ? JsonSerializer.Serialize(widget.Position) : null;
         entity.FiltersJson = widget.Filters != null ? JsonSerializer.Serialize(widget.Filters) : null;

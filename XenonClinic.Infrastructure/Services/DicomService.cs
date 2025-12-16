@@ -882,7 +882,7 @@ public class DicomService : IDicomService
     {
         var report = await _context.RadiologyReports
             .Include(r => r.Study)
-            .ThenInclude(s => s.Patient)
+            .ThenInclude(s => s!.Patient)
             .Include(r => r.ReportingRadiologist)
             .FirstOrDefaultAsync(r => r.StudyId == studyId);
 
@@ -940,7 +940,7 @@ public class DicomService : IDicomService
     {
         var report = await _context.RadiologyReports
             .Include(r => r.Study)
-            .ThenInclude(s => s.Patient)
+            .ThenInclude(s => s!.Patient)
             .FirstOrDefaultAsync(r => r.Id == reportId)
             ?? throw new KeyNotFoundException($"Report with ID {reportId} not found");
 
@@ -963,7 +963,7 @@ public class DicomService : IDicomService
     {
         var report = await _context.RadiologyReports
             .Include(r => r.Study)
-            .ThenInclude(s => s.Patient)
+            .ThenInclude(s => s!.Patient)
             .Include(r => r.ReportingRadiologist)
             .FirstOrDefaultAsync(r => r.Id == reportId)
             ?? throw new KeyNotFoundException($"Report with ID {reportId} not found");

@@ -12,7 +12,7 @@ public abstract class BaseApiController : ControllerBase
     /// <summary>
     /// Returns a successful response with data.
     /// </summary>
-    protected ActionResult<ApiResponse<T>> ApiOk<T>(T data, string? message = null)
+    protected IActionResult ApiOk<T>(T data, string? message = null)
     {
         return Ok(ApiResponse<T>.Success(data, message));
     }
@@ -20,7 +20,7 @@ public abstract class BaseApiController : ControllerBase
     /// <summary>
     /// Returns a successful response without data.
     /// </summary>
-    protected ActionResult<ApiResponse> ApiOk(string? message = null)
+    protected IActionResult ApiOk(string? message = null)
     {
         return Ok(ApiResponse.Ok(message));
     }
@@ -28,7 +28,7 @@ public abstract class BaseApiController : ControllerBase
     /// <summary>
     /// Returns a created response with data.
     /// </summary>
-    protected ActionResult<ApiResponse<T>> ApiCreated<T>(T data, string? location = null, string? message = null)
+    protected IActionResult ApiCreated<T>(T data, string? location = null, string? message = null)
     {
         var response = ApiResponse<T>.Success(data, message ?? "Resource created successfully");
         if (!string.IsNullOrEmpty(location))
@@ -41,7 +41,7 @@ public abstract class BaseApiController : ControllerBase
     /// <summary>
     /// Returns a no content response.
     /// </summary>
-    protected new ActionResult NoContent()
+    protected new IActionResult NoContent()
     {
         return StatusCode(204);
     }
@@ -49,7 +49,7 @@ public abstract class BaseApiController : ControllerBase
     /// <summary>
     /// Returns a bad request response with error details.
     /// </summary>
-    protected ActionResult<ApiResponse> ApiBadRequest(string error, IDictionary<string, string[]>? validationErrors = null)
+    protected IActionResult ApiBadRequest(string error, IDictionary<string, string[]>? validationErrors = null)
     {
         return BadRequest(ApiResponse.Failure(error, validationErrors));
     }
@@ -57,7 +57,7 @@ public abstract class BaseApiController : ControllerBase
     /// <summary>
     /// Returns a bad request response from ModelState.
     /// </summary>
-    protected ActionResult<ApiResponse> ApiBadRequestFromModelState()
+    protected IActionResult ApiBadRequestFromModelState()
     {
         var errors = ModelState
             .Where(x => x.Value?.Errors.Count > 0)
@@ -71,7 +71,7 @@ public abstract class BaseApiController : ControllerBase
     /// <summary>
     /// Returns a not found response.
     /// </summary>
-    protected ActionResult<ApiResponse> ApiNotFound(string error = "Resource not found")
+    protected IActionResult ApiNotFound(string error = "Resource not found")
     {
         return NotFound(ApiResponse.Failure(error));
     }
@@ -79,7 +79,7 @@ public abstract class BaseApiController : ControllerBase
     /// <summary>
     /// Returns a not found response (generic version for typed responses).
     /// </summary>
-    protected ActionResult<ApiResponse<T>> ApiNotFound<T>(string error = "Resource not found")
+    protected IActionResult ApiNotFound<T>(string error = "Resource not found")
     {
         return NotFound(ApiResponse<T>.Failure(error));
     }
@@ -87,7 +87,7 @@ public abstract class BaseApiController : ControllerBase
     /// <summary>
     /// Returns an unauthorized response.
     /// </summary>
-    protected ActionResult<ApiResponse> ApiUnauthorized(string error = "Unauthorized access")
+    protected IActionResult ApiUnauthorized(string error = "Unauthorized access")
     {
         return Unauthorized(ApiResponse.Failure(error));
     }
@@ -95,7 +95,7 @@ public abstract class BaseApiController : ControllerBase
     /// <summary>
     /// Returns an unauthorized response (generic version for typed responses).
     /// </summary>
-    protected ActionResult<ApiResponse<T>> ApiUnauthorized<T>(string error = "Unauthorized access")
+    protected IActionResult ApiUnauthorized<T>(string error = "Unauthorized access")
     {
         return Unauthorized(ApiResponse<T>.Failure(error));
     }
@@ -103,7 +103,7 @@ public abstract class BaseApiController : ControllerBase
     /// <summary>
     /// Returns a forbidden response.
     /// </summary>
-    protected ActionResult<ApiResponse> ApiForbidden(string error = "Access denied")
+    protected IActionResult ApiForbidden(string error = "Access denied")
     {
         return StatusCode(403, ApiResponse.Failure(error));
     }
@@ -111,7 +111,7 @@ public abstract class BaseApiController : ControllerBase
     /// <summary>
     /// Returns a forbidden response (generic version for typed responses).
     /// </summary>
-    protected ActionResult<ApiResponse<T>> ApiForbidden<T>(string error = "Access denied")
+    protected IActionResult ApiForbidden<T>(string error = "Access denied")
     {
         return StatusCode(403, ApiResponse<T>.Failure(error));
     }
@@ -119,7 +119,7 @@ public abstract class BaseApiController : ControllerBase
     /// <summary>
     /// Returns a conflict response.
     /// </summary>
-    protected ActionResult<ApiResponse> ApiConflict(string error)
+    protected IActionResult ApiConflict(string error)
     {
         return Conflict(ApiResponse.Failure(error));
     }
@@ -127,7 +127,7 @@ public abstract class BaseApiController : ControllerBase
     /// <summary>
     /// Returns an internal server error response.
     /// </summary>
-    protected ActionResult<ApiResponse> ApiServerError(string error = "An unexpected error occurred")
+    protected IActionResult ApiServerError(string error = "An unexpected error occurred")
     {
         return StatusCode(500, ApiResponse.Failure(error));
     }
@@ -135,7 +135,7 @@ public abstract class BaseApiController : ControllerBase
     /// <summary>
     /// Returns a paginated response.
     /// </summary>
-    protected ActionResult<ApiResponse<PaginatedResponse<T>>> ApiPaginated<T>(
+    protected IActionResult ApiPaginated<T>(
         IReadOnlyList<T> items,
         int totalCount,
         int pageNumber,

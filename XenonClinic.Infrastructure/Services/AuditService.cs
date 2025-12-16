@@ -549,10 +549,10 @@ public class AuditService : IAuditService
 
         var entry = new AuditLogEntry
         {
-            EventType = log.EventType,
-            EventCategory = log.EventCategory,
-            Action = log.Action,
-            ResourceType = log.ResourceType,
+            EventType = log.EventType ?? string.Empty,
+            EventCategory = log.EventCategory ?? string.Empty,
+            Action = log.Action ?? string.Empty,
+            ResourceType = log.ResourceType ?? string.Empty,
             ResourceId = log.ResourceId,
             UserId = log.UserId,
             PatientId = log.PatientId,
