@@ -96,7 +96,9 @@ public class HRController : BaseApiController
         var validationResult = await _employeeListValidator.ValidateAsync(request);
         if (!validationResult.IsValid)
         {
-            return ApiBadRequest(validationResult.Errors);
+            return ApiBadRequest("Validation failed", validationResult.Errors.ToDictionary(
+                e => e.PropertyName,
+                e => new[] { e.ErrorMessage }));
         }
 
         var branchId = GetCurrentBranchId();
@@ -153,8 +155,7 @@ public class HRController : BaseApiController
             Items = items,
             PageNumber = request.PageNumber,
             PageSize = request.PageSize,
-            TotalCount = totalCount,
-            TotalPages = (int)Math.Ceiling(totalCount / (double)request.PageSize)
+            TotalCount = totalCount
         };
 
         return ApiOk(paginatedResult);
@@ -220,7 +221,9 @@ public class HRController : BaseApiController
         var validationResult = await _createEmployeeValidator.ValidateAsync(dto);
         if (!validationResult.IsValid)
         {
-            return ApiBadRequest(validationResult.Errors);
+            return ApiBadRequest("Validation failed", validationResult.Errors.ToDictionary(
+                e => e.PropertyName,
+                e => new[] { e.ErrorMessage }));
         }
 
         var branchId = GetCurrentBranchId();
@@ -295,7 +298,9 @@ public class HRController : BaseApiController
         var validationResult = await _updateEmployeeValidator.ValidateAsync(dto);
         if (!validationResult.IsValid)
         {
-            return ApiBadRequest(validationResult.Errors);
+            return ApiBadRequest("Validation failed", validationResult.Errors.ToDictionary(
+                e => e.PropertyName,
+                e => new[] { e.ErrorMessage }));
         }
 
         var existingEmployee = await _hrService.GetEmployeeByIdAsync(id);
@@ -438,7 +443,9 @@ public class HRController : BaseApiController
         var validationResult = await _createDepartmentValidator.ValidateAsync(dto);
         if (!validationResult.IsValid)
         {
-            return ApiBadRequest(validationResult.Errors);
+            return ApiBadRequest("Validation failed", validationResult.Errors.ToDictionary(
+                e => e.PropertyName,
+                e => new[] { e.ErrorMessage }));
         }
 
         var branchId = GetCurrentBranchId();
@@ -485,7 +492,9 @@ public class HRController : BaseApiController
         var validationResult = await _updateDepartmentValidator.ValidateAsync(dto);
         if (!validationResult.IsValid)
         {
-            return ApiBadRequest(validationResult.Errors);
+            return ApiBadRequest("Validation failed", validationResult.Errors.ToDictionary(
+                e => e.PropertyName,
+                e => new[] { e.ErrorMessage }));
         }
 
         var existingDepartment = await _hrService.GetDepartmentByIdAsync(id);
@@ -605,7 +614,9 @@ public class HRController : BaseApiController
         var validationResult = await _createJobPositionValidator.ValidateAsync(dto);
         if (!validationResult.IsValid)
         {
-            return ApiBadRequest(validationResult.Errors);
+            return ApiBadRequest("Validation failed", validationResult.Errors.ToDictionary(
+                e => e.PropertyName,
+                e => new[] { e.ErrorMessage }));
         }
 
         var branchId = GetCurrentBranchId();
@@ -653,7 +664,9 @@ public class HRController : BaseApiController
         var validationResult = await _updateJobPositionValidator.ValidateAsync(dto);
         if (!validationResult.IsValid)
         {
-            return ApiBadRequest(validationResult.Errors);
+            return ApiBadRequest("Validation failed", validationResult.Errors.ToDictionary(
+                e => e.PropertyName,
+                e => new[] { e.ErrorMessage }));
         }
 
         var existingPosition = await _hrService.GetJobPositionByIdAsync(id);
@@ -723,7 +736,9 @@ public class HRController : BaseApiController
         var validationResult = await _attendanceListValidator.ValidateAsync(request);
         if (!validationResult.IsValid)
         {
-            return ApiBadRequest(validationResult.Errors);
+            return ApiBadRequest("Validation failed", validationResult.Errors.ToDictionary(
+                e => e.PropertyName,
+                e => new[] { e.ErrorMessage }));
         }
 
         var branchId = GetCurrentBranchId();
@@ -772,8 +787,7 @@ public class HRController : BaseApiController
             Items = items,
             PageNumber = request.PageNumber,
             PageSize = request.PageSize,
-            TotalCount = totalCount,
-            TotalPages = (int)Math.Ceiling(totalCount / (double)request.PageSize)
+            TotalCount = totalCount
         };
 
         return ApiOk(paginatedResult);
@@ -809,7 +823,9 @@ public class HRController : BaseApiController
         var validationResult = await _checkInValidator.ValidateAsync(dto);
         if (!validationResult.IsValid)
         {
-            return ApiBadRequest(validationResult.Errors);
+            return ApiBadRequest("Validation failed", validationResult.Errors.ToDictionary(
+                e => e.PropertyName,
+                e => new[] { e.ErrorMessage }));
         }
 
         var employee = await _hrService.GetEmployeeByIdAsync(dto.EmployeeId);
@@ -844,7 +860,9 @@ public class HRController : BaseApiController
         var validationResult = await _checkOutValidator.ValidateAsync(dto);
         if (!validationResult.IsValid)
         {
-            return ApiBadRequest(validationResult.Errors);
+            return ApiBadRequest("Validation failed", validationResult.Errors.ToDictionary(
+                e => e.PropertyName,
+                e => new[] { e.ErrorMessage }));
         }
 
         var attendance = await _hrService.GetAttendanceByIdAsync(dto.AttendanceId);
@@ -887,7 +905,9 @@ public class HRController : BaseApiController
         var validationResult = await _createAttendanceValidator.ValidateAsync(dto);
         if (!validationResult.IsValid)
         {
-            return ApiBadRequest(validationResult.Errors);
+            return ApiBadRequest("Validation failed", validationResult.Errors.ToDictionary(
+                e => e.PropertyName,
+                e => new[] { e.ErrorMessage }));
         }
 
         var employee = await _hrService.GetEmployeeByIdAsync(dto.EmployeeId);
@@ -937,7 +957,9 @@ public class HRController : BaseApiController
         var validationResult = await _leaveRequestListValidator.ValidateAsync(request);
         if (!validationResult.IsValid)
         {
-            return ApiBadRequest(validationResult.Errors);
+            return ApiBadRequest("Validation failed", validationResult.Errors.ToDictionary(
+                e => e.PropertyName,
+                e => new[] { e.ErrorMessage }));
         }
 
         var branchId = GetCurrentBranchId();
@@ -997,8 +1019,7 @@ public class HRController : BaseApiController
             Items = items,
             PageNumber = request.PageNumber,
             PageSize = request.PageSize,
-            TotalCount = totalCount,
-            TotalPages = (int)Math.Ceiling(totalCount / (double)request.PageSize)
+            TotalCount = totalCount
         };
 
         return ApiOk(paginatedResult);
@@ -1060,7 +1081,9 @@ public class HRController : BaseApiController
         var validationResult = await _createLeaveRequestValidator.ValidateAsync(dto);
         if (!validationResult.IsValid)
         {
-            return ApiBadRequest(validationResult.Errors);
+            return ApiBadRequest("Validation failed", validationResult.Errors.ToDictionary(
+                e => e.PropertyName,
+                e => new[] { e.ErrorMessage }));
         }
 
         var employee = await _hrService.GetEmployeeByIdAsync(dto.EmployeeId);
@@ -1124,7 +1147,9 @@ public class HRController : BaseApiController
         var validationResult = await _approveLeaveValidator.ValidateAsync(dto);
         if (!validationResult.IsValid)
         {
-            return ApiBadRequest(validationResult.Errors);
+            return ApiBadRequest("Validation failed", validationResult.Errors.ToDictionary(
+                e => e.PropertyName,
+                e => new[] { e.ErrorMessage }));
         }
 
         var leaveRequest = await _hrService.GetLeaveRequestByIdAsync(id);
@@ -1171,7 +1196,9 @@ public class HRController : BaseApiController
         var validationResult = await _rejectLeaveValidator.ValidateAsync(dto);
         if (!validationResult.IsValid)
         {
-            return ApiBadRequest(validationResult.Errors);
+            return ApiBadRequest("Validation failed", validationResult.Errors.ToDictionary(
+                e => e.PropertyName,
+                e => new[] { e.ErrorMessage }));
         }
 
         var leaveRequest = await _hrService.GetLeaveRequestByIdAsync(id);

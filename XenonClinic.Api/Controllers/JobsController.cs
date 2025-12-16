@@ -87,7 +87,7 @@ public class JobsController : BaseApiController
     [HttpGet("{jobId}")]
     [ProducesResponseType(typeof(ApiResponse<JobDetailsResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status404NotFound)]
-    public ActionResult<ApiResponse<JobDetailsResponse>> GetJob(string jobId)
+    public IActionResult GetJob(string jobId)
     {
         var job = _jobService.GetJobDetails(jobId);
 
@@ -119,7 +119,7 @@ public class JobsController : BaseApiController
     /// </summary>
     [HttpGet("recurring")]
     [ProducesResponseType(typeof(ApiResponse<IEnumerable<RecurringJobResponse>>), StatusCodes.Status200OK)]
-    public ActionResult<ApiResponse<IEnumerable<RecurringJobResponse>>> GetRecurringJobs()
+    public IActionResult GetRecurringJobs()
     {
         var jobs = _jobService.GetRecurringJobs()
             .Select(j => new RecurringJobResponse
@@ -140,7 +140,7 @@ public class JobsController : BaseApiController
     /// </summary>
     [HttpGet("failed")]
     [ProducesResponseType(typeof(ApiResponse<IEnumerable<JobDetailsResponse>>), StatusCodes.Status200OK)]
-    public ActionResult<ApiResponse<IEnumerable<JobDetailsResponse>>> GetFailedJobs([FromQuery] int limit = 50)
+    public IActionResult GetFailedJobs([FromQuery] int limit = 50)
     {
         var jobs = _jobService.GetAllJobs(JobState.Failed)
             .Take(limit)
@@ -166,7 +166,7 @@ public class JobsController : BaseApiController
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status404NotFound)]
-    public ActionResult<ApiResponse> RequeueJob(string jobId)
+    public IActionResult RequeueJob(string jobId)
     {
         var job = _jobService.GetJobDetails(jobId);
 
@@ -197,7 +197,7 @@ public class JobsController : BaseApiController
     [HttpDelete("{jobId}")]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status404NotFound)]
-    public ActionResult<ApiResponse> DeleteJob(string jobId)
+    public IActionResult DeleteJob(string jobId)
     {
         var success = _jobService.Delete(jobId);
 
@@ -215,7 +215,7 @@ public class JobsController : BaseApiController
     /// </summary>
     [HttpPost("recurring/{jobId}/trigger")]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status200OK)]
-    public ActionResult<ApiResponse> TriggerRecurringJob(string jobId)
+    public IActionResult TriggerRecurringJob(string jobId)
     {
         _jobService.TriggerRecurring(jobId);
         _logger.LogInformation("Recurring job {JobId} triggered by admin", jobId);
@@ -227,7 +227,7 @@ public class JobsController : BaseApiController
     /// </summary>
     [HttpDelete("recurring/{jobId}")]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status200OK)]
-    public ActionResult<ApiResponse> RemoveRecurringJob(string jobId)
+    public IActionResult RemoveRecurringJob(string jobId)
     {
         _jobService.RemoveRecurring(jobId);
         _logger.LogInformation("Recurring job {JobId} removed by admin", jobId);

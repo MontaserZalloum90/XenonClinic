@@ -59,7 +59,9 @@ public class PatientController : BaseApiController
         var validationResult = await _listValidator.ValidateAsync(request);
         if (!validationResult.IsValid)
         {
-            return ApiBadRequest(validationResult.Errors);
+            return ApiBadRequest("Validation failed", validationResult.Errors.ToDictionary(
+                e => e.PropertyName,
+                e => new[] { e.ErrorMessage }));
         }
 
         var branchId = GetCurrentBranchId();
@@ -113,8 +115,7 @@ public class PatientController : BaseApiController
             Items = items,
             PageNumber = request.PageNumber,
             PageSize = request.PageSize,
-            TotalCount = totalCount,
-            TotalPages = (int)Math.Ceiling(totalCount / (double)request.PageSize)
+            TotalCount = totalCount
         };
 
         return ApiOk(paginatedResult);
@@ -182,7 +183,9 @@ public class PatientController : BaseApiController
         var validationResult = await _createValidator.ValidateAsync(dto);
         if (!validationResult.IsValid)
         {
-            return ApiBadRequest(validationResult.Errors);
+            return ApiBadRequest("Validation failed", validationResult.Errors.ToDictionary(
+                e => e.PropertyName,
+                e => new[] { e.ErrorMessage }));
         }
 
         var branchId = GetCurrentBranchId();
@@ -271,7 +274,9 @@ public class PatientController : BaseApiController
         var validationResult = await _updateValidator.ValidateAsync(dto);
         if (!validationResult.IsValid)
         {
-            return ApiBadRequest(validationResult.Errors);
+            return ApiBadRequest("Validation failed", validationResult.Errors.ToDictionary(
+                e => e.PropertyName,
+                e => new[] { e.ErrorMessage }));
         }
 
         var existingPatient = await _patientService.GetPatientByIdAsync(id);
@@ -476,7 +481,9 @@ public class PatientController : BaseApiController
         var validationResult = await _documentValidator.ValidateAsync(dto);
         if (!validationResult.IsValid)
         {
-            return ApiBadRequest(validationResult.Errors);
+            return ApiBadRequest("Validation failed", validationResult.Errors.ToDictionary(
+                e => e.PropertyName,
+                e => new[] { e.ErrorMessage }));
         }
 
         var patient = await _patientService.GetPatientByIdAsync(patientId);
