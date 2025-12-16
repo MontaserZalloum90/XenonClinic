@@ -1,5 +1,6 @@
-import { useForm } from 'react-hook-form';
-import { CampaignType, CreateCampaignRequest } from '../../types/marketing';
+import { useForm } from "react-hook-form";
+import { CampaignType } from "../../types/marketing";
+import type { CreateCampaignRequest } from "../../types/marketing";
 
 interface CampaignFormProps {
   initialData?: Partial<CreateCampaignRequest>;
@@ -8,29 +9,33 @@ interface CampaignFormProps {
 }
 
 const campaignTypes = [
-  { value: CampaignType.Email, label: 'Email Marketing' },
-  { value: CampaignType.Social, label: 'Social Media' },
-  { value: CampaignType.SMS, label: 'SMS/Text Message' },
-  { value: CampaignType.Event, label: 'Event/Webinar' },
-  { value: CampaignType.Referral, label: 'Referral Program' },
-  { value: CampaignType.Recall, label: 'Patient Recall' },
-  { value: CampaignType.Seasonal, label: 'Seasonal Promotion' },
-  { value: CampaignType.Digital, label: 'Digital Advertising' },
-  { value: CampaignType.Print, label: 'Print/Traditional' },
-  { value: CampaignType.Other, label: 'Other' },
+  { value: CampaignType.Email, label: "Email Marketing" },
+  { value: CampaignType.Social, label: "Social Media" },
+  { value: CampaignType.SMS, label: "SMS/Text Message" },
+  { value: CampaignType.Event, label: "Event/Webinar" },
+  { value: CampaignType.Referral, label: "Referral Program" },
+  { value: CampaignType.Recall, label: "Patient Recall" },
+  { value: CampaignType.Seasonal, label: "Seasonal Promotion" },
+  { value: CampaignType.Digital, label: "Digital Advertising" },
+  { value: CampaignType.Print, label: "Print/Traditional" },
+  { value: CampaignType.Other, label: "Other" },
 ];
 
-export const CampaignForm = ({ initialData, onSubmit, onCancel }: CampaignFormProps) => {
+export const CampaignForm = ({
+  initialData,
+  onSubmit,
+  onCancel,
+}: CampaignFormProps) => {
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<CreateCampaignRequest>({
     defaultValues: {
-      name: '',
-      description: '',
+      name: "",
+      description: "",
       type: CampaignType.Email,
-      startDate: new Date().toISOString().split('T')[0],
+      startDate: new Date().toISOString().split("T")[0],
       ...initialData,
     },
   });
@@ -45,7 +50,7 @@ export const CampaignForm = ({ initialData, onSubmit, onCancel }: CampaignFormPr
           </label>
           <input
             type="text"
-            {...register('name', { required: 'Campaign name is required' })}
+            {...register("name", { required: "Campaign name is required" })}
             className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
             placeholder="Enter campaign name"
           />
@@ -60,7 +65,7 @@ export const CampaignForm = ({ initialData, onSubmit, onCancel }: CampaignFormPr
             Campaign Type <span className="text-red-500">*</span>
           </label>
           <select
-            {...register('type', { required: 'Campaign type is required' })}
+            {...register("type", { required: "Campaign type is required" })}
             className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
           >
             {campaignTypes.map((type) => (
@@ -73,10 +78,12 @@ export const CampaignForm = ({ initialData, onSubmit, onCancel }: CampaignFormPr
 
         {/* Target Audience */}
         <div>
-          <label className="block text-sm font-medium text-gray-700">Target Audience</label>
+          <label className="block text-sm font-medium text-gray-700">
+            Target Audience
+          </label>
           <input
             type="text"
-            {...register('targetAudience')}
+            {...register("targetAudience")}
             className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
             placeholder="e.g., New patients, Hearing aid users"
           />
@@ -89,31 +96,37 @@ export const CampaignForm = ({ initialData, onSubmit, onCancel }: CampaignFormPr
           </label>
           <input
             type="date"
-            {...register('startDate', { required: 'Start date is required' })}
+            {...register("startDate", { required: "Start date is required" })}
             className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
           />
           {errors.startDate && (
-            <p className="mt-1 text-sm text-red-600">{errors.startDate.message}</p>
+            <p className="mt-1 text-sm text-red-600">
+              {errors.startDate.message}
+            </p>
           )}
         </div>
 
         {/* End Date */}
         <div>
-          <label className="block text-sm font-medium text-gray-700">End Date</label>
+          <label className="block text-sm font-medium text-gray-700">
+            End Date
+          </label>
           <input
             type="date"
-            {...register('endDate')}
+            {...register("endDate")}
             className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
           />
         </div>
 
         {/* Budget */}
         <div>
-          <label className="block text-sm font-medium text-gray-700">Budget (AED)</label>
+          <label className="block text-sm font-medium text-gray-700">
+            Budget (AED)
+          </label>
           <input
             type="number"
             step="0.01"
-            {...register('budget', { valueAsNumber: true })}
+            {...register("budget", { valueAsNumber: true })}
             className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
             placeholder="0.00"
           />
@@ -121,10 +134,12 @@ export const CampaignForm = ({ initialData, onSubmit, onCancel }: CampaignFormPr
 
         {/* Target Leads */}
         <div>
-          <label className="block text-sm font-medium text-gray-700">Target Leads</label>
+          <label className="block text-sm font-medium text-gray-700">
+            Target Leads
+          </label>
           <input
             type="number"
-            {...register('targetLeads', { valueAsNumber: true })}
+            {...register("targetLeads", { valueAsNumber: true })}
             className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
             placeholder="0"
           />
@@ -132,10 +147,12 @@ export const CampaignForm = ({ initialData, onSubmit, onCancel }: CampaignFormPr
 
         {/* Target Conversions */}
         <div>
-          <label className="block text-sm font-medium text-gray-700">Target Conversions</label>
+          <label className="block text-sm font-medium text-gray-700">
+            Target Conversions
+          </label>
           <input
             type="number"
-            {...register('targetConversions', { valueAsNumber: true })}
+            {...register("targetConversions", { valueAsNumber: true })}
             className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
             placeholder="0"
           />
@@ -143,10 +160,12 @@ export const CampaignForm = ({ initialData, onSubmit, onCancel }: CampaignFormPr
 
         {/* Tags */}
         <div>
-          <label className="block text-sm font-medium text-gray-700">Tags</label>
+          <label className="block text-sm font-medium text-gray-700">
+            Tags
+          </label>
           <input
             type="text"
-            {...register('tags')}
+            {...register("tags")}
             className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
             placeholder="Comma-separated tags"
           />
@@ -154,10 +173,12 @@ export const CampaignForm = ({ initialData, onSubmit, onCancel }: CampaignFormPr
 
         {/* Subject */}
         <div className="md:col-span-2">
-          <label className="block text-sm font-medium text-gray-700">Subject Line</label>
+          <label className="block text-sm font-medium text-gray-700">
+            Subject Line
+          </label>
           <input
             type="text"
-            {...register('subject')}
+            {...register("subject")}
             className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
             placeholder="Email/SMS subject line"
           />
@@ -165,10 +186,12 @@ export const CampaignForm = ({ initialData, onSubmit, onCancel }: CampaignFormPr
 
         {/* Call to Action */}
         <div className="md:col-span-2">
-          <label className="block text-sm font-medium text-gray-700">Call to Action</label>
+          <label className="block text-sm font-medium text-gray-700">
+            Call to Action
+          </label>
           <input
             type="text"
-            {...register('callToAction')}
+            {...register("callToAction")}
             className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
             placeholder="e.g., Book your free consultation today!"
           />
@@ -176,9 +199,11 @@ export const CampaignForm = ({ initialData, onSubmit, onCancel }: CampaignFormPr
 
         {/* Description */}
         <div className="md:col-span-2">
-          <label className="block text-sm font-medium text-gray-700">Description</label>
+          <label className="block text-sm font-medium text-gray-700">
+            Description
+          </label>
           <textarea
-            {...register('description')}
+            {...register("description")}
             rows={3}
             className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
             placeholder="Campaign description and goals"
@@ -187,9 +212,11 @@ export const CampaignForm = ({ initialData, onSubmit, onCancel }: CampaignFormPr
 
         {/* Content */}
         <div className="md:col-span-2">
-          <label className="block text-sm font-medium text-gray-700">Campaign Content</label>
+          <label className="block text-sm font-medium text-gray-700">
+            Campaign Content
+          </label>
           <textarea
-            {...register('content')}
+            {...register("content")}
             rows={5}
             className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
             placeholder="Main campaign message/content"
@@ -211,7 +238,7 @@ export const CampaignForm = ({ initialData, onSubmit, onCancel }: CampaignFormPr
           disabled={isSubmitting}
           className="px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 disabled:opacity-50"
         >
-          {isSubmitting ? 'Creating...' : 'Create Campaign'}
+          {isSubmitting ? "Creating..." : "Create Campaign"}
         </button>
       </div>
     </form>
