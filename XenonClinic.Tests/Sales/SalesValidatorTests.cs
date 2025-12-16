@@ -713,7 +713,7 @@ public class SalesValidatorTests
                 PageSize = 20,
                 PatientId = 1,
                 Status = SaleStatus.Confirmed,
-                PaymentStatus = PaymentStatus.PartiallyPaid,
+                PaymentStatus = PaymentStatus.Partial,
                 DateFrom = DateTime.UtcNow.AddDays(-30),
                 DateTo = DateTime.UtcNow,
                 SearchTerm = "Invoice"

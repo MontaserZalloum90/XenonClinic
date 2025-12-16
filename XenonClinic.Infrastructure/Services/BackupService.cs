@@ -799,7 +799,7 @@ public class DatabaseBackup
     public DateTime CreatedAt { get; set; }
     public string BackupType { get; set; } = string.Empty;
     public string Version { get; set; } = string.Empty;
-    public Dictionary<string, object> Tables { get; set; } = new();
+    public Dictionary<string, System.Collections.IList> Tables { get; set; } = new();
     public Dictionary<string, object> Metadata { get; set; } = new();
 }
 

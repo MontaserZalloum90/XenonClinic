@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations.Schema;
 using XenonClinic.Core.Enums;
+using XenonClinic.Core.Interfaces;
 
 namespace XenonClinic.Core.Entities;
 
@@ -54,7 +55,10 @@ public class Campaign
 
     // Assignment
     public string? AssignedToUserId { get; set; }
-    // Note: ApplicationUser navigation removed to avoid circular dependency with Infrastructure
+    /// <summary>
+    /// Assigned user navigation property - uses IApplicationUser interface to avoid circular dependency
+    /// </summary>
+    public IApplicationUser? AssignedToUser { get; set; }
 
     // Audit
     public string CreatedBy { get; set; } = string.Empty;

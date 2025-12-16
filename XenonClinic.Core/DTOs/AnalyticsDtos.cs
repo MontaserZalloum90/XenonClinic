@@ -904,8 +904,14 @@ public class SaveDashboardDto
     public string? Description { get; set; }
     public string? Category { get; set; }
     public List<SaveWidgetDto>? Widgets { get; set; }
+    public List<DashboardWidgetDto>? DashboardWidgets { get; set; }
     public bool IsDefault { get; set; }
     public bool IsShared { get; set; }
+    public bool IsPublic { get; set; }
+    public DashboardLayoutDto? Layout { get; set; }
+    public DashboardThemeDto? Theme { get; set; }
+    public int? RefreshIntervalSeconds { get; set; }
+    public int BranchId { get; set; }
 }
 
 /// <summary>
@@ -922,6 +928,10 @@ public class SaveWidgetDto
     public int PositionX { get; set; }
     public int PositionY { get; set; }
     public Dictionary<string, object>? Configuration { get; set; }
+    public WidgetPositionDto? Position { get; set; }
+    public Dictionary<string, object>? Filters { get; set; }
+    public int? RefreshIntervalSeconds { get; set; }
+    public bool IsVisible { get; set; } = true;
 }
 
 /// <summary>
@@ -940,6 +950,10 @@ public class WidgetDto
     public int PositionX { get; set; }
     public int PositionY { get; set; }
     public Dictionary<string, object>? Configuration { get; set; }
+    public WidgetPositionDto? Position { get; set; }
+    public Dictionary<string, object>? Filters { get; set; }
+    public int RefreshIntervalSeconds { get; set; }
+    public bool IsVisible { get; set; } = true;
     public DateTime CreatedAt { get; set; }
 }
 
@@ -949,10 +963,16 @@ public class WidgetDto
 public class WidgetDataDto
 {
     public int WidgetId { get; set; }
+    public string Title { get; set; } = string.Empty;
+    public string Type { get; set; } = string.Empty;
     public string WidgetType { get; set; } = string.Empty;
+    public Dictionary<string, object>? Data { get; set; }
     public object? Value { get; set; }
     public List<object>? SeriesData { get; set; }
     public Dictionary<string, object>? Metadata { get; set; }
+    public DateTime LastUpdated { get; set; }
+    public DateTime? StartDate { get; set; }
+    public DateTime? EndDate { get; set; }
     public DateTime GeneratedAt { get; set; }
 }
 
@@ -962,10 +982,12 @@ public class WidgetDataDto
 public class DashboardDataDto
 {
     public int DashboardId { get; set; }
+    public string DashboardName { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
     public DateTime? StartDate { get; set; }
     public DateTime? EndDate { get; set; }
     public List<WidgetDataDto> Widgets { get; set; } = new();
+    public DateTime LastUpdated { get; set; }
     public DateTime GeneratedAt { get; set; }
 }
 
@@ -980,10 +1002,24 @@ public class ClinicalOutcomesDto
     public int TotalPatientsTreated { get; set; }
     public decimal PatientSatisfactionScore { get; set; }
     public decimal TreatmentSuccessRate { get; set; }
+    public decimal TreatmentEffectiveness { get; set; }
     public decimal ReadmissionRate { get; set; }
     public decimal ComplicationRate { get; set; }
+    public decimal RecoveryTimeAverage { get; set; }
     public List<OutcomeMetricDto> OutcomesByDepartment { get; set; } = new();
     public List<QualityMeasureDto> QualityMeasures { get; set; } = new();
+    public List<PatientOutcomeDto> PatientOutcomes { get; set; } = new();
+}
+
+/// <summary>
+/// Patient outcome record
+/// </summary>
+public class PatientOutcomeDto
+{
+    public int PatientId { get; set; }
+    public string PatientName { get; set; } = string.Empty;
+    public string Outcome { get; set; } = string.Empty;
+    public DateTime OutcomeDate { get; set; }
 }
 
 /// <summary>
@@ -995,6 +1031,20 @@ public class KPIDashboardDto
     public DateTime StartDate { get; set; }
     public DateTime EndDate { get; set; }
     public List<KPIItemDto> KPIs { get; set; } = new();
+    public List<KpiDto> Kpis { get; set; } = new();
+    public string Period { get; set; } = string.Empty;
+}
+
+/// <summary>
+/// KPI item DTO (alias for KPIItemDto)
+/// </summary>
+public class KpiDto
+{
+    public string Name { get; set; } = string.Empty;
+    public decimal Value { get; set; }
+    public decimal Target { get; set; }
+    public string Unit { get; set; } = string.Empty;
+    public string Status { get; set; } = string.Empty;
 }
 
 /// <summary>
@@ -1021,6 +1071,7 @@ public class MetricDataPointDto
     public DateTime Timestamp { get; set; }
     public decimal Value { get; set; }
     public string? Label { get; set; }
+    public string? MetricName { get; set; }
 }
 
 /// <summary>

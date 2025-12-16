@@ -39,7 +39,7 @@ public interface IHRService
     Task<IEnumerable<LeaveRequest>> GetLeaveRequestsByEmployeeIdAsync(int employeeId);
     Task<IEnumerable<LeaveRequest>> GetLeaveRequestsByBranchIdAsync(int branchId);
     Task<IEnumerable<LeaveRequest>> GetPendingLeaveRequestsAsync(int branchId);
-    Task<IEnumerable<LeaveRequest>> GetLeaveRequestsByStatusAsync(int branchId, LeaveRequestStatus status);
+    Task<IEnumerable<LeaveRequest>> GetLeaveRequestsByStatusAsync(int branchId, LeaveStatus status);
     Task<LeaveRequest> CreateLeaveRequestAsync(LeaveRequest leaveRequest);
     Task UpdateLeaveRequestAsync(LeaveRequest leaveRequest);
     Task DeleteLeaveRequestAsync(int id);

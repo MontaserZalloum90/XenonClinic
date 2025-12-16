@@ -4,6 +4,7 @@ using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using XenonClinic.Core.DTOs;
+using XenonClinic.Core.Entities;
 using XenonClinic.Core.Enums;
 using XenonClinic.Core.Interfaces;
 using XenonClinic.Infrastructure.Data;
@@ -320,6 +321,26 @@ public class AnalyticsService : IAnalyticsService
         widget.Id = entity.Id;
         widget.WidgetId = entity.WidgetId;
         return widget;
+    }
+
+    private async Task AddWidgetInternalAsync(int dashboardId, SaveWidgetDto widget)
+    {
+        var entity = new AnalyticsDashboardWidget
+        {
+            DashboardId = dashboardId,
+            WidgetId = Guid.NewGuid().ToString(),
+            Title = widget.Title,
+            WidgetType = widget.WidgetType,
+            DataSource = widget.DataSource,
+            ConfigurationJson = widget.Configuration != null ? JsonSerializer.Serialize(widget.Configuration) : null,
+            PositionJson = widget.Position != null ? JsonSerializer.Serialize(widget.Position) : null,
+            FiltersJson = widget.Filters != null ? JsonSerializer.Serialize(widget.Filters) : null,
+            RefreshIntervalSeconds = widget.RefreshIntervalSeconds ?? 300,
+            IsVisible = widget.IsVisible
+        };
+
+        _context.Set<AnalyticsDashboardWidget>().Add(entity);
+        await _context.SaveChangesAsync();
     }
 
     public async Task<WidgetDto?> UpdateWidgetAsync(int widgetId, SaveWidgetDto widget)

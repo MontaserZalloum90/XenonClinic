@@ -49,6 +49,16 @@ public class CompanyAuthSettings
     public string? LoginPageMessage { get; set; }
 
     /// <summary>
+    /// Custom login page message/instructions in Arabic
+    /// </summary>
+    public string? LoginPageMessageAr { get; set; }
+
+    /// <summary>
+    /// URL to redirect after successful login
+    /// </summary>
+    public string? PostLoginRedirectUrl { get; set; }
+
+    /// <summary>
     /// URL to redirect after logout
     /// </summary>
     public string? PostLogoutRedirectUrl { get; set; }

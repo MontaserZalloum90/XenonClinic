@@ -954,8 +954,7 @@ public class HRController : BaseApiController
         }
         else if (request.Status.HasValue)
         {
-            leaveRequests = await _hrService.GetLeaveRequestsByStatusAsync(branchId.Value,
-                MapToLeaveRequestStatus(request.Status.Value));
+            leaveRequests = await _hrService.GetLeaveRequestsByStatusAsync(branchId.Value, request.Status.Value);
         }
         else
         {
@@ -1427,18 +1426,6 @@ public class HRController : BaseApiController
             IsActive = leaveRequest.IsActive,
             CreatedAt = leaveRequest.CreatedAt,
             CreatedBy = leaveRequest.CreatedBy
-        };
-    }
-
-    private static LeaveRequestStatus MapToLeaveRequestStatus(LeaveStatus status)
-    {
-        return status switch
-        {
-            LeaveStatus.Pending => LeaveRequestStatus.Pending,
-            LeaveStatus.Approved => LeaveRequestStatus.Approved,
-            LeaveStatus.Rejected => LeaveRequestStatus.Rejected,
-            LeaveStatus.Cancelled => LeaveRequestStatus.Cancelled,
-            _ => LeaveRequestStatus.Pending
         };
     }
 
