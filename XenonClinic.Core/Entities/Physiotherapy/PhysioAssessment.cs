@@ -9,6 +9,11 @@ public class PhysioAssessment
     public int PatientId { get; set; }
     public int BranchId { get; set; }
     public DateTime AssessmentDate { get; set; }
+    public string? PresentingComplaint
+    {
+        get => ChiefComplaint;
+        set => ChiefComplaint = value;
+    }
 
     /// <summary>
     /// Assessment type (Initial, Follow-up, Discharge, Re-assessment)
@@ -54,6 +59,12 @@ public class PhysioAssessment
     /// </summary>
     public string? MedicalHistory { get; set; }
 
+    public string? PastMedicalHistory
+    {
+        get => MedicalHistory;
+        set => MedicalHistory = value;
+    }
+
     /// <summary>
     /// Surgical history
     /// </summary>
@@ -84,6 +95,16 @@ public class PhysioAssessment
     /// </summary>
     public string? MuscleTesting { get; set; }
 
+    public string? StrengthAssessment
+    {
+        get => MuscleTesting;
+        set => MuscleTesting = value;
+    }
+
+    public string? ObjectiveFindings { get; set; }
+
+    public string? RangeOfMotion { get; set; }
+
     /// <summary>
     /// Special tests performed and results
     /// </summary>
@@ -100,6 +121,8 @@ public class PhysioAssessment
     public string? FunctionalLimitations { get; set; }
 
     public string? Diagnosis { get; set; }
+
+    public string? TreatmentGoals { get; set; }
 
     /// <summary>
     /// ICD-10 codes
@@ -120,6 +143,8 @@ public class PhysioAssessment
     /// Treatment plan summary
     /// </summary>
     public string? TreatmentPlan { get; set; }
+
+    public int? PlannedSessions { get; set; }
 
     /// <summary>
     /// Recommended frequency of sessions

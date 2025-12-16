@@ -237,7 +237,8 @@ public class SecurityController : BaseApiController
     [ProducesResponseType(typeof(ApiResponse<DataAccessRuleDto>), StatusCodes.Status201Created)]
     public async Task<IActionResult> CreateDataAccessRule([FromBody] CreateDataAccessRuleDto dto)
     {
-        var rule = await _rbacService.CreateDataAccessRuleAsync(dto);
+        var createdBy = _userContext.UserId ?? 0;
+        var rule = await _rbacService.CreateDataAccessRuleAsync(dto, createdBy);
         return ApiCreated(rule, $"/api/security/data-access-rules/{rule.Id}");
     }
 

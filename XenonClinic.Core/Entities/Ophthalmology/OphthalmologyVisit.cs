@@ -9,6 +9,7 @@ public class OphthalmologyVisit
     public int PatientId { get; set; }
     public int BranchId { get; set; }
     public DateTime VisitDate { get; set; }
+    public int? ProviderId { get; set; }
 
     /// <summary>
     /// Visit type (Routine, Comprehensive, Follow-up, Emergency, Pre-operative, Post-operative)
