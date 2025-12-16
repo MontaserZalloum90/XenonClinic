@@ -112,7 +112,7 @@ public class ClinicalVisitsController : BaseApiController
     [HttpDelete("audiology/{id:int}")]
     [ProducesResponseType(204)]
     [ProducesResponseType(typeof(ApiResponse), 404)]
-    public async Task<ActionResult> DeleteAudiologyVisit(int id)
+    public async Task<IActionResult> DeleteAudiologyVisit(int id)
     {
         var visit = await _clinicalVisitService.GetAudiologyVisitByIdAsync(id);
         if (visit == null)
@@ -204,7 +204,7 @@ public class ClinicalVisitsController : BaseApiController
     [HttpDelete("dental/{id:int}")]
     [ProducesResponseType(204)]
     [ProducesResponseType(typeof(ApiResponse), 404)]
-    public async Task<ActionResult> DeleteDentalVisit(int id)
+    public async Task<IActionResult> DeleteDentalVisit(int id)
     {
         var visit = await _clinicalVisitService.GetDentalVisitByIdAsync(id);
         if (visit == null)
@@ -278,7 +278,6 @@ public class ClinicalVisitsController : BaseApiController
             VisitDate = dto.VisitDate,
             ChiefComplaint = dto.ChiefComplaint,
             Notes = dto.Notes,
-            ProviderId = dto.ProviderId?.ToString(),
             CreatedBy = _userContext.UserId
         };
 
@@ -361,7 +360,6 @@ public class ClinicalVisitsController : BaseApiController
             VisitDate = dto.VisitDate,
             ChiefComplaint = dto.ChiefComplaint,
             Notes = dto.Notes,
-            ProviderId = dto.ProviderId?.ToString(),
             CreatedBy = _userContext.UserId
         };
 
