@@ -48,6 +48,7 @@ public class Patient : ISoftDelete, IBranchEntity
     public string? City { get; set; }
     public string? Country { get; set; }
     public string? MRN { get; set; } // Medical Record Number
+    public string? EncryptedSSN { get; set; } // Encrypted Social Security Number for compliance
     public bool IsActive { get; set; } = true;
 
     // Soft delete support for healthcare compliance

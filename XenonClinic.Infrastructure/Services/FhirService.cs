@@ -51,11 +51,12 @@ public class FhirService : IFhirService
 
             var name = fhirPatient.Name.FirstOrDefault(n => n.Use == "official") ?? fhirPatient.Name.First();
 
+            var firstName = name.Given?.FirstOrDefault() ?? "Unknown";
+            var lastName = name.Family ?? "Unknown";
             var patient = new Patient
             {
                 BranchId = branchId,
-                FirstName = name.Given?.FirstOrDefault() ?? "Unknown",
-                LastName = name.Family ?? "Unknown",
+                FullNameEn = $"{firstName} {lastName}".Trim(),
                 Gender = MapFhirGender(fhirPatient.Gender),
                 DateOfBirth = !string.IsNullOrEmpty(fhirPatient.BirthDate)
                     ? DateTime.Parse(fhirPatient.BirthDate)
