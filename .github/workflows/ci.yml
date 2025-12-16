@@ -30,14 +30,17 @@ jobs:
         run: dotnet restore XenonClinic.sln
 
       - name: Build
+        shell: bash
         run: |
-          dotnet build XenonClinic.sln --configuration Release --no-restore /p:TreatWarningsAsErrors=false 2>&1 | tee build.log
-          BUILD_EXIT_CODE=${PIPESTATUS[0]}
-          if [ $BUILD_EXIT_CODE -ne 0 ]; then
-            echo "::group::Build Errors"
-            grep -E "(error CS[0-9]+|error :|Build FAILED)" build.log || true
-            echo "::endgroup::"
-            exit $BUILD_EXIT_CODE
+          set -o pipefail
+          dotnet build XenonClinic.sln --configuration Release --no-restore /p:TreatWarningsAsErrors=false 2>&1 | tee build.log; BUILD_RESULT=$?
+          if [ $BUILD_RESULT -ne 0 ]; then
+            echo "::error::Build failed. Extracting errors..."
+            echo "=== BUILD ERRORS ==="
+            grep -E "error CS[0-9]+:" build.log || echo "No CS errors found"
+            grep -i "error:" build.log | head -50 || echo "No error lines found"
+            echo "=== END BUILD ERRORS ==="
+            exit $BUILD_RESULT
           fi
 
       - name: Run tests
