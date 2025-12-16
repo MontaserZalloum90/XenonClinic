@@ -31,9 +31,11 @@ builder.Services.AddAuthorization();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddMemoryCache();
 
-// Infrastructure services
-builder.Services.AddScoped<ICurrentUserContext, CurrentUserContext>();
-builder.Services.AddScoped<ICurrentUserService, CurrentUserContext>();
+// Infrastructure services - User context
+builder.Services.AddScoped<CurrentUserContext>();
+builder.Services.AddScoped<ICurrentUserContext>(sp => sp.GetRequiredService<CurrentUserContext>());
+builder.Services.AddScoped<ICurrentUserService>(sp => sp.GetRequiredService<CurrentUserContext>());
+
 builder.Services.AddScoped<ITenantContextAccessor, TenantContextAccessor>();
 builder.Services.AddScoped<IPatientService, PatientService>();
 builder.Services.AddScoped<IAppointmentService, AppointmentService>();
@@ -58,7 +60,7 @@ builder.Services.AddScoped<ISalesService, SalesService>();
 builder.Services.AddScoped<IDicomService, DicomService>();
 builder.Services.AddScoped<IFhirService, FhirService>();
 builder.Services.AddScoped<IRbacService, RbacService>();
-builder.Services.AddScoped<ISecurityConfigurationService, SecurityConfigurationService>();
+builder.Services.AddScoped<XenonClinic.Core.Interfaces.ISecurityConfigurationService, SecurityConfigurationService>();
 builder.Services.AddScoped<ITenantService, TenantService>();
 builder.Services.AddScoped<ICompanyService, CompanyService>();
 builder.Services.AddScoped<IAdminService, AdminService>();
@@ -82,8 +84,7 @@ builder.Services.AddCors(options =>
 });
 
 // Health checks
-builder.Services.AddHealthChecks()
-    .AddDbContextCheck<ClinicDbContext>();
+builder.Services.AddHealthChecks();
 
 var app = builder.Build();
 

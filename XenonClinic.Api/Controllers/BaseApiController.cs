@@ -13,15 +13,15 @@ public abstract class BaseApiController : ControllerBase
     /// <summary>
     /// Returns a successful response with data.
     /// </summary>
-    protected ActionResult<ApiResponse<T>> ApiOk<T>(T data, string? message = null)
+    protected IActionResult ApiOk<T>(T data, string? message = null)
     {
-        return Ok(ApiResponse<T>.Success(data, message));
+        return Ok(ApiResponse<T>.SuccessWithData(data, message));
     }
 
     /// <summary>
     /// Returns a successful response without data.
     /// </summary>
-    protected ActionResult<ApiResponse> ApiOk(string? message = null)
+    protected IActionResult ApiOk(string? message = null)
     {
         return Ok(ApiResponse.SuccessResponse(message));
     }
@@ -29,9 +29,9 @@ public abstract class BaseApiController : ControllerBase
     /// <summary>
     /// Returns a created response with data.
     /// </summary>
-    protected ActionResult<ApiResponse<T>> ApiCreated<T>(T data, string? location = null, string? message = null)
+    protected IActionResult ApiCreated<T>(T data, string? location = null, string? message = null)
     {
-        var response = ApiResponse<T>.Success(data, message ?? "Resource created successfully");
+        var response = ApiResponse<T>.SuccessWithData(data, message ?? "Resource created successfully");
         if (!string.IsNullOrEmpty(location))
         {
             return Created(location, response);
@@ -50,7 +50,7 @@ public abstract class BaseApiController : ControllerBase
     /// <summary>
     /// Returns a bad request response with error details.
     /// </summary>
-    protected ActionResult<ApiResponse> ApiBadRequest(string error, IDictionary<string, string[]>? validationErrors = null)
+    protected IActionResult ApiBadRequest(string error, IDictionary<string, string[]>? validationErrors = null)
     {
         return BadRequest(ApiResponse.Failure(error, validationErrors));
     }
@@ -58,7 +58,7 @@ public abstract class BaseApiController : ControllerBase
     /// <summary>
     /// Returns a bad request response with FluentValidation errors.
     /// </summary>
-    protected ActionResult<ApiResponse> ApiBadRequest(IEnumerable<ValidationFailure> validationFailures)
+    protected IActionResult ApiBadRequest(IEnumerable<ValidationFailure> validationFailures)
     {
         var errors = validationFailures
             .GroupBy(x => x.PropertyName)
@@ -72,7 +72,7 @@ public abstract class BaseApiController : ControllerBase
     /// <summary>
     /// Returns a bad request response from ModelState.
     /// </summary>
-    protected ActionResult<ApiResponse> ApiBadRequestFromModelState()
+    protected IActionResult ApiBadRequestFromModelState()
     {
         var errors = ModelState
             .Where(x => x.Value?.Errors.Count > 0)
@@ -86,7 +86,7 @@ public abstract class BaseApiController : ControllerBase
     /// <summary>
     /// Returns a not found response.
     /// </summary>
-    protected ActionResult<ApiResponse> ApiNotFound(string error = "Resource not found")
+    protected IActionResult ApiNotFound(string error = "Resource not found")
     {
         return NotFound(ApiResponse.Failure(error));
     }
@@ -94,7 +94,7 @@ public abstract class BaseApiController : ControllerBase
     /// <summary>
     /// Returns an unauthorized response.
     /// </summary>
-    protected ActionResult<ApiResponse> ApiUnauthorized(string error = "Unauthorized access")
+    protected IActionResult ApiUnauthorized(string error = "Unauthorized access")
     {
         return Unauthorized(ApiResponse.Failure(error));
     }
@@ -102,7 +102,7 @@ public abstract class BaseApiController : ControllerBase
     /// <summary>
     /// Returns a forbidden response.
     /// </summary>
-    protected ActionResult<ApiResponse> ApiForbidden(string error = "Access denied")
+    protected IActionResult ApiForbidden(string error = "Access denied")
     {
         return StatusCode(403, ApiResponse.Failure(error));
     }
@@ -110,7 +110,7 @@ public abstract class BaseApiController : ControllerBase
     /// <summary>
     /// Returns a conflict response.
     /// </summary>
-    protected ActionResult<ApiResponse> ApiConflict(string error)
+    protected IActionResult ApiConflict(string error)
     {
         return Conflict(ApiResponse.Failure(error));
     }
@@ -118,7 +118,7 @@ public abstract class BaseApiController : ControllerBase
     /// <summary>
     /// Returns an internal server error response.
     /// </summary>
-    protected ActionResult<ApiResponse> ApiServerError(string error = "An unexpected error occurred")
+    protected IActionResult ApiServerError(string error = "An unexpected error occurred")
     {
         return StatusCode(500, ApiResponse.Failure(error));
     }
@@ -126,7 +126,7 @@ public abstract class BaseApiController : ControllerBase
     /// <summary>
     /// Returns a paginated response.
     /// </summary>
-    protected ActionResult<ApiResponse<PaginatedResponse<T>>> ApiPaginated<T>(
+    protected IActionResult ApiPaginated<T>(
         IReadOnlyList<T> items,
         int totalCount,
         int pageNumber,
@@ -141,7 +141,7 @@ public abstract class BaseApiController : ControllerBase
             PageSize = pageSize
         };
 
-        return Ok(ApiResponse<PaginatedResponse<T>>.Success(paginatedResponse, message));
+        return Ok(ApiResponse<PaginatedResponse<T>>.SuccessWithData(paginatedResponse, message));
     }
 }
 
@@ -178,19 +178,27 @@ public class ApiResponse<T> : ApiResponse
 {
     public T? Data { get; set; }
 
-    public static ApiResponse<T> Success(T data, string? message = null) => new()
+    public static ApiResponse<T> SuccessWithData(T data, string? message = null)
     {
-        Success = true,
-        Data = data,
-        Message = message
-    };
+        var response = new ApiResponse<T>
+        {
+            Data = data,
+            Message = message
+        };
+        response.Success = true;
+        return response;
+    }
 
-    public new static ApiResponse<T> Failure(string error, IDictionary<string, string[]>? validationErrors = null) => new()
+    public new static ApiResponse<T> Failure(string error, IDictionary<string, string[]>? validationErrors = null)
     {
-        Success = false,
-        Error = error,
-        ValidationErrors = validationErrors
-    };
+        var response = new ApiResponse<T>
+        {
+            Error = error,
+            ValidationErrors = validationErrors
+        };
+        response.Success = false;
+        return response;
+    }
 }
 
 /// <summary>

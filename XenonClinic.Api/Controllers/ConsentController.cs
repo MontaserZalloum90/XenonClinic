@@ -82,7 +82,8 @@ public class ConsentController : BaseApiController
     [ProducesResponseType(typeof(ApiResponse<PatientConsentDto>), StatusCodes.Status201Created)]
     public async Task<IActionResult> GrantConsent([FromBody] SaveConsentDto dto)
     {
-        var userId = _userContext.UserId ?? 0;
+        var userIdStr = _userContext.UserId;
+        var userId = !string.IsNullOrEmpty(userIdStr) && int.TryParse(userIdStr, out var id) ? id : 0;
         var consent = await _consentService.GrantConsentAsync(dto, userId);
 
         _logger.LogInformation(
@@ -99,7 +100,8 @@ public class ConsentController : BaseApiController
     [ProducesResponseType(typeof(ApiResponse<PatientConsentDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> RevokeConsent([FromBody] RevokeConsentDto dto)
     {
-        var userId = _userContext.UserId ?? 0;
+        var userIdStr = _userContext.UserId;
+        var userId = !string.IsNullOrEmpty(userIdStr) && int.TryParse(userIdStr, out var id) ? id : 0;
         var consent = await _consentService.RevokeConsentAsync(dto, userId);
 
         _logger.LogInformation(
@@ -117,7 +119,8 @@ public class ConsentController : BaseApiController
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> UpdateConsent(int id, [FromBody] SaveConsentDto dto)
     {
-        var userId = _userContext.UserId ?? 0;
+        var userIdStr = _userContext.UserId;
+        var userId = !string.IsNullOrEmpty(userIdStr) && int.TryParse(userIdStr, out var id2) ? id2 : 0;
         var consent = await _consentService.UpdateConsentAsync(id, dto, userId);
         if (consent == null)
         {

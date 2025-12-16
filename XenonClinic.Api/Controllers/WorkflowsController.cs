@@ -40,7 +40,7 @@ public class WorkflowsController : BaseApiController
     /// </summary>
     [HttpGet("definitions")]
     [ProducesResponseType(typeof(ApiResponse<PaginatedResponse<WorkflowDefinitionListDto>>), 200)]
-    public async Task<ActionResult<ApiResponse<PaginatedResponse<WorkflowDefinitionListDto>>>> GetDefinitions(
+    public async Task<IActionResult> GetDefinitions(
         [FromQuery] WorkflowDefinitionListRequestDto request)
     {
         var query = new WorkflowDefinitionQuery
@@ -69,7 +69,7 @@ public class WorkflowsController : BaseApiController
     [HttpGet("definitions/{id}")]
     [ProducesResponseType(typeof(ApiResponse<WorkflowDefinitionDto>), 200)]
     [ProducesResponseType(typeof(ApiResponse), 404)]
-    public async Task<ActionResult<ApiResponse<WorkflowDefinitionDto>>> GetDefinition(
+    public async Task<IActionResult> GetDefinition(
         string id,
         [FromQuery] int? version = null)
     {
@@ -89,7 +89,7 @@ public class WorkflowsController : BaseApiController
     /// </summary>
     [HttpGet("definitions/{id}/versions")]
     [ProducesResponseType(typeof(ApiResponse<IEnumerable<WorkflowDefinitionListDto>>), 200)]
-    public async Task<ActionResult<ApiResponse<IEnumerable<WorkflowDefinitionListDto>>>> GetDefinitionVersions(string id)
+    public async Task<IActionResult> GetDefinitionVersions(string id)
     {
         var versions = await _definitionStore.GetVersionsAsync(id);
         var dtos = versions.Select(MapToDefinitionListDto);
@@ -102,7 +102,7 @@ public class WorkflowsController : BaseApiController
     [HttpPost("definitions/{id}/publish")]
     [Authorize(Roles = "Admin,WorkflowAdmin")]
     [ProducesResponseType(typeof(ApiResponse), 200)]
-    public async Task<ActionResult<ApiResponse>> PublishDefinition(string id, [FromQuery] int version)
+    public async Task<IActionResult> PublishDefinition(string id, [FromQuery] int version)
     {
         await _definitionStore.PublishAsync(id, version);
         _logger.LogInformation("Workflow definition published: {WorkflowId} v{Version}", id, version);
@@ -115,7 +115,7 @@ public class WorkflowsController : BaseApiController
     [HttpPost("definitions/{id}/unpublish")]
     [Authorize(Roles = "Admin,WorkflowAdmin")]
     [ProducesResponseType(typeof(ApiResponse), 200)]
-    public async Task<ActionResult<ApiResponse>> UnpublishDefinition(string id, [FromQuery] int version)
+    public async Task<IActionResult> UnpublishDefinition(string id, [FromQuery] int version)
     {
         await _definitionStore.UnpublishAsync(id, version);
         _logger.LogInformation("Workflow definition unpublished: {WorkflowId} v{Version}", id, version);
@@ -131,7 +131,7 @@ public class WorkflowsController : BaseApiController
     /// </summary>
     [HttpGet("instances")]
     [ProducesResponseType(typeof(ApiResponse<PaginatedResponse<WorkflowInstanceListDto>>), 200)]
-    public async Task<ActionResult<ApiResponse<PaginatedResponse<WorkflowInstanceListDto>>>> GetInstances(
+    public async Task<IActionResult> GetInstances(
         [FromQuery] WorkflowInstanceListRequestDto request)
     {
         var statuses = request.Statuses?
@@ -166,7 +166,7 @@ public class WorkflowsController : BaseApiController
     [HttpGet("instances/{id:guid}")]
     [ProducesResponseType(typeof(ApiResponse<WorkflowInstanceDto>), 200)]
     [ProducesResponseType(typeof(ApiResponse), 404)]
-    public async Task<ActionResult<ApiResponse<WorkflowInstanceDto>>> GetInstance(Guid id)
+    public async Task<IActionResult> GetInstance(Guid id)
     {
         var instance = await _workflowEngine.GetInstanceAsync(id);
         if (instance == null)
@@ -184,7 +184,7 @@ public class WorkflowsController : BaseApiController
     /// </summary>
     [HttpGet("instances/{id:guid}/history")]
     [ProducesResponseType(typeof(ApiResponse<IEnumerable<WorkflowExecutionRecordDto>>), 200)]
-    public async Task<ActionResult<ApiResponse<IEnumerable<WorkflowExecutionRecordDto>>>> GetInstanceHistory(Guid id)
+    public async Task<IActionResult> GetInstanceHistory(Guid id)
     {
         var history = await _workflowEngine.GetHistoryAsync(id);
         var dtos = history.Select(MapToExecutionRecordDto);
@@ -201,7 +201,7 @@ public class WorkflowsController : BaseApiController
     [HttpPost("start")]
     [ProducesResponseType(typeof(ApiResponse<WorkflowExecutionResultDto>), 200)]
     [ProducesResponseType(typeof(ApiResponse), 400)]
-    public async Task<ActionResult<ApiResponse<WorkflowExecutionResultDto>>> StartWorkflow(
+    public async Task<IActionResult> StartWorkflow(
         [FromBody] StartWorkflowRequestDto request)
     {
         if (string.IsNullOrWhiteSpace(request.WorkflowId))
@@ -244,7 +244,7 @@ public class WorkflowsController : BaseApiController
     [HttpPost("instances/{id:guid}/resume")]
     [ProducesResponseType(typeof(ApiResponse<WorkflowExecutionResultDto>), 200)]
     [ProducesResponseType(typeof(ApiResponse), 400)]
-    public async Task<ActionResult<ApiResponse<WorkflowExecutionResultDto>>> ResumeWorkflow(
+    public async Task<IActionResult> ResumeWorkflow(
         Guid id,
         [FromBody] ResumeWorkflowRequestDto request)
     {
@@ -280,7 +280,7 @@ public class WorkflowsController : BaseApiController
     [HttpPost("instances/{id:guid}/cancel")]
     [ProducesResponseType(typeof(ApiResponse), 200)]
     [ProducesResponseType(typeof(ApiResponse), 400)]
-    public async Task<ActionResult<ApiResponse>> CancelWorkflow(
+    public async Task<IActionResult> CancelWorkflow(
         Guid id,
         [FromBody] CancelWorkflowRequestDto? request = null)
     {
@@ -309,7 +309,7 @@ public class WorkflowsController : BaseApiController
     [HttpPost("instances/{id:guid}/terminate")]
     [Authorize(Roles = "Admin,WorkflowAdmin")]
     [ProducesResponseType(typeof(ApiResponse), 200)]
-    public async Task<ActionResult<ApiResponse>> TerminateWorkflow(
+    public async Task<IActionResult> TerminateWorkflow(
         Guid id,
         [FromBody] CancelWorkflowRequestDto? request = null)
     {
@@ -334,7 +334,7 @@ public class WorkflowsController : BaseApiController
     [HttpPost("instances/{id:guid}/retry")]
     [ProducesResponseType(typeof(ApiResponse<WorkflowExecutionResultDto>), 200)]
     [ProducesResponseType(typeof(ApiResponse), 400)]
-    public async Task<ActionResult<ApiResponse<WorkflowExecutionResultDto>>> RetryWorkflow(Guid id)
+    public async Task<IActionResult> RetryWorkflow(Guid id)
     {
         try
         {
@@ -363,7 +363,7 @@ public class WorkflowsController : BaseApiController
     /// </summary>
     [HttpPost("instances/{id:guid}/signal")]
     [ProducesResponseType(typeof(ApiResponse), 200)]
-    public async Task<ActionResult<ApiResponse>> SendSignal(
+    public async Task<IActionResult> SendSignal(
         Guid id,
         [FromBody] SendSignalRequestDto request)
     {
@@ -390,7 +390,7 @@ public class WorkflowsController : BaseApiController
     /// </summary>
     [HttpPost("broadcast-signal")]
     [ProducesResponseType(typeof(ApiResponse), 200)]
-    public async Task<ActionResult<ApiResponse>> BroadcastSignal([FromBody] BroadcastSignalRequestDto request)
+    public async Task<IActionResult> BroadcastSignal([FromBody] BroadcastSignalRequestDto request)
     {
         if (string.IsNullOrWhiteSpace(request.SignalName))
             return ApiBadRequest(WorkflowValidationMessages.SignalNameRequired);
@@ -408,7 +408,7 @@ public class WorkflowsController : BaseApiController
     /// </summary>
     [HttpPost("trigger-event")]
     [ProducesResponseType(typeof(ApiResponse<IEnumerable<WorkflowExecutionResultDto>>), 200)]
-    public async Task<ActionResult<ApiResponse<IEnumerable<WorkflowExecutionResultDto>>>> TriggerEvent(
+    public async Task<IActionResult> TriggerEvent(
         [FromBody] TriggerEventRequestDto request)
     {
         if (string.IsNullOrWhiteSpace(request.EventName))
