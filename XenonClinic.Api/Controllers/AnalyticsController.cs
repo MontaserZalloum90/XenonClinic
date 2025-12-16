@@ -313,7 +313,7 @@ public class AnalyticsController : BaseApiController
         [FromQuery] int daysAhead = 30)
     {
         var branchId = _tenantContext.BranchId ?? 0;
-        var forecast = await _analyticsService.GetDemandForecastAsync(branchId, daysAhead);
+        var forecast = await _analyticsService.GetDemandForecastAsync(branchId, DateTime.UtcNow, daysAhead);
         return ApiOk(forecast);
     }
 

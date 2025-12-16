@@ -37,7 +37,7 @@ public class RadiologyController : BaseApiController
     [ProducesResponseType(typeof(ApiResponse<IEnumerable<ImagingStudyDto>>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetImagingStudies()
     {
-        var branchId = _currentUserService.BranchId;
+        var branchId = _currentUserService.BranchId ?? 0;
         var studies = await _radiologyService.GetImagingStudiesByBranchIdAsync(branchId);
 
         var studyDtos = studies.Select(MapToImagingStudyDto).ToList();
@@ -51,7 +51,7 @@ public class RadiologyController : BaseApiController
     [ProducesResponseType(typeof(ApiResponse<IEnumerable<ImagingStudyDto>>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetActiveImagingStudies()
     {
-        var branchId = _currentUserService.BranchId;
+        var branchId = _currentUserService.BranchId ?? 0;
         var studies = await _radiologyService.GetActiveImagingStudiesAsync(branchId);
 
         var studyDtos = studies.Select(MapToImagingStudyDto).ToList();
@@ -65,7 +65,7 @@ public class RadiologyController : BaseApiController
     [ProducesResponseType(typeof(ApiResponse<IEnumerable<ImagingStudyDto>>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetImagingStudiesByModality(string modality)
     {
-        var branchId = _currentUserService.BranchId;
+        var branchId = _currentUserService.BranchId ?? 0;
         var studies = await _radiologyService.GetImagingStudiesByCategoryAsync(branchId, modality);
 
         var studyDtos = studies.Select(MapToImagingStudyDto).ToList();

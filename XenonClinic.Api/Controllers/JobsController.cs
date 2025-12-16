@@ -31,7 +31,7 @@ public class JobsController : BaseApiController
     /// </summary>
     [HttpGet("statistics")]
     [ProducesResponseType(typeof(ApiResponse<JobStatisticsResponse>), StatusCodes.Status200OK)]
-    public ActionResult<ApiResponse<JobStatisticsResponse>> GetStatistics()
+    public IActionResult GetStatistics()
     {
         var stats = _jobService.GetStatistics();
 
@@ -57,7 +57,7 @@ public class JobsController : BaseApiController
     /// </summary>
     [HttpGet]
     [ProducesResponseType(typeof(ApiResponse<IEnumerable<JobDetailsResponse>>), StatusCodes.Status200OK)]
-    public ActionResult<ApiResponse<IEnumerable<JobDetailsResponse>>> GetJobs(
+    public IActionResult GetJobs(
         [FromQuery] JobState? state = null,
         [FromQuery] int limit = 100)
     {
