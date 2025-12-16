@@ -102,7 +102,7 @@ public class ClinicalDecisionSupportController : BaseApiController
     [HttpGet("allergies/patient/{patientId}/alternatives")]
     [Authorize(Policy = "PrescriptionCreate")]
     [ProducesResponseType(typeof(ApiResponse<List<string>>), 200)]
-    public async Task<IActionResult>> GetAllergyAlternatives(
+    public async Task<IActionResult> GetAllergyAlternatives(
         int patientId,
         [FromQuery] string medicationCode,
         [FromQuery] string drugClass)
@@ -133,7 +133,7 @@ public class ClinicalDecisionSupportController : BaseApiController
     [HttpGet("reminders/patient/{patientId}")]
     [Authorize(Policy = "PatientView")]
     [ProducesResponseType(typeof(ApiResponse<List<ClinicalReminderDto>>), 200)]
-    public async Task<IActionResult>> GetClinicalReminders(
+    public async Task<IActionResult> GetClinicalReminders(
         int patientId,
         [FromQuery] string? category = null)
     {
@@ -147,7 +147,7 @@ public class ClinicalDecisionSupportController : BaseApiController
     [HttpGet("care-gaps/branch/{branchId}/overdue")]
     [Authorize(Policy = "ClinicalReportView")]
     [ProducesResponseType(typeof(ApiResponse<List<PatientCareGapSummaryDto>>), 200)]
-    public async Task<IActionResult>> GetOverdueCareGaps(
+    public async Task<IActionResult> GetOverdueCareGaps(
         int branchId,
         [FromQuery] int limit = 100)
     {
@@ -246,7 +246,7 @@ public class ClinicalDecisionSupportController : BaseApiController
     [HttpPost("diagnosis/differential")]
     [Authorize(Policy = "MedicalRecordCreate")]
     [ProducesResponseType(typeof(ApiResponse<List<DiagnosisSuggestionDto>>), 200)]
-    public async Task<IActionResult>> GetDifferentialDiagnoses(
+    public async Task<IActionResult> GetDifferentialDiagnoses(
         [FromBody] DifferentialDiagnosisRequest request)
     {
         var suggestions = await _cdsService.GetDifferentialDiagnosesAsync(request.Symptoms, request.PatientId);
@@ -259,7 +259,7 @@ public class ClinicalDecisionSupportController : BaseApiController
     [HttpPost("diagnosis/red-flags")]
     [Authorize(Policy = "PatientView")]
     [ProducesResponseType(typeof(ApiResponse<List<string>>), 200)]
-    public async Task<IActionResult>> GetRedFlags([FromBody] RedFlagsRequest request)
+    public async Task<IActionResult> GetRedFlags([FromBody] RedFlagsRequest request)
     {
         var redFlags = await _cdsService.GetRedFlagsAsync(request.Symptoms, request.ChiefComplaint);
         return ApiOk(redFlags);
@@ -335,7 +335,7 @@ public class ClinicalDecisionSupportController : BaseApiController
     [HttpGet("contraindications/patient/{patientId}")]
     [Authorize(Policy = "PatientView")]
     [ProducesResponseType(typeof(ApiResponse<List<ContraindicationAlertDto>>), 200)]
-    public async Task<IActionResult>> GetPatientContraindications(
+    public async Task<IActionResult> GetPatientContraindications(
         int patientId)
     {
         var contraindications = await _cdsService.GetPatientContraindicationsAsync(patientId);
@@ -394,7 +394,7 @@ public class ClinicalDecisionSupportController : BaseApiController
     [HttpGet("labs/patient/{patientId}/critical")]
     [Authorize(Policy = "LabResultView")]
     [ProducesResponseType(typeof(ApiResponse<List<LabInterpretationResultDto>>), 200)]
-    public async Task<IActionResult>> GetCriticalLabs(int patientId)
+    public async Task<IActionResult> GetCriticalLabs(int patientId)
     {
         var criticalLabs = await _cdsService.GetCriticalLabsAsync(patientId);
         return ApiOk(criticalLabs);
@@ -406,7 +406,7 @@ public class ClinicalDecisionSupportController : BaseApiController
     [HttpGet("labs/follow-up-suggestions")]
     [Authorize(Policy = "LabResultView")]
     [ProducesResponseType(typeof(ApiResponse<List<string>>), 200)]
-    public async Task<IActionResult>> GetSuggestedFollowUpLabs(
+    public async Task<IActionResult> GetSuggestedFollowUpLabs(
         [FromQuery] int patientId,
         [FromQuery] string labCode,
         [FromQuery] decimal value)
@@ -425,7 +425,7 @@ public class ClinicalDecisionSupportController : BaseApiController
     [HttpGet("guidelines/condition/{conditionCode}")]
     [Authorize(Policy = "PatientView")]
     [ProducesResponseType(typeof(ApiResponse<List<ClinicalGuidelineDto>>), 200)]
-    public async Task<IActionResult>> GetGuidelines(string conditionCode)
+    public async Task<IActionResult> GetGuidelines(string conditionCode)
     {
         var guidelines = await _cdsService.GetGuidelinesAsync(conditionCode);
         return ApiOk(guidelines);
@@ -437,7 +437,7 @@ public class ClinicalDecisionSupportController : BaseApiController
     [HttpGet("guidelines/patient/{patientId}")]
     [Authorize(Policy = "PatientView")]
     [ProducesResponseType(typeof(ApiResponse<List<ClinicalGuidelineDto>>), 200)]
-    public async Task<IActionResult>> GetPatientGuidelines(int patientId)
+    public async Task<IActionResult> GetPatientGuidelines(int patientId)
     {
         var guidelines = await _cdsService.GetPatientGuidelinesAsync(patientId);
         return ApiOk(guidelines);
@@ -449,7 +449,7 @@ public class ClinicalDecisionSupportController : BaseApiController
     [HttpGet("guidelines/search")]
     [Authorize(Policy = "PatientView")]
     [ProducesResponseType(typeof(ApiResponse<List<ClinicalGuidelineDto>>), 200)]
-    public async Task<IActionResult>> SearchGuidelines(
+    public async Task<IActionResult> SearchGuidelines(
         [FromQuery] string searchTerm,
         [FromQuery] string? category = null)
     {
@@ -467,7 +467,7 @@ public class ClinicalDecisionSupportController : BaseApiController
     [HttpGet("order-sets")]
     [Authorize(Policy = "PatientView")]
     [ProducesResponseType(typeof(ApiResponse<List<ClinicalOrderSetDto>>), 200)]
-    public async Task<IActionResult>> GetOrderSets(
+    public async Task<IActionResult> GetOrderSets(
         [FromQuery] string? category = null,
         [FromQuery] string? conditionCode = null)
     {
@@ -498,7 +498,7 @@ public class ClinicalDecisionSupportController : BaseApiController
     [HttpGet("order-sets/patient/{patientId}/recommended")]
     [Authorize(Policy = "PatientView")]
     [ProducesResponseType(typeof(ApiResponse<List<ClinicalOrderSetDto>>), 200)]
-    public async Task<IActionResult>> GetRecommendedOrderSets(int patientId)
+    public async Task<IActionResult> GetRecommendedOrderSets(int patientId)
     {
         var orderSets = await _cdsService.GetRecommendedOrderSetsAsync(patientId);
         return ApiOk(orderSets);
@@ -565,7 +565,7 @@ public class ClinicalDecisionSupportController : BaseApiController
     [HttpGet("risk-calculators")]
     [Authorize(Policy = "PatientView")]
     [ProducesResponseType(typeof(ApiResponse<List<RiskCalculatorDto>>), 200)]
-    public async Task<IActionResult>> GetRiskCalculators(
+    public async Task<IActionResult> GetRiskCalculators(
         [FromQuery] string? category = null)
     {
         var calculators = await _cdsService.GetRiskCalculatorsAsync(category);
@@ -591,7 +591,7 @@ public class ClinicalDecisionSupportController : BaseApiController
     [HttpGet("risk-calculators/patient/{patientId}/history/{calculatorId}")]
     [Authorize(Policy = "PatientView")]
     [ProducesResponseType(typeof(ApiResponse<List<RiskCalculationResultDto>>), 200)]
-    public async Task<IActionResult>> GetPatientRiskHistory(
+    public async Task<IActionResult> GetPatientRiskHistory(
         int patientId,
         string calculatorId)
     {
@@ -645,7 +645,7 @@ public class ClinicalDecisionSupportController : BaseApiController
     [HttpGet("alerts/config")]
     [Authorize(Policy = "SettingsManage")]
     [ProducesResponseType(typeof(ApiResponse<List<ClinicalAlertConfigDto>>), 200)]
-    public async Task<IActionResult>> GetAlertConfigurations()
+    public async Task<IActionResult> GetAlertConfigurations()
     {
         var configs = await _cdsService.GetAlertConfigurationsAsync();
         return ApiOk(configs);
@@ -692,7 +692,7 @@ public class ClinicalDecisionSupportController : BaseApiController
     [HttpGet("alerts/overrides")]
     [Authorize(Policy = "AuditLogView")]
     [ProducesResponseType(typeof(ApiResponse<List<AlertOverrideDto>>), 200)]
-    public async Task<IActionResult>> GetAlertOverrides(
+    public async Task<IActionResult> GetAlertOverrides(
         [FromQuery] int? patientId = null,
         [FromQuery] int? userId = null,
         [FromQuery] DateTime? fromDate = null,

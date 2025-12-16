@@ -37,7 +37,7 @@ public class InventoryController : BaseApiController
     /// Get all inventory items for the current branch.
     /// </summary>
     [HttpGet("items")]
-    public async Task<IActionResult>> GetItems(
+    public async Task<IActionResult> GetItems(
         [FromQuery] InventoryItemListRequestDto request)
     {
         try
@@ -183,7 +183,7 @@ public class InventoryController : BaseApiController
     /// Get active inventory items.
     /// </summary>
     [HttpGet("items/active")]
-    public async Task<IActionResult>> GetActiveItems()
+    public async Task<IActionResult> GetActiveItems()
     {
         try
         {
@@ -207,7 +207,7 @@ public class InventoryController : BaseApiController
     /// Get low stock items.
     /// </summary>
     [HttpGet("items/low-stock")]
-    public async Task<IActionResult>> GetLowStockItems()
+    public async Task<IActionResult> GetLowStockItems()
     {
         try
         {
@@ -633,7 +633,7 @@ public class InventoryController : BaseApiController
     /// Get transactions for the current branch.
     /// </summary>
     [HttpGet("transactions")]
-    public async Task<IActionResult>> GetTransactions(
+    public async Task<IActionResult> GetTransactions(
         [FromQuery] InventoryTransactionListRequestDto request)
     {
         try
@@ -739,7 +739,7 @@ public class InventoryController : BaseApiController
     /// Get transactions for a specific item.
     /// </summary>
     [HttpGet("items/{itemId}/transactions")]
-    public async Task<IActionResult>> GetItemTransactions(int itemId)
+    public async Task<IActionResult> GetItemTransactions(int itemId)
     {
         try
         {
@@ -891,7 +891,7 @@ public class InventoryController : BaseApiController
     /// Get stock level summary for all items.
     /// </summary>
     [HttpGet("stock/summary")]
-    public async Task<IActionResult>> GetStockSummary()
+    public async Task<IActionResult> GetStockSummary()
     {
         try
         {

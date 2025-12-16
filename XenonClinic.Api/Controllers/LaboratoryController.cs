@@ -37,7 +37,7 @@ public class LaboratoryController : BaseApiController
     /// Get all lab tests for the current branch.
     /// </summary>
     [HttpGet("tests")]
-    public async Task<IActionResult>> GetTests(
+    public async Task<IActionResult> GetTests(
         [FromQuery] LabTestListRequestDto request)
     {
         try
@@ -137,7 +137,7 @@ public class LaboratoryController : BaseApiController
     /// Get active lab tests.
     /// </summary>
     [HttpGet("tests/active")]
-    public async Task<IActionResult>> GetActiveTests()
+    public async Task<IActionResult> GetActiveTests()
     {
         try
         {
@@ -161,7 +161,7 @@ public class LaboratoryController : BaseApiController
     /// Get lab tests by category.
     /// </summary>
     [HttpGet("tests/category/{category}")]
-    public async Task<IActionResult>> GetTestsByCategory(TestCategory category)
+    public async Task<IActionResult> GetTestsByCategory(TestCategory category)
     {
         try
         {
@@ -343,7 +343,7 @@ public class LaboratoryController : BaseApiController
     /// Get all lab orders for the current branch.
     /// </summary>
     [HttpGet("orders")]
-    public async Task<IActionResult>> GetOrders(
+    public async Task<IActionResult> GetOrders(
         [FromQuery] LabOrderListRequestDto request)
     {
         try
@@ -457,7 +457,7 @@ public class LaboratoryController : BaseApiController
     /// Get pending lab orders.
     /// </summary>
     [HttpGet("orders/pending")]
-    public async Task<IActionResult>> GetPendingOrders()
+    public async Task<IActionResult> GetPendingOrders()
     {
         try
         {
@@ -481,7 +481,7 @@ public class LaboratoryController : BaseApiController
     /// Get urgent lab orders.
     /// </summary>
     [HttpGet("orders/urgent")]
-    public async Task<IActionResult>> GetUrgentOrders()
+    public async Task<IActionResult> GetUrgentOrders()
     {
         try
         {
@@ -505,7 +505,7 @@ public class LaboratoryController : BaseApiController
     /// Get lab orders for a patient.
     /// </summary>
     [HttpGet("orders/patient/{patientId}")]
-    public async Task<IActionResult>> GetPatientOrders(int patientId)
+    public async Task<IActionResult> GetPatientOrders(int patientId)
     {
         try
         {
@@ -756,7 +756,7 @@ public class LaboratoryController : BaseApiController
     /// Get lab results for an order.
     /// </summary>
     [HttpGet("orders/{orderId}/results")]
-    public async Task<IActionResult>> GetOrderResults(int orderId)
+    public async Task<IActionResult> GetOrderResults(int orderId)
     {
         try
         {
@@ -999,7 +999,7 @@ public class LaboratoryController : BaseApiController
     /// Get all external labs for the current branch.
     /// </summary>
     [HttpGet("external-labs")]
-    public async Task<IActionResult>> GetExternalLabs()
+    public async Task<IActionResult> GetExternalLabs()
     {
         try
         {
@@ -1023,7 +1023,7 @@ public class LaboratoryController : BaseApiController
     /// Get active external labs.
     /// </summary>
     [HttpGet("external-labs/active")]
-    public async Task<IActionResult>> GetActiveExternalLabs()
+    public async Task<IActionResult> GetActiveExternalLabs()
     {
         try
         {

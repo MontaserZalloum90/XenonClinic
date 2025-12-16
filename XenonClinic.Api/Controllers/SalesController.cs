@@ -34,7 +34,7 @@ public class SalesController : BaseApiController
     #region Sales
 
     [HttpGet]
-    public async Task<IActionResult>> GetSales([FromQuery] SaleListRequestDto request)
+    public async Task<IActionResult> GetSales([FromQuery] SaleListRequestDto request)
     {
         try
         {
@@ -93,7 +93,7 @@ public class SalesController : BaseApiController
     }
 
     [HttpGet("patient/{patientId}")]
-    public async Task<IActionResult>> GetPatientSales(int patientId)
+    public async Task<IActionResult> GetPatientSales(int patientId)
     {
         try
         {
@@ -122,7 +122,7 @@ public class SalesController : BaseApiController
     }
 
     [HttpGet("overdue")]
-    public async Task<IActionResult>> GetOverdueSales()
+    public async Task<IActionResult> GetOverdueSales()
     {
         try
         {
@@ -312,7 +312,7 @@ public class SalesController : BaseApiController
     #region Payments
 
     [HttpGet("{saleId}/payments")]
-    public async Task<IActionResult>> GetSalePayments(int saleId)
+    public async Task<IActionResult> GetSalePayments(int saleId)
     {
         try
         {
@@ -403,7 +403,7 @@ public class SalesController : BaseApiController
     #region Quotations
 
     [HttpGet("quotations")]
-    public async Task<IActionResult>> GetQuotations([FromQuery] QuotationListRequestDto request)
+    public async Task<IActionResult> GetQuotations([FromQuery] QuotationListRequestDto request)
     {
         try
         {

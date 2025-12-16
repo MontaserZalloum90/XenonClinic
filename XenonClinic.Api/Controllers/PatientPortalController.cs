@@ -396,7 +396,7 @@ public class PatientPortalController : BaseApiController
     [Authorize]
     [ProducesResponseType(typeof(ApiResponse<IEnumerable<PortalAppointmentSummaryDto>>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status403Forbidden)]
-    public async Task<IActionResult>> GetUpcomingAppointments()
+    public async Task<IActionResult> GetUpcomingAppointments()
     {
         var patientId = GetAuthenticatedPatientId();
         if (!patientId.HasValue)
@@ -413,7 +413,7 @@ public class PatientPortalController : BaseApiController
     [Authorize]
     [ProducesResponseType(typeof(ApiResponse<IEnumerable<PortalAppointmentSummaryDto>>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status403Forbidden)]
-    public async Task<IActionResult>> GetPastAppointments(
+    public async Task<IActionResult> GetPastAppointments(
         [FromQuery][Range(1, 100, ErrorMessage = "Limit must be between 1 and 100")] int limit = 20)
     {
         var patientId = GetAuthenticatedPatientId();
@@ -453,7 +453,7 @@ public class PatientPortalController : BaseApiController
     [Authorize]
     [ProducesResponseType(typeof(ApiResponse<IEnumerable<PortalAppointmentSlotDto>>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult>> GetAvailableSlots(
+    public async Task<IActionResult> GetAvailableSlots(
         [FromQuery][Range(1, int.MaxValue, ErrorMessage = "Valid branch ID is required")] int branchId,
         [FromQuery][Range(1, int.MaxValue, ErrorMessage = "Valid doctor ID is required")] int doctorId,
         [FromQuery] DateTime startDate,
@@ -478,7 +478,7 @@ public class PatientPortalController : BaseApiController
     [HttpGet("appointments/doctors")]
     [Authorize]
     [ProducesResponseType(typeof(ApiResponse<IEnumerable<PortalDoctorDto>>), StatusCodes.Status200OK)]
-    public async Task<IActionResult>> GetDoctorsForBooking(
+    public async Task<IActionResult> GetDoctorsForBooking(
         [FromQuery][Range(1, int.MaxValue, ErrorMessage = "Valid branch ID is required")] int branchId,
         [FromQuery][StringLength(100, ErrorMessage = "Specialty cannot exceed 100 characters")] string? specialty = null)
     {
@@ -601,7 +601,7 @@ public class PatientPortalController : BaseApiController
     [Authorize]
     [ProducesResponseType(typeof(ApiResponse<IEnumerable<PortalVisitSummaryDto>>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status403Forbidden)]
-    public async Task<IActionResult>> GetVisitHistory(
+    public async Task<IActionResult> GetVisitHistory(
         [FromQuery][Range(2000, 2100, ErrorMessage = "Invalid year")] int? year = null,
         [FromQuery][Range(1, 100, ErrorMessage = "Limit must be between 1 and 100")] int limit = 50)
     {
@@ -642,7 +642,7 @@ public class PatientPortalController : BaseApiController
     [Authorize]
     [ProducesResponseType(typeof(ApiResponse<IEnumerable<PortalAllergyDto>>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status403Forbidden)]
-    public async Task<IActionResult>> GetAllergies()
+    public async Task<IActionResult> GetAllergies()
     {
         var patientId = GetAuthenticatedPatientId();
         if (!patientId.HasValue)
@@ -659,7 +659,7 @@ public class PatientPortalController : BaseApiController
     [Authorize]
     [ProducesResponseType(typeof(ApiResponse<IEnumerable<PortalImmunizationDto>>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status403Forbidden)]
-    public async Task<IActionResult>> GetImmunizations()
+    public async Task<IActionResult> GetImmunizations()
     {
         var patientId = GetAuthenticatedPatientId();
         if (!patientId.HasValue)
@@ -676,7 +676,7 @@ public class PatientPortalController : BaseApiController
     [Authorize]
     [ProducesResponseType(typeof(ApiResponse<IEnumerable<PortalVitalSignsDto>>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status403Forbidden)]
-    public async Task<IActionResult>> GetVitalSignsHistory(
+    public async Task<IActionResult> GetVitalSignsHistory(
         [FromQuery][Range(1, 100, ErrorMessage = "Limit must be between 1 and 100")] int limit = 20)
     {
         var patientId = GetAuthenticatedPatientId();
@@ -718,7 +718,7 @@ public class PatientPortalController : BaseApiController
     [Authorize]
     [ProducesResponseType(typeof(ApiResponse<IEnumerable<PortalLabResultSummaryDto>>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status403Forbidden)]
-    public async Task<IActionResult>> GetLabResults(
+    public async Task<IActionResult> GetLabResults(
         [FromQuery][Range(2000, 2100, ErrorMessage = "Invalid year")] int? year = null,
         [FromQuery][Range(1, 100, ErrorMessage = "Limit must be between 1 and 100")] int limit = 50)
     {
@@ -780,7 +780,7 @@ public class PatientPortalController : BaseApiController
     [Authorize]
     [ProducesResponseType(typeof(ApiResponse<IEnumerable<PortalMedicationSummaryDto>>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status403Forbidden)]
-    public async Task<IActionResult>> GetActiveMedications()
+    public async Task<IActionResult> GetActiveMedications()
     {
         var patientId = GetAuthenticatedPatientId();
         if (!patientId.HasValue)
@@ -797,7 +797,7 @@ public class PatientPortalController : BaseApiController
     [Authorize]
     [ProducesResponseType(typeof(ApiResponse<IEnumerable<PortalPrescriptionDetailDto>>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status403Forbidden)]
-    public async Task<IActionResult>> GetPrescriptionHistory(
+    public async Task<IActionResult> GetPrescriptionHistory(
         [FromQuery][Range(1, 100, ErrorMessage = "Limit must be between 1 and 100")] int limit = 20)
     {
         var patientId = GetAuthenticatedPatientId();
@@ -866,7 +866,7 @@ public class PatientPortalController : BaseApiController
     [Authorize]
     [ProducesResponseType(typeof(ApiResponse<IEnumerable<PortalMessageThreadDto>>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status403Forbidden)]
-    public async Task<IActionResult>> GetMessageThreads()
+    public async Task<IActionResult> GetMessageThreads()
     {
         var patientId = GetAuthenticatedPatientId();
         if (!patientId.HasValue)
@@ -883,7 +883,7 @@ public class PatientPortalController : BaseApiController
     [Authorize]
     [ProducesResponseType(typeof(ApiResponse<IEnumerable<PortalMessageDto>>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status403Forbidden)]
-    public async Task<IActionResult>> GetMessages(int threadId)
+    public async Task<IActionResult> GetMessages(int threadId)
     {
         var patientId = GetAuthenticatedPatientId();
         if (!patientId.HasValue)
@@ -965,7 +965,7 @@ public class PatientPortalController : BaseApiController
     [Authorize]
     [ProducesResponseType(typeof(ApiResponse<IEnumerable<PortalInvoiceSummaryDto>>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status403Forbidden)]
-    public async Task<IActionResult>> GetInvoices(
+    public async Task<IActionResult> GetInvoices(
         [FromQuery][RegularExpression("^(Pending|Paid|Overdue|Partial)?$", ErrorMessage = "Invalid status")] string? status = null)
     {
         var patientId = GetAuthenticatedPatientId();
@@ -1088,7 +1088,7 @@ public class PatientPortalController : BaseApiController
     [Authorize]
     [ProducesResponseType(typeof(ApiResponse<IEnumerable<PortalNotificationDto>>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status403Forbidden)]
-    public async Task<IActionResult>> GetNotifications(
+    public async Task<IActionResult> GetNotifications(
         [FromQuery] bool unreadOnly = false)
     {
         var patientId = GetAuthenticatedPatientId();
