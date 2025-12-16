@@ -30,11 +30,15 @@ jobs:
         run: dotnet restore XenonClinic.sln
 
       - name: Build
-        run: dotnet build XenonClinic.sln --configuration Release --no-restore /p:TreatWarningsAsErrors=false /warnaserror- --verbosity diagnostic 2>&1 | tail -500 || true
-        continue-on-error: true
-
-      - name: Build Standard
-        run: dotnet build XenonClinic.sln --configuration Release --no-restore /p:TreatWarningsAsErrors=false
+        run: |
+          dotnet build XenonClinic.sln --configuration Release --no-restore /p:TreatWarningsAsErrors=false 2>&1 | tee build.log
+          BUILD_EXIT_CODE=${PIPESTATUS[0]}
+          if [ $BUILD_EXIT_CODE -ne 0 ]; then
+            echo "::group::Build Errors"
+            grep -E "(error CS[0-9]+|error :|Build FAILED)" build.log || true
+            echo "::endgroup::"
+            exit $BUILD_EXIT_CODE
+          fi
 
       - name: Run tests
         run: dotnet test XenonClinic.sln --configuration Release --no-build --verbosity normal --collect:"XPlat Code Coverage"
