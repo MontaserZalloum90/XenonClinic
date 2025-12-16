@@ -174,12 +174,13 @@ public class InventoryService : IInventoryService
         await using var dbTransaction = await _context.Database.BeginTransactionAsync();
         try
         {
-            var stockChange = transaction.TransactionType == TransactionType.Credit
-                ? transaction.Quantity
-                : -transaction.Quantity;
+            // Purchase and Return add stock, Sale removes stock, Adjustment can be positive or negative
+            var stockChange = transaction.TransactionType == InventoryTransactionType.Sale
+                ? -Math.Abs(transaction.Quantity)
+                : transaction.Quantity;
 
-            // BUG FIX: Validate stock won't go negative for debits
-            if (transaction.TransactionType == TransactionType.Debit && item.QuantityOnHand < transaction.Quantity)
+            // BUG FIX: Validate stock won't go negative for sales
+            if (transaction.TransactionType == InventoryTransactionType.Sale && item.QuantityOnHand < Math.Abs(transaction.Quantity))
             {
                 throw new InvalidOperationException($"Insufficient stock. Available: {item.QuantityOnHand}, Requested: {transaction.Quantity}");
             }
@@ -236,14 +237,14 @@ public class InventoryService : IInventoryService
                 throw new KeyNotFoundException($"Inventory item with ID {transaction.InventoryItemId} not found");
             }
 
-            // Reverse old transaction effect
-            var oldStockChange = oldTransaction.TransactionType == TransactionType.Credit
-                ? oldTransaction.Quantity
-                : -oldTransaction.Quantity;
+            // Reverse old transaction effect (Sale removes stock, others add stock)
+            var oldStockChange = oldTransaction.TransactionType == InventoryTransactionType.Sale
+                ? -Math.Abs(oldTransaction.Quantity)
+                : oldTransaction.Quantity;
             // Apply new transaction effect
-            var newStockChange = transaction.TransactionType == TransactionType.Credit
-                ? transaction.Quantity
-                : -transaction.Quantity;
+            var newStockChange = transaction.TransactionType == InventoryTransactionType.Sale
+                ? -Math.Abs(transaction.Quantity)
+                : transaction.Quantity;
 
             var newStock = item.QuantityOnHand - oldStockChange + newStockChange;
 
@@ -289,9 +290,10 @@ public class InventoryService : IInventoryService
             var item = await _context.InventoryItems.FindAsync(transaction.InventoryItemId);
             if (item != null)
             {
-                var stockChange = transaction.TransactionType == TransactionType.Credit
-                    ? -transaction.Quantity  // Reverse the credit
-                    : transaction.Quantity;  // Reverse the debit
+                // Reverse the transaction effect (Sale removed stock so add it back, others added stock so subtract)
+                var stockChange = transaction.TransactionType == InventoryTransactionType.Sale
+                    ? Math.Abs(transaction.Quantity)  // Reverse the sale (add stock back)
+                    : -transaction.Quantity;  // Reverse the purchase/adjustment (remove stock)
 
                 var newStock = item.QuantityOnHand + stockChange;
 
@@ -353,7 +355,7 @@ public class InventoryService : IInventoryService
             var transaction = new InventoryTransaction
             {
                 InventoryItemId = itemId,
-                TransactionType = TransactionType.Credit,
+                TransactionType = InventoryTransactionType.Purchase,
                 Quantity = quantity,
                 UnitPrice = unitCost,
                 TotalAmount = quantity * unitCost,
@@ -418,7 +420,7 @@ public class InventoryService : IInventoryService
             var transaction = new InventoryTransaction
             {
                 InventoryItemId = itemId,
-                TransactionType = TransactionType.Debit,
+                TransactionType = InventoryTransactionType.Sale,
                 Quantity = quantity,
                 UnitPrice = item.CostPrice,
                 TotalAmount = quantity * item.CostPrice,
@@ -470,19 +472,18 @@ public class InventoryService : IInventoryService
                 return new InventoryTransaction
                 {
                     InventoryItemId = itemId,
-                    TransactionType = TransactionType.Credit,
+                    TransactionType = InventoryTransactionType.Adjustment,
                     Quantity = 0,
                     Notes = "No adjustment needed - stock already at target level"
                 };
             }
 
-            var transactionType = difference > 0 ? TransactionType.Credit : TransactionType.Debit;
             var absoluteDifference = Math.Abs(difference);
 
             var transaction = new InventoryTransaction
             {
                 InventoryItemId = itemId,
-                TransactionType = transactionType,
+                TransactionType = InventoryTransactionType.Adjustment,
                 Quantity = absoluteDifference,
                 UnitPrice = item.CostPrice,
                 TotalAmount = absoluteDifference * item.CostPrice,
