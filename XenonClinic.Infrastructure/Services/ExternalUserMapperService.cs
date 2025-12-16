@@ -137,22 +137,24 @@ public class ExternalUserMapperService : IExternalUserMapper
         string externalUserId,
         int companyId)
     {
-        return await _dbContext.Users
+        ApplicationUser? user = await _dbContext.Users
             .FirstOrDefaultAsync(u =>
                 u.ExternalProviderName == providerName &&
                 u.ExternalUserId == externalUserId &&
                 u.CompanyId == companyId &&
                 u.IsActive);
+        return user;
     }
 
     /// <inheritdoc />
     public async Task<IApplicationUser?> FindUserByEmailAsync(string email, int companyId)
     {
-        return await _dbContext.Users
+        ApplicationUser? user = await _dbContext.Users
             .FirstOrDefaultAsync(u =>
                 u.Email == email &&
                 u.CompanyId == companyId &&
                 u.IsActive);
+        return user;
     }
 
     /// <inheritdoc />

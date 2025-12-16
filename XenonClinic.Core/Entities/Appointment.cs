@@ -6,6 +6,7 @@ namespace XenonClinic.Core.Entities;
 public class Appointment : IBranchEntity
 {
     public int Id { get; set; }
+    public string? ReferenceNumber { get; set; }
     public int PatientId { get; set; }
     public int BranchId { get; set; }
     public int? ProviderId { get; set; } // Optional: Healthcare provider/employee assigned to this appointment

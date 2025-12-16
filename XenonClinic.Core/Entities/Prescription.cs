@@ -12,6 +12,11 @@ public class Prescription
     [Key]
     public int Id { get; set; }
 
+    [MaxLength(50)]
+    public string? PrescriptionNumber { get; set; }
+
+    public int BranchId { get; set; }
+
     public int PatientId { get; set; }
 
     public int? ClinicalVisitId { get; set; }
@@ -28,6 +33,9 @@ public class Prescription
     public DateTime? UpdatedAt { get; set; }
 
     // Navigation properties
+    [ForeignKey(nameof(BranchId))]
+    public virtual Branch? Branch { get; set; }
+
     [ForeignKey(nameof(PatientId))]
     public virtual Patient? Patient { get; set; }
 
