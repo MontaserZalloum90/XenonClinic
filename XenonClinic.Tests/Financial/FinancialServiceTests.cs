@@ -4,6 +4,7 @@ using XenonClinic.Core.Entities;
 using XenonClinic.Core.Enums;
 using XenonClinic.Infrastructure.Data;
 using XenonClinic.Infrastructure.Services;
+using Xunit;
 
 namespace XenonClinic.Tests.Financial;
 

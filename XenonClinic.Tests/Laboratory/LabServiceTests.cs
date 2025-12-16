@@ -6,6 +6,7 @@ using XenonClinic.Core.Enums;
 using XenonClinic.Core.Interfaces;
 using XenonClinic.Infrastructure.Data;
 using XenonClinic.Infrastructure.Services;
+using Xunit;
 
 namespace XenonClinic.Tests.Laboratory;
 

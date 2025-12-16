@@ -580,9 +580,9 @@ public class FinancialServiceExtendedTests : IAsyncLifetime
 
     [Theory]
     [InlineData(PaymentMethod.Cash)]
-    [InlineData(PaymentMethod.CreditCard)]
+    [InlineData(PaymentMethod.Card)]
     [InlineData(PaymentMethod.BankTransfer)]
-    [InlineData(PaymentMethod.Check)]
+    [InlineData(PaymentMethod.Cheque)]
     [InlineData(PaymentMethod.Insurance)]
     public async Task CreatePaymentAsync_VariousMethods_AllSucceed(PaymentMethod method)
     {
