@@ -132,9 +132,9 @@ public class ClinicDbContext : IdentityDbContext<Entities.ApplicationUser>
     public DbSet<Immunization> Immunizations => Set<Immunization>();
     public DbSet<DoctorSchedule> DoctorSchedules => Set<DoctorSchedule>();
 
-    // Authentication configuration entities (from Infrastructure)
-    public DbSet<Entities.CompanyAuthSettings> CompanyAuthSettings => Set<Entities.CompanyAuthSettings>();
-    public DbSet<Entities.CompanyIdentityProvider> CompanyIdentityProviders => Set<Entities.CompanyIdentityProvider>();
+    // Authentication configuration entities
+    public DbSet<CompanyAuthSettings> CompanyAuthSettings => Set<CompanyAuthSettings>();
+    public DbSet<CompanyIdentityProvider> CompanyIdentityProviders => Set<CompanyIdentityProvider>();
     public DbSet<Entities.UserMfaConfiguration> UserMfaConfigurations => Set<Entities.UserMfaConfiguration>();
 
     // Case Management entities
@@ -1806,54 +1806,54 @@ public class ClinicDbContext : IdentityDbContext<Entities.ApplicationUser>
         // ========================================
 
         // CompanyAuthSettings configuration (Infrastructure entity)
-        builder.Entity<Entities.CompanyAuthSettings>()
+        builder.Entity<CompanyAuthSettings>()
             .HasIndex(cas => cas.CompanyId)
             .IsUnique();
 
-        builder.Entity<Entities.CompanyAuthSettings>()
+        builder.Entity<CompanyAuthSettings>()
             .HasIndex(cas => cas.IsEnabled);
 
-        builder.Entity<Entities.CompanyAuthSettings>()
+        builder.Entity<CompanyAuthSettings>()
             .HasOne(cas => cas.Company)
             .WithMany()
             .HasForeignKey(cas => cas.CompanyId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        builder.Entity<Entities.CompanyAuthSettings>()
+        builder.Entity<CompanyAuthSettings>()
             .HasMany(cas => cas.IdentityProviders)
             .WithOne()
             .HasForeignKey(ip => ip.CompanyId)
             .OnDelete(DeleteBehavior.Cascade);
 
         // CompanyIdentityProvider configuration (Infrastructure entity)
-        builder.Entity<Entities.CompanyIdentityProvider>()
+        builder.Entity<CompanyIdentityProvider>()
             .HasIndex(ip => ip.CompanyId);
 
-        builder.Entity<Entities.CompanyIdentityProvider>()
+        builder.Entity<CompanyIdentityProvider>()
             .HasIndex(ip => ip.Name);
 
-        builder.Entity<Entities.CompanyIdentityProvider>()
+        builder.Entity<CompanyIdentityProvider>()
             .HasIndex(ip => ip.IsEnabled);
 
-        builder.Entity<Entities.CompanyIdentityProvider>()
+        builder.Entity<CompanyIdentityProvider>()
             .HasIndex(ip => ip.IsDefault);
 
-        builder.Entity<Entities.CompanyIdentityProvider>()
+        builder.Entity<CompanyIdentityProvider>()
             .HasIndex(ip => new { ip.CompanyId, ip.Name })
             .IsUnique();
 
-        builder.Entity<Entities.CompanyIdentityProvider>()
+        builder.Entity<CompanyIdentityProvider>()
             .HasOne(ip => ip.Company)
             .WithMany()
             .HasForeignKey(ip => ip.CompanyId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        builder.Entity<Entities.CompanyIdentityProvider>()
+        builder.Entity<CompanyIdentityProvider>()
             .Property(ip => ip.Name)
             .HasMaxLength(100)
             .IsRequired();
 
-        builder.Entity<Entities.CompanyIdentityProvider>()
+        builder.Entity<CompanyIdentityProvider>()
             .Property(ip => ip.DisplayName)
             .HasMaxLength(200)
             .IsRequired();
