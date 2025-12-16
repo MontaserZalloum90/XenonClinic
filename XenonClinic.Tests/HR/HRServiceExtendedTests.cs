@@ -557,7 +557,7 @@ public class HRServiceExtendedTests : IAsyncLifetime
     [Theory]
     [InlineData(LeaveType.Annual)]
     [InlineData(LeaveType.Sick)]
-    [InlineData(LeaveType.Casual)]
+    [InlineData(LeaveType.Emergency)]
     [InlineData(LeaveType.Unpaid)]
     [InlineData(LeaveType.Maternity)]
     public async Task CreateLeaveRequestAsync_VariousTypes_AllSucceed(LeaveType leaveType)

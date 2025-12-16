@@ -5,6 +5,7 @@ using Moq;
 using System.Security.Claims;
 using XenonClinic.Core.Entities;
 using XenonClinic.Infrastructure.Data;
+using XenonClinic.Infrastructure.Entities;
 using XenonClinic.Infrastructure.Services;
 using Xunit;
 
