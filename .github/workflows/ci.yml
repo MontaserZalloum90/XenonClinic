@@ -30,24 +30,16 @@ jobs:
         run: dotnet restore XenonClinic.sln
 
       - name: Build Core
-        run: |
-          echo "=== Building XenonClinic.Core ==="
-          dotnet build XenonClinic.Core/XenonClinic.Core.csproj --configuration Release --no-restore 2>&1 || true
+        run: dotnet build XenonClinic.Core/XenonClinic.Core.csproj --configuration Release --no-restore
 
       - name: Build Infrastructure
-        run: |
-          echo "=== Building XenonClinic.Infrastructure ==="
-          dotnet build XenonClinic.Infrastructure/XenonClinic.Infrastructure.csproj --configuration Release --no-restore 2>&1 || true
+        run: dotnet build XenonClinic.Infrastructure/XenonClinic.Infrastructure.csproj --configuration Release --no-restore
 
       - name: Build Api
-        run: |
-          echo "=== Building XenonClinic.Api ==="
-          dotnet build XenonClinic.Api/XenonClinic.Api.csproj --configuration Release --no-restore 2>&1 || true
+        run: dotnet build XenonClinic.Api/XenonClinic.Api.csproj --configuration Release --no-restore
 
       - name: Build Tests
-        run: |
-          echo "=== Building XenonClinic.Tests ==="
-          dotnet build XenonClinic.Tests/XenonClinic.Tests.csproj --configuration Release --no-restore 2>&1 || true
+        run: dotnet build XenonClinic.Tests/XenonClinic.Tests.csproj --configuration Release --no-restore
 
       - name: Full Build
         run: |
