@@ -1,0 +1,7 @@
+<Project>
+  <PropertyGroup>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <NoWarn>$(NoWarn);CS8600;CS8601;CS8602;CS8603;CS8604;CS8618;CS8625;CS8629;CS8765;CS8767;CS8769</NoWarn>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+</Project>
