@@ -181,7 +181,7 @@ public class BackgroundJobService : IBackgroundJobService
         return Schedule(methodCall, DateTimeOffset.UtcNow.Add(delay));
     }
 
-    public void AddOrUpdateRecurring<T>(string jobId, Expression<Func<T, Task>> methodCall, string cronExpression)
+    public void AddOrUpdateRecurring<T>(string jobId, Expression<Func<T, Task>> methodCall, string cronExpression) where T : notnull
     {
         var recurringJob = new RecurringJobInfo
         {

@@ -206,7 +206,10 @@ public class RadiologyController : BaseApiController
     public async Task<IActionResult> GetRadiologyOrders()
     {
         var branchId = _currentUserService.BranchId;
-        var orders = await _radiologyService.GetRadiologyOrdersByBranchIdAsync(branchId);
+        if (branchId == null)
+            return ApiBadRequest("Branch context is required");
+
+        var orders = await _radiologyService.GetRadiologyOrdersByBranchIdAsync(branchId.Value);
 
         var orderDtos = orders.Select(MapToRadiologyOrderDto).ToList();
         return ApiOk(orderDtos);
@@ -220,7 +223,10 @@ public class RadiologyController : BaseApiController
     public async Task<IActionResult> GetPendingRadiologyOrders()
     {
         var branchId = _currentUserService.BranchId;
-        var orders = await _radiologyService.GetPendingRadiologyOrdersAsync(branchId);
+        if (branchId == null)
+            return ApiBadRequest("Branch context is required");
+
+        var orders = await _radiologyService.GetPendingRadiologyOrdersAsync(branchId.Value);
 
         var orderDtos = orders.Select(MapToRadiologyOrderDto).ToList();
         return ApiOk(orderDtos);
@@ -234,7 +240,10 @@ public class RadiologyController : BaseApiController
     public async Task<IActionResult> GetCompletedRadiologyOrders()
     {
         var branchId = _currentUserService.BranchId;
-        var orders = await _radiologyService.GetCompletedRadiologyOrdersAsync(branchId);
+        if (branchId == null)
+            return ApiBadRequest("Branch context is required");
+
+        var orders = await _radiologyService.GetCompletedRadiologyOrdersAsync(branchId.Value);
 
         var orderDtos = orders.Select(MapToRadiologyOrderDto).ToList();
         return ApiOk(orderDtos);
@@ -263,7 +272,10 @@ public class RadiologyController : BaseApiController
         [FromQuery] DateTime endDate)
     {
         var branchId = _currentUserService.BranchId;
-        var orders = await _radiologyService.GetRadiologyOrdersByDateRangeAsync(branchId, startDate, endDate);
+        if (branchId == null)
+            return ApiBadRequest("Branch context is required");
+
+        var orders = await _radiologyService.GetRadiologyOrdersByDateRangeAsync(branchId.Value, startDate, endDate);
 
         var orderDtos = orders.Select(MapToRadiologyOrderDto).ToList();
         return ApiOk(orderDtos);
@@ -756,8 +768,8 @@ public class RadiologyController : BaseApiController
             StudyCode = study.TestCode,
             StudyName = study.TestName,
             Description = study.Description,
-            Modality = Enum.TryParse<ImagingModality>(study.Category, out var modality) ? modality : ImagingModality.Other,
-            EstimatedDurationMinutes = study.TurnaroundTime,
+            Modality = Enum.TryParse<ImagingModality>(study.Category.ToString(), out var modality) ? modality : ImagingModality.Other,
+            EstimatedDurationMinutes = study.TurnaroundTimeHours,
             Price = study.Price,
             PatientPreparation = study.PreparationInstructions,
             IsActive = study.IsActive,

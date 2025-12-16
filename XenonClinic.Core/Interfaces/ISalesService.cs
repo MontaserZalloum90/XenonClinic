@@ -95,6 +95,9 @@ public interface ISalesService
     Task<int> GetPendingQuotationsCountAsync(int branchId);
     Task<decimal> GetQuotationConversionRateAsync(int branchId, DateTime startDate, DateTime endDate);
     Task<SalesStatistics> GetSalesStatisticsAsync(int branchId, DateTime? startDate = null, DateTime? endDate = null);
+    Task<Dictionary<SaleStatus, int>> GetSalesStatusDistributionAsync(int branchId);
+    Task<Dictionary<PaymentStatus, int>> GetSalesPaymentStatusDistributionAsync(int branchId);
+    Task<IEnumerable<(string ItemName, int Quantity, decimal Revenue)>> GetTopSellingItemsAsync(int branchId, int topN = 10);
 
     #endregion
 }

@@ -68,6 +68,7 @@ builder.Services.AddScoped<IClinicalVisitService, ClinicalVisitService>();
 builder.Services.AddScoped<ICaseService, CaseService>();
 builder.Services.AddScoped<ILookupService, LookupService>();
 builder.Services.AddScoped<IFileStorageService, FileStorageService>();
+builder.Services.AddScoped<ISequenceGenerator, SequenceGenerator>();
 
 // Validators - FluentValidation
 builder.Services.AddValidatorsFromAssemblyContaining<Program>();

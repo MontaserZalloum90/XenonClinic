@@ -1347,6 +1347,41 @@ public class SalesService : ISalesService
         };
     }
 
+    public async Task<Dictionary<SaleStatus, int>> GetSalesStatusDistributionAsync(int branchId)
+    {
+        return await _context.Sales
+            .Where(s => s.BranchId == branchId)
+            .GroupBy(s => s.Status)
+            .ToDictionaryAsync(g => g.Key, g => g.Count());
+    }
+
+    public async Task<Dictionary<PaymentStatus, int>> GetSalesPaymentStatusDistributionAsync(int branchId)
+    {
+        return await _context.Sales
+            .Where(s => s.BranchId == branchId)
+            .GroupBy(s => s.PaymentStatus)
+            .ToDictionaryAsync(g => g.Key, g => g.Count());
+    }
+
+    public async Task<IEnumerable<(string ItemName, int Quantity, decimal Revenue)>> GetTopSellingItemsAsync(int branchId, int topN = 10)
+    {
+        var topItems = await _context.SaleItems
+            .Include(i => i.Sale)
+            .Where(i => i.Sale.BranchId == branchId && i.Sale.Status != SaleStatus.Cancelled)
+            .GroupBy(i => i.ItemName)
+            .Select(g => new
+            {
+                ItemName = g.Key,
+                Quantity = g.Sum(i => i.Quantity),
+                Revenue = g.Sum(i => i.Total)
+            })
+            .OrderByDescending(x => x.Revenue)
+            .Take(topN)
+            .ToListAsync();
+
+        return topItems.Select(x => (x.ItemName, x.Quantity, x.Revenue));
+    }
+
     #endregion
 
     #region Helper Methods

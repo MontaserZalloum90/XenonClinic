@@ -31,7 +31,7 @@ public class JobsController : BaseApiController
     /// </summary>
     [HttpGet("statistics")]
     [ProducesResponseType(typeof(ApiResponse<JobStatisticsResponse>), StatusCodes.Status200OK)]
-    public ActionResult<ApiResponse<JobStatisticsResponse>> GetStatistics()
+    public IActionResult GetStatistics()
     {
         var stats = _jobService.GetStatistics();
 
@@ -57,7 +57,7 @@ public class JobsController : BaseApiController
     /// </summary>
     [HttpGet]
     [ProducesResponseType(typeof(ApiResponse<IEnumerable<JobDetailsResponse>>), StatusCodes.Status200OK)]
-    public ActionResult<ApiResponse<IEnumerable<JobDetailsResponse>>> GetJobs(
+    public IActionResult GetJobs(
         [FromQuery] JobState? state = null,
         [FromQuery] int limit = 100)
     {
@@ -87,7 +87,7 @@ public class JobsController : BaseApiController
     [HttpGet("{jobId}")]
     [ProducesResponseType(typeof(ApiResponse<JobDetailsResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status404NotFound)]
-    public ActionResult<ApiResponse<JobDetailsResponse>> GetJob(string jobId)
+    public IActionResult GetJob(string jobId)
     {
         var job = _jobService.GetJobDetails(jobId);
 
@@ -119,7 +119,7 @@ public class JobsController : BaseApiController
     /// </summary>
     [HttpGet("recurring")]
     [ProducesResponseType(typeof(ApiResponse<IEnumerable<RecurringJobResponse>>), StatusCodes.Status200OK)]
-    public ActionResult<ApiResponse<IEnumerable<RecurringJobResponse>>> GetRecurringJobs()
+    public IActionResult GetRecurringJobs()
     {
         var jobs = _jobService.GetRecurringJobs()
             .Select(j => new RecurringJobResponse
@@ -140,7 +140,7 @@ public class JobsController : BaseApiController
     /// </summary>
     [HttpGet("failed")]
     [ProducesResponseType(typeof(ApiResponse<IEnumerable<JobDetailsResponse>>), StatusCodes.Status200OK)]
-    public ActionResult<ApiResponse<IEnumerable<JobDetailsResponse>>> GetFailedJobs([FromQuery] int limit = 50)
+    public IActionResult GetFailedJobs([FromQuery] int limit = 50)
     {
         var jobs = _jobService.GetAllJobs(JobState.Failed)
             .Take(limit)
