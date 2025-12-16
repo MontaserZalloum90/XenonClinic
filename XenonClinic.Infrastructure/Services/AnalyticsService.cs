@@ -722,7 +722,7 @@ public class AnalyticsService : IAnalyticsService
         var denied = claims.Count(c => c.Status == Core.Enums.ClaimStatus.Denied);
 
         var totalClaimed = claims.Sum(c => c.BilledAmount);
-        var totalPaid = claims.Sum(c => c.PaidAmount ?? 0m);
+        var totalPaid = claims.Sum(c => c.PaidAmount);
 
         return new ClaimsAnalyticsDto
         {
@@ -1059,7 +1059,7 @@ public class AnalyticsService : IAnalyticsService
             .Take(100)
             .ToListAsync();
 
-        var scores = patients.Select(p => new PatientRiskScoreDto
+        IEnumerable<PatientRiskScoreDto> scores = patients.Select(p => new PatientRiskScoreDto
         {
             PatientId = p.Id,
             PatientName = $"{p.FirstName} {p.LastName}",

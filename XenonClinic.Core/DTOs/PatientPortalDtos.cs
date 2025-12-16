@@ -493,6 +493,8 @@ public class PortalMakePaymentDto
     public string PaymentMethod { get; set; } = string.Empty; // Card, Bank Transfer
     public string? CardToken { get; set; } // For card payments
     public string? SaveCard { get; set; }
+    public string? ReturnUrl { get; set; }
+    public string? CancelUrl { get; set; }
 }
 
 /// <summary>
@@ -505,6 +507,9 @@ public class PortalPaymentResponseDto
     public string? Message { get; set; }
     public string? ReceiptUrl { get; set; }
     public decimal? NewBalance { get; set; }
+    public string? PaymentUrl { get; set; }
+    public bool RequiresAction { get; set; }
+    public string? ClientSecret { get; set; }
 }
 
 #endregion

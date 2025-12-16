@@ -47,7 +47,13 @@ public class Employee : IBranchEntity
     public decimal BasicSalary { get; set; }
     public decimal? HousingAllowance { get; set; }
     public decimal? TransportAllowance { get; set; }
+    public decimal? FoodAllowance { get; set; }
     public decimal? OtherAllowances { get; set; }
+    public decimal? MonthlyLoanDeduction { get; set; }
+    public decimal? HealthInsuranceDeduction { get; set; }
+
+    // Position alias for JobPosition
+    public string? Position => JobPosition?.Title;
 
     // Banking Information
     public string? BankName { get; set; }

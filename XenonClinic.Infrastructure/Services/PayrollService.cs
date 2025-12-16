@@ -8,6 +8,7 @@ using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
 using XenonClinic.Core.DTOs;
 using XenonClinic.Core.Entities;
+using XenonClinic.Core.Enums;
 using XenonClinic.Core.Interfaces;
 using XenonClinic.Infrastructure.Data;
 
@@ -1261,7 +1262,7 @@ public class PayrollService : IPayrollService
                     var totalBasic = payslips.Sum(p => p.BasicSalary);
                     var totalAllowances = payslips.Sum(p => p.HousingAllowance + p.TransportAllowance + p.OtherAllowances);
                     var totalGross = payslips.Sum(p => p.GrossPay);
-                    var totalDeductions = payslips.Sum(p => p.IncomeTax + p.SocialInsurance + p.HealthInsurance +
+                    var totalDeductions = payslips.Sum(p => p.Tax + p.SocialInsurance + p.HealthInsurance +
                         p.PensionContribution + p.LoanDeduction + p.OtherDeductions);
                     var totalNet = payslips.Sum(p => p.NetPay);
 
@@ -1404,7 +1405,7 @@ public class PayrollService : IPayrollService
             payslips.Sum(p => p.TransportAllowance),
             payslips.Sum(p => p.OtherAllowances),
             payslips.Sum(p => p.GrossPay),
-            payslips.Sum(p => p.IncomeTax),
+            payslips.Sum(p => p.Tax),
             payslips.Sum(p => p.SocialInsurance + p.HealthInsurance),
             payslips.Sum(p => p.PensionContribution),
             payslips.Sum(p => p.LoanDeduction + p.OtherDeductions),
@@ -1642,7 +1643,7 @@ public class PayrollService : IPayrollService
     {
         var leaveCount = await _context.LeaveRequests
             .Where(l => l.EmployeeId == employeeId &&
-                       l.Status == "Approved" &&
+                       l.Status == LeaveStatus.Approved &&
                        l.StartDate <= endDate &&
                        l.EndDate >= startDate)
             .SumAsync(l => (l.EndDate - l.StartDate).Days + 1);

@@ -610,6 +610,7 @@ public class AuditLog
     [MaxLength(64)] public string? IntegrityHash { get; set; }
     public bool IsArchived { get; set; }
     public DateTime? ArchivedAt { get; set; }
+    [MaxLength(100)] public string? ModuleName { get; set; }
 }
 
 [Table("AuditRetentionPolicies")]

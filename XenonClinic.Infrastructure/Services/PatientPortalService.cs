@@ -1407,7 +1407,7 @@ public class PatientPortalService : IPatientPortalService
                                 section.Item().Row(r =>
                                 {
                                     r.ConstantItem(80).Text($"{imm.AdministeredDate:MM/dd/yyyy}");
-                                    r.RelativeItem().Text($"{imm.VaccineName} (Dose {imm.DoseNumber ?? (int?)1 ?? 1})");
+                                    r.RelativeItem().Text($"{imm.VaccineName} (Dose {imm.DoseNumber ?? 1})");
                                 });
                             }
                         }
@@ -1637,9 +1637,9 @@ public class PatientPortalService : IPatientPortalService
                     // Status
                     col.Item().PaddingTop(20).Row(row =>
                     {
-                        row.RelativeItem().Text($"Status: {labOrder.Status ?? "Processing"}")
+                        row.RelativeItem().Text($"Status: {labOrder.Status}")
                             .Bold()
-                            .FontColor(labOrder.Status == "Completed" ? Colors.Green.Darken2 : Colors.Orange.Darken2);
+                            .FontColor(labOrder.Status == LabOrderStatus.Completed ? Colors.Green.Darken2 : Colors.Orange.Darken2);
                     });
                 });
 
@@ -1725,8 +1725,8 @@ public class PatientPortalService : IPatientPortalService
                 Strength = i.Strength,
                 Dosage = i.Dosage,
                 Frequency = i.Frequency,
-                Duration = i.Duration,
-                Quantity = i.Quantity,
+                Duration = i.Duration?.ToString(),
+                Quantity = i.Quantity.HasValue ? (int?)i.Quantity.Value : null,
                 Refills = i.Refills,
                 Instructions = i.Instructions
             }).ToList() ?? new List<PortalPrescriptionItemDto>(),
@@ -1759,8 +1759,8 @@ public class PatientPortalService : IPatientPortalService
                 Strength = i.Strength,
                 Dosage = i.Dosage,
                 Frequency = i.Frequency,
-                Duration = i.Duration,
-                Quantity = i.Quantity,
+                Duration = i.Duration?.ToString(),
+                Quantity = i.Quantity.HasValue ? (int?)i.Quantity.Value : null,
                 Refills = i.Refills,
                 Instructions = i.Instructions
             }).ToList() ?? new List<PortalPrescriptionItemDto>(),
@@ -1970,9 +1970,9 @@ public class PatientPortalService : IPatientPortalService
         var query = _context.Invoices
             .Where(i => i.PatientId == patientId);
 
-        if (!string.IsNullOrEmpty(status))
+        if (!string.IsNullOrEmpty(status) && Enum.TryParse<InvoiceStatus>(status, true, out var statusEnum))
         {
-            query = query.Where(i => i.Status == status);
+            query = query.Where(i => i.Status == statusEnum);
         }
 
         var invoices = await query
@@ -1988,7 +1988,7 @@ public class PatientPortalService : IPatientPortalService
             TotalAmount = i.TotalAmount,
             PaidAmount = i.PaidAmount,
             BalanceDue = i.TotalAmount - i.PaidAmount,
-            Status = i.Status ?? "Pending",
+            Status = i.Status.ToString(),
             ServiceDescription = i.ServiceDescription
         });
     }
@@ -2015,8 +2015,8 @@ public class PatientPortalService : IPatientPortalService
             TotalAmount = invoice.TotalAmount,
             PaidAmount = invoice.PaidAmount,
             BalanceDue = invoice.TotalAmount - invoice.PaidAmount,
-            Status = invoice.Status ?? "Pending",
-            LineItems = invoice.LineItems?.Select(li => new PortalInvoiceLineItemDto
+            Status = invoice.Status.ToString(),
+            LineItems = invoice.Items?.Select(li => new PortalInvoiceLineItemDto
             {
                 Description = li.Description,
                 Quantity = li.Quantity,
@@ -2141,7 +2141,7 @@ public class PatientPortalService : IPatientPortalService
             transactionId = paymentIntent?.TransactionReference ??
                 $"TXN-{DateTime.UtcNow:yyyyMMddHHmmss}-{Guid.NewGuid().ToString()[..8].ToUpper()}";
 
-            var payment = new Payment
+            var payment = new InvoicePayment
             {
                 InvoiceId = dto.InvoiceId,
                 PatientId = patientId,
@@ -2153,16 +2153,16 @@ public class PatientPortalService : IPatientPortalService
                 CreatedAt = DateTime.UtcNow
             };
 
-            _context.Payments.Add(payment);
+            _context.InvoicePayments.Add(payment);
 
             invoice.PaidAmount += dto.Amount;
             if (invoice.PaidAmount >= invoice.TotalAmount)
             {
-                invoice.Status = "Paid";
+                invoice.Status = InvoiceStatus.Paid;
             }
             else
             {
-                invoice.Status = "Partial";
+                invoice.Status = InvoiceStatus.PartiallyPaid;
             }
 
             await _context.SaveChangesAsync();
