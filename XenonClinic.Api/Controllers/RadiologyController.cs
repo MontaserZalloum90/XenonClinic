@@ -291,7 +291,7 @@ public class RadiologyController : BaseApiController
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> CreateRadiologyOrder([FromBody] CreateRadiologyOrderDto dto)
     {
-        var branchId = _currentUserService.BranchId;
+        var branchId = _currentUserService.BranchId ?? 0;
         var orderNumber = await _radiologyService.GenerateRadiologyOrderNumberAsync(branchId);
 
         var order = new LabOrder
@@ -300,7 +300,7 @@ public class RadiologyController : BaseApiController
             OrderDate = DateTime.UtcNow,
             Status = LabOrderStatus.Pending,
             PatientId = dto.PatientId,
-            AppointmentId = dto.AppointmentId,
+            VisitId = dto.AppointmentId,
             OrderingDoctorId = dto.ReferringDoctorId,
             IsUrgent = dto.IsUrgent || dto.IsStat,
             ClinicalNotes = dto.ClinicalIndication,
@@ -320,12 +320,13 @@ public class RadiologyController : BaseApiController
                 var price = study.Price - (itemDto.DiscountAmount ?? 0);
                 total += price;
 
-                order.OrderItems.Add(new LabOrderItem
+                order.Items.Add(new LabOrderItem
                 {
                     LabTestId = itemDto.ImagingStudyId,
+                    TestCode = study.TestCode,
+                    TestName = study.TestName,
                     Price = price,
                     Notes = itemDto.Notes,
-                    BranchId = branchId,
                     CreatedAt = DateTime.UtcNow,
                     CreatedBy = _currentUserService.UserId
                 });
@@ -335,11 +336,10 @@ public class RadiologyController : BaseApiController
         // Apply order-level discount
         if (dto.DiscountPercentage.HasValue && dto.DiscountPercentage.Value > 0)
         {
-            order.DiscountAmount = total * (dto.DiscountPercentage.Value / 100);
-            total -= order.DiscountAmount ?? 0;
+            total -= total * (dto.DiscountPercentage.Value / 100);
         }
 
-        order.TotalPrice = total;
+        order.TotalAmount = total;
 
         var created = await _radiologyService.CreateRadiologyOrderAsync(order);
         return ApiCreated(MapToRadiologyOrderDto(created), "Radiology order created successfully");
@@ -549,7 +549,7 @@ public class RadiologyController : BaseApiController
             Interpretation = dto.Findings,
             Notes = dto.Notes,
             AttachmentPath = dto.ImagePath,
-            BranchId = _currentUserService.BranchId,
+            BranchId = _currentUserService.BranchId ?? 0,
             CreatedAt = DateTime.UtcNow,
             CreatedBy = _currentUserService.UserId
         };
@@ -663,7 +663,7 @@ public class RadiologyController : BaseApiController
         [FromQuery] DateTime? startDate = null,
         [FromQuery] DateTime? endDate = null)
     {
-        var branchId = _currentUserService.BranchId;
+        var branchId = _currentUserService.BranchId ?? 0;
         var start = startDate ?? DateTime.UtcNow.AddMonths(-1);
         var end = endDate ?? DateTime.UtcNow;
 
