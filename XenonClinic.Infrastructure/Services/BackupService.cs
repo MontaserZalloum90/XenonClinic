@@ -80,9 +80,10 @@ public class RestoreResult
 }
 
 /// <summary>
-/// Backup and disaster recovery service
+/// Internal backup service interface (Infrastructure layer)
+/// Note: This is separate from Core.Interfaces.IBackupService which has a different contract
 /// </summary>
-public interface IBackupService
+public interface IInternalBackupService
 {
     Task<BackupResult> CreateBackupAsync(BackupType type, string? description = null, CancellationToken cancellationToken = default);
     Task<RestoreResult> RestoreFromBackupAsync(int backupId, CancellationToken cancellationToken = default);
@@ -117,7 +118,7 @@ public class BackupHealthStatus
 /// <summary>
 /// Backup service implementation
 /// </summary>
-public class BackupService : IBackupService
+public class BackupService : IInternalBackupService
 {
     private readonly ClinicDbContext _context;
     private readonly IEncryptionService _encryptionService;
@@ -823,5 +824,8 @@ public class BackupRecord
     public long RowsCount { get; set; }
     [MaxLength(2000)] public string? ErrorMessage { get; set; }
     [MaxLength(500)] public string? RemoteStorageId { get; set; }
+    [MaxLength(1000)] public string? RemoteStorageUrl { get; set; }
+    public bool UploadedToRemote { get; set; }
+    public DateTime? UploadedAt { get; set; }
     public DateTime CreatedAt { get; set; }
 }

@@ -63,26 +63,18 @@ public static class TelemetryConfiguration
                     {
                         options.RecordException = true;
                     })
-                    .AddEntityFrameworkCoreInstrumentation(options =>
-                    {
-                        options.SetDbStatementForText = true;
-                        options.SetDbStatementForStoredProcedure = true;
-                    })
+                    // Note: AddEntityFrameworkCoreInstrumentation requires OpenTelemetry.Instrumentation.EntityFrameworkCore package
+                    // .AddEntityFrameworkCoreInstrumentation(options =>
+                    // {
+                    //     options.SetDbStatementForText = true;
+                    //     options.SetDbStatementForStoredProcedure = true;
+                    // })
                     .AddSource("XenonClinic.*");
 
                 // Add exporters
-                if (!string.IsNullOrEmpty(otlpEndpoint))
-                {
-                    tracing.AddOtlpExporter(options =>
-                    {
-                        options.Endpoint = new Uri(otlpEndpoint);
-                    });
-                }
-                else
-                {
-                    // Default to console exporter for development
-                    tracing.AddConsoleExporter();
-                }
+                // Note: AddOtlpExporter requires OpenTelemetry.Exporter.OpenTelemetryProtocol package
+                // For now, use console exporter for development
+                tracing.AddConsoleExporter();
             })
             .WithMetrics(metrics =>
             {
@@ -90,8 +82,8 @@ public static class TelemetryConfiguration
                     .SetResourceBuilder(resourceBuilder)
                     .AddAspNetCoreInstrumentation()
                     .AddHttpClientInstrumentation()
-                    .AddRuntimeInstrumentation()
-                    .AddProcessInstrumentation()
+                    // Note: AddRuntimeInstrumentation requires OpenTelemetry.Instrumentation.Runtime package
+                    // Note: AddProcessInstrumentation requires OpenTelemetry.Instrumentation.Process package
                     .AddMeter("XenonClinic.*");
 
                 // Custom metrics
@@ -99,17 +91,9 @@ public static class TelemetryConfiguration
                 metrics.AddMeter("XenonClinic.Appointments");
                 metrics.AddMeter("XenonClinic.Orders");
 
-                if (!string.IsNullOrEmpty(otlpEndpoint))
-                {
-                    metrics.AddOtlpExporter(options =>
-                    {
-                        options.Endpoint = new Uri(otlpEndpoint);
-                    });
-                }
-                else
-                {
-                    metrics.AddConsoleExporter();
-                }
+                // Note: AddOtlpExporter requires OpenTelemetry.Exporter.OpenTelemetryProtocol package
+                // For now, use console exporter for development
+                metrics.AddConsoleExporter();
             });
 
         return services;
@@ -131,14 +115,9 @@ public static class TelemetryConfiguration
             options.IncludeScopes = true;
             options.ParseStateValues = true;
 
-            if (!string.IsNullOrEmpty(otlpEndpoint))
-            {
-                options.AddOtlpExporter(o => o.Endpoint = new Uri(otlpEndpoint));
-            }
-            else
-            {
-                options.AddConsoleExporter();
-            }
+            // Note: AddOtlpExporter requires OpenTelemetry.Exporter.OpenTelemetryProtocol package
+            // For now, use console exporter for development
+            options.AddConsoleExporter();
         });
 
         return logging;

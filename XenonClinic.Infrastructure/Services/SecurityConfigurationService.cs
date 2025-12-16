@@ -65,14 +65,15 @@ public enum SecretType
 }
 
 /// <summary>
-/// Security configuration service interface
+/// Internal security configuration service interface (Infrastructure layer)
+/// Note: This is separate from Core.Interfaces.ISecurityConfigurationService which has a different contract
 /// </summary>
-public interface ISecurityConfigurationService
+public interface IInternalSecurityConfigurationService
 {
     // Settings
     Task<SecuritySettings> GetSecuritySettingsAsync();
     Task<SecuritySettings> UpdateSecuritySettingsAsync(SecuritySettings settings, int userId);
-    
+
     // Secrets Management
     Task<string> GetSecretAsync(string secretName);
     Task SetSecretAsync(string secretName, string secretValue, SecretType type, int userId, DateTime? expiresAt = null);
@@ -177,7 +178,7 @@ public class SecurityCheckResult
 /// <summary>
 /// Security configuration service implementation
 /// </summary>
-public class SecurityConfigurationService : ISecurityConfigurationService
+public class SecurityConfigurationService : IInternalSecurityConfigurationService
 {
     private readonly ClinicDbContext _context;
     private readonly IConfiguration _configuration;

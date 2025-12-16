@@ -49,13 +49,8 @@ public static class ServiceCollectionExtensions
         // Role-Based Access Control
         services.AddScoped<IRbacService, RbacService>();
 
-        // PHI Encryption Service
-        services.AddSingleton<IEncryptionService>(sp =>
-        {
-            var masterKey = configuration["Security:EncryptionMasterKey"]
-                ?? throw new InvalidOperationException("Security:EncryptionMasterKey is required");
-            return new EncryptionService(masterKey);
-        });
+        // PHI Encryption Service - uses DI for configuration and logging
+        services.AddSingleton<IEncryptionService, EncryptionService>();
 
         // Patient Consent Management
         services.AddScoped<IConsentService, ConsentService>();
@@ -67,14 +62,11 @@ public static class ServiceCollectionExtensions
             client.DefaultRequestHeaders.Add("User-Agent", "XenonClinic-BackupService/1.0");
         });
 
-        // Backup and Disaster Recovery
-        services.AddScoped<IBackupService, BackupService>();
+        // Backup and Disaster Recovery (using internal interface)
+        services.AddScoped<IInternalBackupService, BackupService>();
 
-        // Security Configuration
-        services.AddScoped<ISecurityConfigurationService, SecurityConfigurationService>();
-
-        // Resilience Services (Circuit Breaker, Rate Limiting)
-        services.AddSingleton<IResilienceService, ResilienceService>();
+        // Security Configuration (using internal interface)
+        services.AddScoped<IInternalSecurityConfigurationService, SecurityConfigurationService>();
 
         return services;
     }
