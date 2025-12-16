@@ -328,7 +328,7 @@ public class PharmacyService : IPharmacyService
             }
             else if (sale.PaidAmount > 0)
             {
-                sale.PaymentStatus = PaymentStatus.PartiallyPaid;
+                sale.PaymentStatus = PaymentStatus.Partial;
             }
             else
             {

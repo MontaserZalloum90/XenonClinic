@@ -139,6 +139,7 @@ public static class GlobalQueryFilterExtensions
     /// <summary>
     /// Applies a simple accessible branches filter using Contains().
     /// This is an alternative approach when the branch list is known at filter time.
+    /// Note: EF Core query filters require expression-bodied lambdas.
     /// </summary>
     /// <typeparam name="T">The entity type with BranchId property.</typeparam>
     /// <param name="modelBuilder">The model builder.</param>
@@ -149,18 +150,11 @@ public static class GlobalQueryFilterExtensions
         Func<bool> shouldFilter,
         Func<IReadOnlyList<int>?> getAccessibleBranches) where T : class, IBranchEntity
     {
-        // BUG FIX: Avoid calling getAccessibleBranches() twice - capture in local variable
-        // to prevent thread safety issues and ensure consistent results
+        // EF Core query filters require expression-bodied lambdas that can be translated to SQL.
+        // The filter checks: skip filtering OR accessible branches contains the entity's branch
         modelBuilder.Entity<T>().HasQueryFilter(e =>
-        {
-            if (!shouldFilter())
-                return true;
-
-            var branches = getAccessibleBranches();
-            if (branches == null)
-                return true;
-
-            return branches.Contains(e.BranchId);
-        });
+            !shouldFilter() ||
+            getAccessibleBranches() == null ||
+            getAccessibleBranches()!.Contains(e.BranchId));
     }
 }

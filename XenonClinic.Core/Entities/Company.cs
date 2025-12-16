@@ -53,6 +53,8 @@ public class Company
     /// </summary>
     public CompanySettings? Settings { get; set; }
 
-    // Note: ApplicationUser and CompanyAuthSettings relationships are defined in Infrastructure
-    // as they depend on ASP.NET Identity which is an infrastructure concern
+    /// <summary>
+    /// Authentication settings for this company
+    /// </summary>
+    public CompanyAuthSettings? AuthSettings { get; set; }
 }

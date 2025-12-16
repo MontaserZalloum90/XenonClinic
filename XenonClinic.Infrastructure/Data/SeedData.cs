@@ -509,7 +509,7 @@ public static class SeedData
                 {
                     var start = DateTime.UtcNow.AddDays(-random.Next(1, 60)).AddHours(random.Next(8, 18));
                     var status = new[] { AppointmentStatus.Confirmed, AppointmentStatus.Completed, AppointmentStatus.Cancelled, AppointmentStatus.NoShow }[random.Next(4)];
-                    var type = new[] { Core.Enums.AppointmentType.HearingTest, Core.Enums.AppointmentType.DeviceFitting, Core.Enums.AppointmentType.Consultation, Core.Enums.AppointmentType.Repair, Core.Enums.AppointmentType.FollowUp }[random.Next(5)];
+                    var type = new[] { Core.Enums.AppointmentType.HearingTest, Core.Enums.AppointmentType.HearingAidFitting, Core.Enums.AppointmentType.Consultation, Core.Enums.AppointmentType.HearingDeviceRepair, Core.Enums.AppointmentType.FollowUp }[random.Next(5)];
                     appointments.Add(new Appointment
                     {
                         BranchId = patient.BranchId,
