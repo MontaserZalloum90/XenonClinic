@@ -90,6 +90,8 @@ public class ClinicDbContext : IdentityDbContext<Entities.ApplicationUser>
     public DbSet<Audiogram> Audiograms => Set<Audiogram>();
     public DbSet<HearingDevice> HearingDevices => Set<HearingDevice>();
     public DbSet<Invoice> Invoices => Set<Invoice>();
+    public DbSet<InvoiceItem> InvoiceItems => Set<InvoiceItem>();
+    public DbSet<InvoicePayment> InvoicePayments => Set<InvoicePayment>();
     public DbSet<Supplier> Suppliers => Set<Supplier>();
     public DbSet<InventoryItem> InventoryItems => Set<InventoryItem>();
     public DbSet<InventoryTransaction> InventoryTransactions => Set<InventoryTransaction>();

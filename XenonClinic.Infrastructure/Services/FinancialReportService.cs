@@ -939,10 +939,10 @@ public class FinancialReportService : IFinancialReportService
         });
     }
 
-    private static void RenderCashFlowSection(ColumnDescriptor col, string title, IEnumerable<CashFlowLineDto>? items, decimal netAmount, string color)
+    private static void RenderCashFlowSection(ColumnDescriptor col, string title, CashFlowSectionDto? section, decimal netAmount, string color)
     {
         col.Item().PaddingTop(15).Text(title).Bold().FontSize(12).FontColor(color);
-        if (items != null)
+        if (section?.Items != null && section.Items.Any())
         {
             col.Item().Table(table =>
             {
@@ -951,7 +951,7 @@ public class FinancialReportService : IFinancialReportService
                     columns.RelativeColumn(3);
                     columns.RelativeColumn(2);
                 });
-                foreach (var item in items)
+                foreach (var item in section.Items)
                 {
                     table.Cell().Padding(2).PaddingLeft(15).Text(item.Description);
                     table.Cell().Padding(2).AlignRight().Text($"{item.Amount:C}");
