@@ -330,7 +330,7 @@ public class PatientPortalService : IPatientPortalService
     {
         var account = await _context.PortalAccounts
             .Include(pa => pa.Patient)
-            .ThenInclude(p => p.Branch)
+            .ThenInclude(p => p!.Branch)
             .FirstOrDefaultAsync(pa => pa.Email == email && pa.IsActive);
 
         if (account == null)
@@ -1097,7 +1097,7 @@ public class PatientPortalService : IPatientPortalService
             LabResults = labResults.Select(l => new PortalLabResultSummaryDto
             {
                 Id = l.Id,
-                TestName = l.TestName,
+                TestName = l.TestName ?? string.Empty,
                 OrderDate = l.OrderDate,
                 ResultDate = l.ResultDate,
                 Status = l.Status.ToString(),
@@ -1113,7 +1113,7 @@ public class PatientPortalService : IPatientPortalService
     {
         var diagnoses = await _context.Diagnoses
             .Include(d => d.Visit)
-                .ThenInclude(v => v.Doctor)
+                .ThenInclude(v => v!.Doctor)
             .Where(d => d.PatientId == patientId &&
                 (d.Status == "Active" || d.Status == "Chronic"))
             .OrderByDescending(d => d.DiagnosisDate)
@@ -1122,7 +1122,7 @@ public class PatientPortalService : IPatientPortalService
         return diagnoses.Select(d => new PortalDiagnosisSummaryDto
         {
             Id = d.Id,
-            DiagnosisName = d.DiagnosisName,
+            DiagnosisName = d.DiagnosisName ?? string.Empty,
             ICD10Code = d.ICD10Code,
             DiagnosisDate = d.DiagnosisDate,
             DoctorName = d.Visit?.Doctor != null
@@ -1436,7 +1436,7 @@ public class PatientPortalService : IPatientPortalService
         return labResults.Select(l => new PortalLabResultSummaryDto
         {
             Id = l.Id,
-            TestName = l.TestName,
+            TestName = l.TestName ?? string.Empty,
             OrderDate = l.OrderDate,
             ResultDate = l.ResultDate,
             Status = l.Status.ToString(),
@@ -1460,7 +1460,7 @@ public class PatientPortalService : IPatientPortalService
         return new PortalLabResultDetailDto
         {
             Id = labOrder.Id,
-            TestName = labOrder.TestName,
+            TestName = labOrder.TestName ?? string.Empty,
             TestCode = labOrder.TestCode,
             OrderDate = labOrder.OrderDate,
             ResultDate = labOrder.ResultDate,
@@ -1470,7 +1470,7 @@ public class PatientPortalService : IPatientPortalService
             Status = labOrder.Status.ToString(),
             Results = labOrder.Results?.Select(r => new PortalLabResultItemDto
             {
-                ComponentName = r.ComponentName,
+                ComponentName = r.ComponentName ?? string.Empty,
                 Value = r.Value,
                 Unit = r.Unit,
                 ReferenceRange = r.ReferenceRange,
@@ -1488,7 +1488,7 @@ public class PatientPortalService : IPatientPortalService
             .Include(l => l.OrderingDoctor)
             .Include(l => l.Results)
             .Include(l => l.Patient)
-            .ThenInclude(p => p.Branch)
+            .ThenInclude(p => p!.Branch)
             .FirstOrDefaultAsync(l => l.Id == labResultId && l.PatientId == patientId);
 
         if (labOrder == null)
@@ -1655,7 +1655,7 @@ public class PatientPortalService : IPatientPortalService
     {
         var medications = await _context.PrescriptionItems
             .Include(pi => pi.Prescription)
-                .ThenInclude(p => p.Doctor)
+                .ThenInclude(p => p!.Doctor)
             .Where(pi => pi.Prescription != null && pi.Prescription.PatientId == patientId &&
                 pi.Status == "Active" &&
                 (pi.EndDate == null || pi.EndDate > DateTime.Today))
@@ -1997,7 +1997,7 @@ public class PatientPortalService : IPatientPortalService
             Status = invoice.Status.ToString(),
             LineItems = invoice.Items?.Select(li => new PortalInvoiceLineItemDto
             {
-                Description = li.Description,
+                Description = li.Description ?? string.Empty,
                 Quantity = li.Quantity,
                 UnitPrice = li.UnitPrice,
                 TotalPrice = li.TotalPrice,
@@ -2008,7 +2008,7 @@ public class PatientPortalService : IPatientPortalService
                 Id = p.Id,
                 PaymentDate = p.PaymentDate,
                 Amount = p.Amount,
-                PaymentMethod = p.PaymentMethod,
+                PaymentMethod = p.PaymentMethod ?? string.Empty,
                 TransactionReference = p.TransactionReference,
                 Status = p.Status ?? "Completed"
             }).ToList() ?? new List<PortalPaymentHistoryDto>(),
@@ -2030,7 +2030,7 @@ public class PatientPortalService : IPatientPortalService
         {
             var invoice = await _context.Invoices
                 .Include(i => i.Patient)
-                .ThenInclude(p => p.Branch)
+                .ThenInclude(p => p!.Branch)
                 .FirstOrDefaultAsync(i => i.Id == dto.InvoiceId && i.PatientId == patientId);
 
             if (invoice == null)
@@ -2169,7 +2169,7 @@ public class PatientPortalService : IPatientPortalService
     {
         var invoice = await _context.Invoices
             .Include(i => i.Patient)
-            .ThenInclude(p => p.Branch)
+            .ThenInclude(p => p!.Branch)
             .Include(i => i.Items)
             .Include(i => i.Payments)
             .FirstOrDefaultAsync(i => i.Id == invoiceId && i.PatientId == patientId);
@@ -2371,7 +2371,7 @@ public class PatientPortalService : IPatientPortalService
     {
         var payment = await _context.InvoicePayments
             .Include(p => p.Patient)
-            .ThenInclude(p => p.Branch)
+            .ThenInclude(p => p!.Branch)
             .Include(p => p.Invoice)
             .FirstOrDefaultAsync(p => p.Id == paymentId && p.PatientId == patientId);
 

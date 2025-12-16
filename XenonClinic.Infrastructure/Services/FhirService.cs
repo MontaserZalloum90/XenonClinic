@@ -573,7 +573,7 @@ public class FhirService : IFhirService
             if (icdCoding != null)
             {
                 diagnosis.ICD10Code = icdCoding.Code;
-                diagnosis.Description = icdCoding.Display;
+                diagnosis.Description = icdCoding.Display ?? string.Empty;
             }
             else if (condition.Code?.Text != null)
             {
@@ -671,7 +671,7 @@ public class FhirService : IFhirService
             if (cptCoding != null)
             {
                 procedure.CPTCode = cptCoding.Code;
-                procedure.Name = cptCoding.Display;
+                procedure.Name = cptCoding.Display ?? string.Empty;
             }
             else if (fhirProcedure.Code?.Text != null)
             {

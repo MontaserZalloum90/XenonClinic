@@ -560,7 +560,7 @@ public class ConsentService : IConsentService
             .Replace("{{PatientName}}", $"{patient.FirstName} {patient.LastName}")
             .Replace("{{PatientDOB}}", patient.DateOfBirth.ToString("MM/dd/yyyy"))
             .Replace("{{Date}}", DateTime.UtcNow.ToString("MM/dd/yyyy"))
-            .Replace("{{ConsentType}}", template.ConsentType);
+            .Replace("{{ConsentType}}", template.ConsentType ?? string.Empty);
 
         return document;
     }

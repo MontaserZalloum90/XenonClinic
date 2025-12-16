@@ -263,7 +263,7 @@ public class PayrollService : IPayrollService
     {
         var payslip = await _context.Payslips
             .Include(p => p.Employee)
-            .ThenInclude(e => e.Department)
+            .ThenInclude(e => e!.Department)
             .Include(p => p.PayrollPeriod)
             .FirstOrDefaultAsync(p => p.Id == id);
 
@@ -304,7 +304,7 @@ public class PayrollService : IPayrollService
     {
         var payslip = await _context.Payslips
             .Include(p => p.Employee)
-            .ThenInclude(e => e.Department)
+            .ThenInclude(e => e!.Department)
             .Include(p => p.PayrollPeriod)
             .Where(p => p.EmployeeId == employeeId)
             .OrderByDescending(p => p.PayrollPeriod != null ? p.PayrollPeriod.EndDate : DateTime.MinValue)
@@ -319,7 +319,7 @@ public class PayrollService : IPayrollService
     {
         var payslip = await _context.Payslips
             .Include(p => p.Employee)
-            .ThenInclude(e => e.Branch)
+            .ThenInclude(e => e!.Branch)
             .Include(p => p.PayrollPeriod)
             .FirstOrDefaultAsync(p => p.Id == payslipId);
 
@@ -514,7 +514,7 @@ public class PayrollService : IPayrollService
     {
         var payslip = await _context.Payslips
             .Include(p => p.Employee)
-            .ThenInclude(e => e.Branch)
+            .ThenInclude(e => e!.Branch)
             .Include(p => p.PayrollPeriod)
             .FirstOrDefaultAsync(p => p.Id == payslipId);
 
@@ -843,7 +843,7 @@ public class PayrollService : IPayrollService
 
         var payslips = await _context.Payslips
             .Include(p => p.Employee)
-            .ThenInclude(e => e.Department)
+            .ThenInclude(e => e!.Department)
             .Where(p => p.PayrollPeriodId == periodId)
             .ToListAsync();
 
@@ -910,7 +910,7 @@ public class PayrollService : IPayrollService
 
         var query = _context.Payslips
             .Include(p => p.Employee)
-            .ThenInclude(e => e.Department)
+            .ThenInclude(e => e!.Department)
             .Where(p => p.PayrollPeriodId == periodId);
 
         if (departmentId.HasValue)
@@ -1050,7 +1050,7 @@ public class PayrollService : IPayrollService
     {
         var payslips = await _context.Payslips
             .Include(p => p.Employee)
-            .ThenInclude(e => e.Department)
+            .ThenInclude(e => e!.Department)
             .Include(p => p.PayrollPeriod)
             .Where(p => p.PayrollPeriod != null &&
                        p.PayrollPeriod.BranchId == branchId &&
@@ -1162,7 +1162,7 @@ public class PayrollService : IPayrollService
         // Fetch payroll data based on request
         var query = _context.Payslips
             .Include(p => p.Employee)
-            .ThenInclude(e => e.Branch)
+            .ThenInclude(e => e!.Branch)
             .Include(p => p.PayrollPeriod)
             .Where(p => p.Employee != null && p.Employee.BranchId == request.BranchId);
 
