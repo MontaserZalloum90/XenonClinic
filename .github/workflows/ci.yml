@@ -52,7 +52,13 @@ jobs:
       - name: Full Build
         run: |
           echo "=== Full Solution Build ==="
-          dotnet build XenonClinic.sln --configuration Release --no-restore /p:TreatWarningsAsErrors=false 2>&1
+          dotnet build XenonClinic.sln --configuration Release --no-restore /p:TreatWarningsAsErrors=false 2>&1 | tee full-build.log
+          BUILD_EXIT_CODE=${PIPESTATUS[0]}
+          if [ $BUILD_EXIT_CODE -ne 0 ]; then
+            echo "=== Build Errors ==="
+            grep -i "error" full-build.log | head -100
+            exit $BUILD_EXIT_CODE
+          fi
 
       - name: Run tests
         run: dotnet test XenonClinic.sln --configuration Release --no-build --verbosity normal --collect:"XPlat Code Coverage"
