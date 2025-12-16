@@ -22,7 +22,7 @@ public abstract class BaseApiController : ControllerBase
     /// </summary>
     protected ActionResult<ApiResponse> ApiOk(string? message = null)
     {
-        return Ok(ApiResponse.Success(message));
+        return Ok(ApiResponse.SuccessResponse(message));
     }
 
     /// <summary>
@@ -142,7 +142,7 @@ public class ApiResponse
     public string? TraceId { get; set; }
     public DateTime Timestamp { get; set; } = DateTime.UtcNow;
 
-    public static ApiResponse Success(string? message = null) => new()
+    public static ApiResponse SuccessResponse(string? message = null) => new()
     {
         Success = true,
         Message = message

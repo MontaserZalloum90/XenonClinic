@@ -273,7 +273,7 @@ public class AnalyticsService : IAnalyticsService
             WidgetId = Guid.NewGuid().ToString(),
             Title = widget.Title,
             WidgetType = widget.WidgetType,
-            DataSource = widget.DataSource,
+            DataSource = widget.DataSource ?? string.Empty,
             ConfigurationJson = widget.Configuration != null ? JsonSerializer.Serialize(widget.Configuration) : null,
             PositionJson = widget.Position != null ? JsonSerializer.Serialize(widget.Position) : null,
             FiltersJson = widget.Filters != null ? JsonSerializer.Serialize(widget.Filters) : null,
@@ -331,7 +331,7 @@ public class AnalyticsService : IAnalyticsService
             WidgetId = Guid.NewGuid().ToString(),
             Title = widget.Title,
             WidgetType = widget.WidgetType,
-            DataSource = widget.DataSource,
+            DataSource = widget.DataSource ?? string.Empty,
             ConfigurationJson = widget.Configuration != null ? JsonSerializer.Serialize(widget.Configuration) : null,
             PositionJson = widget.Position != null ? JsonSerializer.Serialize(widget.Position) : null,
             FiltersJson = widget.Filters != null ? JsonSerializer.Serialize(widget.Filters) : null,
@@ -353,7 +353,7 @@ public class AnalyticsService : IAnalyticsService
 
         entity.Title = widget.Title;
         entity.WidgetType = widget.WidgetType;
-        entity.DataSource = widget.DataSource;
+        entity.DataSource = widget.DataSource ?? string.Empty;
         entity.ConfigurationJson = widget.Configuration != null ? JsonSerializer.Serialize(widget.Configuration) : null;
         entity.PositionJson = widget.Position != null ? JsonSerializer.Serialize(widget.Position) : null;
         entity.FiltersJson = widget.Filters != null ? JsonSerializer.Serialize(widget.Filters) : null;
