@@ -13,9 +13,9 @@ public class Appointment : IBranchEntity
     public DateTime StartTime { get; set; }
     public DateTime EndTime { get; set; }
     public DateTime AppointmentDate { get; set; } // Date of the appointment
-    public AppointmentType Type { get; set; } = AppointmentType.Consultation;
+    public Enums.AppointmentType Type { get; set; } = Enums.AppointmentType.Consultation;
     public string? AppointmentType { get; set; } // String representation for compatibility
-    public AppointmentStatus Status { get; set; } = AppointmentStatus.Booked;
+    public AppointmentStatus Status { get; set; } = AppointmentStatus.Scheduled;
     public string? Notes { get; set; }
     public string? Reason { get; set; }
     public string? Location { get; set; }
