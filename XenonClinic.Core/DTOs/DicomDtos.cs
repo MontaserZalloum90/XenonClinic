@@ -182,6 +182,12 @@ public class DicomImageResponseDto
     public int Width { get; set; }
     public int Height { get; set; }
     public string? SopInstanceUid { get; set; }
+    public int? NumberOfFrames { get; set; }
+    public int? CurrentFrame { get; set; }
+    public string? PhotometricInterpretation { get; set; }
+    public double? PixelSpacing { get; set; }
+    public string? ImageType { get; set; }
+    public string? TransferSyntaxUid { get; set; }
 }
 
 #endregion

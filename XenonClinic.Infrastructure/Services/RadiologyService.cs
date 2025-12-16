@@ -175,7 +175,7 @@ public class RadiologyService : IRadiologyService
     {
         return await _context.LabTests
             .AsNoTracking()
-            .Where(t => t.BranchId == branchId && t.Category == category)
+            .Where(t => t.BranchId == branchId && t.Category.ToString() == category)
             .OrderBy(t => t.TestName)
             .ToListAsync();
     }
@@ -422,7 +422,7 @@ public class RadiologyService : IRadiologyService
             .Include(oi => oi.LabOrder)
             .Include(oi => oi.LabTest)
             .Where(oi => oi.LabOrder.BranchId == branchId)
-            .GroupBy(oi => oi.LabTest!.Category ?? "Uncategorized")
+            .GroupBy(oi => oi.LabTest != null ? oi.LabTest.Category.ToString() : "Uncategorized")
             .Select(g => new { Modality = g.Key, Count = g.Count() })
             .ToListAsync();
 

@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using XenonClinic.Core.DTOs;
 using XenonClinic.Core.Entities;
 using XenonClinic.Core.Interfaces;
@@ -13,10 +14,12 @@ namespace XenonClinic.Infrastructure.Services;
 public class DicomService : IDicomService
 {
     private readonly ClinicDbContext _context;
+    private readonly ILogger<DicomService> _logger;
 
-    public DicomService(ClinicDbContext context)
+    public DicomService(ClinicDbContext context, ILogger<DicomService> logger)
     {
         _context = context;
+        _logger = logger;
     }
 
     #region Study Operations
@@ -485,21 +488,20 @@ public class DicomService : IDicomService
             }
 
             // Get PACS configuration for the destination AE
-            var pacsConfig = await _context.DicomPacsConfigs
-                .FirstOrDefaultAsync(p => p.BranchId == branchId && p.AeTitle == request.DestinationAeTitle);
-
-            if (pacsConfig == null)
-            {
-                _logger.LogWarning("C-MOVE: Destination AE not configured: {AeTitle}", request.DestinationAeTitle);
-                return false;
-            }
+            // TODO: Implement DicomPacsConfig entity and DbSet
+            // var pacsConfig = await _context.DicomPacsConfigs
+            //     .FirstOrDefaultAsync(p => p.BranchId == branchId && p.AeTitle == request.DestinationAeTitle);
+            //
+            // if (pacsConfig == null)
+            // {
+            //     _logger.LogWarning("C-MOVE: Destination AE not configured: {AeTitle}", request.DestinationAeTitle);
+            //     return false;
+            // }
 
             _logger.LogInformation(
-                "C-MOVE initiated: Study {StudyUid} to {DestAe} at {Host}:{Port}",
+                "C-MOVE initiated: Study {StudyUid} to {DestAe}",
                 request.StudyInstanceUid,
-                request.DestinationAeTitle,
-                pacsConfig.Host,
-                pacsConfig.Port);
+                request.DestinationAeTitle);
 
             // In production with fo-dicom:
             // var client = DicomClientFactory.Create(pacsConfig.Host, pacsConfig.Port,
@@ -517,18 +519,19 @@ public class DicomService : IDicomService
             // await client.SendAsync();
 
             // Record the move request
-            var moveRecord = new DicomMoveRecord
-            {
-                BranchId = branchId,
-                StudyInstanceUid = request.StudyInstanceUid,
-                DestinationAeTitle = request.DestinationAeTitle,
-                Status = "Queued",
-                RequestedAt = DateTime.UtcNow,
-                QueryLevel = request.QueryLevel ?? "STUDY"
-            };
-
-            _context.DicomMoveRecords.Add(moveRecord);
-            await _context.SaveChangesAsync();
+            // TODO: Implement DicomMoveRecord entity and DbSet
+            // var moveRecord = new DicomMoveRecord
+            // {
+            //     BranchId = branchId,
+            //     StudyInstanceUid = request.StudyInstanceUid,
+            //     DestinationAeTitle = request.DestinationAeTitle,
+            //     Status = "Queued",
+            //     RequestedAt = DateTime.UtcNow,
+            //     QueryLevel = request.QueryLevel ?? "STUDY"
+            // };
+            //
+            // _context.DicomMoveRecords.Add(moveRecord);
+            // await _context.SaveChangesAsync();
 
             // Update study status
             study.Status = "MovePending";
@@ -633,7 +636,6 @@ public class DicomService : IDicomService
                             Modality = "OT",
                             Status = "Imported",
                             ReceivedDate = DateTime.UtcNow,
-                            Source = "Import",
                             CreatedAt = DateTime.UtcNow
                         };
                         _context.DicomStudies.Add(study);
@@ -660,8 +662,10 @@ public class DicomService : IDicomService
                     var fileInfo = new FileInfo(filePath);
 
                     // Copy file to DICOM storage location
+                    // TODO: Configure DICOM storage path via configuration
+                    var baseStoragePath = Environment.GetEnvironmentVariable("DICOM_STORAGE_PATH") ?? "/var/lib/xenonclinic/dicom";
                     var storagePath = Path.Combine(
-                        _config.StoragePath,
+                        baseStoragePath,
                         branchId.ToString(),
                         study.StudyInstanceUid,
                         series.SeriesInstanceUid);
@@ -687,8 +691,8 @@ public class DicomService : IDicomService
                     await _context.SaveChangesAsync();
 
                     // Update study statistics
-                    study.NumberOfSeries = (study.NumberOfSeries ?? 0) + 1;
-                    study.NumberOfInstances = (study.NumberOfInstances ?? 0) + 1;
+                    study.NumberOfSeries = study.NumberOfSeries + 1;
+                    study.NumberOfInstances = study.NumberOfInstances + 1;
                     study.TotalSizeBytes = (study.TotalSizeBytes ?? 0) + fileInfo.Length;
                     await _context.SaveChangesAsync();
 

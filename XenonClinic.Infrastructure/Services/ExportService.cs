@@ -161,7 +161,9 @@ public class ExportService : IExportService
         return value switch
         {
             int or long or short or byte => ("Number", value.ToString() ?? ""),
-            float or double or decimal d => ("Number", format != null ? d.ToString(format) : d.ToString()),
+            float f => ("Number", format != null ? f.ToString(format) : f.ToString()),
+            double d => ("Number", format != null ? d.ToString(format) : d.ToString()),
+            decimal m => ("Number", format != null ? m.ToString(format) : m.ToString()),
             DateTime dt => ("String", format != null ? dt.ToString(format) : dt.ToString("yyyy-MM-dd")),
             bool b => ("String", b ? "Yes" : "No"),
             _ => ("String", value.ToString() ?? "")
