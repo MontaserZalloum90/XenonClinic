@@ -30,7 +30,26 @@ jobs:
         run: dotnet restore XenonClinic.sln
 
       - name: Build
-        run: dotnet build XenonClinic.sln --configuration Release --no-restore --verbosity normal /p:TreatWarningsAsErrors=false
+        id: build
+        run: |
+          dotnet build XenonClinic.sln --configuration Release --no-restore --verbosity normal /p:TreatWarningsAsErrors=false 2>&1 | tee build_output.txt
+          exit ${PIPESTATUS[0]}
+        continue-on-error: true
+
+      - name: Upload build output on failure
+        if: steps.build.outcome == 'failure'
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-output
+          path: build_output.txt
+
+      - name: Check build result
+        if: steps.build.outcome == 'failure'
+        run: |
+          echo "Build failed! See build_output.txt artifact for details."
+          echo "=== Last 100 lines of build output ==="
+          tail -100 build_output.txt
+          exit 1
 
       - name: Run tests
         run: dotnet test XenonClinic.sln --configuration Release --no-build --verbosity normal --collect:"XPlat Code Coverage"
