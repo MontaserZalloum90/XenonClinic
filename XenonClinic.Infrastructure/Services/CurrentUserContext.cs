@@ -246,4 +246,16 @@ public class CurrentUserContext : ICurrentUserContext
 
         return await _userManager.IsInRoleAsync(user, role);
     }
+
+    /// <summary>
+    /// BUG FIX: Synchronous role check for controllers.
+    /// Uses claims-based role checking for efficiency.
+    /// </summary>
+    public bool IsInRole(string role)
+    {
+        var httpContext = _httpContextAccessor.HttpContext;
+        if (httpContext?.User == null) return false;
+
+        return httpContext.User.IsInRole(role);
+    }
 }

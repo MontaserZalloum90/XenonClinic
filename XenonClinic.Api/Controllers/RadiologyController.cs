@@ -816,7 +816,7 @@ public class RadiologyController : BaseApiController
             ImagingStudyId = item.LabTestId,
             StudyCode = item.LabTest?.TestCode,
             StudyName = item.LabTest?.TestName,
-            Modality = Enum.TryParse<ImagingModality>(item.LabTest?.Category, out var modality) ? modality : ImagingModality.Other,
+            Modality = Enum.TryParse<ImagingModality>(item.LabTest?.Category.ToString(), out var modality) ? modality : ImagingModality.Other,
             Price = item.Price,
             FinalPrice = item.Price,
             Notes = item.Notes
@@ -833,7 +833,7 @@ public class RadiologyController : BaseApiController
             RadiologyOrderItemId = result.LabOrderItemId,
             ImagingStudyId = result.LabTestId,
             StudyName = result.LabTest?.TestName,
-            Modality = result.LabTest != null && Enum.TryParse<ImagingModality>(result.LabTest.Category, out var modality)
+            Modality = result.LabTest != null && Enum.TryParse<ImagingModality>(result.LabTest.Category.ToString(), out var modality)
                 ? modality : ImagingModality.Other,
             Status = MapToImagingResultStatus(result.Status),
             ResultDate = result.ResultDate,
@@ -875,8 +875,8 @@ public class RadiologyController : BaseApiController
             LabResultStatus.Pending => ImagingResultStatus.Pending,
             LabResultStatus.InProgress => ImagingResultStatus.InProgress,
             LabResultStatus.Completed => ImagingResultStatus.Final,
+            LabResultStatus.Reviewed => ImagingResultStatus.Final,
             LabResultStatus.Verified => ImagingResultStatus.Verified,
-            LabResultStatus.Cancelled => ImagingResultStatus.Cancelled,
             _ => ImagingResultStatus.Pending
         };
     }
