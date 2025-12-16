@@ -32,14 +32,20 @@ jobs:
       - name: Build
         run: |
           echo "=== Starting Build ==="
-          dotnet build XenonClinic.sln --configuration Release --no-restore /p:TreatWarningsAsErrors=false -v normal 2>&1 | tee build.log
+          echo "=== Solution contents ==="
+          cat XenonClinic.sln
+          echo ""
+          echo "=== Building with detailed output ==="
+          dotnet build XenonClinic.sln --configuration Release --no-restore /p:TreatWarningsAsErrors=false -v detailed 2>&1 | tee build.log
           BUILD_EXIT_CODE=${PIPESTATUS[0]}
           echo "=== Build Exit Code: $BUILD_EXIT_CODE ==="
           if [ $BUILD_EXIT_CODE -ne 0 ]; then
             echo "=== Build Errors ==="
-            grep -E "(error CS|Error:|MSBUILD : error)" build.log || echo "No specific error pattern found"
-            echo "=== Last 100 lines of build log ==="
-            tail -100 build.log
+            grep -E "(error CS|Error:|MSBUILD : error|error :|: error)" build.log || echo "No specific error pattern found"
+            echo "=== All error lines ==="
+            grep -i "error" build.log | head -50
+            echo "=== Last 200 lines of build log ==="
+            tail -200 build.log
             exit $BUILD_EXIT_CODE
           fi
 
