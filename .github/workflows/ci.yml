@@ -30,7 +30,7 @@ jobs:
         run: dotnet restore XenonClinic.sln
 
       - name: Build
-        run: dotnet build XenonClinic.sln --configuration Release --no-restore --verbosity normal /p:TreatWarningsAsErrors=false
+        run: dotnet build XenonClinic.sln --configuration Release --no-restore /p:TreatWarningsAsErrors=false
 
       - name: Run tests
         run: dotnet test XenonClinic.sln --configuration Release --no-build --verbosity normal --collect:"XPlat Code Coverage"
