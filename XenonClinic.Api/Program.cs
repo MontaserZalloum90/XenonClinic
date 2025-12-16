@@ -109,3 +109,6 @@ app.MapControllers();
 app.MapHealthChecks("/health");
 
 app.Run();
+
+// Make Program class accessible for integration tests using WebApplicationFactory<Program>
+public partial class Program { }

@@ -11,6 +11,7 @@ using FluentAssertions;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using XenonClinic.Infrastructure.Data;
 using Xunit;
 
 namespace XenonClinic.Tests.E2E;
@@ -31,10 +32,10 @@ public class EndToEndExtendedTests : IClassFixture<WebApplicationFactory<Program
             builder.ConfigureServices(services =>
             {
                 // Configure test database
-                var descriptor = services.SingleOrDefault(d => d.ServiceType == typeof(DbContextOptions<ApplicationDbContext>));
+                var descriptor = services.SingleOrDefault(d => d.ServiceType == typeof(DbContextOptions<ClinicDbContext>));
                 if (descriptor != null) services.Remove(descriptor);
 
-                services.AddDbContext<ApplicationDbContext>(options =>
+                services.AddDbContext<ClinicDbContext>(options =>
                 {
                     options.UseInMemoryDatabase($"E2ETestDb_{Guid.NewGuid()}");
                 });

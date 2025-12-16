@@ -5,6 +5,9 @@ using System.Threading.Tasks;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Moq;
+using XenonClinic.Core.Interfaces;
+using XenonClinic.Infrastructure.Data;
+using XenonClinic.Infrastructure.Services;
 using Xunit;
 
 namespace XenonClinic.Tests.Appointments;
@@ -15,16 +18,14 @@ namespace XenonClinic.Tests.Appointments;
 /// </summary>
 public class AppointmentBulkOperationsTests : IAsyncLifetime
 {
-    private ApplicationDbContext _context;
-    private IAppointmentService _appointmentService;
+    private ClinicDbContext _context = null!;
 
     public async Task InitializeAsync()
     {
-        var options = new DbContextOptionsBuilder<ApplicationDbContext>()
+        var options = new DbContextOptionsBuilder<ClinicDbContext>()
             .UseInMemoryDatabase($"AppointmentBulkDb_{Guid.NewGuid()}")
             .Options;
-        _context = new ApplicationDbContext(options);
-        _appointmentService = new AppointmentService(_context);
+        _context = new ClinicDbContext(options);
         await Task.CompletedTask;
     }
 
