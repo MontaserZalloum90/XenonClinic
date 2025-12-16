@@ -301,7 +301,7 @@ public class DicomService : IDicomService
             // Find the DICOM instance
             var instance = await _context.DicomInstances
                 .Include(i => i.Series)
-                .ThenInclude(s => s.Study)
+                .ThenInclude(s => s!.Study) // Null-forgiving: EF Core handles nullable navigation in ThenInclude
                 .FirstOrDefaultAsync(i => i.SopInstanceUid == request.SopInstanceUid);
 
             if (instance == null)
@@ -882,7 +882,7 @@ public class DicomService : IDicomService
     {
         var report = await _context.RadiologyReports
             .Include(r => r.Study)
-            .ThenInclude(s => s.Patient)
+            .ThenInclude(s => s!.Patient) // Null-forgiving: EF Core handles nullable navigation in ThenInclude
             .Include(r => r.ReportingRadiologist)
             .FirstOrDefaultAsync(r => r.StudyId == studyId);
 
@@ -940,7 +940,7 @@ public class DicomService : IDicomService
     {
         var report = await _context.RadiologyReports
             .Include(r => r.Study)
-            .ThenInclude(s => s.Patient)
+            .ThenInclude(s => s!.Patient) // Null-forgiving: EF Core handles nullable navigation in ThenInclude
             .FirstOrDefaultAsync(r => r.Id == reportId)
             ?? throw new KeyNotFoundException($"Report with ID {reportId} not found");
 
@@ -963,7 +963,7 @@ public class DicomService : IDicomService
     {
         var report = await _context.RadiologyReports
             .Include(r => r.Study)
-            .ThenInclude(s => s.Patient)
+            .ThenInclude(s => s!.Patient) // Null-forgiving: EF Core handles nullable navigation in ThenInclude
             .Include(r => r.ReportingRadiologist)
             .FirstOrDefaultAsync(r => r.Id == reportId)
             ?? throw new KeyNotFoundException($"Report with ID {reportId} not found");
