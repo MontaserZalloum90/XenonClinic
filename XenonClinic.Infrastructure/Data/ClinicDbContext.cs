@@ -2070,9 +2070,6 @@ public class ClinicDbContext : IdentityDbContext<Entities.ApplicationUser>
             .Property(a => a.CorrelationId)
             .HasMaxLength(50);
 
-        builder.Entity<AuditLog>()
-            .Property(a => a.UserId)
-            .HasMaxLength(450);
 
         builder.Entity<AuditLog>()
             .Property(a => a.UserName)
@@ -2797,7 +2794,7 @@ public class ClinicDbContext : IdentityDbContext<Entities.ApplicationUser>
             .OnDelete(DeleteBehavior.SetNull);
 
         builder.Entity<CardiacProcedure>()
-            .Property(p => p.Fee)
+            .Property(p => p.Cost)
             .HasPrecision(18, 2);
 
         builder.Entity<HeartCondition>()
@@ -2856,7 +2853,7 @@ public class ClinicDbContext : IdentityDbContext<Entities.ApplicationUser>
             .OnDelete(DeleteBehavior.SetNull);
 
         builder.Entity<OrthoProcedure>()
-            .Property(p => p.Fee)
+            .Property(p => p.Cost)
             .HasPrecision(18, 2);
 
         builder.Entity<JointAssessment>()
@@ -2884,13 +2881,13 @@ public class ClinicDbContext : IdentityDbContext<Entities.ApplicationUser>
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.Entity<CastRecord>()
-            .HasOne(c => c.OrthoInjury)
-            .WithMany(i => i.CastRecords)
-            .HasForeignKey(c => c.OrthoInjuryId)
+            .HasOne(c => c.OrthoVisit)
+            .WithMany(v => v.CastRecords)
+            .HasForeignKey(c => c.OrthoVisitId)
             .OnDelete(DeleteBehavior.SetNull);
 
         builder.Entity<OrthoImaging>()
-            .HasIndex(o => o.ImagingDate);
+            .HasIndex(o => o.StudyDate);
 
         builder.Entity<OrthoImaging>()
             .HasOne(o => o.Patient)
@@ -2981,7 +2978,7 @@ public class ClinicDbContext : IdentityDbContext<Entities.ApplicationUser>
             .OnDelete(DeleteBehavior.SetNull);
 
         builder.Entity<ENTProcedure>()
-            .Property(p => p.Fee)
+            .Property(p => p.Cost)
             .HasPrecision(18, 2);
 
         builder.Entity<AllergyTest>()
@@ -3044,7 +3041,7 @@ public class ClinicDbContext : IdentityDbContext<Entities.ApplicationUser>
             .HasPrecision(6, 2);
 
         builder.Entity<ObUltrasound>()
-            .HasIndex(u => u.ExamDate);
+            .HasIndex(u => u.UltrasoundDate);
 
         builder.Entity<ObUltrasound>()
             .HasOne(u => u.Patient)
@@ -3078,11 +3075,11 @@ public class ClinicDbContext : IdentityDbContext<Entities.ApplicationUser>
             .OnDelete(DeleteBehavior.SetNull);
 
         builder.Entity<GynProcedure>()
-            .Property(p => p.Fee)
+            .Property(p => p.Cost)
             .HasPrecision(18, 2);
 
         builder.Entity<PapSmearRecord>()
-            .HasIndex(p => p.TestDate);
+            .HasIndex(p => p.CollectionDate);
 
         builder.Entity<PapSmearRecord>()
             .HasOne(p => p.Patient)
@@ -3141,10 +3138,6 @@ public class ClinicDbContext : IdentityDbContext<Entities.ApplicationUser>
             .WithMany(v => v.TherapySessions)
             .HasForeignKey(t => t.MentalHealthVisitId)
             .OnDelete(DeleteBehavior.SetNull);
-
-        builder.Entity<TherapySession>()
-            .Property(t => t.Fee)
-            .HasPrecision(18, 2);
 
         builder.Entity<PsychMedicationPlan>()
             .HasIndex(m => m.PatientId);
@@ -3235,7 +3228,7 @@ public class ClinicDbContext : IdentityDbContext<Entities.ApplicationUser>
             .OnDelete(DeleteBehavior.SetNull);
 
         builder.Entity<GastroProcedure>()
-            .Property(p => p.Fee)
+            .Property(p => p.Cost)
             .HasPrecision(18, 2);
 
         builder.Entity<DigestiveCondition>()
@@ -3279,7 +3272,7 @@ public class ClinicDbContext : IdentityDbContext<Entities.ApplicationUser>
             .OnDelete(DeleteBehavior.SetNull);
 
         builder.Entity<EEGRecord>()
-            .HasIndex(e => e.RecordDate);
+            .HasIndex(e => e.StudyDate);
 
         builder.Entity<EEGRecord>()
             .HasOne(e => e.Patient)
@@ -3324,7 +3317,7 @@ public class ClinicDbContext : IdentityDbContext<Entities.ApplicationUser>
             .OnDelete(DeleteBehavior.SetNull);
 
         builder.Entity<NeuroProcedure>()
-            .Property(p => p.Fee)
+            .Property(p => p.Cost)
             .HasPrecision(18, 2);
 
         builder.Entity<NeuroCondition>()
@@ -3361,12 +3354,6 @@ public class ClinicDbContext : IdentityDbContext<Entities.ApplicationUser>
             .HasForeignKey(a => a.PatientId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        builder.Entity<FertilityAssessment>()
-            .HasOne(a => a.FertilityVisit)
-            .WithMany(v => v.Assessments)
-            .HasForeignKey(a => a.FertilityVisitId)
-            .OnDelete(DeleteBehavior.SetNull);
-
         builder.Entity<IVFCycle>()
             .HasIndex(i => i.CycleStartDate);
 
@@ -3397,10 +3384,6 @@ public class ClinicDbContext : IdentityDbContext<Entities.ApplicationUser>
             .WithMany(p => p.HormoneLevels)
             .HasForeignKey(h => h.PatientId)
             .OnDelete(DeleteBehavior.Restrict);
-
-        builder.Entity<HormoneLevel>()
-            .Property(h => h.Value)
-            .HasPrecision(10, 4);
 
         builder.Entity<SpermAnalysis>()
             .HasIndex(s => s.AnalysisDate);
@@ -3444,12 +3427,6 @@ public class ClinicDbContext : IdentityDbContext<Entities.ApplicationUser>
             .HasForeignKey(a => a.PatientId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        builder.Entity<PainAssessment>()
-            .HasOne(a => a.PainVisit)
-            .WithMany(v => v.Assessments)
-            .HasForeignKey(a => a.PainVisitId)
-            .OnDelete(DeleteBehavior.SetNull);
-
         builder.Entity<PainProcedure>()
             .HasIndex(p => p.ProcedureDate);
 
@@ -3466,7 +3443,7 @@ public class ClinicDbContext : IdentityDbContext<Entities.ApplicationUser>
             .OnDelete(DeleteBehavior.SetNull);
 
         builder.Entity<PainProcedure>()
-            .Property(p => p.Fee)
+            .Property(p => p.Cost)
             .HasPrecision(18, 2);
 
         builder.Entity<PainMedicationRegimen>()
@@ -3497,9 +3474,9 @@ public class ClinicDbContext : IdentityDbContext<Entities.ApplicationUser>
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.Entity<TriggerPointRecord>()
-            .HasOne(t => t.PainAssessment)
-            .WithMany(a => a.TriggerPoints)
-            .HasForeignKey(t => t.PainAssessmentId)
+            .HasOne(t => t.PainVisit)
+            .WithMany()
+            .HasForeignKey(t => t.PainVisitId)
             .OnDelete(DeleteBehavior.SetNull);
 
         // ========================================
@@ -3555,10 +3532,6 @@ public class ClinicDbContext : IdentityDbContext<Entities.ApplicationUser>
             .HasForeignKey(c => c.PatientId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        builder.Entity<CPAPRecord>()
-            .Property(c => c.PressureSetting)
-            .HasPrecision(4, 1);
-
         builder.Entity<SleepDisorder>()
             .HasIndex(d => d.PatientId);
 
@@ -3610,7 +3583,7 @@ public class ClinicDbContext : IdentityDbContext<Entities.ApplicationUser>
             .HasPrecision(6, 2);
 
         builder.Entity<DialysisSession>()
-            .Property(s => s.UltraFiltrationVolume)
+            .Property(s => s.ActualUFRemoved)
             .HasPrecision(8, 2);
 
         builder.Entity<DialysisAccessRecord>()
@@ -3623,23 +3596,13 @@ public class ClinicDbContext : IdentityDbContext<Entities.ApplicationUser>
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.Entity<DialysisLabResult>()
-            .HasIndex(l => l.TestDate);
+            .HasIndex(l => l.LabDate);
 
         builder.Entity<DialysisLabResult>()
             .HasOne(l => l.Patient)
             .WithMany(p => p.DialysisLabResults)
             .HasForeignKey(l => l.PatientId)
             .OnDelete(DeleteBehavior.Restrict);
-
-        builder.Entity<DialysisLabResult>()
-            .HasOne(l => l.DialysisSession)
-            .WithMany(s => s.LabResults)
-            .HasForeignKey(l => l.DialysisSessionId)
-            .OnDelete(DeleteBehavior.SetNull);
-
-        builder.Entity<DialysisLabResult>()
-            .Property(l => l.Value)
-            .HasPrecision(10, 4);
 
         builder.Entity<FluidBalance>()
             .HasIndex(f => f.RecordDate);
@@ -3651,15 +3614,11 @@ public class ClinicDbContext : IdentityDbContext<Entities.ApplicationUser>
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.Entity<FluidBalance>()
-            .Property(f => f.FluidIntake)
+            .Property(f => f.FluidIntakeOral)
             .HasPrecision(8, 2);
 
         builder.Entity<FluidBalance>()
-            .Property(f => f.FluidOutput)
-            .HasPrecision(8, 2);
-
-        builder.Entity<FluidBalance>()
-            .Property(f => f.NetBalance)
+            .Property(f => f.UrineOutput)
             .HasPrecision(8, 2);
 
         // ========================================
@@ -3705,11 +3664,11 @@ public class ClinicDbContext : IdentityDbContext<Entities.ApplicationUser>
         builder.Entity<ChemotherapySession>()
             .HasOne(c => c.TreatmentPlan)
             .WithMany(t => t.ChemotherapySessions)
-            .HasForeignKey(c => c.OncologyTreatmentPlanId)
+            .HasForeignKey(c => c.TreatmentPlanId)
             .OnDelete(DeleteBehavior.SetNull);
 
         builder.Entity<RadiationRecord>()
-            .HasIndex(r => r.SessionDate);
+            .HasIndex(r => r.TreatmentDate);
 
         builder.Entity<RadiationRecord>()
             .HasOne(r => r.Patient)
@@ -3726,11 +3685,11 @@ public class ClinicDbContext : IdentityDbContext<Entities.ApplicationUser>
         builder.Entity<RadiationRecord>()
             .HasOne(r => r.TreatmentPlan)
             .WithMany(t => t.RadiationRecords)
-            .HasForeignKey(r => r.OncologyTreatmentPlanId)
+            .HasForeignKey(r => r.TreatmentPlanId)
             .OnDelete(DeleteBehavior.SetNull);
 
         builder.Entity<RadiationRecord>()
-            .Property(r => r.DoseDelivered)
+            .Property(r => r.TotalDoseDelivered)
             .HasPrecision(8, 3);
 
         builder.Entity<TumorMarker>()
@@ -3757,8 +3716,8 @@ public class ClinicDbContext : IdentityDbContext<Entities.ApplicationUser>
 
         builder.Entity<OncologyTreatmentPlan>()
             .HasOne(o => o.CancerDiagnosis)
-            .WithMany(c => c.TreatmentPlans)
-            .HasForeignKey(o => o.CancerDiagnosisId)
+            .WithOne(c => c.TreatmentPlan)
+            .HasForeignKey<OncologyTreatmentPlan>(o => o.CancerDiagnosisId)
             .OnDelete(DeleteBehavior.Restrict);
 
         // ========================================
@@ -3786,12 +3745,6 @@ public class ClinicDbContext : IdentityDbContext<Entities.ApplicationUser>
             .HasForeignKey(s => s.PatientId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        builder.Entity<SpinalAssessment>()
-            .HasOne(s => s.ChiroVisit)
-            .WithMany(v => v.SpinalAssessments)
-            .HasForeignKey(s => s.ChiroVisitId)
-            .OnDelete(DeleteBehavior.SetNull);
-
         builder.Entity<ChiroAdjustment>()
             .HasIndex(a => a.AdjustmentDate);
 
@@ -3807,10 +3760,6 @@ public class ClinicDbContext : IdentityDbContext<Entities.ApplicationUser>
             .HasForeignKey(a => a.ChiroVisitId)
             .OnDelete(DeleteBehavior.SetNull);
 
-        builder.Entity<ChiroAdjustment>()
-            .Property(a => a.Fee)
-            .HasPrecision(18, 2);
-
         builder.Entity<PostureAnalysis>()
             .HasIndex(p => p.AnalysisDate);
 
@@ -3819,12 +3768,6 @@ public class ClinicDbContext : IdentityDbContext<Entities.ApplicationUser>
             .WithMany(pa => pa.PostureAnalyses)
             .HasForeignKey(p => p.PatientId)
             .OnDelete(DeleteBehavior.Restrict);
-
-        builder.Entity<PostureAnalysis>()
-            .HasOne(p => p.ChiroVisit)
-            .WithMany(v => v.PostureAnalyses)
-            .HasForeignKey(p => p.ChiroVisitId)
-            .OnDelete(DeleteBehavior.SetNull);
 
         builder.Entity<ChiroXRayFinding>()
             .HasIndex(x => x.XRayDate);
@@ -3835,12 +3778,6 @@ public class ClinicDbContext : IdentityDbContext<Entities.ApplicationUser>
             .HasForeignKey(x => x.PatientId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        builder.Entity<ChiroXRayFinding>()
-            .HasOne(x => x.ChiroVisit)
-            .WithMany(v => v.XRayFindings)
-            .HasForeignKey(x => x.ChiroVisitId)
-            .OnDelete(DeleteBehavior.SetNull);
-
         builder.Entity<ChiroTreatmentPlan>()
             .HasIndex(t => t.PatientId);
 
@@ -3849,10 +3786,6 @@ public class ClinicDbContext : IdentityDbContext<Entities.ApplicationUser>
             .WithMany(p => p.ChiroTreatmentPlans)
             .HasForeignKey(t => t.PatientId)
             .OnDelete(DeleteBehavior.Restrict);
-
-        builder.Entity<ChiroTreatmentPlan>()
-            .Property(t => t.EstimatedCost)
-            .HasPrecision(18, 2);
 
         // ========================================
         // Podiatry Configuration
@@ -3879,12 +3812,6 @@ public class ClinicDbContext : IdentityDbContext<Entities.ApplicationUser>
             .HasForeignKey(f => f.PatientId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        builder.Entity<FootAssessment>()
-            .HasOne(f => f.PodiatryVisit)
-            .WithMany(v => v.FootAssessments)
-            .HasForeignKey(f => f.PodiatryVisitId)
-            .OnDelete(DeleteBehavior.SetNull);
-
         builder.Entity<PodiatryGaitAnalysis>()
             .HasIndex(g => g.AnalysisDate);
 
@@ -3893,12 +3820,6 @@ public class ClinicDbContext : IdentityDbContext<Entities.ApplicationUser>
             .WithMany(p => p.PodiatryGaitAnalyses)
             .HasForeignKey(g => g.PatientId)
             .OnDelete(DeleteBehavior.Restrict);
-
-        builder.Entity<PodiatryGaitAnalysis>()
-            .HasOne(g => g.PodiatryVisit)
-            .WithMany(v => v.GaitAnalyses)
-            .HasForeignKey(g => g.PodiatryVisitId)
-            .OnDelete(DeleteBehavior.SetNull);
 
         builder.Entity<PodiatryProcedure>()
             .HasIndex(p => p.ProcedureDate);
@@ -3916,7 +3837,7 @@ public class ClinicDbContext : IdentityDbContext<Entities.ApplicationUser>
             .OnDelete(DeleteBehavior.SetNull);
 
         builder.Entity<PodiatryProcedure>()
-            .Property(p => p.Fee)
+            .Property(p => p.Cost)
             .HasPrecision(18, 2);
 
         builder.Entity<OrthoticPrescription>()
@@ -3927,12 +3848,6 @@ public class ClinicDbContext : IdentityDbContext<Entities.ApplicationUser>
             .WithMany(p => p.OrthoticPrescriptions)
             .HasForeignKey(o => o.PatientId)
             .OnDelete(DeleteBehavior.Restrict);
-
-        builder.Entity<OrthoticPrescription>()
-            .HasOne(o => o.PodiatryVisit)
-            .WithMany(v => v.OrthoticPrescriptions)
-            .HasForeignKey(o => o.PodiatryVisitId)
-            .OnDelete(DeleteBehavior.SetNull);
 
         builder.Entity<OrthoticPrescription>()
             .Property(o => o.Cost)

@@ -40,6 +40,7 @@ public class OrthoVisit
     public ICollection<OrthoProcedure> Procedures { get; set; } = new List<OrthoProcedure>();
     public ICollection<OrthoImaging> ImagingStudies { get; set; } = new List<OrthoImaging>();
     public ICollection<JointAssessment> JointAssessments { get; set; } = new List<JointAssessment>();
+    public ICollection<CastRecord> CastRecords { get; set; } = new List<CastRecord>();
 
     /// <summary>
     /// Alias for ImagingStudies for compatibility
