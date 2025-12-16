@@ -330,7 +330,7 @@ public class PatientPortalService : IPatientPortalService
     {
         var account = await _context.PortalAccounts
             .Include(pa => pa.Patient)
-            .ThenInclude(p => p.Branch)
+            .ThenInclude(p => p!.Branch)
             .FirstOrDefaultAsync(pa => pa.Email == email && pa.IsActive);
 
         if (account == null)

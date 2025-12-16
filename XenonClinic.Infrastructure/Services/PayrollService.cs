@@ -239,10 +239,10 @@ public class PayrollService : IPayrollService
             .Where(p => p.PayrollPeriodId == periodId);
 
         if (departmentId.HasValue)
-            query = query.Where(p => p.Employee.DepartmentId == departmentId.Value);
+            query = query.Where(p => p.Employee != null && p.Employee.DepartmentId == departmentId.Value);
 
         var payslips = await query
-            .OrderBy(p => p.Employee.EmployeeCode)
+            .OrderBy(p => p.Employee != null ? p.Employee.EmployeeCode : "")
             .ToListAsync();
 
         return payslips.Select(p => new PayslipSummaryDto
@@ -263,7 +263,7 @@ public class PayrollService : IPayrollService
     {
         var payslip = await _context.Payslips
             .Include(p => p.Employee)
-            .ThenInclude(e => e.Department)
+            .ThenInclude(e => e!.Department)
             .Include(p => p.PayrollPeriod)
             .FirstOrDefaultAsync(p => p.Id == id);
 
@@ -304,7 +304,7 @@ public class PayrollService : IPayrollService
     {
         var payslip = await _context.Payslips
             .Include(p => p.Employee)
-            .ThenInclude(e => e.Department)
+            .ThenInclude(e => e!.Department)
             .Include(p => p.PayrollPeriod)
             .Where(p => p.EmployeeId == employeeId)
             .OrderByDescending(p => p.PayrollPeriod != null ? p.PayrollPeriod.EndDate : DateTime.MinValue)
@@ -914,7 +914,7 @@ public class PayrollService : IPayrollService
             .Where(p => p.PayrollPeriodId == periodId);
 
         if (departmentId.HasValue)
-            query = query.Where(p => p.Employee.DepartmentId == departmentId.Value);
+            query = query.Where(p => p.Employee != null && p.Employee.DepartmentId == departmentId.Value);
 
         var payslips = await query.OrderBy(p => p.Employee.EmployeeCode).ToListAsync();
 
