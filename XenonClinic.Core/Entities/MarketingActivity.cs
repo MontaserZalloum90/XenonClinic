@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations.Schema;
+using XenonClinic.Core.Interfaces;
 
 namespace XenonClinic.Core.Entities;
 
@@ -42,7 +43,10 @@ public class MarketingActivity
 
     // User who performed the activity
     public string? PerformedByUserId { get; set; }
-    // Note: ApplicationUser navigation removed to avoid circular dependency with Infrastructure
+    /// <summary>
+    /// User who performed this activity - uses IApplicationUser interface to avoid circular dependency
+    /// </summary>
+    public IApplicationUser? PerformedByUser { get; set; }
 
     // Contact details
     public string? ContactMethod { get; set; }
