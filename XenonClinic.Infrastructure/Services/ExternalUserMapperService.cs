@@ -74,7 +74,7 @@ public class ExternalUserMapperService : IExternalUserMapper
             if (existingUser != null)
             {
                 // Update existing user with latest claims
-                await UpdateUserFromClaims(existingUser, claims, provider);
+                await UpdateUserFromClaims((ApplicationUser)existingUser, claims, provider);
                 await UpdateLastExternalLoginAsync(existingUser.Id);
 
                 _logger.LogInformation("Mapped external user {ExternalId} to existing user {UserId}",
@@ -93,7 +93,7 @@ public class ExternalUserMapperService : IExternalUserMapper
                 existingUser.ExternalProviderName = provider.Name;
                 existingUser.IsExternalUser = true;
 
-                await UpdateUserFromClaims(existingUser, claims, provider);
+                await UpdateUserFromClaims((ApplicationUser)existingUser, claims, provider);
                 await UpdateLastExternalLoginAsync(existingUser.Id);
 
                 _logger.LogInformation("Linked external user {ExternalId} to existing user {UserId} by email",

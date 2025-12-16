@@ -563,8 +563,8 @@ public class AnalyticsService : IAnalyticsService
         var activePatients = patients.Count(p => p.IsActive);
 
         var ageGroups = patients
-            .Where(p => p.DateOfBirth.HasValue)
-            .GroupBy(p => GetAgeGroup(p.DateOfBirth!.Value))
+            .Where(p => p.DateOfBirth != default(DateTime))
+            .GroupBy(p => GetAgeGroup(p.DateOfBirth))
             .Select(g => new DemographicBreakdownDto
             {
                 Category = g.Key,
@@ -590,9 +590,9 @@ public class AnalyticsService : IAnalyticsService
             NewPatientsThisMonth = newThisMonth,
             ActivePatients = activePatients,
             PatientRetentionRate = totalPatients > 0 ? Math.Round((decimal)activePatients / totalPatients * 100, 1) : 0,
-            AveragePatientAge = patients.Where(p => p.DateOfBirth.HasValue).Any()
-                ? Math.Round((decimal)patients.Where(p => p.DateOfBirth.HasValue)
-                    .Average(p => (DateTime.UtcNow - p.DateOfBirth!.Value).Days / 365.25), 1)
+            AveragePatientAge = patients.Where(p => p.DateOfBirth != default(DateTime)).Any()
+                ? Math.Round((decimal)patients.Where(p => p.DateOfBirth != default(DateTime))
+                    .Average(p => (DateTime.UtcNow - p.DateOfBirth).Days / 365.25), 1)
                 : 0,
             AgeDistribution = ageGroups,
             GenderDistribution = genderGroups,
@@ -722,7 +722,7 @@ public class AnalyticsService : IAnalyticsService
         var denied = claims.Count(c => c.Status == Core.Enums.ClaimStatus.Denied);
 
         var totalClaimed = claims.Sum(c => c.BilledAmount);
-        var totalPaid = claims.Sum(c => c.PaidAmount ?? 0);
+        var totalPaid = claims.Sum(c => c.PaidAmount ?? 0m);
 
         return new ClaimsAnalyticsDto
         {
@@ -1067,7 +1067,7 @@ public class AnalyticsService : IAnalyticsService
             RiskCategory = GetRiskCategory(CalculateRiskScore(p)),
             RiskFactors = new List<RiskFactorDto>
             {
-                new() { FactorName = "Age", Category = "Demographic", Score = p.DateOfBirth.HasValue ? GetAgeRiskScore(p.DateOfBirth.Value) : 0, Weight = 0.2m },
+                new() { FactorName = "Age", Category = "Demographic", Score = p.DateOfBirth != default(DateTime) ? GetAgeRiskScore(p.DateOfBirth) : 0, Weight = 0.2m },
                 new() { FactorName = "Chronic Conditions", Category = "Clinical", Score = 0.3m, Weight = 0.4m }
             },
             RecommendedInterventions = new List<string> { "Annual wellness visit", "Medication review" },
@@ -1104,7 +1104,7 @@ public class AnalyticsService : IAnalyticsService
             RiskCategory = GetRiskCategory(score),
             RiskFactors = new List<RiskFactorDto>
             {
-                new() { FactorName = "Age", Category = "Demographic", Score = patient.DateOfBirth.HasValue ? GetAgeRiskScore(patient.DateOfBirth.Value) : 0, Weight = 0.2m }
+                new() { FactorName = "Age", Category = "Demographic", Score = patient.DateOfBirth != default(DateTime) ? GetAgeRiskScore(patient.DateOfBirth) : 0, Weight = 0.2m }
             },
             CalculatedAt = DateTime.UtcNow
         };
@@ -1113,9 +1113,9 @@ public class AnalyticsService : IAnalyticsService
     private static decimal CalculateRiskScore(Core.Entities.Patient patient)
     {
         var score = 0.2m; // Base score
-        if (patient.DateOfBirth.HasValue)
+        if (patient.DateOfBirth != default(DateTime))
         {
-            var age = (DateTime.UtcNow - patient.DateOfBirth.Value).Days / 365;
+            var age = (DateTime.UtcNow - patient.DateOfBirth).Days / 365;
             score += age > 65 ? 0.4m : age > 45 ? 0.2m : 0.1m;
         }
         return Math.Min(score, 1.0m);

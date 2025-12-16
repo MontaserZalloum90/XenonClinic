@@ -264,7 +264,7 @@ public class SequenceGenerator : ISequenceGenerator
     private async Task<string?> GetLastPrescriptionNumberAsync(int branchId, string prefix)
     {
         return await _context.Prescriptions
-            .Where(p => p.BranchId == branchId && p.PrescriptionNumber.StartsWith(prefix))
+            .Where(p => p.BranchId == branchId && p.PrescriptionNumber != null && p.PrescriptionNumber.StartsWith(prefix))
             .OrderByDescending(p => p.PrescriptionNumber)
             .Select(p => p.PrescriptionNumber)
             .FirstOrDefaultAsync();

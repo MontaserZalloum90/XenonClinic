@@ -465,8 +465,8 @@ public class PayrollService : IPayrollService
                         row.RelativeItem().Background(Colors.Grey.Lighten4).Padding(8).Column(leave =>
                         {
                             leave.Item().Text("LEAVE BALANCE").Bold().FontSize(10);
-                            leave.Item().Text($"Annual: {payslip.AnnualLeaveBalance ?? 0} days").FontSize(9);
-                            leave.Item().Text($"Sick: {payslip.SickLeaveBalance ?? 0} days").FontSize(9);
+                            leave.Item().Text($"Annual: {payslip.AnnualLeaveBalance} days").FontSize(9);
+                            leave.Item().Text($"Sick: {payslip.SickLeaveBalance} days").FontSize(9);
                         });
                         row.ConstantItem(20);
                         row.RelativeItem();

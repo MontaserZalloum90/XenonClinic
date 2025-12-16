@@ -473,11 +473,15 @@ public class PushNotificationService : IPushNotificationService
 
         // Merge data
         var data = new Dictionary<string, string>();
-        if (template.DefaultData != null)
+        if (!string.IsNullOrEmpty(template.DefaultData))
         {
-            foreach (var kvp in template.DefaultData)
+            var defaultDataDict = JsonSerializer.Deserialize<Dictionary<string, string>>(template.DefaultData);
+            if (defaultDataDict != null)
             {
-                data[kvp.Key] = kvp.Value;
+                foreach (var kvp in defaultDataDict)
+                {
+                    data[kvp.Key] = kvp.Value;
+                }
             }
         }
         if (request.AdditionalData != null)

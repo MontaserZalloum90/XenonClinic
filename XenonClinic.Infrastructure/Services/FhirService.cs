@@ -1373,7 +1373,7 @@ public class FhirService : IFhirService
         {
             Id = $"lab-{result.Id}",
             Meta = new FhirMetaDto { LastUpdated = result.ResultDate, Source = SystemUrl },
-            Status = MapLabStatusToFhir(result.Status),
+            Status = MapLabStatusToFhir(result.Status.ToString()),
             Category = new List<FhirCodeableConceptDto>
             {
                 new()

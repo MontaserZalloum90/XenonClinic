@@ -1026,11 +1026,8 @@ public class ClinicDbContext : IdentityDbContext<Entities.ApplicationUser>
             .HasForeignKey(e => e.JobPositionId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        builder.Entity<Employee>()
-            .HasOne(e => e.User)
-            .WithMany()
-            .HasForeignKey(e => e.UserId)
-            .OnDelete(DeleteBehavior.SetNull);
+        // Note: Employee.User navigation property removed to avoid circular dependency
+        // UserId is stored as a string property for linking to ApplicationUser
 
         builder.Entity<Employee>()
             .Property(e => e.BasicSalary)
@@ -1997,7 +1994,7 @@ public class ClinicDbContext : IdentityDbContext<Entities.ApplicationUser>
             .HasIndex(ca => ca.CaseId);
 
         builder.Entity<CaseActivity>()
-            .HasIndex(ca => ca.Status);
+            .HasIndex(ca => ca.CaseActivityStatusId);
 
         builder.Entity<CaseActivity>()
             .HasIndex(ca => ca.AssignedToUserId);
@@ -2006,7 +2003,7 @@ public class ClinicDbContext : IdentityDbContext<Entities.ApplicationUser>
             .HasIndex(ca => ca.DueDate);
 
         builder.Entity<CaseActivity>()
-            .HasIndex(ca => new { ca.CaseId, ca.Status });
+            .HasIndex(ca => new { ca.CaseId, ca.CaseActivityStatusId });
 
         builder.Entity<CaseActivity>()
             .HasOne(ca => ca.Case)

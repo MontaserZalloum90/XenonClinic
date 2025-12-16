@@ -363,12 +363,12 @@ public class LabService : ILabService
         }
 
         // Validate lab test exists if specified
-        if (labResult.LabTestId.HasValue)
+        if (labResult.LabTestId > 0)
         {
-            var labTestExists = await _context.LabTests.AnyAsync(lt => lt.Id == labResult.LabTestId.Value);
+            var labTestExists = await _context.LabTests.AnyAsync(lt => lt.Id == labResult.LabTestId);
             if (!labTestExists)
             {
-                throw new KeyNotFoundException($"Lab test with ID {labResult.LabTestId.Value} not found");
+                throw new KeyNotFoundException($"Lab test with ID {labResult.LabTestId} not found");
             }
         }
 

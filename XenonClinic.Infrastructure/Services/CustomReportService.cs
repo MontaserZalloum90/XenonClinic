@@ -687,7 +687,7 @@ public class CustomReportService : ICustomReportService
                 // Send to recipients
                 var recipients = JsonSerializer.Deserialize<List<ReportRecipientDto>>(schedule.RecipientsJson ?? "[]");
 
-                if (recipients != null && recipients.Any() && result.Content != null)
+                if (recipients != null && recipients.Any() && exportResult.Content != null)
                 {
                     var contentType = schedule.OutputFormat?.ToLower() switch
                     {
@@ -705,7 +705,7 @@ public class CustomReportService : ICustomReportService
                         _ => ".dat"
                     };
 
-                    var fileName = $"{report?.Name ?? "Report"}_{now:yyyyMMdd}{extension}";
+                    var fileName = $"{schedule.Report?.Name ?? "Report"}_{now:yyyyMMdd}{extension}";
 
                     foreach (var recipient in recipients.Where(r => !string.IsNullOrEmpty(r.Email)))
                     {
@@ -714,12 +714,12 @@ public class CustomReportService : ICustomReportService
                             var emailMessage = new EmailMessage
                             {
                                 To = recipient.Email!,
-                                Subject = $"Scheduled Report: {report?.Name ?? "Report"} - {now:MMMM dd, yyyy}",
+                                Subject = $"Scheduled Report: {schedule.Report?.Name ?? "Report"} - {now:MMMM dd, yyyy}",
                                 Body = $@"
                                     <html>
                                     <body>
                                     <h2>Scheduled Report</h2>
-                                    <p>Please find attached the scheduled report: <strong>{report?.Name}</strong></p>
+                                    <p>Please find attached the scheduled report: <strong>{schedule.Report?.Name}</strong></p>
                                     <p><strong>Report Details:</strong></p>
                                     <ul>
                                         <li>Generated: {now:MMMM dd, yyyy hh:mm tt}</li>
@@ -737,7 +737,7 @@ public class CustomReportService : ICustomReportService
                                     new EmailAttachment
                                     {
                                         FileName = fileName,
-                                        Content = result.Content,
+                                        Content = exportResult.Content,
                                         ContentType = contentType
                                     }
                                 }

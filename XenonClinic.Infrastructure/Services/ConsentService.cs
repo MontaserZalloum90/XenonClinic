@@ -35,7 +35,7 @@ public class ConsentService : IConsentService
             .FirstOrDefaultAsync(c => c.Id == consentId);
 
         if (consent == null)
-            throw new InvalidOperationException("Consent not found");
+            return null;
 
         return MapToDto(consent);
     }
@@ -96,7 +96,7 @@ public class ConsentService : IConsentService
         await _auditService.LogPHIAccessAsync(grantedByUserId, request.PatientId, "CONSENT", "CREATE", consent.Id.ToString());
         _logger.LogInformation("Created consent {ConsentId} for patient {PatientId}", consent.Id, request.PatientId);
 
-        return await GetConsentByIdAsync(consent.Id);
+        return (await GetConsentByIdAsync(consent.Id))!;
     }
 
     public async Task<PatientConsentDto?> UpdateConsentAsync(int consentId, SaveConsentDto request, int updatedByUserId)
@@ -158,7 +158,7 @@ public class ConsentService : IConsentService
         await _auditService.LogPHIAccessAsync(revokedByUserId, consent.PatientId, "CONSENT", "REVOKE", request.ConsentId.ToString(), request.Reason);
         _logger.LogInformation("Revoked consent {ConsentId} for patient {PatientId}: {Reason}", consent.Id, consent.PatientId, request.Reason);
 
-        return await GetConsentByIdAsync(consent.Id);
+        return (await GetConsentByIdAsync(consent.Id))!;
     }
 
     public async Task<List<ConsentHistoryDto>> GetConsentHistoryAsync(int consentId)
@@ -556,9 +556,9 @@ public class ConsentService : IConsentService
             throw new InvalidOperationException("Patient not found");
 
         // Replace placeholders in template
-        var document = template.TemplateContent
+        var document = (template.TemplateContent ?? string.Empty)
             .Replace("{{PatientName}}", $"{patient.FirstName} {patient.LastName}")
-            .Replace("{{PatientDOB}}", patient.DateOfBirth?.ToString("MM/dd/yyyy") ?? "")
+            .Replace("{{PatientDOB}}", patient.DateOfBirth.ToString("MM/dd/yyyy"))
             .Replace("{{Date}}", DateTime.UtcNow.ToString("MM/dd/yyyy"))
             .Replace("{{ConsentType}}", template.ConsentType);
 
@@ -650,6 +650,11 @@ public class ConsentService : IConsentService
     public async Task SendConsentReminderAsync(int consentId)
     {
         var consent = await GetConsentByIdAsync(consentId);
+        if (consent == null)
+        {
+            _logger.LogWarning("Cannot send consent reminder: consent {ConsentId} not found", consentId);
+            return;
+        }
         _logger.LogInformation("Sending consent renewal reminder for consent {ConsentId} to patient {PatientId}", consentId, consent.PatientId);
         // Integration with notification service would go here
     }

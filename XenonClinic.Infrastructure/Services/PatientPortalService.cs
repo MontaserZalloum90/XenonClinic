@@ -708,7 +708,7 @@ public class PatientPortalService : IPatientPortalService
         {
             Id = a.Id,
             AppointmentDate = a.AppointmentDate,
-            StartTime = a.StartTime,
+            StartTime = a.StartTime.ToString("HH:mm"),
             DoctorName = $"Dr. {a.Doctor?.FirstName} {a.Doctor?.LastName}",
             DoctorSpecialty = a.Doctor?.Specialty,
             AppointmentType = a.AppointmentType ?? "Regular",
@@ -732,7 +732,7 @@ public class PatientPortalService : IPatientPortalService
         {
             Id = a.Id,
             AppointmentDate = a.AppointmentDate,
-            StartTime = a.StartTime,
+            StartTime = a.StartTime.ToString("HH:mm"),
             DoctorName = $"Dr. {a.Doctor?.FirstName} {a.Doctor?.LastName}",
             DoctorSpecialty = a.Doctor?.Specialty,
             AppointmentType = a.AppointmentType ?? "Regular",
@@ -758,15 +758,15 @@ public class PatientPortalService : IPatientPortalService
         {
             Id = appointment.Id,
             AppointmentDate = appointment.AppointmentDate,
-            StartTime = appointment.StartTime,
-            EndTime = appointment.EndTime,
+            StartTime = appointment.StartTime.ToString("HH:mm"),
+            EndTime = appointment.EndTime.ToString("HH:mm"),
             DoctorName = $"Dr. {appointment.Doctor?.FirstName} {appointment.Doctor?.LastName}",
             DoctorSpecialty = appointment.Doctor?.Specialty,
             DoctorPhotoUrl = appointment.Doctor?.PhotoPath,
             Department = appointment.Department,
             Location = appointment.Location,
             AppointmentType = appointment.AppointmentType ?? "Regular",
-            Status = appointment.Status ?? "Scheduled",
+            Status = appointment.Status.ToString(),
             Reason = appointment.Reason,
             Notes = appointment.Notes,
             CanCancel = canModify,
@@ -796,8 +796,8 @@ public class PatientPortalService : IPatientPortalService
             .Select(a => new { a.AppointmentDate, StartTimeStr = a.StartTime.ToString("HH:mm") })
             .ToListAsync();
 
-        var doctor = await _context.Users
-            .FirstOrDefaultAsync(u => u.Id == doctorId);
+        var doctor = await _context.Doctors
+            .FirstOrDefaultAsync(d => d.Id == doctorId);
 
         for (var date = startDate; date <= endDate; date = date.AddDays(1))
         {
@@ -806,8 +806,8 @@ public class PatientPortalService : IPatientPortalService
 
             // Generate slots based on schedule
             var slotDuration = daySchedule.SlotDurationMinutes > 0 ? daySchedule.SlotDurationMinutes : 30;
-            var startTime = TimeSpan.Parse(daySchedule.StartTime ?? "09:00");
-            var endTime = TimeSpan.Parse(daySchedule.EndTime ?? "17:00");
+            var startTime = daySchedule.StartTime.ToTimeSpan();
+            var endTime = daySchedule.EndTime.ToTimeSpan();
 
             while (startTime < endTime)
             {
@@ -850,8 +850,8 @@ public class PatientPortalService : IPatientPortalService
                 throw new InvalidOperationException("Patient not found");
 
             // Validate doctor exists and is active
-            var doctor = await _context.Users
-                .FirstOrDefaultAsync(u => u.Id == dto.DoctorId && u.Role == "Doctor" && u.IsActive);
+            var doctor = await _context.Doctors
+                .FirstOrDefaultAsync(d => d.Id == dto.DoctorId && d.IsActive);
 
             if (doctor == null)
                 throw new InvalidOperationException("Doctor not found or not available");
@@ -978,12 +978,12 @@ public class PatientPortalService : IPatientPortalService
 
     public async Task<IEnumerable<PortalDoctorDto>> GetDoctorsForBookingAsync(int branchId, string? specialty = null)
     {
-        var query = _context.Users
-            .Where(u => u.BranchId == branchId && u.Role == "Doctor" && u.IsActive);
+        var query = _context.Doctors
+            .Where(d => d.BranchId == branchId && d.IsActive);
 
         if (!string.IsNullOrEmpty(specialty))
         {
-            query = query.Where(u => u.Specialty == specialty);
+            query = query.Where(d => d.Specialty == specialty);
         }
 
         var doctors = await query.ToListAsync();
@@ -1121,7 +1121,7 @@ public class PatientPortalService : IPatientPortalService
                 TestName = l.TestName,
                 OrderDate = l.OrderDate,
                 ResultDate = l.ResultDate,
-                Status = l.Status ?? "Pending",
+                Status = l.Status.ToString(),
                 OrderingDoctor = $"Dr. {visit.Doctor?.FirstName} {visit.Doctor?.LastName}",
                 IsAbnormal = l.IsAbnormal
             }).ToList(),
@@ -1174,22 +1174,22 @@ public class PatientPortalService : IPatientPortalService
     public async Task<IEnumerable<PortalImmunizationDto>> GetImmunizationsAsync(int patientId)
     {
         var immunizations = await _context.Immunizations
-            .Include(i => i.AdministeredByUser)
+            .Include(i => i.AdministeredByEmployee)
             .Where(i => i.PatientId == patientId)
-            .OrderByDescending(i => i.AdministeredDate)
+            .OrderByDescending(i => i.AdministrationDate)
             .ToListAsync();
 
         return immunizations.Select(i => new PortalImmunizationDto
         {
             Id = i.Id,
             VaccineName = i.VaccineName,
-            AdministeredDate = i.AdministeredDate,
+            AdministeredDate = i.AdministrationDate,
             DoseNumber = i.DoseNumber,
             LotNumber = i.LotNumber,
-            AdministeredBy = i.AdministeredByUser != null
-                ? $"{i.AdministeredByUser.FirstName} {i.AdministeredByUser.LastName}"
+            AdministeredBy = i.AdministeredByEmployee != null
+                ? $"{i.AdministeredByEmployee.FirstName} {i.AdministeredByEmployee.LastName}"
                 : null,
-            NextDueDate = i.NextDueDate
+            NextDueDate = i.NextDoseDate
         });
     }
 
@@ -1407,7 +1407,7 @@ public class PatientPortalService : IPatientPortalService
                                 section.Item().Row(r =>
                                 {
                                     r.ConstantItem(80).Text($"{imm.AdministeredDate:MM/dd/yyyy}");
-                                    r.RelativeItem().Text($"{imm.VaccineName} (Dose {imm.DoseNumber ?? 1})");
+                                    r.RelativeItem().Text($"{imm.VaccineName} (Dose {imm.DoseNumber ?? (int?)1 ?? 1})");
                                 });
                             }
                         }
@@ -1460,7 +1460,7 @@ public class PatientPortalService : IPatientPortalService
             TestName = l.TestName,
             OrderDate = l.OrderDate,
             ResultDate = l.ResultDate,
-            Status = l.Status ?? "Pending",
+            Status = l.Status.ToString(),
             OrderingDoctor = l.OrderingDoctor != null
                 ? $"Dr. {l.OrderingDoctor.FirstName} {l.OrderingDoctor.LastName}"
                 : null,
@@ -1488,7 +1488,7 @@ public class PatientPortalService : IPatientPortalService
             OrderingDoctor = labOrder.OrderingDoctor != null
                 ? $"Dr. {labOrder.OrderingDoctor.FirstName} {labOrder.OrderingDoctor.LastName}"
                 : null,
-            Status = labOrder.Status ?? "Pending",
+            Status = labOrder.Status.ToString(),
             Results = labOrder.Results?.Select(r => new PortalLabResultItemDto
             {
                 ComponentName = r.ComponentName,
@@ -1499,7 +1499,7 @@ public class PatientPortalService : IPatientPortalService
                 IsAbnormal = r.IsAbnormal
             }).ToList() ?? new List<PortalLabResultItemDto>(),
             Comments = labOrder.Comments,
-            CanDownloadReport = labOrder.Status == "Completed"
+            CanDownloadReport = labOrder.Status == LabOrderStatus.Completed
         };
     }
 

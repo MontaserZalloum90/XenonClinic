@@ -262,7 +262,7 @@ public class RbacService : IRbacService
             Description = source.Description,
             RoleType = RoleTypes.Custom,
             PermissionIds = source.RolePermissions.Select(rp => rp.PermissionId).ToList()
-        }, createdByUserId);
+        });
     }
 
     public async Task InitializeDefaultRolesAsync()

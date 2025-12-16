@@ -70,14 +70,25 @@ public class CashFlowStatementDto
 {
     public DateTime StartDate { get; set; }
     public DateTime EndDate { get; set; }
+
+    // Alias properties for PDF rendering compatibility
+    public DateTime PeriodStart { get => StartDate; set => StartDate = value; }
+    public DateTime PeriodEnd { get => EndDate; set => EndDate = value; }
+
     public string Currency { get; set; } = "AED";
 
     // Opening Balance
     public decimal OpeningCashBalance { get; set; }
 
+    // Alias for PDF rendering compatibility
+    public decimal BeginningCashBalance { get => OpeningCashBalance; set => OpeningCashBalance = value; }
+
     // Operating Activities
     public CashFlowSectionDto OperatingActivities { get; set; } = new();
     public decimal NetCashFromOperations { get; set; }
+
+    // Alias for PDF rendering compatibility
+    public decimal NetCashFromOperating { get => NetCashFromOperations; set => NetCashFromOperations = value; }
 
     // Investing Activities
     public CashFlowSectionDto InvestingActivities { get; set; } = new();
@@ -90,6 +101,9 @@ public class CashFlowStatementDto
     // Summary
     public decimal NetChangeInCash { get; set; }
     public decimal ClosingCashBalance { get; set; }
+
+    // Alias for PDF rendering compatibility
+    public decimal EndingCashBalance { get => ClosingCashBalance; set => ClosingCashBalance = value; }
 
     // Reconciliation
     public decimal NetIncome { get; set; }
@@ -608,6 +622,7 @@ public class RevenueReportDto
     public string Currency { get; set; } = "AED";
     public decimal TotalRevenue { get; set; }
     public List<RevenueLineDto> RevenueLines { get; set; } = new();
+    public List<RevenueByCategoryDto>? RevenueByCategory { get; set; }
     public DateTime GeneratedAt { get; set; } = DateTime.UtcNow;
 }
 
@@ -617,6 +632,16 @@ public class RevenueReportDto
 public class RevenueLineDto
 {
     public string Source { get; set; } = string.Empty;
+    public decimal Amount { get; set; }
+    public decimal Percentage { get; set; }
+}
+
+/// <summary>
+/// Revenue by Category DTO for revenue breakdown
+/// </summary>
+public class RevenueByCategoryDto
+{
+    public string Category { get; set; } = string.Empty;
     public decimal Amount { get; set; }
     public decimal Percentage { get; set; }
 }

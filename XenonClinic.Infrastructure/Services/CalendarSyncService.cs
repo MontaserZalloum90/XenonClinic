@@ -926,9 +926,9 @@ public class CalendarSyncService : ICalendarSyncService
     {
         var slots = new List<AvailableSlotDto>();
 
-        var users = request.UserIds ?? await _context.Users
-            .Where(u => u.BranchId == branchId && u.Role == "Doctor" && u.IsActive)
-            .Select(u => u.Id)
+        var users = request.UserIds ?? await _context.Doctors
+            .Where(d => d.BranchId == branchId && d.IsActive)
+            .Select(d => d.Id)
             .ToListAsync();
 
         var startTime = TimeSpan.TryParse(request.StartTimeOfDay, out var st) ? st : TimeSpan.FromHours(9);

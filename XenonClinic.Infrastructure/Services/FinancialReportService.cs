@@ -789,13 +789,13 @@ public class FinancialReportService : IFinancialReportService
                     footer.Item().PaddingTop(5).Row(row =>
                     {
                         row.RelativeItem().Text("Confidential - For Internal Use Only").FontSize(8).FontColor(Colors.Grey.Medium);
-                        row.ConstantItem(100).AlignRight().Text(text =>
+                        row.ConstantItem(100).AlignRight().DefaultTextStyle(x => x.FontSize(8)).Text(text =>
                         {
                             text.Span("Page ");
                             text.CurrentPageNumber();
                             text.Span(" of ");
                             text.TotalPages();
-                        }).FontSize(8);
+                        });
                     });
                 });
             });
