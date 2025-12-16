@@ -29,34 +29,17 @@ jobs:
       - name: Restore dependencies
         run: dotnet restore XenonClinic.sln
 
-      - name: Build Core
-        run: dotnet build XenonClinic.Core/XenonClinic.Core.csproj --configuration Release --no-restore
-
-      - name: Build Infrastructure
-        run: dotnet build XenonClinic.Infrastructure/XenonClinic.Infrastructure.csproj --configuration Release --no-restore
-
-      - name: Build Api
+      - name: Build
         run: |
-          dotnet build XenonClinic.Api/XenonClinic.Api.csproj --configuration Release --no-restore 2>&1 | tee api-build.log
+          echo "=== Building solution ==="
+          dotnet build XenonClinic.sln --configuration Release --no-restore /p:TreatWarningsAsErrors=false 2>&1 | tee build.log
           BUILD_EXIT_CODE=${PIPESTATUS[0]}
+          echo "=== Build Exit Code: $BUILD_EXIT_CODE ==="
           if [ $BUILD_EXIT_CODE -ne 0 ]; then
-            echo "=== API Build Errors ==="
-            grep -i "error" api-build.log | head -50
-            cat api-build.log
-            exit $BUILD_EXIT_CODE
-          fi
-
-      - name: Build Tests
-        run: dotnet build XenonClinic.Tests/XenonClinic.Tests.csproj --configuration Release --no-restore
-
-      - name: Full Build
-        run: |
-          echo "=== Full Solution Build (with restore) ==="
-          dotnet build XenonClinic.sln --configuration Release /p:TreatWarningsAsErrors=false 2>&1 | tee full-build.log
-          BUILD_EXIT_CODE=${PIPESTATUS[0]}
-          if [ $BUILD_EXIT_CODE -ne 0 ]; then
-            echo "=== Build Errors ==="
-            grep -i "error" full-build.log | head -100
+            echo "=== ALL ERROR LINES ==="
+            grep -i "error" build.log
+            echo "=== LAST 300 LINES ==="
+            tail -300 build.log
             exit $BUILD_EXIT_CODE
           fi
 
