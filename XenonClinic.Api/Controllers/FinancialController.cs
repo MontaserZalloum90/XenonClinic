@@ -1144,16 +1144,10 @@ public class FinancialController : BaseApiController
         };
     }
 
-    private static Enums.ExpenseStatus MapToExpenseStatus(ExpenseStatus status)
+    private static ExpenseStatus MapToExpenseStatus(ExpenseStatus status)
     {
-        return status switch
-        {
-            ExpenseStatus.Pending => Enums.ExpenseStatus.Pending,
-            ExpenseStatus.Approved => Enums.ExpenseStatus.Approved,
-            ExpenseStatus.Paid => Enums.ExpenseStatus.Paid,
-            ExpenseStatus.Rejected => Enums.ExpenseStatus.Rejected,
-            _ => Enums.ExpenseStatus.Pending
-        };
+        // This method is an identity mapping and can be simplified
+        return status;
     }
 
     #endregion

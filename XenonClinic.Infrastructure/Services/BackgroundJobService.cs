@@ -71,7 +71,7 @@ public class BackgroundJobService : IBackgroundJobService
         }
     }
 
-    public string Enqueue<T>(Expression<Func<T, Task>> methodCall)
+    public string Enqueue<T>(Expression<Func<T, Task>> methodCall) where T : notnull
     {
         // Periodically cleanup old jobs to prevent memory leaks
         CleanupOldJobs();
@@ -115,7 +115,7 @@ public class BackgroundJobService : IBackgroundJobService
         return jobId;
     }
 
-    public string Schedule<T>(Expression<Func<T, Task>> methodCall, DateTimeOffset enqueueAt)
+    public string Schedule<T>(Expression<Func<T, Task>> methodCall, DateTimeOffset enqueueAt) where T : notnull
     {
         var jobId = GenerateJobId();
         var delay = enqueueAt - DateTimeOffset.UtcNow;
@@ -176,12 +176,12 @@ public class BackgroundJobService : IBackgroundJobService
         return jobId;
     }
 
-    public string Schedule<T>(Expression<Func<T, Task>> methodCall, TimeSpan delay)
+    public string Schedule<T>(Expression<Func<T, Task>> methodCall, TimeSpan delay) where T : notnull
     {
         return Schedule(methodCall, DateTimeOffset.UtcNow.Add(delay));
     }
 
-    public void AddOrUpdateRecurring<T>(string jobId, Expression<Func<T, Task>> methodCall, string cronExpression)
+    public void AddOrUpdateRecurring<T>(string jobId, Expression<Func<T, Task>> methodCall, string cronExpression) where T : notnull
     {
         var recurringJob = new RecurringJobInfo
         {
@@ -251,7 +251,7 @@ public class BackgroundJobService : IBackgroundJobService
         }
     }
 
-    public string ContinueWith<T>(string parentJobId, Expression<Func<T, Task>> methodCall)
+    public string ContinueWith<T>(string parentJobId, Expression<Func<T, Task>> methodCall) where T : notnull
     {
         var jobId = GenerateJobId();
         var job = new JobInfo
@@ -526,7 +526,7 @@ public class BackgroundJobService : IBackgroundJobService
     /// <summary>
     /// BUG FIX: Added timeout and proper cancellation support to prevent infinite waiting.
     /// </summary>
-    private async Task WaitForParentAndExecuteAsync<T>(string jobId, string parentJobId, Expression<Func<T, Task>> methodCall)
+    private async Task WaitForParentAndExecuteAsync<T>(string jobId, string parentJobId, Expression<Func<T, Task>> methodCall) where T : notnull
     {
         // BUG FIX: Add timeout to prevent infinite waiting
         const int maxWaitSeconds = 3600; // 1 hour max wait
