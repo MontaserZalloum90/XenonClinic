@@ -36,7 +36,15 @@ jobs:
         run: dotnet build XenonClinic.Infrastructure/XenonClinic.Infrastructure.csproj --configuration Release --no-restore
 
       - name: Build Api
-        run: dotnet build XenonClinic.Api/XenonClinic.Api.csproj --configuration Release --no-restore
+        run: |
+          dotnet build XenonClinic.Api/XenonClinic.Api.csproj --configuration Release --no-restore 2>&1 | tee api-build.log
+          BUILD_EXIT_CODE=${PIPESTATUS[0]}
+          if [ $BUILD_EXIT_CODE -ne 0 ]; then
+            echo "=== API Build Errors ==="
+            grep -i "error" api-build.log | head -50
+            cat api-build.log
+            exit $BUILD_EXIT_CODE
+          fi
 
       - name: Build Tests
         run: dotnet build XenonClinic.Tests/XenonClinic.Tests.csproj --configuration Release --no-restore
