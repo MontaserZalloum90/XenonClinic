@@ -32,15 +32,28 @@ jobs:
       - name: Build
         run: |
           echo "=== Building solution ==="
-          dotnet build XenonClinic.sln --configuration Release --no-restore /p:TreatWarningsAsErrors=false 2>&1 | tee build.log
+          dotnet build XenonClinic.sln --configuration Release --no-restore /p:TreatWarningsAsErrors=false 2>&1 | tee build.log || true
           BUILD_EXIT_CODE=${PIPESTATUS[0]}
-          echo "=== Build Exit Code: $BUILD_EXIT_CODE ==="
+          echo "BUILD_EXIT_CODE=$BUILD_EXIT_CODE" >> $GITHUB_ENV
           if [ $BUILD_EXIT_CODE -ne 0 ]; then
             echo "=== ALL ERROR LINES ==="
-            grep -i "error" build.log
+            grep -i "error" build.log || echo "No error lines found"
             echo "=== LAST 300 LINES ==="
             tail -300 build.log
-            exit $BUILD_EXIT_CODE
+          fi
+
+      - name: Upload build log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log
+          path: build.log
+
+      - name: Check build result
+        run: |
+          if [ "$BUILD_EXIT_CODE" != "0" ]; then
+            echo "Build failed with exit code $BUILD_EXIT_CODE"
+            exit 1
           fi
 
       - name: Run tests
