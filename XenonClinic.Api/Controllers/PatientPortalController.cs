@@ -119,7 +119,7 @@ public class PatientPortalController : BaseApiController
     [EnableRateLimiting("auth")]
     [ProducesResponseType(typeof(ApiResponse<PortalRegistrationResponseDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<ApiResponse<PortalRegistrationResponseDto>>> Register(
+    public async Task<IActionResult> Register(
         [FromQuery][Range(1, int.MaxValue, ErrorMessage = "Valid branch ID is required")] int branchId,
         [FromBody] PortalRegistrationDto request)
     {
@@ -151,7 +151,7 @@ public class PatientPortalController : BaseApiController
     [EnableRateLimiting("auth")]
     [ProducesResponseType(typeof(ApiResponse<PortalLoginResponseDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status401Unauthorized)]
-    public async Task<ActionResult<ApiResponse<PortalLoginResponseDto>>> Login([FromBody] PortalLoginDto request)
+    public async Task<IActionResult> Login([FromBody] PortalLoginDto request)
     {
         if (!ModelState.IsValid)
             return ApiBadRequestFromModelState();
@@ -187,7 +187,7 @@ public class PatientPortalController : BaseApiController
     [EnableRateLimiting("auth")]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<ApiResponse>> VerifyEmail(
+    public async Task<IActionResult> VerifyEmail(
         [FromQuery][Required(ErrorMessage = "Verification token is required")] string token)
     {
         if (string.IsNullOrWhiteSpace(token) || token.Length > 500)
@@ -208,7 +208,7 @@ public class PatientPortalController : BaseApiController
     [AllowAnonymous]
     [EnableRateLimiting("auth")]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status200OK)]
-    public async Task<ActionResult<ApiResponse>> ForgotPassword([FromBody] ForgotPasswordRequest request)
+    public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest request)
     {
         if (!ModelState.IsValid)
             return ApiBadRequestFromModelState();
@@ -227,7 +227,7 @@ public class PatientPortalController : BaseApiController
     [EnableRateLimiting("auth")]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<ApiResponse>> ResetPassword([FromBody] ResetPasswordRequest request)
+    public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest request)
     {
         if (!ModelState.IsValid)
             return ApiBadRequestFromModelState();
@@ -248,7 +248,7 @@ public class PatientPortalController : BaseApiController
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status403Forbidden)]
-    public async Task<ActionResult<ApiResponse>> ChangePassword([FromBody] ChangePasswordRequest request)
+    public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest request)
     {
         if (!ModelState.IsValid)
             return ApiBadRequestFromModelState();
@@ -274,7 +274,7 @@ public class PatientPortalController : BaseApiController
     [EnableRateLimiting("auth")]
     [ProducesResponseType(typeof(ApiResponse<PortalLoginResponseDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status401Unauthorized)]
-    public async Task<ActionResult<ApiResponse<PortalLoginResponseDto>>> RefreshToken([FromBody] RefreshTokenRequest request)
+    public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenRequest request)
     {
         if (!ModelState.IsValid)
             return ApiBadRequestFromModelState();
@@ -298,7 +298,7 @@ public class PatientPortalController : BaseApiController
     [Authorize]
     [ProducesResponseType(typeof(ApiResponse<PatientPortalDashboardDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status403Forbidden)]
-    public async Task<ActionResult<ApiResponse<PatientPortalDashboardDto>>> GetDashboard()
+    public async Task<IActionResult> GetDashboard()
     {
         var patientId = GetAuthenticatedPatientId();
         if (!patientId.HasValue)
@@ -315,7 +315,7 @@ public class PatientPortalController : BaseApiController
     [Authorize]
     [ProducesResponseType(typeof(ApiResponse<PatientPortalProfileDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status403Forbidden)]
-    public async Task<ActionResult<ApiResponse<PatientPortalProfileDto>>> GetProfile()
+    public async Task<IActionResult> GetProfile()
     {
         var patientId = GetAuthenticatedPatientId();
         if (!patientId.HasValue)
@@ -332,7 +332,7 @@ public class PatientPortalController : BaseApiController
     [Authorize]
     [ProducesResponseType(typeof(ApiResponse<PatientPortalProfileDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status403Forbidden)]
-    public async Task<ActionResult<ApiResponse<PatientPortalProfileDto>>> UpdateProfile(
+    public async Task<IActionResult> UpdateProfile(
         [FromBody] UpdatePatientProfileDto request)
     {
         if (!ModelState.IsValid)
@@ -355,7 +355,7 @@ public class PatientPortalController : BaseApiController
     [ProducesResponseType(typeof(ApiResponse<string>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status403Forbidden)]
-    public async Task<ActionResult<ApiResponse<string>>> UploadProfilePhoto(IFormFile file)
+    public async Task<IActionResult> UploadProfilePhoto(IFormFile file)
     {
         var patientId = GetAuthenticatedPatientId();
         if (!patientId.HasValue)
@@ -396,7 +396,7 @@ public class PatientPortalController : BaseApiController
     [Authorize]
     [ProducesResponseType(typeof(ApiResponse<IEnumerable<PortalAppointmentSummaryDto>>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status403Forbidden)]
-    public async Task<ActionResult<ApiResponse<IEnumerable<PortalAppointmentSummaryDto>>>> GetUpcomingAppointments()
+    public async Task<IActionResult> GetUpcomingAppointments()
     {
         var patientId = GetAuthenticatedPatientId();
         if (!patientId.HasValue)
@@ -413,7 +413,7 @@ public class PatientPortalController : BaseApiController
     [Authorize]
     [ProducesResponseType(typeof(ApiResponse<IEnumerable<PortalAppointmentSummaryDto>>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status403Forbidden)]
-    public async Task<ActionResult<ApiResponse<IEnumerable<PortalAppointmentSummaryDto>>>> GetPastAppointments(
+    public async Task<IActionResult> GetPastAppointments(
         [FromQuery][Range(1, 100, ErrorMessage = "Limit must be between 1 and 100")] int limit = 20)
     {
         var patientId = GetAuthenticatedPatientId();
@@ -432,7 +432,7 @@ public class PatientPortalController : BaseApiController
     [ProducesResponseType(typeof(ApiResponse<PortalAppointmentDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<ApiResponse<PortalAppointmentDto>>> GetAppointment(int appointmentId)
+    public async Task<IActionResult> GetAppointment(int appointmentId)
     {
         var patientId = GetAuthenticatedPatientId();
         if (!patientId.HasValue)
@@ -453,7 +453,7 @@ public class PatientPortalController : BaseApiController
     [Authorize]
     [ProducesResponseType(typeof(ApiResponse<IEnumerable<PortalAppointmentSlotDto>>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<ApiResponse<IEnumerable<PortalAppointmentSlotDto>>>> GetAvailableSlots(
+    public async Task<IActionResult> GetAvailableSlots(
         [FromQuery][Range(1, int.MaxValue, ErrorMessage = "Valid branch ID is required")] int branchId,
         [FromQuery][Range(1, int.MaxValue, ErrorMessage = "Valid doctor ID is required")] int doctorId,
         [FromQuery] DateTime startDate,
@@ -478,7 +478,7 @@ public class PatientPortalController : BaseApiController
     [HttpGet("appointments/doctors")]
     [Authorize]
     [ProducesResponseType(typeof(ApiResponse<IEnumerable<PortalDoctorDto>>), StatusCodes.Status200OK)]
-    public async Task<ActionResult<ApiResponse<IEnumerable<PortalDoctorDto>>>> GetDoctorsForBooking(
+    public async Task<IActionResult> GetDoctorsForBooking(
         [FromQuery][Range(1, int.MaxValue, ErrorMessage = "Valid branch ID is required")] int branchId,
         [FromQuery][StringLength(100, ErrorMessage = "Specialty cannot exceed 100 characters")] string? specialty = null)
     {
@@ -494,7 +494,7 @@ public class PatientPortalController : BaseApiController
     [ProducesResponseType(typeof(ApiResponse<PortalAppointmentDto>), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status403Forbidden)]
-    public async Task<ActionResult<ApiResponse<PortalAppointmentDto>>> BookAppointment(
+    public async Task<IActionResult> BookAppointment(
         [FromBody] PortalBookAppointmentDto request)
     {
         if (!ModelState.IsValid)
@@ -526,7 +526,7 @@ public class PatientPortalController : BaseApiController
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status403Forbidden)]
-    public async Task<ActionResult<ApiResponse>> CancelAppointment(
+    public async Task<IActionResult> CancelAppointment(
         int appointmentId,
         [FromQuery][StringLength(500, ErrorMessage = "Reason cannot exceed 500 characters")] string? reason = null)
     {
@@ -550,7 +550,7 @@ public class PatientPortalController : BaseApiController
     [ProducesResponseType(typeof(ApiResponse<PortalAppointmentDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status403Forbidden)]
-    public async Task<ActionResult<ApiResponse<PortalAppointmentDto>>> RescheduleAppointment(
+    public async Task<IActionResult> RescheduleAppointment(
         int appointmentId,
         [FromQuery] DateTime newDate,
         [FromQuery][StringLength(10, ErrorMessage = "Time format invalid")] string? newTime = null)
@@ -584,7 +584,7 @@ public class PatientPortalController : BaseApiController
     [Authorize]
     [ProducesResponseType(typeof(ApiResponse<PortalMedicalRecordsSummaryDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status403Forbidden)]
-    public async Task<ActionResult<ApiResponse<PortalMedicalRecordsSummaryDto>>> GetMedicalRecordsSummary()
+    public async Task<IActionResult> GetMedicalRecordsSummary()
     {
         var patientId = GetAuthenticatedPatientId();
         if (!patientId.HasValue)
@@ -601,7 +601,7 @@ public class PatientPortalController : BaseApiController
     [Authorize]
     [ProducesResponseType(typeof(ApiResponse<IEnumerable<PortalVisitSummaryDto>>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status403Forbidden)]
-    public async Task<ActionResult<ApiResponse<IEnumerable<PortalVisitSummaryDto>>>> GetVisitHistory(
+    public async Task<IActionResult> GetVisitHistory(
         [FromQuery][Range(2000, 2100, ErrorMessage = "Invalid year")] int? year = null,
         [FromQuery][Range(1, 100, ErrorMessage = "Limit must be between 1 and 100")] int limit = 50)
     {
@@ -621,7 +621,7 @@ public class PatientPortalController : BaseApiController
     [ProducesResponseType(typeof(ApiResponse<PortalVisitDetailDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<ApiResponse<PortalVisitDetailDto>>> GetVisitDetail(int visitId)
+    public async Task<IActionResult> GetVisitDetail(int visitId)
     {
         var patientId = GetAuthenticatedPatientId();
         if (!patientId.HasValue)
@@ -642,7 +642,7 @@ public class PatientPortalController : BaseApiController
     [Authorize]
     [ProducesResponseType(typeof(ApiResponse<IEnumerable<PortalAllergyDto>>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status403Forbidden)]
-    public async Task<ActionResult<ApiResponse<IEnumerable<PortalAllergyDto>>>> GetAllergies()
+    public async Task<IActionResult> GetAllergies()
     {
         var patientId = GetAuthenticatedPatientId();
         if (!patientId.HasValue)
@@ -659,7 +659,7 @@ public class PatientPortalController : BaseApiController
     [Authorize]
     [ProducesResponseType(typeof(ApiResponse<IEnumerable<PortalImmunizationDto>>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status403Forbidden)]
-    public async Task<ActionResult<ApiResponse<IEnumerable<PortalImmunizationDto>>>> GetImmunizations()
+    public async Task<IActionResult> GetImmunizations()
     {
         var patientId = GetAuthenticatedPatientId();
         if (!patientId.HasValue)
@@ -676,7 +676,7 @@ public class PatientPortalController : BaseApiController
     [Authorize]
     [ProducesResponseType(typeof(ApiResponse<IEnumerable<PortalVitalSignsDto>>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status403Forbidden)]
-    public async Task<ActionResult<ApiResponse<IEnumerable<PortalVitalSignsDto>>>> GetVitalSignsHistory(
+    public async Task<IActionResult> GetVitalSignsHistory(
         [FromQuery][Range(1, 100, ErrorMessage = "Limit must be between 1 and 100")] int limit = 20)
     {
         var patientId = GetAuthenticatedPatientId();
@@ -718,7 +718,7 @@ public class PatientPortalController : BaseApiController
     [Authorize]
     [ProducesResponseType(typeof(ApiResponse<IEnumerable<PortalLabResultSummaryDto>>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status403Forbidden)]
-    public async Task<ActionResult<ApiResponse<IEnumerable<PortalLabResultSummaryDto>>>> GetLabResults(
+    public async Task<IActionResult> GetLabResults(
         [FromQuery][Range(2000, 2100, ErrorMessage = "Invalid year")] int? year = null,
         [FromQuery][Range(1, 100, ErrorMessage = "Limit must be between 1 and 100")] int limit = 50)
     {
@@ -738,7 +738,7 @@ public class PatientPortalController : BaseApiController
     [ProducesResponseType(typeof(ApiResponse<PortalLabResultDetailDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<ApiResponse<PortalLabResultDetailDto>>> GetLabResultDetail(int labResultId)
+    public async Task<IActionResult> GetLabResultDetail(int labResultId)
     {
         var patientId = GetAuthenticatedPatientId();
         if (!patientId.HasValue)
@@ -780,7 +780,7 @@ public class PatientPortalController : BaseApiController
     [Authorize]
     [ProducesResponseType(typeof(ApiResponse<IEnumerable<PortalMedicationSummaryDto>>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status403Forbidden)]
-    public async Task<ActionResult<ApiResponse<IEnumerable<PortalMedicationSummaryDto>>>> GetActiveMedications()
+    public async Task<IActionResult> GetActiveMedications()
     {
         var patientId = GetAuthenticatedPatientId();
         if (!patientId.HasValue)
@@ -797,7 +797,7 @@ public class PatientPortalController : BaseApiController
     [Authorize]
     [ProducesResponseType(typeof(ApiResponse<IEnumerable<PortalPrescriptionDetailDto>>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status403Forbidden)]
-    public async Task<ActionResult<ApiResponse<IEnumerable<PortalPrescriptionDetailDto>>>> GetPrescriptionHistory(
+    public async Task<IActionResult> GetPrescriptionHistory(
         [FromQuery][Range(1, 100, ErrorMessage = "Limit must be between 1 and 100")] int limit = 20)
     {
         var patientId = GetAuthenticatedPatientId();
@@ -816,7 +816,7 @@ public class PatientPortalController : BaseApiController
     [ProducesResponseType(typeof(ApiResponse<PortalPrescriptionDetailDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<ApiResponse<PortalPrescriptionDetailDto>>> GetPrescriptionDetail(int prescriptionId)
+    public async Task<IActionResult> GetPrescriptionDetail(int prescriptionId)
     {
         var patientId = GetAuthenticatedPatientId();
         if (!patientId.HasValue)
@@ -838,7 +838,7 @@ public class PatientPortalController : BaseApiController
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status403Forbidden)]
-    public async Task<ActionResult<ApiResponse>> RequestRefill([FromBody] PortalRefillRequestDto request)
+    public async Task<IActionResult> RequestRefill([FromBody] PortalRefillRequestDto request)
     {
         if (!ModelState.IsValid)
             return ApiBadRequestFromModelState();
@@ -866,7 +866,7 @@ public class PatientPortalController : BaseApiController
     [Authorize]
     [ProducesResponseType(typeof(ApiResponse<IEnumerable<PortalMessageThreadDto>>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status403Forbidden)]
-    public async Task<ActionResult<ApiResponse<IEnumerable<PortalMessageThreadDto>>>> GetMessageThreads()
+    public async Task<IActionResult> GetMessageThreads()
     {
         var patientId = GetAuthenticatedPatientId();
         if (!patientId.HasValue)
@@ -883,7 +883,7 @@ public class PatientPortalController : BaseApiController
     [Authorize]
     [ProducesResponseType(typeof(ApiResponse<IEnumerable<PortalMessageDto>>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status403Forbidden)]
-    public async Task<ActionResult<ApiResponse<IEnumerable<PortalMessageDto>>>> GetMessages(int threadId)
+    public async Task<IActionResult> GetMessages(int threadId)
     {
         var patientId = GetAuthenticatedPatientId();
         if (!patientId.HasValue)
@@ -900,7 +900,7 @@ public class PatientPortalController : BaseApiController
     [Authorize]
     [ProducesResponseType(typeof(ApiResponse<PortalMessageDto>), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status403Forbidden)]
-    public async Task<ActionResult<ApiResponse<PortalMessageDto>>> SendMessage([FromBody] PortalSendMessageDto request)
+    public async Task<IActionResult> SendMessage([FromBody] PortalSendMessageDto request)
     {
         if (!ModelState.IsValid)
             return ApiBadRequestFromModelState();
@@ -927,7 +927,7 @@ public class PatientPortalController : BaseApiController
     [Authorize]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status403Forbidden)]
-    public async Task<ActionResult<ApiResponse>> MarkMessagesAsRead(int threadId)
+    public async Task<IActionResult> MarkMessagesAsRead(int threadId)
     {
         var patientId = GetAuthenticatedPatientId();
         if (!patientId.HasValue)
@@ -944,7 +944,7 @@ public class PatientPortalController : BaseApiController
     [Authorize]
     [ProducesResponseType(typeof(ApiResponse<int>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status403Forbidden)]
-    public async Task<ActionResult<ApiResponse<int>>> GetUnreadMessageCount()
+    public async Task<IActionResult> GetUnreadMessageCount()
     {
         var patientId = GetAuthenticatedPatientId();
         if (!patientId.HasValue)
@@ -965,7 +965,7 @@ public class PatientPortalController : BaseApiController
     [Authorize]
     [ProducesResponseType(typeof(ApiResponse<IEnumerable<PortalInvoiceSummaryDto>>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status403Forbidden)]
-    public async Task<ActionResult<ApiResponse<IEnumerable<PortalInvoiceSummaryDto>>>> GetInvoices(
+    public async Task<IActionResult> GetInvoices(
         [FromQuery][RegularExpression("^(Pending|Paid|Overdue|Partial)?$", ErrorMessage = "Invalid status")] string? status = null)
     {
         var patientId = GetAuthenticatedPatientId();
@@ -984,7 +984,7 @@ public class PatientPortalController : BaseApiController
     [ProducesResponseType(typeof(ApiResponse<PortalInvoiceDetailDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<ApiResponse<PortalInvoiceDetailDto>>> GetInvoiceDetail(int invoiceId)
+    public async Task<IActionResult> GetInvoiceDetail(int invoiceId)
     {
         var patientId = GetAuthenticatedPatientId();
         if (!patientId.HasValue)
@@ -1005,7 +1005,7 @@ public class PatientPortalController : BaseApiController
     [Authorize]
     [ProducesResponseType(typeof(ApiResponse<decimal>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status403Forbidden)]
-    public async Task<ActionResult<ApiResponse<decimal>>> GetOutstandingBalance()
+    public async Task<IActionResult> GetOutstandingBalance()
     {
         var patientId = GetAuthenticatedPatientId();
         if (!patientId.HasValue)
@@ -1023,7 +1023,7 @@ public class PatientPortalController : BaseApiController
     [ProducesResponseType(typeof(ApiResponse<PortalPaymentResponseDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status403Forbidden)]
-    public async Task<ActionResult<ApiResponse<PortalPaymentResponseDto>>> MakePayment([FromBody] PortalMakePaymentDto request)
+    public async Task<IActionResult> MakePayment([FromBody] PortalMakePaymentDto request)
     {
         if (!ModelState.IsValid)
             return ApiBadRequestFromModelState();
@@ -1088,7 +1088,7 @@ public class PatientPortalController : BaseApiController
     [Authorize]
     [ProducesResponseType(typeof(ApiResponse<IEnumerable<PortalNotificationDto>>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status403Forbidden)]
-    public async Task<ActionResult<ApiResponse<IEnumerable<PortalNotificationDto>>>> GetNotifications(
+    public async Task<IActionResult> GetNotifications(
         [FromQuery] bool unreadOnly = false)
     {
         var patientId = GetAuthenticatedPatientId();
@@ -1106,7 +1106,7 @@ public class PatientPortalController : BaseApiController
     [Authorize]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status403Forbidden)]
-    public async Task<ActionResult<ApiResponse>> MarkNotificationAsRead(int notificationId)
+    public async Task<IActionResult> MarkNotificationAsRead(int notificationId)
     {
         var patientId = GetAuthenticatedPatientId();
         if (!patientId.HasValue)
@@ -1123,7 +1123,7 @@ public class PatientPortalController : BaseApiController
     [Authorize]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status403Forbidden)]
-    public async Task<ActionResult<ApiResponse>> MarkAllNotificationsAsRead()
+    public async Task<IActionResult> MarkAllNotificationsAsRead()
     {
         var patientId = GetAuthenticatedPatientId();
         if (!patientId.HasValue)
@@ -1140,7 +1140,7 @@ public class PatientPortalController : BaseApiController
     [Authorize]
     [ProducesResponseType(typeof(ApiResponse<PortalNotificationPreferencesDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status403Forbidden)]
-    public async Task<ActionResult<ApiResponse<PortalNotificationPreferencesDto>>> GetNotificationPreferences()
+    public async Task<IActionResult> GetNotificationPreferences()
     {
         var patientId = GetAuthenticatedPatientId();
         if (!patientId.HasValue)
@@ -1157,7 +1157,7 @@ public class PatientPortalController : BaseApiController
     [Authorize]
     [ProducesResponseType(typeof(ApiResponse<PortalNotificationPreferencesDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status403Forbidden)]
-    public async Task<ActionResult<ApiResponse<PortalNotificationPreferencesDto>>> UpdateNotificationPreferences(
+    public async Task<IActionResult> UpdateNotificationPreferences(
         [FromBody] PortalNotificationPreferencesDto preferences)
     {
         if (!ModelState.IsValid)
