@@ -355,7 +355,7 @@ public class RadiologyController : BaseApiController
             total -= order.DiscountAmount ?? 0;
         }
 
-        order.TotalPrice = total;
+        order.TotalAmount = total;
 
         var created = await _radiologyService.CreateRadiologyOrderAsync(order);
         return ApiCreated(MapToRadiologyOrderDto(created), "Radiology order created successfully");
