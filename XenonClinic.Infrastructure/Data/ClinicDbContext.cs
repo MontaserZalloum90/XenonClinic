@@ -1815,8 +1815,8 @@ public class ClinicDbContext : IdentityDbContext<Entities.ApplicationUser>
 
         builder.Entity<CompanyAuthSettings>()
             .HasOne(cas => cas.Company)
-            .WithMany()
-            .HasForeignKey(cas => cas.CompanyId)
+            .WithOne(c => c.AuthSettings)
+            .HasForeignKey<CompanyAuthSettings>(cas => cas.CompanyId)
             .OnDelete(DeleteBehavior.Cascade);
 
         builder.Entity<CompanyAuthSettings>()
