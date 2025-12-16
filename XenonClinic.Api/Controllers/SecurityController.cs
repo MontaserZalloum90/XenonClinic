@@ -242,11 +242,8 @@ public class SecurityController : BaseApiController
     [ProducesResponseType(typeof(ApiResponse<DataAccessRuleDto>), StatusCodes.Status201Created)]
     public async Task<IActionResult> CreateDataAccessRule([FromBody] CreateDataAccessRuleDto dto)
     {
-        var userId = _userContext.UserId;
-        if (string.IsNullOrEmpty(userId) || !int.TryParse(userId, out var userIdInt))
-            return ApiUnauthorized("User context is required");
-
-        var rule = await _rbacService.CreateDataAccessRuleAsync(dto, userIdInt);
+        var createdBy = _userContext.UserId ?? 0;
+        var rule = await _rbacService.CreateDataAccessRuleAsync(dto, createdBy);
         return ApiCreated(rule, $"/api/security/data-access-rules/{rule.Id}");
     }
 

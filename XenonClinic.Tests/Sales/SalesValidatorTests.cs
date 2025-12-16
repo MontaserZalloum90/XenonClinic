@@ -880,7 +880,7 @@ public class SalesValidatorTests
             {
                 SaleId = 1,
                 Amount = 500.00m,
-                PaymentMethod = PaymentMethod.CreditCard,
+                PaymentMethod = PaymentMethod.Card,
                 ReferenceNumber = "REF-123456",
                 BankName = "Emirates NBD",
                 CardLastFourDigits = "1234",
@@ -1047,7 +1047,7 @@ public class SalesValidatorTests
             {
                 SaleId = 1,
                 Amount = 100,
-                PaymentMethod = PaymentMethod.CreditCard,
+                PaymentMethod = PaymentMethod.Card,
                 CardLastFourDigits = cardDigits
             };
 
@@ -1066,7 +1066,7 @@ public class SalesValidatorTests
             {
                 SaleId = 1,
                 Amount = 100,
-                PaymentMethod = PaymentMethod.CreditCard,
+                PaymentMethod = PaymentMethod.Card,
                 CardLastFourDigits = "1234"
             };
 

@@ -583,12 +583,6 @@ public class EndToEndExtendedTests : IClassFixture<WebApplicationFactory<Program
     }
 
     [Fact]
-    public async Task PaymentReminder_ShouldBeSent()
-    {
-        Assert.True(true);
-    }
-
-    [Fact]
     public async Task OverduePayment_ShouldBeTracked()
     {
         Assert.True(true);

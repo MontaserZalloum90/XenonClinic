@@ -18,7 +18,8 @@ namespace XenonClinic.Tests.Appointments;
 /// </summary>
 public class AppointmentBulkOperationsTests : IAsyncLifetime
 {
-    private ClinicDbContext _context = null!;
+    private ClinicDbContext _context;
+    private IAppointmentService _appointmentService;
 
     public async Task InitializeAsync()
     {
@@ -26,6 +27,7 @@ public class AppointmentBulkOperationsTests : IAsyncLifetime
             .UseInMemoryDatabase($"AppointmentBulkDb_{Guid.NewGuid()}")
             .Options;
         _context = new ClinicDbContext(options);
+        _appointmentService = new AppointmentService(_context);
         await Task.CompletedTask;
     }
 
