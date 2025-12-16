@@ -708,7 +708,7 @@ public class PatientPortalService : IPatientPortalService
         {
             Id = a.Id,
             AppointmentDate = a.AppointmentDate,
-            StartTime = a.StartTime,
+            StartTime = a.StartTime.ToString("HH:mm"),
             DoctorName = $"Dr. {a.Doctor?.FirstName} {a.Doctor?.LastName}",
             DoctorSpecialty = a.Doctor?.Specialty,
             AppointmentType = a.AppointmentType ?? "Regular",
@@ -732,7 +732,7 @@ public class PatientPortalService : IPatientPortalService
         {
             Id = a.Id,
             AppointmentDate = a.AppointmentDate,
-            StartTime = a.StartTime,
+            StartTime = a.StartTime.ToString("HH:mm"),
             DoctorName = $"Dr. {a.Doctor?.FirstName} {a.Doctor?.LastName}",
             DoctorSpecialty = a.Doctor?.Specialty,
             AppointmentType = a.AppointmentType ?? "Regular",
@@ -758,22 +758,19 @@ public class PatientPortalService : IPatientPortalService
         {
             Id = appointment.Id,
             AppointmentDate = appointment.AppointmentDate,
-            StartTime = appointment.StartTime,
-            EndTime = appointment.EndTime,
+            StartTime = appointment.StartTime.ToString("HH:mm"),
+            EndTime = appointment.EndTime.ToString("HH:mm"),
             DoctorName = $"Dr. {appointment.Doctor?.FirstName} {appointment.Doctor?.LastName}",
             DoctorSpecialty = appointment.Doctor?.Specialty,
             DoctorPhotoUrl = appointment.Doctor?.PhotoPath,
-            Department = appointment.Department,
             Location = appointment.Location,
             AppointmentType = appointment.AppointmentType ?? "Regular",
-            Status = appointment.Status ?? "Scheduled",
+            Status = appointment.Status.ToString(),
             Reason = appointment.Reason,
             Notes = appointment.Notes,
             CanCancel = canModify,
             CanReschedule = canModify,
-            IsTelemedicine = appointment.IsTelemedicine,
-            TelemedicineLink = appointment.IsTelemedicine ? appointment.TelemedicineLink : null,
-            PreVisitInstructions = appointment.PreVisitInstructions
+            IsTelemedicine = appointment.IsTelemedicine
         };
     }
 

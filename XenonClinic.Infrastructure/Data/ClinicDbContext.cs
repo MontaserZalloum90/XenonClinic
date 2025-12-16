@@ -68,12 +68,18 @@ public class ClinicDbContext : IdentityDbContext<Entities.ApplicationUser>
     public DbSet<Company> Companies => Set<Company>();
     public DbSet<XenonClinic.Core.Entities.TenantSettings> TenantSettings => Set<XenonClinic.Core.Entities.TenantSettings>();
     public DbSet<CompanySettings> CompanySettings => Set<CompanySettings>();
+    public DbSet<Feature> Features => Set<Feature>();
+    public DbSet<CompanyType> CompanyTypes => Set<CompanyType>();
+    public DbSet<ClinicType> ClinicTypes => Set<ClinicType>();
+    public DbSet<CompanyTypeTemplate> CompanyTypeTemplates => Set<CompanyTypeTemplate>();
+    public DbSet<ClinicTypeTemplate> ClinicTypeTemplates => Set<ClinicTypeTemplate>();
 
     // Existing entities
     public DbSet<Branch> Branches => Set<Branch>();
     public DbSet<LicenseConfig> LicenseConfigs => Set<LicenseConfig>();
     public DbSet<UserBranch> UserBranches => Set<UserBranch>();
     public DbSet<Patient> Patients => Set<Patient>();
+    public DbSet<PatientAllergy> PatientAllergies => Set<PatientAllergy>();
     public DbSet<PatientMedicalHistory> PatientMedicalHistories => Set<PatientMedicalHistory>();
     public DbSet<PatientDocument> PatientDocuments => Set<PatientDocument>();
     public DbSet<Appointment> Appointments => Set<Appointment>();

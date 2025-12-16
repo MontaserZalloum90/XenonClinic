@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Identity;
+using XenonClinic.Core.Entities;
 using XenonClinic.Core.Interfaces;
 
 namespace XenonClinic.Infrastructure.Entities;
@@ -62,4 +63,6 @@ public class ApplicationUser : IdentityUser, IApplicationUser
 
     // Navigation properties - these reference Core entities
     // Note: These are configured in DbContext, not using attributes to avoid circular references
+    public Company? Company { get; set; }
+    public Branch? PrimaryBranch { get; set; }
 }

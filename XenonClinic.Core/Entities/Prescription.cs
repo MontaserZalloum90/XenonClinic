@@ -23,6 +23,9 @@ public class Prescription
     [MaxLength(50)]
     public string Status { get; set; } = "Active";
 
+    [MaxLength(1000)]
+    public string? Instructions { get; set; }
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     public DateTime? UpdatedAt { get; set; }
@@ -52,6 +55,12 @@ public class PrescriptionItem
     [MaxLength(200)]
     public string MedicationName { get; set; } = string.Empty;
 
+    [MaxLength(200)]
+    public string? GenericName { get; set; }
+
+    [MaxLength(100)]
+    public string? Strength { get; set; }
+
     [MaxLength(100)]
     public string? Dosage { get; set; }
 
@@ -59,12 +68,19 @@ public class PrescriptionItem
     public string? Frequency { get; set; } // e.g., "Once daily", "Twice daily", "Every 8 hours"
 
     [MaxLength(50)]
+    public string? Duration { get; set; } // Duration as string (e.g., "7 days", "2 weeks")
+
+    [MaxLength(50)]
     public string? Route { get; set; } // e.g., "Oral", "Topical", "Injection"
 
     [MaxLength(500)]
     public string? Instructions { get; set; }
 
-    public decimal? Quantity { get; set; }
+    public int? Quantity { get; set; }
+
+    public int? Refills { get; set; }
+
+    public int? RefillsRemaining { get; set; }
 
     public int? DurationDays { get; set; }
 

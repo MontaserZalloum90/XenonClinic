@@ -123,7 +123,7 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddInMemoryCaching(this IServiceCollection services)
     {
         services.AddMemoryCache();
-        services.AddSingleton<ICacheService, CacheService>();
+        services.AddSingleton<Services.ICacheService, CacheService>();
         return services;
     }
 
@@ -147,7 +147,7 @@ public static class ServiceCollectionExtensions
             options.InstanceName = "XenonClinic_";
         });
 
-        services.AddSingleton<ICacheService, RedisCacheService>();
+        services.AddSingleton<Services.ICacheService, RedisCacheService>();
 
         return services;
     }

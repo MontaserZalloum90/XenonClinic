@@ -48,6 +48,9 @@ public class Patient : ISoftDelete, IBranchEntity
     public string? City { get; set; }
     public string? Country { get; set; }
     public string? MRN { get; set; } // Medical Record Number
+    public string? BloodType { get; set; }
+    public string? EmergencyContactName { get; set; }
+    public string? EmergencyContactPhone { get; set; }
     public bool IsActive { get; set; } = true;
 
     // Soft delete support for healthcare compliance

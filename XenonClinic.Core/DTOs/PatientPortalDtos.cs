@@ -504,6 +504,8 @@ public class PortalPaymentResponseDto
     public string? TransactionId { get; set; }
     public string? Message { get; set; }
     public string? ReceiptUrl { get; set; }
+    public string? PaymentUrl { get; set; }
+    public bool RequiresAction { get; set; }
     public decimal? NewBalance { get; set; }
 }
 
@@ -567,6 +569,7 @@ public class PortalRegistrationResponseDto
     public int? PatientId { get; set; }
     public string? Message { get; set; }
     public bool RequiresVerification { get; set; }
+    public string? VerificationToken { get; set; }
 }
 
 /// <summary>

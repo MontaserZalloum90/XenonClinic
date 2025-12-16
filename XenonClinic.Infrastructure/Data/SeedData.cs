@@ -507,16 +507,16 @@ public static class SeedData
                 for (int j = 0; j < 3; j++)
                 {
                     var start = DateTime.UtcNow.AddDays(-random.Next(1, 60)).AddHours(random.Next(8, 18));
-                    var status = new[] { "Booked", "Completed", "Cancelled", "NoShow" }[random.Next(4)];
-                    var type = new[] { "HearingTest", "Fitting", "Consultation", "Repair", "FollowUp" }[random.Next(5)];
+                    var statusValues = new[] { Core.Enums.AppointmentStatus.Confirmed, Core.Enums.AppointmentStatus.Completed, Core.Enums.AppointmentStatus.Cancelled, Core.Enums.AppointmentStatus.NoShow };
+                    var typeValues = new[] { Core.Enums.AppointmentType.HearingTest, Core.Enums.AppointmentType.HearingAidFitting, Core.Enums.AppointmentType.Consultation, Core.Enums.AppointmentType.HearingDeviceRepair, Core.Enums.AppointmentType.FollowUp };
                     appointments.Add(new Appointment
                     {
                         BranchId = patient.BranchId,
                         PatientId = patient.Id,
                         StartTime = start,
                         EndTime = start.AddMinutes(45),
-                        Status = status,
-                        Type = type,
+                        Status = statusValues[random.Next(4)],
+                        Type = typeValues[random.Next(5)],
                         Notes = "Seeded appointment"
                     });
                 }

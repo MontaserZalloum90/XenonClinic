@@ -42,11 +42,19 @@ public class Employee : IBranchEntity
     public DateTime? TerminationDate { get; set; }
     public EmploymentStatus EmploymentStatus { get; set; } = EmploymentStatus.Active;
 
+    // Position title for display
+    public string? Position { get; set; }
+
     // Compensation
     public decimal BasicSalary { get; set; }
     public decimal? HousingAllowance { get; set; }
     public decimal? TransportAllowance { get; set; }
     public decimal? OtherAllowances { get; set; }
+
+    // Bank Details
+    public string? BankName { get; set; }
+    public string? BankAccountNumber { get; set; }
+    public string? IBAN { get; set; }
 
     // Leave Balances
     public int AnnualLeaveBalance { get; set; } = 30; // Days per year
