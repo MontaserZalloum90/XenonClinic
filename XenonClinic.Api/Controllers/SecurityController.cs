@@ -192,7 +192,8 @@ public class SecurityController : BaseApiController
     [ProducesResponseType(typeof(ApiResponse<List<string>>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetMyPermissions()
     {
-        var permissions = await _rbacService.GetUserEffectivePermissionsAsync(_userContext.UserId ?? 0);
+        var userId = int.TryParse(_userContext.UserId, out var parsedUserId) ? parsedUserId : 0;
+        var permissions = await _rbacService.GetUserEffectivePermissionsAsync(userId);
         return ApiOk(permissions);
     }
 
@@ -209,7 +210,7 @@ public class SecurityController : BaseApiController
     {
         if (request.UserId == 0)
         {
-            request.UserId = _userContext.UserId ?? 0;
+            request.UserId = int.TryParse(_userContext.UserId, out var parsedUserId) ? parsedUserId : 0;
         }
         request.BranchId ??= _tenantContext.BranchId;
 
@@ -237,7 +238,7 @@ public class SecurityController : BaseApiController
     [ProducesResponseType(typeof(ApiResponse<DataAccessRuleDto>), StatusCodes.Status201Created)]
     public async Task<IActionResult> CreateDataAccessRule([FromBody] CreateDataAccessRuleDto dto)
     {
-        var createdBy = _userContext.UserId ?? 0;
+        var createdBy = int.TryParse(_userContext.UserId, out var parsedUserId) ? parsedUserId : 0;
         var rule = await _rbacService.CreateDataAccessRuleAsync(dto, createdBy);
         return ApiCreated(rule, $"/api/security/data-access-rules/{rule.Id}");
     }
