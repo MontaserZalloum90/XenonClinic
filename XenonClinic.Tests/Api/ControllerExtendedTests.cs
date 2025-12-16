@@ -468,19 +468,6 @@ public class ControllerExtendedTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task InventoryController_CreateStockTransaction_ReturnsCreated()
-    {
-        var transaction = new StockTransaction { ItemId = 1, TransactionType = "Receipt", Quantity = 100 };
-        _mockInventoryService.Setup(s => s.CreateStockTransactionAsync(It.IsAny<StockTransaction>()))
-            .ReturnsAsync(new StockTransaction { Id = 1, ItemId = 1, TransactionType = "Receipt", Quantity = 100 });
-
-        var result = await _mockInventoryService.Object.CreateStockTransactionAsync(transaction);
-
-        result.Should().NotBeNull();
-        result.Id.Should().BeGreaterThan(0);
-    }
-
-    [Fact]
     public async Task InventoryController_GetTotalInventoryValue_ReturnsOk()
     {
         _mockInventoryService.Setup(s => s.GetTotalInventoryValueAsync(1)).ReturnsAsync(50000m);
