@@ -322,13 +322,14 @@ public class SecurityController : BaseApiController
         }
 
         // BUG FIX: Prevent testing passwords for other users (security vulnerability)
-        if (request.UserId.HasValue && request.UserId.Value != currentUserId)
+        // Compare as strings since currentUserId is string and request.UserId is int
+        if (request.UserId.HasValue && request.UserId.Value.ToString() != currentUserId)
         {
             return ApiForbidden("Cannot validate password for other users");
         }
 
         var branchId = _tenantContext.BranchId ?? request.BranchId ?? 0;
-        var result = await _securityConfigService.ValidatePasswordAsync(request.Password, branchId, currentUserId);
+        var result = await _securityConfigService.ValidatePasswordAsync(request.Password, branchId, request.UserId);
         return ApiOk(result);
     }
 
