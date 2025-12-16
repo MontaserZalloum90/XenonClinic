@@ -24,12 +24,11 @@ public static class LoggingConfiguration
                 .ReadFrom.Configuration(context.Configuration)
                 .ReadFrom.Services(services)
                 .Enrich.FromLogContext()
-                .Enrich.WithMachineName()
-                .Enrich.WithEnvironmentName()
                 .Enrich.WithThreadId()
-                .Enrich.WithProcessId()
                 .Enrich.WithProperty("Application", "XenonClinic")
                 .Enrich.WithProperty("Version", GetApplicationVersion())
+                .Enrich.WithProperty("MachineName", Environment.MachineName)
+                .Enrich.WithProperty("Environment", context.HostingEnvironment.EnvironmentName)
                 .Filter.ByExcluding(IsHealthCheckRequest)
                 .ConfigureForEnvironment(context.HostingEnvironment);
         });

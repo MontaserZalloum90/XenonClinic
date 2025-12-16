@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using XenonClinic.Core.Constants;
 using XenonClinic.Core.Entities;
+using XenonClinic.Infrastructure.Entities;
 
 namespace XenonClinic.Infrastructure.Data;
 

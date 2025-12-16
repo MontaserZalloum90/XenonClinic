@@ -26,9 +26,8 @@ public static class ApiVersioningConfiguration
                 new HeaderApiVersionReader("X-Api-Version"), // X-Api-Version: 1.0
                 new QueryStringApiVersionReader("api-version") // ?api-version=1.0
             );
-        });
-
-        services.AddVersionedApiExplorer(options =>
+        })
+        .AddApiExplorer(options =>
         {
             // Format version as 'v'major[.minor][-status]
             options.GroupNameFormat = "'v'VVV";
