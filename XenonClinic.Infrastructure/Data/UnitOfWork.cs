@@ -13,6 +13,7 @@ public class UnitOfWork : IUnitOfWork
 {
     private readonly ClinicDbContext _context;
     private readonly ConcurrentDictionary<Type, object> _repositories;
+    private IPatientRepository? _patients;
     private bool _disposed;
 
     public UnitOfWork(ClinicDbContext context)
@@ -20,6 +21,9 @@ public class UnitOfWork : IUnitOfWork
         _context = context ?? throw new ArgumentNullException(nameof(context));
         _repositories = new ConcurrentDictionary<Type, object>();
     }
+
+    /// <inheritdoc />
+    public IPatientRepository Patients => _patients ??= new PatientRepository(_context);
 
     /// <inheritdoc />
     public IRepository<T> Repository<T>() where T : class

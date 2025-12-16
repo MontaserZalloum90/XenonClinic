@@ -24,7 +24,6 @@ public static class LoggingConfiguration
                 .ReadFrom.Configuration(context.Configuration)
                 .ReadFrom.Services(services)
                 .Enrich.FromLogContext()
-                .Enrich.WithThreadId()
                 .Enrich.WithProperty("Application", "XenonClinic")
                 .Enrich.WithProperty("Version", GetApplicationVersion())
                 .Enrich.WithProperty("MachineName", Environment.MachineName)

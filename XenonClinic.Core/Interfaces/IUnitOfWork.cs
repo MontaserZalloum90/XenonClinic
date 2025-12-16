@@ -7,6 +7,11 @@ namespace XenonClinic.Core.Interfaces;
 public interface IUnitOfWork : IDisposable, IAsyncDisposable
 {
     /// <summary>
+    /// Gets the Patient repository with specialized queries.
+    /// </summary>
+    IPatientRepository Patients { get; }
+
+    /// <summary>
     /// Gets a repository for the specified entity type.
     /// </summary>
     /// <typeparam name="T">The entity type.</typeparam>
