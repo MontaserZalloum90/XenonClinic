@@ -656,7 +656,7 @@ public class InventoryController : BaseApiController
 
             if (request.TransactionType.HasValue)
             {
-                filteredTransactions = filteredTransactions.Where(t => (int)t.TransactionType == (int)request.TransactionType.Value);
+                filteredTransactions = filteredTransactions.Where(t => t.TransactionType == request.TransactionType.Value);
             }
 
             if (request.PatientId.HasValue)
@@ -791,7 +791,7 @@ public class InventoryController : BaseApiController
             var transaction = new InventoryTransaction
             {
                 InventoryItemId = dto.InventoryItemId,
-                TransactionType = (TransactionType)(int)dto.TransactionType,
+                TransactionType = dto.TransactionType,
                 Quantity = dto.Quantity,
                 UnitPrice = dto.UnitPrice,
                 TotalAmount = dto.Quantity * dto.UnitPrice,
@@ -862,8 +862,7 @@ public class InventoryController : BaseApiController
                 ItemsByCategory = itemsList
                     .GroupBy(i => i.Category)
                     .ToDictionary(g => g.Key, g => g.Count()),
-                TransactionsByType = transactionDistribution
-                    .ToDictionary(kvp => (InventoryTransactionType)(int)kvp.Key, kvp => kvp.Value),
+                TransactionsByType = transactionDistribution,
                 TopLowStockItems = itemsList
                     .Where(i => i.IsLowStock)
                     .OrderBy(i => i.QuantityOnHand)
@@ -972,7 +971,7 @@ public class InventoryController : BaseApiController
             InventoryItemId = transaction.InventoryItemId,
             ItemCode = item?.ItemCode ?? string.Empty,
             ItemName = item?.Name ?? string.Empty,
-            TransactionType = (InventoryTransactionType)(int)transaction.TransactionType,
+            TransactionType = transaction.TransactionType,
             Quantity = transaction.Quantity,
             UnitPrice = transaction.UnitPrice,
             TotalAmount = transaction.TotalAmount,

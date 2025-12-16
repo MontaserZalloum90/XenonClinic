@@ -137,7 +137,7 @@ public class InventoryService : IInventoryService
             .ToListAsync();
     }
 
-    public async Task<IEnumerable<InventoryTransaction>> GetTransactionsByTypeAsync(int branchId, TransactionType transactionType)
+    public async Task<IEnumerable<InventoryTransaction>> GetTransactionsByTypeAsync(int branchId, InventoryTransactionType transactionType)
     {
         return await _context.InventoryTransactions
             .AsNoTracking()
@@ -554,7 +554,7 @@ public class InventoryService : IInventoryService
             .SumAsync(i => i.QuantityOnHand * i.CostPrice);
     }
 
-    public async Task<Dictionary<TransactionType, int>> GetTransactionTypeDistributionAsync(int branchId)
+    public async Task<Dictionary<InventoryTransactionType, int>> GetTransactionTypeDistributionAsync(int branchId)
     {
         var transactions = await _context.InventoryTransactions
             .Include(t => t.InventoryItem)

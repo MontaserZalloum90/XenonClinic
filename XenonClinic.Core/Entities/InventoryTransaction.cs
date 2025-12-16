@@ -6,7 +6,7 @@ public class InventoryTransaction
 {
     public int Id { get; set; }
     public int InventoryItemId { get; set; }
-    public TransactionType TransactionType { get; set; }
+    public InventoryTransactionType TransactionType { get; set; }
     public int Quantity { get; set; } // Positive for additions, negative for reductions
     public decimal UnitPrice { get; set; }
     public decimal TotalAmount { get; set; }
