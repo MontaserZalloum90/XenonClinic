@@ -1025,9 +1025,11 @@ public class MedicationSafetyCheckResultDto
 
     // Summary
     public List<string> Warnings { get; set; } = new();
+    public List<string> Recommendations { get; set; } = new();
     public bool CanPrescribe { get; set; }
     public bool RequiresOverride { get; set; }
     public string? OverrideReason { get; set; }
+    public List<string>? OverrideReasons { get; set; }
 }
 
 #endregion

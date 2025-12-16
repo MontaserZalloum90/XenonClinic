@@ -291,26 +291,3 @@ public interface IClinicalDecisionSupportService
 
     #endregion
 }
-
-/// <summary>
-/// Comprehensive medication safety check result
-/// </summary>
-public class MedicationSafetyCheckResultDto
-{
-    public int PatientId { get; set; }
-    public string MedicationCode { get; set; } = string.Empty;
-    public string MedicationName { get; set; } = string.Empty;
-    public DateTime CheckedAt { get; set; }
-    public bool IsSafe { get; set; }
-    public string SafetyLevel { get; set; } = string.Empty; // Safe, ProceedWithCaution, NotRecommended, Contraindicated
-    public AllergyCheckResultDto? AllergyCheck { get; set; }
-    public DrugInteractionResultDto? InteractionCheck { get; set; }
-    public ContraindicationCheckResultDto? ContraindicationCheck { get; set; }
-    public DosageCheckResultDto? DosageCheck { get; set; }
-    public List<string> Warnings { get; set; } = new();
-    public List<string> Recommendations { get; set; } = new();
-    public bool CanPrescribe { get; set; }
-    public bool RequiresOverride { get; set; }
-    public string? OverrideReason { get; set; }
-    public List<string>? OverrideReasons { get; set; }
-}
