@@ -95,7 +95,7 @@ public class RadiologyController : BaseApiController
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetImagingStudyByCode(string studyCode)
     {
-        var branchId = _currentUserService.BranchId;
+        var branchId = _currentUserService.BranchId ?? 0;
         var study = await _radiologyService.GetImagingStudyByCodeAsync(studyCode, branchId);
         if (study == null)
             return ApiNotFound("Imaging study not found");
@@ -116,12 +116,12 @@ public class RadiologyController : BaseApiController
             TestCode = dto.StudyCode,
             TestName = dto.StudyName,
             Description = dto.Description,
-            Category = dto.Modality.ToString(),
+            Category = TestCategory.Imaging,
             Price = dto.Price,
-            TurnaroundTime = dto.EstimatedDurationMinutes,
+            TurnaroundTimeHours = dto.EstimatedDurationMinutes / 60,
             RequiresFasting = dto.RequiresFasting,
             PreparationInstructions = dto.PatientPreparation,
-            BranchId = _currentUserService.BranchId,
+            BranchId = _currentUserService.BranchId ?? 0,
             IsActive = true,
             CreatedAt = DateTime.UtcNow,
             CreatedBy = _currentUserService.UserId
@@ -149,9 +149,9 @@ public class RadiologyController : BaseApiController
         study.TestCode = dto.StudyCode;
         study.TestName = dto.StudyName;
         study.Description = dto.Description;
-        study.Category = dto.Modality.ToString();
+        study.Category = TestCategory.Imaging;
         study.Price = dto.Price;
-        study.TurnaroundTime = dto.EstimatedDurationMinutes;
+        study.TurnaroundTimeHours = dto.EstimatedDurationMinutes / 60;
         study.RequiresFasting = dto.RequiresFasting;
         study.PreparationInstructions = dto.PatientPreparation;
         study.IsActive = dto.IsActive;
@@ -189,7 +189,7 @@ public class RadiologyController : BaseApiController
     [ProducesResponseType(typeof(ApiResponse<IEnumerable<RadiologyOrderDto>>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetRadiologyOrders()
     {
-        var branchId = _currentUserService.BranchId;
+        var branchId = _currentUserService.BranchId ?? 0;
         var orders = await _radiologyService.GetRadiologyOrdersByBranchIdAsync(branchId);
 
         var orderDtos = orders.Select(MapToRadiologyOrderDto).ToList();
@@ -203,7 +203,7 @@ public class RadiologyController : BaseApiController
     [ProducesResponseType(typeof(ApiResponse<IEnumerable<RadiologyOrderDto>>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetPendingRadiologyOrders()
     {
-        var branchId = _currentUserService.BranchId;
+        var branchId = _currentUserService.BranchId ?? 0;
         var orders = await _radiologyService.GetPendingRadiologyOrdersAsync(branchId);
 
         var orderDtos = orders.Select(MapToRadiologyOrderDto).ToList();
@@ -217,7 +217,7 @@ public class RadiologyController : BaseApiController
     [ProducesResponseType(typeof(ApiResponse<IEnumerable<RadiologyOrderDto>>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetCompletedRadiologyOrders()
     {
-        var branchId = _currentUserService.BranchId;
+        var branchId = _currentUserService.BranchId ?? 0;
         var orders = await _radiologyService.GetCompletedRadiologyOrdersAsync(branchId);
 
         var orderDtos = orders.Select(MapToRadiologyOrderDto).ToList();
@@ -246,7 +246,7 @@ public class RadiologyController : BaseApiController
         [FromQuery] DateTime startDate,
         [FromQuery] DateTime endDate)
     {
-        var branchId = _currentUserService.BranchId;
+        var branchId = _currentUserService.BranchId ?? 0;
         var orders = await _radiologyService.GetRadiologyOrdersByDateRangeAsync(branchId, startDate, endDate);
 
         var orderDtos = orders.Select(MapToRadiologyOrderDto).ToList();
