@@ -1,21 +1,9 @@
 using System.Text.Json;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
+using XenonClinic.Core.Interfaces;
 
 namespace XenonClinic.Infrastructure.Services;
-
-/// <summary>
-/// Interface for distributed caching operations
-/// </summary>
-public interface ICacheService
-{
-    Task<T?> GetAsync<T>(string key, CancellationToken cancellationToken = default);
-    Task SetAsync<T>(string key, T value, TimeSpan? expiration = null, CancellationToken cancellationToken = default);
-    Task RemoveAsync(string key, CancellationToken cancellationToken = default);
-    Task RemoveByPrefixAsync(string prefix, CancellationToken cancellationToken = default);
-    Task<T> GetOrSetAsync<T>(string key, Func<Task<T>> factory, TimeSpan? expiration = null, CancellationToken cancellationToken = default);
-    Task<bool> ExistsAsync(string key, CancellationToken cancellationToken = default);
-}
 
 /// <summary>
 /// Redis-based distributed cache service implementation
@@ -172,22 +160,22 @@ public class RedisCacheService : ICacheService
     }
 
     /// <summary>
-    /// Remove all cached items with a given prefix
+    /// Remove all cached items matching a pattern
     /// Note: This requires Redis SCAN command support
     /// For in-memory cache, this is a no-op
     /// </summary>
-    public async Task RemoveByPrefixAsync(string prefix, CancellationToken cancellationToken = default)
+    public async Task RemoveByPatternAsync(string pattern, CancellationToken cancellationToken = default)
     {
         // This is a simplified implementation
         // For production Redis, you would use SCAN to find and delete keys
-        _logger.LogDebug("RemoveByPrefix called for prefix: {Prefix}", prefix);
+        _logger.LogDebug("RemoveByPattern called for pattern: {Pattern}", pattern);
         await Task.CompletedTask;
     }
 
     /// <summary>
-    /// Get or set a cached item - if not exists, create using factory
+    /// Get or create a cached item - if not exists, create using factory
     /// </summary>
-    public async Task<T> GetOrSetAsync<T>(string key, Func<Task<T>> factory, TimeSpan? expiration = null, CancellationToken cancellationToken = default)
+    public async Task<T> GetOrCreateAsync<T>(string key, Func<Task<T>> factory, TimeSpan? expiration = null, CancellationToken cancellationToken = default)
     {
         var cachedValue = await GetAsync<T>(key, cancellationToken);
 
@@ -235,9 +223,9 @@ public class RedisCacheService : ICacheService
 }
 
 /// <summary>
-/// Cache key builder for consistent key generation
+/// Cache key builder for consistent key generation with Redis prefix
 /// </summary>
-public static class CacheKeys
+public static class RedisCacheKeyBuilder
 {
     private const string Prefix = "xenonclinic";
 

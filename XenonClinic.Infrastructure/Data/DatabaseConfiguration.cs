@@ -177,7 +177,7 @@ public static class DatabaseConfiguration
     /// </summary>
     private static string EnsureConnectionPooling(string connectionString, DatabaseOptions options)
     {
-        var builder = new System.Data.SqlClient.SqlConnectionStringBuilder(connectionString);
+        var builder = new Microsoft.Data.SqlClient.SqlConnectionStringBuilder(connectionString);
 
         // Set pooling parameters if not already specified
         if (!connectionString.Contains("Min Pool Size", StringComparison.OrdinalIgnoreCase))

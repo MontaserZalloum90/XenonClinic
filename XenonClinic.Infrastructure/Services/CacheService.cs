@@ -59,7 +59,7 @@ public class CacheService : ICacheService
         return Task.CompletedTask;
     }
 
-    public async Task<T> GetOrSetAsync<T>(string key, Func<Task<T>> factory, TimeSpan? expiration = null, CancellationToken cancellationToken = default)
+    public async Task<T> GetOrCreateAsync<T>(string key, Func<Task<T>> factory, TimeSpan? expiration = null, CancellationToken cancellationToken = default)
     {
         if (_cache.TryGetValue(key, out T? value) && value is not null)
         {
@@ -87,10 +87,10 @@ public class CacheService : ICacheService
         return Task.CompletedTask;
     }
 
-    public Task RemoveByPrefixAsync(string prefix, CancellationToken cancellationToken = default)
+    public Task RemoveByPatternAsync(string pattern, CancellationToken cancellationToken = default)
     {
         var keysToRemove = _keys.Keys
-            .Where(k => MatchesPattern(k, prefix))
+            .Where(k => MatchesPattern(k, pattern))
             .ToList();
 
         foreach (var key in keysToRemove)
@@ -99,7 +99,7 @@ public class CacheService : ICacheService
             _keys.TryRemove(key, out _);
         }
 
-        _logger.LogDebug("Removed {Count} cache entries matching prefix: {Prefix}", keysToRemove.Count, prefix);
+        _logger.LogDebug("Removed {Count} cache entries matching pattern: {Pattern}", keysToRemove.Count, pattern);
         return Task.CompletedTask;
     }
 
