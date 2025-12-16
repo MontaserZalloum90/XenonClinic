@@ -46,6 +46,8 @@ public class Patient : ISoftDelete, IBranchEntity
     public string? ProfilePhotoUrl { get; set; }
     public string? Address { get; set; }
     public string? City { get; set; }
+    public string? State { get; set; }
+    public string? PostalCode { get; set; }
     public string? Country { get; set; }
     public string? MRN { get; set; } // Medical Record Number
     public string? EncryptedSSN { get; set; } // Encrypted Social Security Number for compliance

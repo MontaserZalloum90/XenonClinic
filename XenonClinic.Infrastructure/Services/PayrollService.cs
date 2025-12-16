@@ -1277,13 +1277,13 @@ public class PayrollService : IPayrollService
                 });
 
                 // Footer
-                page.Footer().AlignCenter().Text(text =>
+                page.Footer().AlignCenter().DefaultTextStyle(x => x.FontSize(8)).Text(text =>
                 {
                     text.Span("Page ");
                     text.CurrentPageNumber();
                     text.Span(" of ");
                     text.TotalPages();
-                }).FontSize(8);
+                });
             });
         });
 
@@ -1546,7 +1546,7 @@ public class PayrollService : IPayrollService
         var employee = await _context.Employees.FindAsync(employeeId)
             ?? throw new KeyNotFoundException($"Employee with ID {employeeId} not found");
 
-        var basicSalary = employee.BasicSalary ?? 0;
+        var basicSalary = employee.BasicSalary;
         var housingAllowance = employee.HousingAllowance ?? 0;
         var transportAllowance = employee.TransportAllowance ?? 0;
         var otherAllowances = employee.OtherAllowances ?? 0;
@@ -1585,7 +1585,7 @@ public class PayrollService : IPayrollService
         };
 
         // Calculate earnings
-        payslip.BasicSalary = employee.BasicSalary ?? 0;
+        payslip.BasicSalary = employee.BasicSalary;
         payslip.HousingAllowance = employee.HousingAllowance ?? 0;
         payslip.TransportAllowance = employee.TransportAllowance ?? 0;
         payslip.FoodAllowance = employee.FoodAllowance ?? 0;

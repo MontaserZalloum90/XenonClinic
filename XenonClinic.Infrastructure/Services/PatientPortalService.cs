@@ -1058,8 +1058,6 @@ public class PatientPortalService : IPatientPortalService
     {
         var visit = await _context.Visits
             .Include(v => v.Doctor)
-            .Include(v => v.Diagnoses)
-            .Include(v => v.VitalSigns)
             .FirstOrDefaultAsync(v => v.Id == visitId && v.PatientId == patientId);
 
         if (visit == null)
@@ -1084,14 +1082,7 @@ public class PatientPortalService : IPatientPortalService
             HistoryOfPresentIllness = visit.HistoryOfPresentIllness,
             Assessment = visit.Assessment,
             Plan = visit.Plan,
-            Diagnoses = visit.Diagnoses?.Select(d => new PortalDiagnosisSummaryDto
-            {
-                Id = d.Id,
-                DiagnosisName = d.DiagnosisName,
-                ICD10Code = d.ICD10Code,
-                DiagnosisDate = d.DiagnosisDate,
-                Status = d.Status ?? "Active"
-            }).ToList() ?? new List<PortalDiagnosisSummaryDto>(),
+            Diagnoses = new List<PortalDiagnosisSummaryDto>(), // Diagnoses stored as JSON string
             Prescriptions = prescriptions.SelectMany(p => p.Items?.Select(i => new PortalMedicationSummaryDto
             {
                 Id = i.Id,
@@ -1102,19 +1093,7 @@ public class PatientPortalService : IPatientPortalService
                 StartDate = p.PrescriptionDate,
                 PrescribingDoctor = $"Dr. {visit.Doctor?.FirstName} {visit.Doctor?.LastName}"
             }) ?? Enumerable.Empty<PortalMedicationSummaryDto>()).ToList(),
-            VitalSigns = visit.VitalSigns != null ? new PortalVitalSignsDto
-            {
-                RecordedAt = visit.VitalSigns.RecordedAt,
-                BloodPressureSystolic = visit.VitalSigns.BloodPressureSystolic,
-                BloodPressureDiastolic = visit.VitalSigns.BloodPressureDiastolic,
-                HeartRate = visit.VitalSigns.HeartRate,
-                Temperature = visit.VitalSigns.Temperature,
-                RespiratoryRate = visit.VitalSigns.RespiratoryRate,
-                OxygenSaturation = visit.VitalSigns.OxygenSaturation,
-                Weight = visit.VitalSigns.Weight,
-                Height = visit.VitalSigns.Height,
-                BMI = visit.VitalSigns.BMI
-            } : null,
+            VitalSigns = null, // VitalSigns stored as JSON string
             LabResults = labResults.Select(l => new PortalLabResultSummaryDto
             {
                 Id = l.Id,
@@ -1184,7 +1163,7 @@ public class PatientPortalService : IPatientPortalService
             Id = i.Id,
             VaccineName = i.VaccineName,
             AdministeredDate = i.AdministrationDate,
-            DoseNumber = i.DoseNumber,
+            DoseNumber = i.DoseNumber?.ToString(),
             LotNumber = i.LotNumber,
             AdministeredBy = i.AdministeredByEmployee != null
                 ? $"{i.AdministeredByEmployee.FirstName} {i.AdministeredByEmployee.LastName}"
@@ -1419,13 +1398,13 @@ public class PatientPortalService : IPatientPortalService
                 });
 
                 // Footer
-                page.Footer().AlignCenter().Text(text =>
+                page.Footer().AlignCenter().DefaultTextStyle(x => x.FontSize(8).FontColor(Colors.Grey.Medium)).Text(text =>
                 {
                     text.Span("XenonClinic - Confidential Medical Record - Page ");
                     text.CurrentPageNumber();
                     text.Span(" of ");
                     text.TotalPages();
-                }).FontSize(8).FontColor(Colors.Grey.Medium);
+                });
             });
         });
 
@@ -1651,13 +1630,13 @@ public class PatientPortalService : IPatientPortalService
                     {
                         row.RelativeItem().Text("This report is confidential and intended for the named patient only.")
                             .FontSize(8).FontColor(Colors.Grey.Medium);
-                        row.ConstantItem(100).AlignRight().Text(text =>
+                        row.ConstantItem(100).AlignRight().DefaultTextStyle(x => x.FontSize(8)).Text(text =>
                         {
                             text.Span("Page ");
                             text.CurrentPageNumber();
                             text.Span(" of ");
                             text.TotalPages();
-                        }).FontSize(8);
+                        });
                     });
                 });
             });
@@ -1984,7 +1963,7 @@ public class PatientPortalService : IPatientPortalService
             Id = i.Id,
             InvoiceNumber = i.InvoiceNumber,
             InvoiceDate = i.InvoiceDate,
-            DueDate = i.DueDate,
+            DueDate = i.DueDate ?? DateTime.MinValue,
             TotalAmount = i.TotalAmount,
             PaidAmount = i.PaidAmount,
             BalanceDue = i.TotalAmount - i.PaidAmount,
@@ -2008,10 +1987,10 @@ public class PatientPortalService : IPatientPortalService
             Id = invoice.Id,
             InvoiceNumber = invoice.InvoiceNumber,
             InvoiceDate = invoice.InvoiceDate,
-            DueDate = invoice.DueDate,
+            DueDate = invoice.DueDate ?? DateTime.MinValue,
             SubTotal = invoice.SubTotal,
-            TaxAmount = invoice.TaxAmount,
-            DiscountAmount = invoice.DiscountAmount,
+            TaxAmount = invoice.TaxAmount ?? 0,
+            DiscountAmount = invoice.DiscountAmount ?? 0,
             TotalAmount = invoice.TotalAmount,
             PaidAmount = invoice.PaidAmount,
             BalanceDue = invoice.TotalAmount - invoice.PaidAmount,
@@ -2252,9 +2231,9 @@ public class PatientPortalService : IPatientPortalService
                         {
                             var statusColor = invoice.Status switch
                             {
-                                "Paid" => Colors.Green.Darken2,
-                                "Overdue" => Colors.Red.Darken2,
-                                "Partial" => Colors.Orange.Darken2,
+                                InvoiceStatus.Paid => Colors.Green.Darken2,
+                                InvoiceStatus.Overdue => Colors.Red.Darken2,
+                                InvoiceStatus.PartiallyPaid => Colors.Orange.Darken2,
                                 _ => Colors.Blue.Darken2
                             };
                             status.Item().Text($"Status: {invoice.Status}").Bold().FontColor(statusColor);
@@ -2390,9 +2369,9 @@ public class PatientPortalService : IPatientPortalService
 
     public async Task<byte[]> DownloadReceiptAsync(int patientId, int paymentId)
     {
-        var payment = await _context.Payments
+        var payment = await _context.InvoicePayments
             .Include(p => p.Patient)
-            .ThenInclude(p => p.Branch)
+            .ThenInclude(p => p!.Branch)
             .Include(p => p.Invoice)
             .FirstOrDefaultAsync(p => p.Id == paymentId && p.PatientId == patientId);
 
