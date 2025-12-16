@@ -50,12 +50,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IRbacService, RbacService>();
 
         // PHI Encryption Service
-        services.AddSingleton<IEncryptionService>(sp =>
-        {
-            var masterKey = configuration["Security:EncryptionMasterKey"]
-                ?? throw new InvalidOperationException("Security:EncryptionMasterKey is required");
-            return new EncryptionService(masterKey);
-        });
+        services.AddSingleton<IEncryptionService, EncryptionService>();
 
         // Patient Consent Management
         services.AddScoped<IConsentService, ConsentService>();
@@ -68,13 +63,13 @@ public static class ServiceCollectionExtensions
         });
 
         // Backup and Disaster Recovery
-        services.AddScoped<IBackupService, BackupService>();
+        services.AddScoped<Services.IBackupService, BackupService>();
 
         // Security Configuration
-        services.AddScoped<ISecurityConfigurationService, SecurityConfigurationService>();
+        services.AddScoped<Services.ISecurityConfigurationService, SecurityConfigurationService>();
 
         // Resilience Services (Circuit Breaker, Rate Limiting)
-        services.AddSingleton<IResilienceService, ResilienceService>();
+        services.AddSingleton<IResilientHttpClientFactory, ResilientHttpClientFactory>();
 
         return services;
     }

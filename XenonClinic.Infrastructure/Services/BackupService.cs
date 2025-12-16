@@ -823,5 +823,8 @@ public class BackupRecord
     public long RowsCount { get; set; }
     [MaxLength(2000)] public string? ErrorMessage { get; set; }
     [MaxLength(500)] public string? RemoteStorageId { get; set; }
+    [MaxLength(1000)] public string? RemoteStorageUrl { get; set; }
+    public bool UploadedToRemote { get; set; }
+    public DateTime? UploadedAt { get; set; }
     public DateTime CreatedAt { get; set; }
 }

@@ -19,8 +19,7 @@ public static class TelemetryConfiguration
     /// Adds OpenTelemetry tracing, metrics, and logging.
     /// </summary>
     public static IServiceCollection AddXenonTelemetry(
-        this IServiceCollection services,
-        string? otlpEndpoint = null)
+        this IServiceCollection services)
     {
         // Configure resource
         var resourceBuilder = ResourceBuilder.CreateDefault()
@@ -63,26 +62,10 @@ public static class TelemetryConfiguration
                     {
                         options.RecordException = true;
                     })
-                    .AddEntityFrameworkCoreInstrumentation(options =>
-                    {
-                        options.SetDbStatementForText = true;
-                        options.SetDbStatementForStoredProcedure = true;
-                    })
                     .AddSource("XenonClinic.*");
 
-                // Add exporters
-                if (!string.IsNullOrEmpty(otlpEndpoint))
-                {
-                    tracing.AddOtlpExporter(options =>
-                    {
-                        options.Endpoint = new Uri(otlpEndpoint);
-                    });
-                }
-                else
-                {
-                    // Default to console exporter for development
-                    tracing.AddConsoleExporter();
-                }
+                // Default to console exporter for development
+                tracing.AddConsoleExporter();
             })
             .WithMetrics(metrics =>
             {
@@ -90,7 +73,6 @@ public static class TelemetryConfiguration
                     .SetResourceBuilder(resourceBuilder)
                     .AddAspNetCoreInstrumentation()
                     .AddHttpClientInstrumentation()
-                    .AddRuntimeInstrumentation()
                     .AddProcessInstrumentation()
                     .AddMeter("XenonClinic.*");
 
@@ -99,17 +81,7 @@ public static class TelemetryConfiguration
                 metrics.AddMeter("XenonClinic.Appointments");
                 metrics.AddMeter("XenonClinic.Orders");
 
-                if (!string.IsNullOrEmpty(otlpEndpoint))
-                {
-                    metrics.AddOtlpExporter(options =>
-                    {
-                        options.Endpoint = new Uri(otlpEndpoint);
-                    });
-                }
-                else
-                {
-                    metrics.AddConsoleExporter();
-                }
+                metrics.AddConsoleExporter();
             });
 
         return services;
@@ -119,8 +91,7 @@ public static class TelemetryConfiguration
     /// Adds OpenTelemetry logging integration.
     /// </summary>
     public static ILoggingBuilder AddXenonTelemetryLogging(
-        this ILoggingBuilder logging,
-        string? otlpEndpoint = null)
+        this ILoggingBuilder logging)
     {
         logging.AddOpenTelemetry(options =>
         {
@@ -131,14 +102,7 @@ public static class TelemetryConfiguration
             options.IncludeScopes = true;
             options.ParseStateValues = true;
 
-            if (!string.IsNullOrEmpty(otlpEndpoint))
-            {
-                options.AddOtlpExporter(o => o.Endpoint = new Uri(otlpEndpoint));
-            }
-            else
-            {
-                options.AddConsoleExporter();
-            }
+            options.AddConsoleExporter();
         });
 
         return logging;
