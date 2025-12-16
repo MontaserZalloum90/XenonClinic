@@ -390,10 +390,10 @@ public class HRService : IHRService
 
     public async Task<IEnumerable<LeaveRequest>> GetPendingLeaveRequestsAsync(int branchId)
     {
-        return await GetLeaveRequestsByStatusAsync(branchId, LeaveRequestStatus.Pending);
+        return await GetLeaveRequestsByStatusAsync(branchId, LeaveStatus.Pending);
     }
 
-    public async Task<IEnumerable<LeaveRequest>> GetLeaveRequestsByStatusAsync(int branchId, LeaveRequestStatus status)
+    public async Task<IEnumerable<LeaveRequest>> GetLeaveRequestsByStatusAsync(int branchId, LeaveStatus status)
     {
         return await _context.LeaveRequests
             .AsNoTracking()
@@ -429,7 +429,7 @@ public class HRService : IHRService
         // Check for overlapping leave requests
         var overlappingRequest = await _context.LeaveRequests
             .AnyAsync(lr => lr.EmployeeId == leaveRequest.EmployeeId &&
-                      lr.Status != LeaveRequestStatus.Rejected &&
+                      lr.Status != LeaveStatus.Rejected &&
                       lr.StartDate <= leaveRequest.EndDate &&
                       lr.EndDate >= leaveRequest.StartDate);
         if (overlappingRequest)
@@ -454,7 +454,7 @@ public class HRService : IHRService
         }
 
         // Only allow updates to pending requests
-        if (existingRequest.Status != LeaveRequestStatus.Pending)
+        if (existingRequest.Status != LeaveStatus.Pending)
         {
             throw new InvalidOperationException("Only pending leave requests can be modified");
         }
@@ -483,7 +483,7 @@ public class HRService : IHRService
             throw new KeyNotFoundException($"Leave request with ID {leaveRequestId} not found");
 
         // Validate status - can only approve pending requests
-        if (leaveRequest.Status != LeaveRequestStatus.Pending)
+        if (leaveRequest.Status != LeaveStatus.Pending)
         {
             throw new InvalidOperationException(
                 $"Cannot approve leave request in {leaveRequest.Status} status. Only pending requests can be approved.");
@@ -503,7 +503,7 @@ public class HRService : IHRService
             }
         }
 
-        leaveRequest.Status = LeaveRequestStatus.Approved;
+        leaveRequest.Status = LeaveStatus.Approved;
         leaveRequest.ApprovedBy = approvedBy;
         leaveRequest.ApprovedDate = DateTime.UtcNow;
 
@@ -532,13 +532,13 @@ public class HRService : IHRService
             throw new KeyNotFoundException($"Leave request with ID {leaveRequestId} not found");
 
         // Validate status - can only reject pending requests
-        if (leaveRequest.Status != LeaveRequestStatus.Pending)
+        if (leaveRequest.Status != LeaveStatus.Pending)
         {
             throw new InvalidOperationException(
                 $"Cannot reject leave request in {leaveRequest.Status} status. Only pending requests can be rejected.");
         }
 
-        leaveRequest.Status = LeaveRequestStatus.Rejected;
+        leaveRequest.Status = LeaveStatus.Rejected;
         leaveRequest.ApprovedBy = rejectedBy;
         leaveRequest.ApprovedDate = DateTime.UtcNow;
         leaveRequest.Remarks = reason;
@@ -778,7 +778,7 @@ public class HRService : IHRService
     public async Task<int> GetPendingLeaveRequestsCountAsync(int branchId)
     {
         return await _context.LeaveRequests
-            .CountAsync(lr => lr.Employee!.BranchId == branchId && lr.Status == LeaveRequestStatus.Pending);
+            .CountAsync(lr => lr.Employee!.BranchId == branchId && lr.Status == LeaveStatus.Pending);
     }
 
     public async Task<decimal> GetTotalPayrollAsync(int branchId)

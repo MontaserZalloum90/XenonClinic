@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using XenonClinic.Core.Constants;
 using XenonClinic.Core.Entities;
+using XenonClinic.Core.Enums;
 using XenonClinic.Infrastructure.Entities;
 
 namespace XenonClinic.Infrastructure.Data;
@@ -507,8 +508,8 @@ public static class SeedData
                 for (int j = 0; j < 3; j++)
                 {
                     var start = DateTime.UtcNow.AddDays(-random.Next(1, 60)).AddHours(random.Next(8, 18));
-                    var status = new[] { "Booked", "Completed", "Cancelled", "NoShow" }[random.Next(4)];
-                    var type = new[] { "HearingTest", "Fitting", "Consultation", "Repair", "FollowUp" }[random.Next(5)];
+                    var status = new[] { AppointmentStatus.Confirmed, AppointmentStatus.Completed, AppointmentStatus.Cancelled, AppointmentStatus.NoShow }[random.Next(4)];
+                    var type = new[] { Core.Enums.AppointmentType.HearingTest, Core.Enums.AppointmentType.DeviceFitting, Core.Enums.AppointmentType.Consultation, Core.Enums.AppointmentType.Repair, Core.Enums.AppointmentType.FollowUp }[random.Next(5)];
                     appointments.Add(new Appointment
                     {
                         BranchId = patient.BranchId,

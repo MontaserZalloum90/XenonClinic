@@ -68,6 +68,12 @@ public class ClinicDbContext : IdentityDbContext<Entities.ApplicationUser>
     public DbSet<Company> Companies => Set<Company>();
     public DbSet<XenonClinic.Core.Entities.TenantSettings> TenantSettings => Set<XenonClinic.Core.Entities.TenantSettings>();
     public DbSet<CompanySettings> CompanySettings => Set<CompanySettings>();
+    public DbSet<Feature> Features => Set<Feature>();
+    public DbSet<CompanyType> CompanyTypes => Set<CompanyType>();
+    public DbSet<ClinicType> ClinicTypes => Set<ClinicType>();
+    public DbSet<CompanyTypeTemplate> CompanyTypeTemplates => Set<CompanyTypeTemplate>();
+    public DbSet<ClinicTypeTemplate> ClinicTypeTemplates => Set<ClinicTypeTemplate>();
+    public DbSet<TenantFeature> TenantFeatures => Set<TenantFeature>();
 
     // Existing entities
     public DbSet<Branch> Branches => Set<Branch>();
@@ -76,6 +82,7 @@ public class ClinicDbContext : IdentityDbContext<Entities.ApplicationUser>
     public DbSet<Patient> Patients => Set<Patient>();
     public DbSet<PatientMedicalHistory> PatientMedicalHistories => Set<PatientMedicalHistory>();
     public DbSet<PatientDocument> PatientDocuments => Set<PatientDocument>();
+    public DbSet<PatientAllergy> PatientAllergies => Set<PatientAllergy>();
     public DbSet<Appointment> Appointments => Set<Appointment>();
     public DbSet<AudiologyVisit> AudiologyVisits => Set<AudiologyVisit>();
     public DbSet<ClinicalVisit> ClinicalVisits => Set<ClinicalVisit>();
@@ -269,7 +276,7 @@ public class ClinicDbContext : IdentityDbContext<Entities.ApplicationUser>
 
     // RBAC
     public DbSet<Permission> Permissions => Set<Permission>();
-    public DbSet<Role> Roles => Set<Role>();
+    public new DbSet<Role> Roles => Set<Role>();
     public DbSet<RolePermission> RolePermissions => Set<RolePermission>();
     public new DbSet<UserRole> UserRoles => Set<UserRole>();
     public DbSet<UserPermission> UserPermissions => Set<UserPermission>();
@@ -285,6 +292,7 @@ public class ClinicDbContext : IdentityDbContext<Entities.ApplicationUser>
     public DbSet<SecretEntity> Secrets => Set<SecretEntity>();
     public DbSet<ApiKeyEntity> ApiKeys => Set<ApiKeyEntity>();
     public DbSet<PasswordHistoryEntity> PasswordHistory => Set<PasswordHistoryEntity>();
+    public DbSet<Services.KeyRotationAuditLog> KeyRotationAuditLogs => Set<Services.KeyRotationAuditLog>();
 
     // Backup & Recovery
     public DbSet<BackupRecord> BackupRecords => Set<BackupRecord>();

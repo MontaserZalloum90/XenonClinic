@@ -3,19 +3,6 @@ using XenonClinic.Core.Entities;
 namespace XenonClinic.Infrastructure.Entities;
 
 /// <summary>
-/// Type of identity provider
-/// </summary>
-public enum IdentityProviderType
-{
-    /// <summary>OpenID Connect provider (e.g., Azure AD, ADFS with OIDC)</summary>
-    OIDC = 0,
-    /// <summary>SAML 2.0 provider (e.g., ADFS, Okta, OneLogin)</summary>
-    SAML2 = 1,
-    /// <summary>WS-Federation provider (e.g., legacy ADFS)</summary>
-    WSFED = 2
-}
-
-/// <summary>
 /// Configuration for an external identity provider for a company.
 /// This is in Infrastructure because it's authentication infrastructure configuration.
 /// </summary>
