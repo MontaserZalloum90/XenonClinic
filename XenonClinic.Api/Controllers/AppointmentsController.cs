@@ -136,8 +136,7 @@ public class AppointmentsController : BaseApiController
             Items = items,
             PageNumber = request.PageNumber,
             PageSize = request.PageSize,
-            TotalCount = totalCount,
-            TotalPages = (int)Math.Ceiling(totalCount / (double)request.PageSize)
+            TotalCount = totalCount
         };
 
         return ApiOk(paginatedResult);

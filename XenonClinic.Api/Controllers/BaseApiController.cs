@@ -1,3 +1,4 @@
+using FluentValidation.Results;
 using Microsoft.AspNetCore.Mvc;
 
 namespace XenonClinic.Api.Controllers;
@@ -52,6 +53,20 @@ public abstract class BaseApiController : ControllerBase
     protected ActionResult<ApiResponse> ApiBadRequest(string error, IDictionary<string, string[]>? validationErrors = null)
     {
         return BadRequest(ApiResponse.Failure(error, validationErrors));
+    }
+
+    /// <summary>
+    /// Returns a bad request response with FluentValidation errors.
+    /// </summary>
+    protected ActionResult<ApiResponse> ApiBadRequest(IEnumerable<ValidationFailure> validationFailures)
+    {
+        var errors = validationFailures
+            .GroupBy(x => x.PropertyName)
+            .ToDictionary(
+                g => g.Key,
+                g => g.Select(x => x.ErrorMessage).ToArray());
+
+        return BadRequest(ApiResponse.Failure("Validation failed", errors));
     }
 
     /// <summary>

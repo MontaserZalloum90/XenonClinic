@@ -38,7 +38,10 @@ public class RadiologyController : BaseApiController
     public async Task<IActionResult> GetImagingStudies()
     {
         var branchId = _currentUserService.BranchId;
-        var studies = await _radiologyService.GetImagingStudiesByBranchIdAsync(branchId);
+        if (branchId == null)
+            return ApiBadRequest("Branch context is required");
+
+        var studies = await _radiologyService.GetImagingStudiesByBranchIdAsync(branchId.Value);
 
         var studyDtos = studies.Select(MapToImagingStudyDto).ToList();
         return ApiOk(studyDtos);
@@ -52,7 +55,10 @@ public class RadiologyController : BaseApiController
     public async Task<IActionResult> GetActiveImagingStudies()
     {
         var branchId = _currentUserService.BranchId;
-        var studies = await _radiologyService.GetActiveImagingStudiesAsync(branchId);
+        if (branchId == null)
+            return ApiBadRequest("Branch context is required");
+
+        var studies = await _radiologyService.GetActiveImagingStudiesAsync(branchId.Value);
 
         var studyDtos = studies.Select(MapToImagingStudyDto).ToList();
         return ApiOk(studyDtos);
@@ -66,7 +72,10 @@ public class RadiologyController : BaseApiController
     public async Task<IActionResult> GetImagingStudiesByModality(string modality)
     {
         var branchId = _currentUserService.BranchId;
-        var studies = await _radiologyService.GetImagingStudiesByCategoryAsync(branchId, modality);
+        if (branchId == null)
+            return ApiBadRequest("Branch context is required");
+
+        var studies = await _radiologyService.GetImagingStudiesByCategoryAsync(branchId.Value, modality);
 
         var studyDtos = studies.Select(MapToImagingStudyDto).ToList();
         return ApiOk(studyDtos);
@@ -96,7 +105,10 @@ public class RadiologyController : BaseApiController
     public async Task<IActionResult> GetImagingStudyByCode(string studyCode)
     {
         var branchId = _currentUserService.BranchId;
-        var study = await _radiologyService.GetImagingStudyByCodeAsync(studyCode, branchId);
+        if (branchId == null)
+            return ApiBadRequest("Branch context is required");
+
+        var study = await _radiologyService.GetImagingStudyByCodeAsync(studyCode, branchId.Value);
         if (study == null)
             return ApiNotFound("Imaging study not found");
 
@@ -111,20 +123,24 @@ public class RadiologyController : BaseApiController
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> CreateImagingStudy([FromBody] CreateImagingStudyDto dto)
     {
+        var branchId = _currentUserService.BranchId;
+        if (branchId == null)
+            return ApiBadRequest("Branch context is required");
+
         var study = new LabTest
         {
             TestCode = dto.StudyCode,
             TestName = dto.StudyName,
-            Description = dto.Description,
-            Category = dto.Modality.ToString(),
+            Description = $"{dto.Modality}: {dto.Description}",
+            Category = TestCategory.Imaging,
             Price = dto.Price,
-            TurnaroundTime = dto.EstimatedDurationMinutes,
+            TurnaroundTimeHours = dto.EstimatedDurationMinutes / 60,
             RequiresFasting = dto.RequiresFasting,
             PreparationInstructions = dto.PatientPreparation,
-            BranchId = _currentUserService.BranchId,
+            BranchId = branchId.Value,
             IsActive = true,
             CreatedAt = DateTime.UtcNow,
-            CreatedBy = _currentUserService.UserId
+            CreatedBy = _currentUserService.UserId ?? "system"
         };
 
         var created = await _radiologyService.CreateImagingStudyAsync(study);
@@ -148,10 +164,10 @@ public class RadiologyController : BaseApiController
 
         study.TestCode = dto.StudyCode;
         study.TestName = dto.StudyName;
-        study.Description = dto.Description;
-        study.Category = dto.Modality.ToString();
+        study.Description = $"{dto.Modality}: {dto.Description}";
+        study.Category = TestCategory.Imaging;
         study.Price = dto.Price;
-        study.TurnaroundTime = dto.EstimatedDurationMinutes;
+        study.TurnaroundTimeHours = dto.EstimatedDurationMinutes / 60;
         study.RequiresFasting = dto.RequiresFasting;
         study.PreparationInstructions = dto.PatientPreparation;
         study.IsActive = dto.IsActive;

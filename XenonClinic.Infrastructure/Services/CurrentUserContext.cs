@@ -87,6 +87,42 @@ public class CurrentUserContext : ICurrentUserContext
         }
     }
 
+    /// <summary>
+    /// BUG FIX: Synchronous access to current user's tenant ID.
+    /// </summary>
+    public int? TenantId
+    {
+        get
+        {
+            var httpContext = _httpContextAccessor.HttpContext;
+            if (httpContext?.User == null) return null;
+            var tenantIdClaim = httpContext.User.FindFirst("tenant_id")?.Value;
+            if (tenantIdClaim != null && int.TryParse(tenantIdClaim, out var tenantId))
+            {
+                return tenantId;
+            }
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// BUG FIX: Synchronous access to current user's company ID.
+    /// </summary>
+    public int? CompanyId
+    {
+        get
+        {
+            var httpContext = _httpContextAccessor.HttpContext;
+            if (httpContext?.User == null) return null;
+            var companyIdClaim = httpContext.User.FindFirst("company_id")?.Value;
+            if (companyIdClaim != null && int.TryParse(companyIdClaim, out var companyId))
+            {
+                return companyId;
+            }
+            return null;
+        }
+    }
+
     public async Task<IApplicationUser?> GetCurrentUserAsync()
     {
         var httpContext = _httpContextAccessor.HttpContext;

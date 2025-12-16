@@ -70,6 +70,18 @@ public interface ICurrentUserContext
     /// BUG FIX: Added for controllers that need synchronous access.
     /// </summary>
     int? BranchId { get; }
+
+    /// <summary>
+    /// Gets the current user's tenant ID synchronously.
+    /// BUG FIX: Added for controllers that need synchronous access.
+    /// </summary>
+    int? TenantId { get; }
+
+    /// <summary>
+    /// Gets the current user's company ID synchronously.
+    /// BUG FIX: Added for controllers that need synchronous access.
+    /// </summary>
+    int? CompanyId { get; }
 }
 
 /// <summary>

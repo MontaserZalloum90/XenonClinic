@@ -41,7 +41,7 @@ public class AnalyticsController : BaseApiController
     [ProducesResponseType(typeof(ApiResponse<List<DashboardDto>>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetDashboards()
     {
-        var userId = _userContext.UserId ?? 0;
+        var userId = _userContext.UserId ?? string.Empty;
         var dashboards = await _analyticsService.GetDashboardsAsync(userId);
         return ApiOk(dashboards);
     }
@@ -69,7 +69,7 @@ public class AnalyticsController : BaseApiController
     [ProducesResponseType(typeof(ApiResponse<DashboardDto>), StatusCodes.Status201Created)]
     public async Task<IActionResult> CreateDashboard([FromBody] SaveDashboardDto dto)
     {
-        var userId = _userContext.UserId ?? 0;
+        var userId = _userContext.UserId ?? string.Empty;
         var dashboard = await _analyticsService.CreateDashboardAsync(dto, userId);
         return ApiCreated(dashboard, $"/api/analytics/dashboards/{dashboard.Id}");
     }
