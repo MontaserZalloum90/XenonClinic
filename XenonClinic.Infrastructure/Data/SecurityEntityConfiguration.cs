@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using XenonClinic.Core.Entities;
 
 namespace XenonClinic.Infrastructure.Data;
 
@@ -32,7 +33,7 @@ public static class SecurityEntityConfiguration
             entity.Property(e => e.UserAgent).HasMaxLength(500);
             entity.Property(e => e.SessionId).HasMaxLength(100);
             entity.Property(e => e.RequestPath).HasMaxLength(500);
-            entity.Property(e => e.RequestMethod).HasMaxLength(10);
+            entity.Property(e => e.HttpMethod).HasMaxLength(10);
             entity.Property(e => e.CorrelationId).HasMaxLength(50);
             entity.Property(e => e.IntegrityHash).HasMaxLength(128);
 
@@ -253,40 +254,7 @@ public static class SecurityEntityConfiguration
 // Security Entity Classes
 // ========================================
 
-public class AuditLog
-{
-    public long Id { get; set; }
-    public DateTime Timestamp { get; set; } = DateTime.UtcNow;
-    public string EventType { get; set; } = string.Empty;
-    public string EventCategory { get; set; } = string.Empty;
-    public string Action { get; set; } = string.Empty;
-    public string ResourceType { get; set; } = string.Empty;
-    public string? ResourceId { get; set; }
-    public int? UserId { get; set; }
-    public string? UserName { get; set; }
-    public string? UserRole { get; set; }
-    public int? PatientId { get; set; }
-    public bool IsPHIAccess { get; set; }
-    public string? IpAddress { get; set; }
-    public string? UserAgent { get; set; }
-    public string? SessionId { get; set; }
-    public string? RequestPath { get; set; }
-    public string? RequestMethod { get; set; }
-    public int? ResponseStatusCode { get; set; }
-    public string? OldValues { get; set; }
-    public string? NewValues { get; set; }
-    public string? AffectedFields { get; set; }
-    public string? Reason { get; set; }
-    public bool IsEmergencyAccess { get; set; }
-    public string? EmergencyJustification { get; set; }
-    public int BranchId { get; set; }
-    public string? CorrelationId { get; set; }
-    public long? DurationMs { get; set; }
-    public bool IsSuccess { get; set; } = true;
-    public string? ErrorMessage { get; set; }
-    public string? AdditionalData { get; set; }
-    public string? IntegrityHash { get; set; }
-}
+// Note: AuditLog class is defined in XenonClinic.Core.Entities.AuditLog
 
 public class AuditRetentionPolicy
 {

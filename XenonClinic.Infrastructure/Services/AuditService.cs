@@ -6,6 +6,7 @@ using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using XenonClinic.Core.DTOs;
+using XenonClinic.Core.Entities;
 using XenonClinic.Core.Interfaces;
 using XenonClinic.Infrastructure.Data;
 
@@ -45,10 +46,10 @@ public class AuditService : IAuditService
                 IpAddress = entry.IpAddress,
                 SessionId = entry.SessionId,
                 RequestPath = entry.RequestPath,
-                RequestMethod = entry.RequestMethod,
-                ResponseStatusCode = entry.ResponseStatusCode,
-                OldValuesJson = entry.OldValues != null ? JsonSerializer.Serialize(entry.OldValues) : null,
-                NewValuesJson = entry.NewValues != null ? JsonSerializer.Serialize(entry.NewValues) : null,
+                HttpMethod = entry.RequestMethod,
+                StatusCode = entry.ResponseStatusCode,
+                OldValues = entry.OldValues != null ? JsonSerializer.Serialize(entry.OldValues) : null,
+                NewValues = entry.NewValues != null ? JsonSerializer.Serialize(entry.NewValues) : null,
                 Reason = entry.Reason,
                 IsEmergencyAccess = entry.IsEmergencyAccess,
                 EmergencyJustification = entry.EmergencyJustification,
@@ -560,11 +561,11 @@ public class AuditService : IAuditService
             IpAddress = log.IpAddress,
             CorrelationId = log.CorrelationId,
             IsSuccess = log.IsSuccess,
-            OldValues = !string.IsNullOrEmpty(log.OldValuesJson)
-                ? JsonSerializer.Deserialize<object>(log.OldValuesJson)
+            OldValues = !string.IsNullOrEmpty(log.OldValues)
+                ? JsonSerializer.Deserialize<object>(log.OldValues)
                 : null,
-            NewValues = !string.IsNullOrEmpty(log.NewValuesJson)
-                ? JsonSerializer.Deserialize<object>(log.NewValuesJson)
+            NewValues = !string.IsNullOrEmpty(log.NewValues)
+                ? JsonSerializer.Deserialize<object>(log.NewValues)
                 : null
         };
 
@@ -577,41 +578,7 @@ public class AuditService : IAuditService
 
 #region Audit Entities
 
-[Table("AuditLogs")]
-public class AuditLog
-{
-    [Key] public long Id { get; set; }
-    public DateTime Timestamp { get; set; }
-    [Required, MaxLength(50)] public string EventType { get; set; } = string.Empty;
-    [Required, MaxLength(50)] public string EventCategory { get; set; } = string.Empty;
-    [Required, MaxLength(50)] public string Action { get; set; } = string.Empty;
-    [Required, MaxLength(100)] public string ResourceType { get; set; } = string.Empty;
-    [MaxLength(100)] public string? ResourceId { get; set; }
-    public int? UserId { get; set; }
-    [MaxLength(200)] public string? UserName { get; set; }
-    [MaxLength(100)] public string? UserRole { get; set; }
-    public int? PatientId { get; set; }
-    public bool IsPHIAccess { get; set; }
-    [MaxLength(50)] public string? IpAddress { get; set; }
-    [MaxLength(100)] public string? SessionId { get; set; }
-    [MaxLength(500)] public string? RequestPath { get; set; }
-    [MaxLength(10)] public string? RequestMethod { get; set; }
-    public int? ResponseStatusCode { get; set; }
-    public string? OldValuesJson { get; set; }
-    public string? NewValuesJson { get; set; }
-    [MaxLength(1000)] public string? Reason { get; set; }
-    public bool IsEmergencyAccess { get; set; }
-    [MaxLength(2000)] public string? EmergencyJustification { get; set; }
-    public int BranchId { get; set; }
-    [MaxLength(100)] public string? CorrelationId { get; set; }
-    public long? DurationMs { get; set; }
-    public bool IsSuccess { get; set; }
-    [MaxLength(2000)] public string? ErrorMessage { get; set; }
-    [MaxLength(64)] public string? IntegrityHash { get; set; }
-    public bool IsArchived { get; set; }
-    public DateTime? ArchivedAt { get; set; }
-    [MaxLength(100)] public string? ModuleName { get; set; }
-}
+// Note: AuditLog class is defined in XenonClinic.Core.Entities.AuditLog
 
 [Table("AuditRetentionPolicies")]
 public class AuditRetentionPolicy
