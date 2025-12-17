@@ -400,7 +400,7 @@ public class RadiologyService : IRadiologyService
         var mostOrdered = await _context.LabOrderItems
             .Include(oi => oi.LabOrder)
             .Include(oi => oi.LabTest)
-            .Where(oi => oi.LabOrder.BranchId == branchId && oi.LabOrder.Status == LabOrderStatus.Completed)
+            .Where(oi => oi.LabOrder != null && oi.LabOrder.BranchId == branchId && oi.LabOrder.Status == LabOrderStatus.Completed)
             .GroupBy(oi => new { oi.LabTestId, oi.LabTest!.TestName })
             .Select(g => new
             {
@@ -421,7 +421,7 @@ public class RadiologyService : IRadiologyService
         var distribution = await _context.LabOrderItems
             .Include(oi => oi.LabOrder)
             .Include(oi => oi.LabTest)
-            .Where(oi => oi.LabOrder.BranchId == branchId)
+            .Where(oi => oi.LabOrder != null && oi.LabOrder.BranchId == branchId)
             .GroupBy(oi => oi.LabTest != null ? oi.LabTest.Category.ToString() : "Uncategorized")
             .Select(g => new { Modality = g.Key, Count = g.Count() })
             .ToListAsync();

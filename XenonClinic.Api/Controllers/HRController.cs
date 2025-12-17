@@ -153,8 +153,7 @@ public class HRController : BaseApiController
             Items = items,
             PageNumber = request.PageNumber,
             PageSize = request.PageSize,
-            TotalCount = totalCount,
-            TotalPages = (int)Math.Ceiling(totalCount / (double)request.PageSize)
+            TotalCount = totalCount
         };
 
         return ApiOk(paginatedResult);
@@ -772,8 +771,7 @@ public class HRController : BaseApiController
             Items = items,
             PageNumber = request.PageNumber,
             PageSize = request.PageSize,
-            TotalCount = totalCount,
-            TotalPages = (int)Math.Ceiling(totalCount / (double)request.PageSize)
+            TotalCount = totalCount
         };
 
         return ApiOk(paginatedResult);
@@ -861,7 +859,7 @@ public class HRController : BaseApiController
         }
 
         // BUG FIX: Validate checkout time is after checkin time
-        if (attendance.CheckInTime.HasValue && dto.CheckOutTime < attendance.CheckInTime.Value)
+        if (attendance.CheckInTime.HasValue && TimeOnly.FromDateTime(dto.CheckOutTime) < attendance.CheckInTime.Value)
         {
             return ApiBadRequest("Check-out time cannot be before check-in time");
         }
@@ -997,8 +995,7 @@ public class HRController : BaseApiController
             Items = items,
             PageNumber = request.PageNumber,
             PageSize = request.PageSize,
-            TotalCount = totalCount,
-            TotalPages = (int)Math.Ceiling(totalCount / (double)request.PageSize)
+            TotalCount = totalCount
         };
 
         return ApiOk(paginatedResult);

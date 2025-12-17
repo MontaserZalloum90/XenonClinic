@@ -1,5 +1,6 @@
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
+using Moq;
 using XenonClinic.Core.Entities;
 using XenonClinic.Core.Enums;
 using XenonClinic.Core.Interfaces;
@@ -17,6 +18,7 @@ public class FinancialServiceExtendedTests : IAsyncLifetime
 {
     private ClinicDbContext _context = null!;
     private IFinancialService _financialService = null!;
+    private Mock<ISequenceGenerator> _mockSequenceGenerator = null!;
 
     public async Task InitializeAsync()
     {
@@ -25,7 +27,10 @@ public class FinancialServiceExtendedTests : IAsyncLifetime
             .Options;
 
         _context = new ClinicDbContext(options);
-        _financialService = new FinancialService(_context);
+        _mockSequenceGenerator = new Mock<ISequenceGenerator>();
+        _mockSequenceGenerator.Setup(x => x.GenerateInvoiceNumberAsync(It.IsAny<int>()))
+            .ReturnsAsync(() => $"INV-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString()[..4]}");
+        _financialService = new FinancialService(_context, _mockSequenceGenerator.Object);
         await SeedExtendedTestDataAsync();
     }
 

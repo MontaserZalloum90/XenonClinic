@@ -22,7 +22,7 @@ public interface IInventoryService
     Task<InventoryTransaction?> GetTransactionByIdAsync(int id);
     Task<IEnumerable<InventoryTransaction>> GetTransactionsByItemIdAsync(int itemId);
     Task<IEnumerable<InventoryTransaction>> GetTransactionsByBranchIdAsync(int branchId);
-    Task<IEnumerable<InventoryTransaction>> GetTransactionsByTypeAsync(int branchId, TransactionType transactionType);
+    Task<IEnumerable<InventoryTransaction>> GetTransactionsByTypeAsync(int branchId, InventoryTransactionType transactionType);
     Task<InventoryTransaction> CreateTransactionAsync(InventoryTransaction transaction);
     Task UpdateTransactionAsync(InventoryTransaction transaction);
     Task DeleteTransactionAsync(int id);
@@ -39,5 +39,5 @@ public interface IInventoryService
     Task<int> GetLowStockItemsCountAsync(int branchId);
     Task<int> GetOutOfStockItemsCountAsync(int branchId);
     Task<decimal> GetTotalInventoryValueAsync(int branchId);
-    Task<Dictionary<TransactionType, int>> GetTransactionTypeDistributionAsync(int branchId);
+    Task<Dictionary<InventoryTransactionType, int>> GetTransactionTypeDistributionAsync(int branchId);
 }

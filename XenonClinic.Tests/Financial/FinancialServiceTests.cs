@@ -1,7 +1,9 @@
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
+using Moq;
 using XenonClinic.Core.Entities;
 using XenonClinic.Core.Enums;
+using XenonClinic.Core.Interfaces;
 using XenonClinic.Infrastructure.Data;
 using XenonClinic.Infrastructure.Services;
 using Xunit;
@@ -17,6 +19,7 @@ public class FinancialServiceTests : IDisposable
     private readonly FinancialService _service;
     private readonly Branch _testBranch;
     private readonly Patient _testPatient;
+    private readonly Mock<ISequenceGenerator> _mockSequenceGenerator;
 
     public FinancialServiceTests()
     {
@@ -25,7 +28,10 @@ public class FinancialServiceTests : IDisposable
             .Options;
 
         _context = new ClinicDbContext(options);
-        _service = new FinancialService(_context);
+        _mockSequenceGenerator = new Mock<ISequenceGenerator>();
+        _mockSequenceGenerator.Setup(x => x.GenerateInvoiceNumberAsync(It.IsAny<int>()))
+            .ReturnsAsync(() => $"INV-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString()[..4]}");
+        _service = new FinancialService(_context, _mockSequenceGenerator.Object);
 
         // Seed test data
         _testBranch = new Branch

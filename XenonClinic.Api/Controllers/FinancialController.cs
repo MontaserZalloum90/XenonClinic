@@ -334,8 +334,7 @@ public class FinancialController : BaseApiController
             Items = items,
             PageNumber = request.PageNumber,
             PageSize = request.PageSize,
-            TotalCount = totalCount,
-            TotalPages = (int)Math.Ceiling(totalCount / (double)request.PageSize)
+            TotalCount = totalCount
         };
 
         return ApiOk(paginatedResult);
@@ -629,8 +628,7 @@ public class FinancialController : BaseApiController
             Items = items,
             PageNumber = request.PageNumber,
             PageSize = request.PageSize,
-            TotalCount = totalCount,
-            TotalPages = (int)Math.Ceiling(totalCount / (double)request.PageSize)
+            TotalCount = totalCount
         };
 
         return ApiOk(paginatedResult);
@@ -922,8 +920,7 @@ public class FinancialController : BaseApiController
             Items = items,
             PageNumber = request.PageNumber,
             PageSize = request.PageSize,
-            TotalCount = totalCount,
-            TotalPages = (int)Math.Ceiling(totalCount / (double)request.PageSize)
+            TotalCount = totalCount
         };
 
         return ApiOk(paginatedResult);
@@ -1144,15 +1141,15 @@ public class FinancialController : BaseApiController
         };
     }
 
-    private static Enums.ExpenseStatus MapToExpenseStatus(ExpenseStatus status)
+    private static ExpenseStatus MapToExpenseStatus(ExpenseStatus status)
     {
         return status switch
         {
-            ExpenseStatus.Pending => Enums.ExpenseStatus.Pending,
-            ExpenseStatus.Approved => Enums.ExpenseStatus.Approved,
-            ExpenseStatus.Paid => Enums.ExpenseStatus.Paid,
-            ExpenseStatus.Rejected => Enums.ExpenseStatus.Rejected,
-            _ => Enums.ExpenseStatus.Pending
+            ExpenseStatus.Pending => ExpenseStatus.Pending,
+            ExpenseStatus.Approved => ExpenseStatus.Approved,
+            ExpenseStatus.Paid => ExpenseStatus.Paid,
+            ExpenseStatus.Rejected => ExpenseStatus.Rejected,
+            _ => ExpenseStatus.Pending
         };
     }
 

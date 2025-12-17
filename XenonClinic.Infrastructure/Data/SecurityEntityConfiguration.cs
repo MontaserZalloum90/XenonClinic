@@ -262,9 +262,12 @@ public class AuditLog
     public string Action { get; set; } = string.Empty;
     public string ResourceType { get; set; } = string.Empty;
     public string? ResourceId { get; set; }
+    public string? EntityType { get; set; }
+    public string? EntityId { get; set; }
     public int? UserId { get; set; }
     public string? UserName { get; set; }
     public string? UserRole { get; set; }
+    public string? UserEmail { get; set; }
     public int? PatientId { get; set; }
     public bool IsPHIAccess { get; set; }
     public string? IpAddress { get; set; }
@@ -272,6 +275,7 @@ public class AuditLog
     public string? SessionId { get; set; }
     public string? RequestPath { get; set; }
     public string? RequestMethod { get; set; }
+    public string? HttpMethod { get; set; }
     public int? ResponseStatusCode { get; set; }
     public string? OldValues { get; set; }
     public string? NewValues { get; set; }
@@ -280,12 +284,15 @@ public class AuditLog
     public bool IsEmergencyAccess { get; set; }
     public string? EmergencyJustification { get; set; }
     public int BranchId { get; set; }
+    public int? TenantId { get; set; }
+    public int? CompanyId { get; set; }
     public string? CorrelationId { get; set; }
     public long? DurationMs { get; set; }
     public bool IsSuccess { get; set; } = true;
     public string? ErrorMessage { get; set; }
     public string? AdditionalData { get; set; }
     public string? IntegrityHash { get; set; }
+    public string? ModuleName { get; set; }
 }
 
 public class AuditRetentionPolicy

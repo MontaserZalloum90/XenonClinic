@@ -37,7 +37,7 @@ public class LaboratoryController : BaseApiController
     /// Get all lab tests for the current branch.
     /// </summary>
     [HttpGet("tests")]
-    public async Task<ActionResult<ApiResponse<IEnumerable<LabTestDto>>>> GetTests(
+    public async Task<IActionResult> GetTests(
         [FromQuery] LabTestListRequestDto request)
     {
         try
@@ -109,7 +109,7 @@ public class LaboratoryController : BaseApiController
     /// Get lab test by ID.
     /// </summary>
     [HttpGet("tests/{id}")]
-    public async Task<ActionResult<ApiResponse<LabTestDto>>> GetTest(int id)
+    public async Task<IActionResult> GetTest(int id)
     {
         try
         {
@@ -137,7 +137,7 @@ public class LaboratoryController : BaseApiController
     /// Get active lab tests.
     /// </summary>
     [HttpGet("tests/active")]
-    public async Task<ActionResult<ApiResponse<IEnumerable<LabTestDto>>>> GetActiveTests()
+    public async Task<IActionResult> GetActiveTests()
     {
         try
         {
@@ -161,7 +161,7 @@ public class LaboratoryController : BaseApiController
     /// Get lab tests by category.
     /// </summary>
     [HttpGet("tests/category/{category}")]
-    public async Task<ActionResult<ApiResponse<IEnumerable<LabTestDto>>>> GetTestsByCategory(TestCategory category)
+    public async Task<IActionResult> GetTestsByCategory(TestCategory category)
     {
         try
         {
@@ -185,7 +185,7 @@ public class LaboratoryController : BaseApiController
     /// Create a new lab test.
     /// </summary>
     [HttpPost("tests")]
-    public async Task<ActionResult<ApiResponse<LabTestDto>>> CreateTest([FromBody] CreateLabTestDto dto)
+    public async Task<IActionResult> CreateTest([FromBody] CreateLabTestDto dto)
     {
         try
         {
@@ -245,7 +245,7 @@ public class LaboratoryController : BaseApiController
     /// Update an existing lab test.
     /// </summary>
     [HttpPut("tests/{id}")]
-    public async Task<ActionResult<ApiResponse<LabTestDto>>> UpdateTest(int id, [FromBody] UpdateLabTestDto dto)
+    public async Task<IActionResult> UpdateTest(int id, [FromBody] UpdateLabTestDto dto)
     {
         try
         {
@@ -306,7 +306,7 @@ public class LaboratoryController : BaseApiController
     /// Delete a lab test.
     /// </summary>
     [HttpDelete("tests/{id}")]
-    public async Task<ActionResult<ApiResponse>> DeleteTest(int id)
+    public async Task<IActionResult> DeleteTest(int id)
     {
         try
         {
@@ -343,7 +343,7 @@ public class LaboratoryController : BaseApiController
     /// Get all lab orders for the current branch.
     /// </summary>
     [HttpGet("orders")]
-    public async Task<ActionResult<ApiResponse<IEnumerable<LabOrderDto>>>> GetOrders(
+    public async Task<IActionResult> GetOrders(
         [FromQuery] LabOrderListRequestDto request)
     {
         try
@@ -429,7 +429,7 @@ public class LaboratoryController : BaseApiController
     /// Get lab order by ID.
     /// </summary>
     [HttpGet("orders/{id}")]
-    public async Task<ActionResult<ApiResponse<LabOrderDto>>> GetOrder(int id)
+    public async Task<IActionResult> GetOrder(int id)
     {
         try
         {
@@ -457,7 +457,7 @@ public class LaboratoryController : BaseApiController
     /// Get pending lab orders.
     /// </summary>
     [HttpGet("orders/pending")]
-    public async Task<ActionResult<ApiResponse<IEnumerable<LabOrderDto>>>> GetPendingOrders()
+    public async Task<IActionResult> GetPendingOrders()
     {
         try
         {
@@ -481,7 +481,7 @@ public class LaboratoryController : BaseApiController
     /// Get urgent lab orders.
     /// </summary>
     [HttpGet("orders/urgent")]
-    public async Task<ActionResult<ApiResponse<IEnumerable<LabOrderDto>>>> GetUrgentOrders()
+    public async Task<IActionResult> GetUrgentOrders()
     {
         try
         {
@@ -505,7 +505,7 @@ public class LaboratoryController : BaseApiController
     /// Get lab orders for a patient.
     /// </summary>
     [HttpGet("orders/patient/{patientId}")]
-    public async Task<ActionResult<ApiResponse<IEnumerable<LabOrderDto>>>> GetPatientOrders(int patientId)
+    public async Task<IActionResult> GetPatientOrders(int patientId)
     {
         try
         {
@@ -539,7 +539,7 @@ public class LaboratoryController : BaseApiController
     /// Create a new lab order.
     /// </summary>
     [HttpPost("orders")]
-    public async Task<ActionResult<ApiResponse<LabOrderDto>>> CreateOrder([FromBody] CreateLabOrderDto dto)
+    public async Task<IActionResult> CreateOrder([FromBody] CreateLabOrderDto dto)
     {
         try
         {
@@ -614,7 +614,7 @@ public class LaboratoryController : BaseApiController
     /// Update lab order status.
     /// </summary>
     [HttpPut("orders/{id}/status")]
-    public async Task<ActionResult<ApiResponse>> UpdateOrderStatus(int id, [FromBody] UpdateLabOrderStatusDto dto)
+    public async Task<IActionResult> UpdateOrderStatus(int id, [FromBody] UpdateLabOrderStatusDto dto)
     {
         try
         {
@@ -657,7 +657,7 @@ public class LaboratoryController : BaseApiController
     /// Collect samples for a lab order.
     /// </summary>
     [HttpPost("orders/{id}/collect")]
-    public async Task<ActionResult<ApiResponse>> CollectSamples(int id, [FromBody] CollectSamplesDto dto)
+    public async Task<IActionResult> CollectSamples(int id, [FromBody] CollectSamplesDto dto)
     {
         try
         {
@@ -714,7 +714,7 @@ public class LaboratoryController : BaseApiController
     /// Delete a lab order.
     /// </summary>
     [HttpDelete("orders/{id}")]
-    public async Task<ActionResult<ApiResponse>> DeleteOrder(int id)
+    public async Task<IActionResult> DeleteOrder(int id)
     {
         try
         {
@@ -756,7 +756,7 @@ public class LaboratoryController : BaseApiController
     /// Get lab results for an order.
     /// </summary>
     [HttpGet("orders/{orderId}/results")]
-    public async Task<ActionResult<ApiResponse<IEnumerable<LabResultDto>>>> GetOrderResults(int orderId)
+    public async Task<IActionResult> GetOrderResults(int orderId)
     {
         try
         {
@@ -785,7 +785,7 @@ public class LaboratoryController : BaseApiController
     /// Get lab result by ID.
     /// </summary>
     [HttpGet("results/{id}")]
-    public async Task<ActionResult<ApiResponse<LabResultDto>>> GetResult(int id)
+    public async Task<IActionResult> GetResult(int id)
     {
         try
         {
@@ -813,7 +813,7 @@ public class LaboratoryController : BaseApiController
     /// Enter lab result.
     /// </summary>
     [HttpPost("results")]
-    public async Task<ActionResult<ApiResponse<LabResultDto>>> EnterResult([FromBody] EnterLabResultDto dto)
+    public async Task<IActionResult> EnterResult([FromBody] EnterLabResultDto dto)
     {
         try
         {
@@ -886,7 +886,7 @@ public class LaboratoryController : BaseApiController
     /// Review lab result.
     /// </summary>
     [HttpPost("results/{id}/review")]
-    public async Task<ActionResult<ApiResponse>> ReviewResult(int id, [FromBody] ReviewLabResultDto dto)
+    public async Task<IActionResult> ReviewResult(int id, [FromBody] ReviewLabResultDto dto)
     {
         try
         {
@@ -938,7 +938,7 @@ public class LaboratoryController : BaseApiController
     /// Verify lab result.
     /// </summary>
     [HttpPost("results/{id}/verify")]
-    public async Task<ActionResult<ApiResponse>> VerifyResult(int id, [FromBody] VerifyLabResultDto dto)
+    public async Task<IActionResult> VerifyResult(int id, [FromBody] VerifyLabResultDto dto)
     {
         try
         {
@@ -999,7 +999,7 @@ public class LaboratoryController : BaseApiController
     /// Get all external labs for the current branch.
     /// </summary>
     [HttpGet("external-labs")]
-    public async Task<ActionResult<ApiResponse<IEnumerable<ExternalLabDto>>>> GetExternalLabs()
+    public async Task<IActionResult> GetExternalLabs()
     {
         try
         {
@@ -1023,7 +1023,7 @@ public class LaboratoryController : BaseApiController
     /// Get active external labs.
     /// </summary>
     [HttpGet("external-labs/active")]
-    public async Task<ActionResult<ApiResponse<IEnumerable<ExternalLabDto>>>> GetActiveExternalLabs()
+    public async Task<IActionResult> GetActiveExternalLabs()
     {
         try
         {
@@ -1047,7 +1047,7 @@ public class LaboratoryController : BaseApiController
     /// Get external lab by ID.
     /// </summary>
     [HttpGet("external-labs/{id}")]
-    public async Task<ActionResult<ApiResponse<ExternalLabDto>>> GetExternalLab(int id)
+    public async Task<IActionResult> GetExternalLab(int id)
     {
         try
         {
@@ -1075,7 +1075,7 @@ public class LaboratoryController : BaseApiController
     /// Create a new external lab.
     /// </summary>
     [HttpPost("external-labs")]
-    public async Task<ActionResult<ApiResponse<ExternalLabDto>>> CreateExternalLab([FromBody] CreateExternalLabDto dto)
+    public async Task<IActionResult> CreateExternalLab([FromBody] CreateExternalLabDto dto)
     {
         try
         {
@@ -1129,7 +1129,7 @@ public class LaboratoryController : BaseApiController
     /// Update an existing external lab.
     /// </summary>
     [HttpPut("external-labs/{id}")]
-    public async Task<ActionResult<ApiResponse<ExternalLabDto>>> UpdateExternalLab(int id, [FromBody] UpdateExternalLabDto dto)
+    public async Task<IActionResult> UpdateExternalLab(int id, [FromBody] UpdateExternalLabDto dto)
     {
         try
         {
@@ -1190,7 +1190,7 @@ public class LaboratoryController : BaseApiController
     /// Delete an external lab.
     /// </summary>
     [HttpDelete("external-labs/{id}")]
-    public async Task<ActionResult<ApiResponse>> DeleteExternalLab(int id)
+    public async Task<IActionResult> DeleteExternalLab(int id)
     {
         try
         {
@@ -1227,7 +1227,7 @@ public class LaboratoryController : BaseApiController
     /// Get laboratory statistics for the current branch.
     /// </summary>
     [HttpGet("statistics")]
-    public async Task<ActionResult<ApiResponse<LabStatisticsDto>>> GetStatistics()
+    public async Task<IActionResult> GetStatistics()
     {
         try
         {

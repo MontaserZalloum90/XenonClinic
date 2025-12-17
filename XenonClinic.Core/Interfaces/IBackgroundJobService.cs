@@ -10,7 +10,7 @@ public interface IBackgroundJobService
     /// <summary>
     /// Enqueue a job to run immediately in the background.
     /// </summary>
-    string Enqueue<T>(Expression<Func<T, Task>> methodCall);
+    string Enqueue<T>(Expression<Func<T, Task>> methodCall) where T : notnull;
 
     /// <summary>
     /// Enqueue a job to run immediately in the background.
@@ -20,7 +20,7 @@ public interface IBackgroundJobService
     /// <summary>
     /// Schedule a job to run at a specific time.
     /// </summary>
-    string Schedule<T>(Expression<Func<T, Task>> methodCall, DateTimeOffset enqueueAt);
+    string Schedule<T>(Expression<Func<T, Task>> methodCall, DateTimeOffset enqueueAt) where T : notnull;
 
     /// <summary>
     /// Schedule a job to run at a specific time.
@@ -30,12 +30,12 @@ public interface IBackgroundJobService
     /// <summary>
     /// Schedule a job to run after a delay.
     /// </summary>
-    string Schedule<T>(Expression<Func<T, Task>> methodCall, TimeSpan delay);
+    string Schedule<T>(Expression<Func<T, Task>> methodCall, TimeSpan delay) where T : notnull;
 
     /// <summary>
     /// Create or update a recurring job.
     /// </summary>
-    void AddOrUpdateRecurring<T>(string jobId, Expression<Func<T, Task>> methodCall, string cronExpression);
+    void AddOrUpdateRecurring<T>(string jobId, Expression<Func<T, Task>> methodCall, string cronExpression) where T : notnull;
 
     /// <summary>
     /// Remove a recurring job.
@@ -50,7 +50,7 @@ public interface IBackgroundJobService
     /// <summary>
     /// Continue with another job after the specified job completes.
     /// </summary>
-    string ContinueWith<T>(string parentJobId, Expression<Func<T, Task>> methodCall);
+    string ContinueWith<T>(string parentJobId, Expression<Func<T, Task>> methodCall) where T : notnull;
 
     /// <summary>
     /// Delete a scheduled or enqueued job.

@@ -40,7 +40,7 @@ public class DiagnosticsController : BaseApiController
     [HttpGet("metrics")]
     [AllowAnonymous]
     [ProducesResponseType(typeof(ApiResponse<ApplicationMetrics>), StatusCodes.Status200OK)]
-    public ActionResult<ApiResponse<ApplicationMetrics>> GetMetrics()
+    public IActionResult GetMetrics()
     {
         Interlocked.Increment(ref _totalRequests);
 
@@ -105,7 +105,7 @@ public class DiagnosticsController : BaseApiController
     [Authorize(Policy = "AdminOnly")]
     [ProducesResponseType(typeof(ApiResponse<DatabaseMetrics>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<ActionResult<ApiResponse<DatabaseMetrics>>> GetDatabaseMetrics()
+    public async Task<IActionResult> GetDatabaseMetrics()
     {
         var stopwatch = Stopwatch.StartNew();
 
@@ -147,7 +147,7 @@ public class DiagnosticsController : BaseApiController
     [HttpGet("metrics/cache")]
     [Authorize(Policy = "AdminOnly")]
     [ProducesResponseType(typeof(ApiResponse<CacheMetrics>), StatusCodes.Status200OK)]
-    public async Task<ActionResult<ApiResponse<CacheMetrics>>> GetCacheMetrics()
+    public async Task<IActionResult> GetCacheMetrics()
     {
         var stopwatch = Stopwatch.StartNew();
 

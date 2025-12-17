@@ -32,7 +32,7 @@ public class ClinicalDecisionSupportController : BaseApiController
     [HttpPost("drug-interactions/check")]
     [Authorize(Policy = "PatientView")]
     [ProducesResponseType(typeof(ApiResponse<DrugInteractionResultDto>), 200)]
-    public async Task<ActionResult<ApiResponse<DrugInteractionResultDto>>> CheckDrugInteractions(
+    public async Task<IActionResult> CheckDrugInteractions(
         [FromBody] DrugInteractionCheckDto request)
     {
         var result = await _cdsService.CheckDrugInteractionsAsync(request);
@@ -45,7 +45,7 @@ public class ClinicalDecisionSupportController : BaseApiController
     [HttpGet("drug-interactions/patient/{patientId}/check/{medicationCode}")]
     [Authorize(Policy = "PrescriptionCreate")]
     [ProducesResponseType(typeof(ApiResponse<DrugInteractionResultDto>), 200)]
-    public async Task<ActionResult<ApiResponse<DrugInteractionResultDto>>> CheckNewMedicationInteractions(
+    public async Task<IActionResult> CheckNewMedicationInteractions(
         int patientId,
         string medicationCode)
     {
@@ -59,7 +59,7 @@ public class ClinicalDecisionSupportController : BaseApiController
     [HttpGet("drug-interactions/patient/{patientId}")]
     [Authorize(Policy = "PatientView")]
     [ProducesResponseType(typeof(ApiResponse<DrugInteractionResultDto>), 200)]
-    public async Task<ActionResult<ApiResponse<DrugInteractionResultDto>>> GetCurrentInteractions(int patientId)
+    public async Task<IActionResult> GetCurrentInteractions(int patientId)
     {
         var result = await _cdsService.GetCurrentInteractionsAsync(patientId);
         return ApiOk(result);
@@ -75,7 +75,7 @@ public class ClinicalDecisionSupportController : BaseApiController
     [HttpPost("allergies/check")]
     [Authorize(Policy = "PatientView")]
     [ProducesResponseType(typeof(ApiResponse<AllergyCheckResultDto>), 200)]
-    public async Task<ActionResult<ApiResponse<AllergyCheckResultDto>>> CheckAllergyContraindications(
+    public async Task<IActionResult> CheckAllergyContraindications(
         [FromBody] AllergyCheckRequestDto request)
     {
         var result = await _cdsService.CheckAllergyContraindicationsAsync(request);
@@ -88,7 +88,7 @@ public class ClinicalDecisionSupportController : BaseApiController
     [HttpGet("allergies/patient/{patientId}/safe/{medicationCode}")]
     [Authorize(Policy = "PrescriptionCreate")]
     [ProducesResponseType(typeof(ApiResponse<AllergyCheckResultDto>), 200)]
-    public async Task<ActionResult<ApiResponse<AllergyCheckResultDto>>> IsMedicationSafe(
+    public async Task<IActionResult> IsMedicationSafe(
         int patientId,
         string medicationCode)
     {
@@ -102,7 +102,7 @@ public class ClinicalDecisionSupportController : BaseApiController
     [HttpGet("allergies/patient/{patientId}/alternatives")]
     [Authorize(Policy = "PrescriptionCreate")]
     [ProducesResponseType(typeof(ApiResponse<List<string>>), 200)]
-    public async Task<ActionResult<ApiResponse<List<string>>>> GetAllergyAlternatives(
+    public async Task<IActionResult> GetAllergyAlternatives(
         int patientId,
         [FromQuery] string medicationCode,
         [FromQuery] string drugClass)
@@ -121,7 +121,7 @@ public class ClinicalDecisionSupportController : BaseApiController
     [HttpGet("care-gaps/patient/{patientId}")]
     [Authorize(Policy = "PatientView")]
     [ProducesResponseType(typeof(ApiResponse<PatientCareGapSummaryDto>), 200)]
-    public async Task<ActionResult<ApiResponse<PatientCareGapSummaryDto>>> GetPatientCareGaps(int patientId)
+    public async Task<IActionResult> GetPatientCareGaps(int patientId)
     {
         var result = await _cdsService.GetPatientCareGapsAsync(patientId);
         return ApiOk(result);
@@ -133,7 +133,7 @@ public class ClinicalDecisionSupportController : BaseApiController
     [HttpGet("reminders/patient/{patientId}")]
     [Authorize(Policy = "PatientView")]
     [ProducesResponseType(typeof(ApiResponse<List<ClinicalReminderDto>>), 200)]
-    public async Task<ActionResult<ApiResponse<List<ClinicalReminderDto>>>> GetClinicalReminders(
+    public async Task<IActionResult> GetClinicalReminders(
         int patientId,
         [FromQuery] string? category = null)
     {
@@ -147,7 +147,7 @@ public class ClinicalDecisionSupportController : BaseApiController
     [HttpGet("care-gaps/branch/{branchId}/overdue")]
     [Authorize(Policy = "ClinicalReportView")]
     [ProducesResponseType(typeof(ApiResponse<List<PatientCareGapSummaryDto>>), 200)]
-    public async Task<ActionResult<ApiResponse<List<PatientCareGapSummaryDto>>>> GetOverdueCareGaps(
+    public async Task<IActionResult> GetOverdueCareGaps(
         int branchId,
         [FromQuery] int limit = 100)
     {
@@ -161,7 +161,7 @@ public class ClinicalDecisionSupportController : BaseApiController
     [HttpPost("reminders/{reminderId}/acknowledge")]
     [Authorize(Policy = "PatientEdit")]
     [ProducesResponseType(typeof(ApiResponse), 200)]
-    public async Task<ActionResult<ApiResponse>> AcknowledgeReminder(
+    public async Task<IActionResult> AcknowledgeReminder(
         int reminderId,
         [FromQuery] int userId)
     {
@@ -179,7 +179,7 @@ public class ClinicalDecisionSupportController : BaseApiController
     [HttpPost("reminders/{reminderId}/dismiss")]
     [Authorize(Policy = "PatientEdit")]
     [ProducesResponseType(typeof(ApiResponse), 200)]
-    public async Task<ActionResult<ApiResponse>> DismissReminder(
+    public async Task<IActionResult> DismissReminder(
         int reminderId,
         [FromQuery] int userId,
         [FromBody] DismissReminderRequest request)
@@ -198,7 +198,7 @@ public class ClinicalDecisionSupportController : BaseApiController
     [HttpPost("care-gaps/{reminderId}/complete")]
     [Authorize(Policy = "PatientEdit")]
     [ProducesResponseType(typeof(ApiResponse), 200)]
-    public async Task<ActionResult<ApiResponse>> CompleteCareGap(
+    public async Task<IActionResult> CompleteCareGap(
         int reminderId,
         [FromQuery] int userId,
         [FromBody] CompleteCareGapRequest? request = null)
@@ -217,7 +217,7 @@ public class ClinicalDecisionSupportController : BaseApiController
     [HttpPost("care-gaps/patient/{patientId}/recalculate")]
     [Authorize(Policy = "PatientEdit")]
     [ProducesResponseType(typeof(ApiResponse), 200)]
-    public async Task<ActionResult<ApiResponse>> RecalculateCareGaps(int patientId)
+    public async Task<IActionResult> RecalculateCareGaps(int patientId)
     {
         await _cdsService.RecalculateCareGapsAsync(patientId);
         return ApiOk("Care gaps recalculated");
@@ -233,7 +233,7 @@ public class ClinicalDecisionSupportController : BaseApiController
     [HttpPost("diagnosis/suggest")]
     [Authorize(Policy = "MedicalRecordCreate")]
     [ProducesResponseType(typeof(ApiResponse<DiagnosisSuggestionResultDto>), 200)]
-    public async Task<ActionResult<ApiResponse<DiagnosisSuggestionResultDto>>> GetDiagnosisSuggestions(
+    public async Task<IActionResult> GetDiagnosisSuggestions(
         [FromBody] DiagnosisSuggestionRequestDto request)
     {
         var result = await _cdsService.GetDiagnosisSuggestionsAsync(request);
@@ -246,7 +246,7 @@ public class ClinicalDecisionSupportController : BaseApiController
     [HttpPost("diagnosis/differential")]
     [Authorize(Policy = "MedicalRecordCreate")]
     [ProducesResponseType(typeof(ApiResponse<List<DiagnosisSuggestionDto>>), 200)]
-    public async Task<ActionResult<ApiResponse<List<DiagnosisSuggestionDto>>>> GetDifferentialDiagnoses(
+    public async Task<IActionResult> GetDifferentialDiagnoses(
         [FromBody] DifferentialDiagnosisRequest request)
     {
         var suggestions = await _cdsService.GetDifferentialDiagnosesAsync(request.Symptoms, request.PatientId);
@@ -259,7 +259,7 @@ public class ClinicalDecisionSupportController : BaseApiController
     [HttpPost("diagnosis/red-flags")]
     [Authorize(Policy = "PatientView")]
     [ProducesResponseType(typeof(ApiResponse<List<string>>), 200)]
-    public async Task<ActionResult<ApiResponse<List<string>>>> GetRedFlags([FromBody] RedFlagsRequest request)
+    public async Task<IActionResult> GetRedFlags([FromBody] RedFlagsRequest request)
     {
         var redFlags = await _cdsService.GetRedFlagsAsync(request.Symptoms, request.ChiefComplaint);
         return ApiOk(redFlags);
@@ -275,7 +275,7 @@ public class ClinicalDecisionSupportController : BaseApiController
     [HttpPost("dosage/check")]
     [Authorize(Policy = "PrescriptionCreate")]
     [ProducesResponseType(typeof(ApiResponse<DosageCheckResultDto>), 200)]
-    public async Task<ActionResult<ApiResponse<DosageCheckResultDto>>> CheckDosage(
+    public async Task<IActionResult> CheckDosage(
         [FromBody] DosageCheckRequestDto request)
     {
         var result = await _cdsService.CheckDosageAsync(request);
@@ -288,7 +288,7 @@ public class ClinicalDecisionSupportController : BaseApiController
     [HttpGet("dosage/patient/{patientId}/recommend/{medicationCode}")]
     [Authorize(Policy = "PrescriptionCreate")]
     [ProducesResponseType(typeof(ApiResponse<DosageRecommendationDto>), 200)]
-    public async Task<ActionResult<ApiResponse<DosageRecommendationDto>>> GetRecommendedDosage(
+    public async Task<IActionResult> GetRecommendedDosage(
         int patientId,
         string medicationCode,
         [FromQuery] string? indication = null)
@@ -303,7 +303,7 @@ public class ClinicalDecisionSupportController : BaseApiController
     [HttpGet("dosage/max-daily/{medicationCode}")]
     [Authorize(Policy = "PrescriptionCreate")]
     [ProducesResponseType(typeof(ApiResponse<DosageRangeDto>), 200)]
-    public async Task<ActionResult<ApiResponse<DosageRangeDto>>> GetMaxDailyDose(
+    public async Task<IActionResult> GetMaxDailyDose(
         string medicationCode,
         [FromQuery] int? patientAge = null,
         [FromQuery] decimal? patientWeight = null)
@@ -322,7 +322,7 @@ public class ClinicalDecisionSupportController : BaseApiController
     [HttpPost("contraindications/check")]
     [Authorize(Policy = "PrescriptionCreate")]
     [ProducesResponseType(typeof(ApiResponse<ContraindicationCheckResultDto>), 200)]
-    public async Task<ActionResult<ApiResponse<ContraindicationCheckResultDto>>> CheckContraindications(
+    public async Task<IActionResult> CheckContraindications(
         [FromBody] ContraindicationCheckRequestDto request)
     {
         var result = await _cdsService.CheckContraindicationsAsync(request);
@@ -335,7 +335,7 @@ public class ClinicalDecisionSupportController : BaseApiController
     [HttpGet("contraindications/patient/{patientId}")]
     [Authorize(Policy = "PatientView")]
     [ProducesResponseType(typeof(ApiResponse<List<ContraindicationAlertDto>>), 200)]
-    public async Task<ActionResult<ApiResponse<List<ContraindicationAlertDto>>>> GetPatientContraindications(
+    public async Task<IActionResult> GetPatientContraindications(
         int patientId)
     {
         var contraindications = await _cdsService.GetPatientContraindicationsAsync(patientId);
@@ -348,7 +348,7 @@ public class ClinicalDecisionSupportController : BaseApiController
     [HttpGet("contraindications/pregnancy/patient/{patientId}/{medicationCode}")]
     [Authorize(Policy = "PrescriptionCreate")]
     [ProducesResponseType(typeof(ApiResponse<ContraindicationCheckResultDto>), 200)]
-    public async Task<ActionResult<ApiResponse<ContraindicationCheckResultDto>>> CheckPregnancyContraindications(
+    public async Task<IActionResult> CheckPregnancyContraindications(
         int patientId,
         string medicationCode)
     {
@@ -366,7 +366,7 @@ public class ClinicalDecisionSupportController : BaseApiController
     [HttpPost("labs/interpret")]
     [Authorize(Policy = "LabResultView")]
     [ProducesResponseType(typeof(ApiResponse<LabInterpretationResultDto>), 200)]
-    public async Task<ActionResult<ApiResponse<LabInterpretationResultDto>>> InterpretLabResult(
+    public async Task<IActionResult> InterpretLabResult(
         [FromBody] LabInterpretationRequestDto request)
     {
         var result = await _cdsService.InterpretLabResultAsync(request);
@@ -379,7 +379,7 @@ public class ClinicalDecisionSupportController : BaseApiController
     [HttpGet("labs/patient/{patientId}/trends/{labCode}")]
     [Authorize(Policy = "LabResultView")]
     [ProducesResponseType(typeof(ApiResponse<TrendAnalysisDto>), 200)]
-    public async Task<ActionResult<ApiResponse<TrendAnalysisDto>>> GetLabTrendAnalysis(
+    public async Task<IActionResult> GetLabTrendAnalysis(
         int patientId,
         string labCode,
         [FromQuery] int? monthsBack = 12)
@@ -394,7 +394,7 @@ public class ClinicalDecisionSupportController : BaseApiController
     [HttpGet("labs/patient/{patientId}/critical")]
     [Authorize(Policy = "LabResultView")]
     [ProducesResponseType(typeof(ApiResponse<List<LabInterpretationResultDto>>), 200)]
-    public async Task<ActionResult<ApiResponse<List<LabInterpretationResultDto>>>> GetCriticalLabs(int patientId)
+    public async Task<IActionResult> GetCriticalLabs(int patientId)
     {
         var criticalLabs = await _cdsService.GetCriticalLabsAsync(patientId);
         return ApiOk(criticalLabs);
@@ -406,7 +406,7 @@ public class ClinicalDecisionSupportController : BaseApiController
     [HttpGet("labs/follow-up-suggestions")]
     [Authorize(Policy = "LabResultView")]
     [ProducesResponseType(typeof(ApiResponse<List<string>>), 200)]
-    public async Task<ActionResult<ApiResponse<List<string>>>> GetSuggestedFollowUpLabs(
+    public async Task<IActionResult> GetSuggestedFollowUpLabs(
         [FromQuery] int patientId,
         [FromQuery] string labCode,
         [FromQuery] decimal value)
@@ -425,7 +425,7 @@ public class ClinicalDecisionSupportController : BaseApiController
     [HttpGet("guidelines/condition/{conditionCode}")]
     [Authorize(Policy = "PatientView")]
     [ProducesResponseType(typeof(ApiResponse<List<ClinicalGuidelineDto>>), 200)]
-    public async Task<ActionResult<ApiResponse<List<ClinicalGuidelineDto>>>> GetGuidelines(string conditionCode)
+    public async Task<IActionResult> GetGuidelines(string conditionCode)
     {
         var guidelines = await _cdsService.GetGuidelinesAsync(conditionCode);
         return ApiOk(guidelines);
@@ -437,7 +437,7 @@ public class ClinicalDecisionSupportController : BaseApiController
     [HttpGet("guidelines/patient/{patientId}")]
     [Authorize(Policy = "PatientView")]
     [ProducesResponseType(typeof(ApiResponse<List<ClinicalGuidelineDto>>), 200)]
-    public async Task<ActionResult<ApiResponse<List<ClinicalGuidelineDto>>>> GetPatientGuidelines(int patientId)
+    public async Task<IActionResult> GetPatientGuidelines(int patientId)
     {
         var guidelines = await _cdsService.GetPatientGuidelinesAsync(patientId);
         return ApiOk(guidelines);
@@ -449,7 +449,7 @@ public class ClinicalDecisionSupportController : BaseApiController
     [HttpGet("guidelines/search")]
     [Authorize(Policy = "PatientView")]
     [ProducesResponseType(typeof(ApiResponse<List<ClinicalGuidelineDto>>), 200)]
-    public async Task<ActionResult<ApiResponse<List<ClinicalGuidelineDto>>>> SearchGuidelines(
+    public async Task<IActionResult> SearchGuidelines(
         [FromQuery] string searchTerm,
         [FromQuery] string? category = null)
     {
@@ -467,7 +467,7 @@ public class ClinicalDecisionSupportController : BaseApiController
     [HttpGet("order-sets")]
     [Authorize(Policy = "PatientView")]
     [ProducesResponseType(typeof(ApiResponse<List<ClinicalOrderSetDto>>), 200)]
-    public async Task<ActionResult<ApiResponse<List<ClinicalOrderSetDto>>>> GetOrderSets(
+    public async Task<IActionResult> GetOrderSets(
         [FromQuery] string? category = null,
         [FromQuery] string? conditionCode = null)
     {
@@ -482,7 +482,7 @@ public class ClinicalDecisionSupportController : BaseApiController
     [Authorize(Policy = "PatientView")]
     [ProducesResponseType(typeof(ApiResponse<ClinicalOrderSetDto>), 200)]
     [ProducesResponseType(typeof(ApiResponse), 404)]
-    public async Task<ActionResult<ApiResponse<ClinicalOrderSetDto>>> GetOrderSetById(int orderSetId)
+    public async Task<IActionResult> GetOrderSetById(int orderSetId)
     {
         var orderSet = await _cdsService.GetOrderSetByIdAsync(orderSetId);
 
@@ -498,7 +498,7 @@ public class ClinicalDecisionSupportController : BaseApiController
     [HttpGet("order-sets/patient/{patientId}/recommended")]
     [Authorize(Policy = "PatientView")]
     [ProducesResponseType(typeof(ApiResponse<List<ClinicalOrderSetDto>>), 200)]
-    public async Task<ActionResult<ApiResponse<List<ClinicalOrderSetDto>>>> GetRecommendedOrderSets(int patientId)
+    public async Task<IActionResult> GetRecommendedOrderSets(int patientId)
     {
         var orderSets = await _cdsService.GetRecommendedOrderSetsAsync(patientId);
         return ApiOk(orderSets);
@@ -510,7 +510,7 @@ public class ClinicalDecisionSupportController : BaseApiController
     [HttpPost("order-sets")]
     [Authorize(Policy = "SettingsManage")]
     [ProducesResponseType(typeof(ApiResponse<ClinicalOrderSetDto>), 201)]
-    public async Task<ActionResult<ApiResponse<ClinicalOrderSetDto>>> CreateOrderSet(
+    public async Task<IActionResult> CreateOrderSet(
         [FromBody] ClinicalOrderSetDto orderSet,
         [FromQuery] int userId)
     {
@@ -525,7 +525,7 @@ public class ClinicalDecisionSupportController : BaseApiController
     [Authorize(Policy = "SettingsManage")]
     [ProducesResponseType(typeof(ApiResponse<ClinicalOrderSetDto>), 200)]
     [ProducesResponseType(typeof(ApiResponse), 404)]
-    public async Task<ActionResult<ApiResponse<ClinicalOrderSetDto>>> UpdateOrderSet(
+    public async Task<IActionResult> UpdateOrderSet(
         int orderSetId,
         [FromBody] ClinicalOrderSetDto orderSet,
         [FromQuery] int userId)
@@ -545,7 +545,7 @@ public class ClinicalDecisionSupportController : BaseApiController
     [Authorize(Policy = "SettingsManage")]
     [ProducesResponseType(typeof(ApiResponse), 200)]
     [ProducesResponseType(typeof(ApiResponse), 404)]
-    public async Task<ActionResult<ApiResponse>> DeleteOrderSet(int orderSetId, [FromQuery] int userId)
+    public async Task<IActionResult> DeleteOrderSet(int orderSetId, [FromQuery] int userId)
     {
         var success = await _cdsService.DeleteOrderSetAsync(orderSetId, userId);
 
@@ -565,7 +565,7 @@ public class ClinicalDecisionSupportController : BaseApiController
     [HttpGet("risk-calculators")]
     [Authorize(Policy = "PatientView")]
     [ProducesResponseType(typeof(ApiResponse<List<RiskCalculatorDto>>), 200)]
-    public async Task<ActionResult<ApiResponse<List<RiskCalculatorDto>>>> GetRiskCalculators(
+    public async Task<IActionResult> GetRiskCalculators(
         [FromQuery] string? category = null)
     {
         var calculators = await _cdsService.GetRiskCalculatorsAsync(category);
@@ -578,7 +578,7 @@ public class ClinicalDecisionSupportController : BaseApiController
     [HttpPost("risk-calculators/calculate")]
     [Authorize(Policy = "PatientView")]
     [ProducesResponseType(typeof(ApiResponse<RiskCalculationResultDto>), 200)]
-    public async Task<ActionResult<ApiResponse<RiskCalculationResultDto>>> CalculateRisk(
+    public async Task<IActionResult> CalculateRisk(
         [FromBody] RiskCalculationRequestDto request)
     {
         var result = await _cdsService.CalculateRiskAsync(request);
@@ -591,7 +591,7 @@ public class ClinicalDecisionSupportController : BaseApiController
     [HttpGet("risk-calculators/patient/{patientId}/history/{calculatorId}")]
     [Authorize(Policy = "PatientView")]
     [ProducesResponseType(typeof(ApiResponse<List<RiskCalculationResultDto>>), 200)]
-    public async Task<ActionResult<ApiResponse<List<RiskCalculationResultDto>>>> GetPatientRiskHistory(
+    public async Task<IActionResult> GetPatientRiskHistory(
         int patientId,
         string calculatorId)
     {
@@ -605,7 +605,7 @@ public class ClinicalDecisionSupportController : BaseApiController
     [HttpGet("risk-calculators/patient/{patientId}/ascvd")]
     [Authorize(Policy = "PatientView")]
     [ProducesResponseType(typeof(ApiResponse<RiskCalculationResultDto>), 200)]
-    public async Task<ActionResult<ApiResponse<RiskCalculationResultDto>>> CalculateAscvdRisk(int patientId)
+    public async Task<IActionResult> CalculateAscvdRisk(int patientId)
     {
         var result = await _cdsService.CalculateAscvdRiskAsync(patientId);
         return ApiOk(result);
@@ -617,7 +617,7 @@ public class ClinicalDecisionSupportController : BaseApiController
     [HttpGet("risk-calculators/patient/{patientId}/diabetes")]
     [Authorize(Policy = "PatientView")]
     [ProducesResponseType(typeof(ApiResponse<RiskCalculationResultDto>), 200)]
-    public async Task<ActionResult<ApiResponse<RiskCalculationResultDto>>> CalculateDiabetesRisk(int patientId)
+    public async Task<IActionResult> CalculateDiabetesRisk(int patientId)
     {
         var result = await _cdsService.CalculateDiabetesRiskAsync(patientId);
         return ApiOk(result);
@@ -629,7 +629,7 @@ public class ClinicalDecisionSupportController : BaseApiController
     [HttpGet("risk-calculators/patient/{patientId}/fall")]
     [Authorize(Policy = "PatientView")]
     [ProducesResponseType(typeof(ApiResponse<RiskCalculationResultDto>), 200)]
-    public async Task<ActionResult<ApiResponse<RiskCalculationResultDto>>> CalculateFallRisk(int patientId)
+    public async Task<IActionResult> CalculateFallRisk(int patientId)
     {
         var result = await _cdsService.CalculateFallRiskAsync(patientId);
         return ApiOk(result);
@@ -645,7 +645,7 @@ public class ClinicalDecisionSupportController : BaseApiController
     [HttpGet("alerts/config")]
     [Authorize(Policy = "SettingsManage")]
     [ProducesResponseType(typeof(ApiResponse<List<ClinicalAlertConfigDto>>), 200)]
-    public async Task<ActionResult<ApiResponse<List<ClinicalAlertConfigDto>>>> GetAlertConfigurations()
+    public async Task<IActionResult> GetAlertConfigurations()
     {
         var configs = await _cdsService.GetAlertConfigurationsAsync();
         return ApiOk(configs);
@@ -657,7 +657,7 @@ public class ClinicalDecisionSupportController : BaseApiController
     [HttpPut("alerts/config")]
     [Authorize(Policy = "SettingsManage")]
     [ProducesResponseType(typeof(ApiResponse<ClinicalAlertConfigDto>), 200)]
-    public async Task<ActionResult<ApiResponse<ClinicalAlertConfigDto>>> UpdateAlertConfiguration(
+    public async Task<IActionResult> UpdateAlertConfiguration(
         [FromBody] ClinicalAlertConfigDto config,
         [FromQuery] int userId)
     {
@@ -671,7 +671,7 @@ public class ClinicalDecisionSupportController : BaseApiController
     [HttpPost("alerts/{alertId}/override")]
     [Authorize(Policy = "PatientEdit")]
     [ProducesResponseType(typeof(ApiResponse<AlertOverrideDto>), 200)]
-    public async Task<ActionResult<ApiResponse<AlertOverrideDto>>> OverrideAlert(
+    public async Task<IActionResult> OverrideAlert(
         int alertId,
         [FromBody] OverrideAlertRequest request,
         [FromQuery] int userId)
@@ -692,7 +692,7 @@ public class ClinicalDecisionSupportController : BaseApiController
     [HttpGet("alerts/overrides")]
     [Authorize(Policy = "AuditLogView")]
     [ProducesResponseType(typeof(ApiResponse<List<AlertOverrideDto>>), 200)]
-    public async Task<ActionResult<ApiResponse<List<AlertOverrideDto>>>> GetAlertOverrides(
+    public async Task<IActionResult> GetAlertOverrides(
         [FromQuery] int? patientId = null,
         [FromQuery] int? userId = null,
         [FromQuery] DateTime? fromDate = null,
@@ -708,7 +708,7 @@ public class ClinicalDecisionSupportController : BaseApiController
     [HttpPost("alerts/overrides/{overrideId}/review")]
     [Authorize(Policy = "AuditLogView")]
     [ProducesResponseType(typeof(ApiResponse), 200)]
-    public async Task<ActionResult<ApiResponse>> ReviewAlertOverride(
+    public async Task<IActionResult> ReviewAlertOverride(
         int overrideId,
         [FromQuery] int reviewedByUserId,
         [FromBody] ReviewOverrideRequest? request = null)
@@ -731,7 +731,7 @@ public class ClinicalDecisionSupportController : BaseApiController
     [HttpPost("safety-check")]
     [Authorize(Policy = "PrescriptionCreate")]
     [ProducesResponseType(typeof(ApiResponse<MedicationSafetyCheckResultDto>), 200)]
-    public async Task<ActionResult<ApiResponse<MedicationSafetyCheckResultDto>>> PerformMedicationSafetyCheck(
+    public async Task<IActionResult> PerformMedicationSafetyCheck(
         [FromQuery] int patientId,
         [FromQuery] string medicationCode,
         [FromBody] DosageCheckRequestDto? dosageInfo = null)

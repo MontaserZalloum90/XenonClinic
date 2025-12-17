@@ -137,7 +137,7 @@ public class InventoryService : IInventoryService
             .ToListAsync();
     }
 
-    public async Task<IEnumerable<InventoryTransaction>> GetTransactionsByTypeAsync(int branchId, TransactionType transactionType)
+    public async Task<IEnumerable<InventoryTransaction>> GetTransactionsByTypeAsync(int branchId, InventoryTransactionType transactionType)
     {
         return await _context.InventoryTransactions
             .AsNoTracking()
@@ -147,6 +147,39 @@ public class InventoryService : IInventoryService
                    t.TransactionType == transactionType)
             .OrderByDescending(t => t.TransactionDate)
             .ToListAsync();
+    }
+
+    /// <summary>
+    /// Determines the stock change for a transaction.
+    /// Returns positive value for additions, negative for removals.
+    /// </summary>
+    private static int CalculateStockChange(InventoryTransactionType transactionType, int quantity)
+    {
+        return transactionType switch
+        {
+            InventoryTransactionType.Purchase => quantity,    // Stock coming in from supplier
+            InventoryTransactionType.Return => quantity,      // Return from patient adds stock back
+            InventoryTransactionType.Sale => -quantity,       // Stock going out to patient
+            InventoryTransactionType.Transfer => -quantity,   // Stock leaving this branch
+            InventoryTransactionType.Adjustment => quantity,  // Adjustment quantity is already signed (positive or negative)
+            _ => throw new ArgumentOutOfRangeException(nameof(transactionType), transactionType, "Unknown transaction type")
+        };
+    }
+
+    /// <summary>
+    /// Determines if a transaction type removes stock (requires sufficient stock).
+    /// </summary>
+    private static bool IsStockRemoval(InventoryTransactionType transactionType, int quantity)
+    {
+        return transactionType switch
+        {
+            InventoryTransactionType.Purchase => false,
+            InventoryTransactionType.Return => false,
+            InventoryTransactionType.Sale => true,
+            InventoryTransactionType.Transfer => true,
+            InventoryTransactionType.Adjustment => quantity < 0, // Negative adjustment removes stock
+            _ => throw new ArgumentOutOfRangeException(nameof(transactionType), transactionType, "Unknown transaction type")
+        };
     }
 
     public async Task<InventoryTransaction> CreateTransactionAsync(InventoryTransaction transaction)
@@ -174,14 +207,13 @@ public class InventoryService : IInventoryService
         await using var dbTransaction = await _context.Database.BeginTransactionAsync();
         try
         {
-            var stockChange = transaction.TransactionType == TransactionType.Credit
-                ? transaction.Quantity
-                : -transaction.Quantity;
+            var stockChange = CalculateStockChange(transaction.TransactionType, transaction.Quantity);
+            var isRemoval = IsStockRemoval(transaction.TransactionType, transaction.Quantity);
 
-            // BUG FIX: Validate stock won't go negative for debits
-            if (transaction.TransactionType == TransactionType.Debit && item.QuantityOnHand < transaction.Quantity)
+            // BUG FIX: Validate stock won't go negative for stock removals
+            if (isRemoval && item.QuantityOnHand < Math.Abs(stockChange))
             {
-                throw new InvalidOperationException($"Insufficient stock. Available: {item.QuantityOnHand}, Requested: {transaction.Quantity}");
+                throw new InvalidOperationException($"Insufficient stock. Available: {item.QuantityOnHand}, Requested: {Math.Abs(stockChange)}");
             }
 
             _context.InventoryTransactions.Add(transaction);
@@ -237,13 +269,9 @@ public class InventoryService : IInventoryService
             }
 
             // Reverse old transaction effect
-            var oldStockChange = oldTransaction.TransactionType == TransactionType.Credit
-                ? oldTransaction.Quantity
-                : -oldTransaction.Quantity;
+            var oldStockChange = CalculateStockChange(oldTransaction.TransactionType, oldTransaction.Quantity);
             // Apply new transaction effect
-            var newStockChange = transaction.TransactionType == TransactionType.Credit
-                ? transaction.Quantity
-                : -transaction.Quantity;
+            var newStockChange = CalculateStockChange(transaction.TransactionType, transaction.Quantity);
 
             var newStock = item.QuantityOnHand - oldStockChange + newStockChange;
 
@@ -289,11 +317,11 @@ public class InventoryService : IInventoryService
             var item = await _context.InventoryItems.FindAsync(transaction.InventoryItemId);
             if (item != null)
             {
-                var stockChange = transaction.TransactionType == TransactionType.Credit
-                    ? -transaction.Quantity  // Reverse the credit
-                    : transaction.Quantity;  // Reverse the debit
+                // Reverse the original stock change by negating it
+                var originalStockChange = CalculateStockChange(transaction.TransactionType, transaction.Quantity);
+                var reversalStockChange = -originalStockChange;
 
-                var newStock = item.QuantityOnHand + stockChange;
+                var newStock = item.QuantityOnHand + reversalStockChange;
 
                 // BUG FIX: Validate stock won't go negative after reversal
                 if (newStock < 0)
@@ -353,7 +381,7 @@ public class InventoryService : IInventoryService
             var transaction = new InventoryTransaction
             {
                 InventoryItemId = itemId,
-                TransactionType = TransactionType.Credit,
+                TransactionType = InventoryTransactionType.Purchase,
                 Quantity = quantity,
                 UnitPrice = unitCost,
                 TotalAmount = quantity * unitCost,
@@ -418,7 +446,7 @@ public class InventoryService : IInventoryService
             var transaction = new InventoryTransaction
             {
                 InventoryItemId = itemId,
-                TransactionType = TransactionType.Debit,
+                TransactionType = InventoryTransactionType.Sale,
                 Quantity = quantity,
                 UnitPrice = item.CostPrice,
                 TotalAmount = quantity * item.CostPrice,
@@ -470,20 +498,19 @@ public class InventoryService : IInventoryService
                 return new InventoryTransaction
                 {
                     InventoryItemId = itemId,
-                    TransactionType = TransactionType.Credit,
+                    TransactionType = InventoryTransactionType.Adjustment,
                     Quantity = 0,
                     Notes = "No adjustment needed - stock already at target level"
                 };
             }
 
-            var transactionType = difference > 0 ? TransactionType.Credit : TransactionType.Debit;
             var absoluteDifference = Math.Abs(difference);
 
             var transaction = new InventoryTransaction
             {
                 InventoryItemId = itemId,
-                TransactionType = transactionType,
-                Quantity = absoluteDifference,
+                TransactionType = InventoryTransactionType.Adjustment,
+                Quantity = difference > 0 ? absoluteDifference : -absoluteDifference, // Positive for additions, negative for removals
                 UnitPrice = item.CostPrice,
                 TotalAmount = absoluteDifference * item.CostPrice,
                 TransactionDate = DateTime.UtcNow,
@@ -554,7 +581,7 @@ public class InventoryService : IInventoryService
             .SumAsync(i => i.QuantityOnHand * i.CostPrice);
     }
 
-    public async Task<Dictionary<TransactionType, int>> GetTransactionTypeDistributionAsync(int branchId)
+    public async Task<Dictionary<InventoryTransactionType, int>> GetTransactionTypeDistributionAsync(int branchId)
     {
         var transactions = await _context.InventoryTransactions
             .Include(t => t.InventoryItem)

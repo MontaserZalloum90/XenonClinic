@@ -45,7 +45,7 @@ public class ClinicalVisitsController : BaseApiController
     [HttpGet("audiology/{id:int}")]
     [ProducesResponseType(typeof(ApiResponse<AudiologyVisitDto>), 200)]
     [ProducesResponseType(typeof(ApiResponse), 404)]
-    public async Task<ActionResult<ApiResponse<AudiologyVisitDto>>> GetAudiologyVisit(int id)
+    public async Task<IActionResult> GetAudiologyVisit(int id)
     {
         var visit = await _clinicalVisitService.GetAudiologyVisitByIdAsync(id);
         if (visit == null)
@@ -62,7 +62,7 @@ public class ClinicalVisitsController : BaseApiController
     /// </summary>
     [HttpGet("audiology/patient/{patientId:int}")]
     [ProducesResponseType(typeof(ApiResponse<IEnumerable<AudiologyVisitDto>>), 200)]
-    public async Task<ActionResult<ApiResponse<IEnumerable<AudiologyVisitDto>>>> GetAudiologyVisitsByPatient(int patientId)
+    public async Task<IActionResult> GetAudiologyVisitsByPatient(int patientId)
     {
         var branchId = _userContext.BranchId ?? 0;
         var visits = await _clinicalVisitService.GetAudiologyVisitsByPatientAsync(patientId, branchId);
@@ -75,7 +75,7 @@ public class ClinicalVisitsController : BaseApiController
     [HttpPost("audiology")]
     [ProducesResponseType(typeof(ApiResponse<AudiologyVisitDto>), 201)]
     [ProducesResponseType(typeof(ApiResponse), 400)]
-    public async Task<ActionResult<ApiResponse<AudiologyVisitDto>>> CreateAudiologyVisit(
+    public async Task<IActionResult> CreateAudiologyVisit(
         [FromBody] CreateAudiologyVisitDto dto,
         [FromServices] IValidator<CreateAudiologyVisitDto> validator)
     {
@@ -112,7 +112,7 @@ public class ClinicalVisitsController : BaseApiController
     [HttpDelete("audiology/{id:int}")]
     [ProducesResponseType(204)]
     [ProducesResponseType(typeof(ApiResponse), 404)]
-    public async Task<ActionResult> DeleteAudiologyVisit(int id)
+    public async Task<IActionResult> DeleteAudiologyVisit(int id)
     {
         var visit = await _clinicalVisitService.GetAudiologyVisitByIdAsync(id);
         if (visit == null)
@@ -135,7 +135,7 @@ public class ClinicalVisitsController : BaseApiController
     [HttpGet("dental/{id:int}")]
     [ProducesResponseType(typeof(ApiResponse<DentalVisitDto>), 200)]
     [ProducesResponseType(typeof(ApiResponse), 404)]
-    public async Task<ActionResult<ApiResponse<DentalVisitDto>>> GetDentalVisit(int id)
+    public async Task<IActionResult> GetDentalVisit(int id)
     {
         var visit = await _clinicalVisitService.GetDentalVisitByIdAsync(id);
         if (visit == null)
@@ -152,7 +152,7 @@ public class ClinicalVisitsController : BaseApiController
     /// </summary>
     [HttpGet("dental/patient/{patientId:int}")]
     [ProducesResponseType(typeof(ApiResponse<IEnumerable<DentalVisitDto>>), 200)]
-    public async Task<ActionResult<ApiResponse<IEnumerable<DentalVisitDto>>>> GetDentalVisitsByPatient(int patientId)
+    public async Task<IActionResult> GetDentalVisitsByPatient(int patientId)
     {
         var branchId = _userContext.BranchId ?? 0;
         var visits = await _clinicalVisitService.GetDentalVisitsByPatientAsync(patientId, branchId);
@@ -165,7 +165,7 @@ public class ClinicalVisitsController : BaseApiController
     [HttpPost("dental")]
     [ProducesResponseType(typeof(ApiResponse<DentalVisitDto>), 201)]
     [ProducesResponseType(typeof(ApiResponse), 400)]
-    public async Task<ActionResult<ApiResponse<DentalVisitDto>>> CreateDentalVisit(
+    public async Task<IActionResult> CreateDentalVisit(
         [FromBody] CreateDentalVisitDto dto,
         [FromServices] IValidator<CreateDentalVisitDto> validator)
     {
@@ -204,7 +204,7 @@ public class ClinicalVisitsController : BaseApiController
     [HttpDelete("dental/{id:int}")]
     [ProducesResponseType(204)]
     [ProducesResponseType(typeof(ApiResponse), 404)]
-    public async Task<ActionResult> DeleteDentalVisit(int id)
+    public async Task<IActionResult> DeleteDentalVisit(int id)
     {
         var visit = await _clinicalVisitService.GetDentalVisitByIdAsync(id);
         if (visit == null)
@@ -227,7 +227,7 @@ public class ClinicalVisitsController : BaseApiController
     [HttpGet("cardiology/{id:int}")]
     [ProducesResponseType(typeof(ApiResponse<CardioVisitDto>), 200)]
     [ProducesResponseType(typeof(ApiResponse), 404)]
-    public async Task<ActionResult<ApiResponse<CardioVisitDto>>> GetCardioVisit(int id)
+    public async Task<IActionResult> GetCardioVisit(int id)
     {
         var visit = await _clinicalVisitService.GetCardioVisitByIdAsync(id);
         if (visit == null)
@@ -244,7 +244,7 @@ public class ClinicalVisitsController : BaseApiController
     /// </summary>
     [HttpGet("cardiology/patient/{patientId:int}")]
     [ProducesResponseType(typeof(ApiResponse<IEnumerable<CardioVisitDto>>), 200)]
-    public async Task<ActionResult<ApiResponse<IEnumerable<CardioVisitDto>>>> GetCardioVisitsByPatient(int patientId)
+    public async Task<IActionResult> GetCardioVisitsByPatient(int patientId)
     {
         var branchId = _userContext.BranchId ?? 0;
         var visits = await _clinicalVisitService.GetCardioVisitsByPatientAsync(patientId, branchId);
@@ -257,7 +257,7 @@ public class ClinicalVisitsController : BaseApiController
     [HttpPost("cardiology")]
     [ProducesResponseType(typeof(ApiResponse<CardioVisitDto>), 201)]
     [ProducesResponseType(typeof(ApiResponse), 400)]
-    public async Task<ActionResult<ApiResponse<CardioVisitDto>>> CreateCardioVisit(
+    public async Task<IActionResult> CreateCardioVisit(
         [FromBody] CreateCardioVisitDto dto,
         [FromServices] IValidator<CreateCardioVisitDto> validator)
     {
@@ -278,7 +278,6 @@ public class ClinicalVisitsController : BaseApiController
             VisitDate = dto.VisitDate,
             ChiefComplaint = dto.ChiefComplaint,
             Notes = dto.Notes,
-            ProviderId = dto.ProviderId?.ToString(),
             CreatedBy = _userContext.UserId
         };
 
@@ -293,7 +292,7 @@ public class ClinicalVisitsController : BaseApiController
     /// </summary>
     [HttpGet("cardiology/ecg/patient/{patientId:int}")]
     [ProducesResponseType(typeof(ApiResponse<IEnumerable<ECGRecordDto>>), 200)]
-    public async Task<ActionResult<ApiResponse<IEnumerable<ECGRecordDto>>>> GetPatientECGs(int patientId)
+    public async Task<IActionResult> GetPatientECGs(int patientId)
     {
         var branchId = _userContext.BranchId ?? 0;
         var ecgs = await _clinicalVisitService.GetECGsByPatientAsync(patientId, branchId);
@@ -310,7 +309,7 @@ public class ClinicalVisitsController : BaseApiController
     [HttpGet("ophthalmology/{id:int}")]
     [ProducesResponseType(typeof(ApiResponse<OphthalmologyVisitDto>), 200)]
     [ProducesResponseType(typeof(ApiResponse), 404)]
-    public async Task<ActionResult<ApiResponse<OphthalmologyVisitDto>>> GetOphthalmologyVisit(int id)
+    public async Task<IActionResult> GetOphthalmologyVisit(int id)
     {
         var visit = await _clinicalVisitService.GetOphthalmologyVisitByIdAsync(id);
         if (visit == null)
@@ -327,7 +326,7 @@ public class ClinicalVisitsController : BaseApiController
     /// </summary>
     [HttpGet("ophthalmology/patient/{patientId:int}")]
     [ProducesResponseType(typeof(ApiResponse<IEnumerable<OphthalmologyVisitDto>>), 200)]
-    public async Task<ActionResult<ApiResponse<IEnumerable<OphthalmologyVisitDto>>>> GetOphthalmologyVisitsByPatient(int patientId)
+    public async Task<IActionResult> GetOphthalmologyVisitsByPatient(int patientId)
     {
         var branchId = _userContext.BranchId ?? 0;
         var visits = await _clinicalVisitService.GetOphthalmologyVisitsByPatientAsync(patientId, branchId);
@@ -340,7 +339,7 @@ public class ClinicalVisitsController : BaseApiController
     [HttpPost("ophthalmology")]
     [ProducesResponseType(typeof(ApiResponse<OphthalmologyVisitDto>), 201)]
     [ProducesResponseType(typeof(ApiResponse), 400)]
-    public async Task<ActionResult<ApiResponse<OphthalmologyVisitDto>>> CreateOphthalmologyVisit(
+    public async Task<IActionResult> CreateOphthalmologyVisit(
         [FromBody] CreateOphthalmologyVisitDto dto,
         [FromServices] IValidator<CreateOphthalmologyVisitDto> validator)
     {
@@ -361,7 +360,6 @@ public class ClinicalVisitsController : BaseApiController
             VisitDate = dto.VisitDate,
             ChiefComplaint = dto.ChiefComplaint,
             Notes = dto.Notes,
-            ProviderId = dto.ProviderId?.ToString(),
             CreatedBy = _userContext.UserId
         };
 
@@ -376,7 +374,7 @@ public class ClinicalVisitsController : BaseApiController
     /// </summary>
     [HttpGet("ophthalmology/prescriptions/patient/{patientId:int}")]
     [ProducesResponseType(typeof(ApiResponse<IEnumerable<EyePrescriptionDto>>), 200)]
-    public async Task<ActionResult<ApiResponse<IEnumerable<EyePrescriptionDto>>>> GetPatientEyePrescriptions(int patientId)
+    public async Task<IActionResult> GetPatientEyePrescriptions(int patientId)
     {
         var branchId = _userContext.BranchId ?? 0;
         var prescriptions = await _clinicalVisitService.GetEyePrescriptionsByPatientAsync(patientId, branchId);
@@ -393,7 +391,7 @@ public class ClinicalVisitsController : BaseApiController
     [HttpGet("physiotherapy/{id:int}")]
     [ProducesResponseType(typeof(ApiResponse<PhysioSessionDto>), 200)]
     [ProducesResponseType(typeof(ApiResponse), 404)]
-    public async Task<ActionResult<ApiResponse<PhysioSessionDto>>> GetPhysioSession(int id)
+    public async Task<IActionResult> GetPhysioSession(int id)
     {
         var session = await _clinicalVisitService.GetPhysioSessionByIdAsync(id);
         if (session == null)
@@ -410,7 +408,7 @@ public class ClinicalVisitsController : BaseApiController
     /// </summary>
     [HttpGet("physiotherapy/patient/{patientId:int}")]
     [ProducesResponseType(typeof(ApiResponse<IEnumerable<PhysioSessionDto>>), 200)]
-    public async Task<ActionResult<ApiResponse<IEnumerable<PhysioSessionDto>>>> GetPhysioSessionsByPatient(int patientId)
+    public async Task<IActionResult> GetPhysioSessionsByPatient(int patientId)
     {
         var branchId = _userContext.BranchId ?? 0;
         var sessions = await _clinicalVisitService.GetPhysioSessionsByPatientAsync(patientId, branchId);
@@ -423,7 +421,7 @@ public class ClinicalVisitsController : BaseApiController
     [HttpPost("physiotherapy")]
     [ProducesResponseType(typeof(ApiResponse<PhysioSessionDto>), 201)]
     [ProducesResponseType(typeof(ApiResponse), 400)]
-    public async Task<ActionResult<ApiResponse<PhysioSessionDto>>> CreatePhysioSession(
+    public async Task<IActionResult> CreatePhysioSession(
         [FromBody] CreatePhysioSessionDto dto,
         [FromServices] IValidator<CreatePhysioSessionDto> validator)
     {
@@ -461,7 +459,7 @@ public class ClinicalVisitsController : BaseApiController
     /// </summary>
     [HttpGet("physiotherapy/assessments/patient/{patientId:int}")]
     [ProducesResponseType(typeof(ApiResponse<IEnumerable<PhysioAssessmentDto>>), 200)]
-    public async Task<ActionResult<ApiResponse<IEnumerable<PhysioAssessmentDto>>>> GetPatientPhysioAssessments(int patientId)
+    public async Task<IActionResult> GetPatientPhysioAssessments(int patientId)
     {
         var branchId = _userContext.BranchId ?? 0;
         var assessments = await _clinicalVisitService.GetPhysioAssessmentsByPatientAsync(patientId, branchId);
@@ -477,7 +475,7 @@ public class ClinicalVisitsController : BaseApiController
     /// </summary>
     [HttpGet("statistics")]
     [ProducesResponseType(typeof(ApiResponse<ClinicalVisitStatisticsDto>), 200)]
-    public async Task<ActionResult<ApiResponse<ClinicalVisitStatisticsDto>>> GetStatistics(
+    public async Task<IActionResult> GetStatistics(
         [FromQuery] DateTime? fromDate = null,
         [FromQuery] DateTime? toDate = null)
     {
@@ -491,7 +489,7 @@ public class ClinicalVisitsController : BaseApiController
     /// </summary>
     [HttpGet("statistics/by-specialty")]
     [ProducesResponseType(typeof(ApiResponse<Dictionary<string, int>>), 200)]
-    public async Task<ActionResult<ApiResponse<Dictionary<string, int>>>> GetVisitsBySpecialty(
+    public async Task<IActionResult> GetVisitsBySpecialty(
         [FromQuery] DateTime? fromDate = null,
         [FromQuery] DateTime? toDate = null)
     {
@@ -528,7 +526,7 @@ public class ClinicalVisitsController : BaseApiController
         PatientId = visit.PatientId,
         PatientName = visit.Patient?.FullNameEn,
         BranchId = visit.BranchId,
-        BranchName = visit.Branch?.NameEn,
+        BranchName = visit.Branch?.Name,
         ProviderName = visit.ProviderId,
         VisitDate = visit.VisitDate,
         ChiefComplaint = visit.ChiefComplaint,
@@ -583,7 +581,7 @@ public class ClinicalVisitsController : BaseApiController
         PatientId = session.PatientId,
         PatientName = session.Patient?.FullNameEn,
         BranchId = session.BranchId,
-        BranchName = session.Branch?.NameEn,
+        BranchName = session.Branch?.Name,
         ProviderName = session.PhysiotherapistId,
         VisitDate = session.SessionDate,
         Notes = session.Notes,
@@ -640,16 +638,16 @@ public class ClinicalVisitsController : BaseApiController
         PatientId = assessment.PatientId,
         AssessmentDate = assessment.AssessmentDate,
         Diagnosis = assessment.Diagnosis,
-        PresentingComplaint = assessment.PresentingComplaint,
+        PresentingComplaint = assessment.ChiefComplaint,
         HistoryOfPresentIllness = assessment.HistoryOfPresentIllness,
-        PastMedicalHistory = assessment.PastMedicalHistory,
-        ObjectiveFindings = assessment.ObjectiveFindings,
-        RangeOfMotion = assessment.RangeOfMotion,
-        StrengthAssessment = assessment.StrengthAssessment,
+        PastMedicalHistory = assessment.MedicalHistory,
+        ObjectiveFindings = assessment.PostureAssessment,
+        RangeOfMotion = null,
+        StrengthAssessment = assessment.MuscleTesting,
         FunctionalLimitations = assessment.FunctionalLimitations,
-        TreatmentGoals = assessment.TreatmentGoals,
+        TreatmentGoals = assessment.ShortTermGoals,
         TreatmentPlan = assessment.TreatmentPlan,
-        PlannedSessions = assessment.PlannedSessions,
+        PlannedSessions = assessment.EstimatedDurationWeeks,
         AssessedBy = assessment.PhysiotherapistId
     };
 

@@ -38,5 +38,10 @@ public enum InvoiceStatus
     /// <summary>
     /// Invoice has been refunded
     /// </summary>
-    Refunded = 6
+    Refunded = 6,
+
+    /// <summary>
+    /// Invoice is pending payment (awaiting payment)
+    /// </summary>
+    Pending = 7
 }

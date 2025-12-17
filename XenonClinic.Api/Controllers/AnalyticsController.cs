@@ -41,7 +41,8 @@ public class AnalyticsController : BaseApiController
     [ProducesResponseType(typeof(ApiResponse<List<DashboardDto>>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetDashboards()
     {
-        var userId = _userContext.UserId ?? 0;
+        var userIdStr = _userContext.UserId;
+        var userId = !string.IsNullOrEmpty(userIdStr) && int.TryParse(userIdStr, out var id) ? id : 0;
         var dashboards = await _analyticsService.GetDashboardsAsync(userId);
         return ApiOk(dashboards);
     }
@@ -69,7 +70,8 @@ public class AnalyticsController : BaseApiController
     [ProducesResponseType(typeof(ApiResponse<DashboardDto>), StatusCodes.Status201Created)]
     public async Task<IActionResult> CreateDashboard([FromBody] SaveDashboardDto dto)
     {
-        var userId = _userContext.UserId ?? 0;
+        var userIdStr = _userContext.UserId;
+        var userId = !string.IsNullOrEmpty(userIdStr) && int.TryParse(userIdStr, out var id) ? id : 0;
         var dashboard = await _analyticsService.CreateDashboardAsync(dto, userId);
         return ApiCreated(dashboard, $"/api/analytics/dashboards/{dashboard.Id}");
     }
@@ -313,7 +315,7 @@ public class AnalyticsController : BaseApiController
         [FromQuery] int daysAhead = 30)
     {
         var branchId = _tenantContext.BranchId ?? 0;
-        var forecast = await _analyticsService.GetDemandForecastAsync(branchId, daysAhead);
+        var forecast = await _analyticsService.GetDemandForecastAsync(branchId, DateTime.UtcNow, daysAhead);
         return ApiOk(forecast);
     }
 
@@ -396,7 +398,8 @@ public class AnalyticsController : BaseApiController
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status200OK)]
     public async Task<IActionResult> AcknowledgeAlert(int id)
     {
-        var userId = _userContext.UserId ?? 0;
+        var userIdStr = _userContext.UserId;
+        var userId = !string.IsNullOrEmpty(userIdStr) && int.TryParse(userIdStr, out var uid) ? uid : 0;
         await _analyticsService.AcknowledgeAlertAsync(id, userId);
         return ApiOk("Alert acknowledged");
     }

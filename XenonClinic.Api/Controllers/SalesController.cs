@@ -34,7 +34,7 @@ public class SalesController : BaseApiController
     #region Sales
 
     [HttpGet]
-    public async Task<ActionResult<ApiResponse<IEnumerable<SaleDto>>>> GetSales([FromQuery] SaleListRequestDto request)
+    public async Task<IActionResult> GetSales([FromQuery] SaleListRequestDto request)
     {
         try
         {
@@ -76,7 +76,7 @@ public class SalesController : BaseApiController
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<ApiResponse<SaleDto>>> GetSale(int id)
+    public async Task<IActionResult> GetSale(int id)
     {
         try
         {
@@ -93,7 +93,7 @@ public class SalesController : BaseApiController
     }
 
     [HttpGet("patient/{patientId}")]
-    public async Task<ActionResult<ApiResponse<IEnumerable<SaleDto>>>> GetPatientSales(int patientId)
+    public async Task<IActionResult> GetPatientSales(int patientId)
     {
         try
         {
@@ -122,7 +122,7 @@ public class SalesController : BaseApiController
     }
 
     [HttpGet("overdue")]
-    public async Task<ActionResult<ApiResponse<IEnumerable<SaleDto>>>> GetOverdueSales()
+    public async Task<IActionResult> GetOverdueSales()
     {
         try
         {
@@ -139,7 +139,7 @@ public class SalesController : BaseApiController
     }
 
     [HttpPost]
-    public async Task<ActionResult<ApiResponse<SaleDto>>> CreateSale([FromBody] CreateSaleDto dto)
+    public async Task<IActionResult> CreateSale([FromBody] CreateSaleDto dto)
     {
         try
         {
@@ -223,7 +223,7 @@ public class SalesController : BaseApiController
     }
 
     [HttpPost("{id}/confirm")]
-    public async Task<ActionResult<ApiResponse>> ConfirmSale(int id)
+    public async Task<IActionResult> ConfirmSale(int id)
     {
         try
         {
@@ -244,7 +244,7 @@ public class SalesController : BaseApiController
     }
 
     [HttpPost("{id}/complete")]
-    public async Task<ActionResult<ApiResponse>> CompleteSale(int id)
+    public async Task<IActionResult> CompleteSale(int id)
     {
         try
         {
@@ -265,7 +265,7 @@ public class SalesController : BaseApiController
     }
 
     [HttpPost("{id}/cancel")]
-    public async Task<ActionResult<ApiResponse>> CancelSale(int id)
+    public async Task<IActionResult> CancelSale(int id)
     {
         try
         {
@@ -287,7 +287,7 @@ public class SalesController : BaseApiController
     }
 
     [HttpDelete("{id}")]
-    public async Task<ActionResult<ApiResponse>> DeleteSale(int id)
+    public async Task<IActionResult> DeleteSale(int id)
     {
         try
         {
@@ -312,7 +312,7 @@ public class SalesController : BaseApiController
     #region Payments
 
     [HttpGet("{saleId}/payments")]
-    public async Task<ActionResult<ApiResponse<IEnumerable<PaymentDto>>>> GetSalePayments(int saleId)
+    public async Task<IActionResult> GetSalePayments(int saleId)
     {
         try
         {
@@ -331,7 +331,7 @@ public class SalesController : BaseApiController
     }
 
     [HttpPost("payments")]
-    public async Task<ActionResult<ApiResponse<PaymentDto>>> RecordPayment([FromBody] RecordSalePaymentDto dto)
+    public async Task<IActionResult> RecordPayment([FromBody] RecordSalePaymentDto dto)
     {
         try
         {
@@ -403,7 +403,7 @@ public class SalesController : BaseApiController
     #region Quotations
 
     [HttpGet("quotations")]
-    public async Task<ActionResult<ApiResponse<IEnumerable<QuotationDto>>>> GetQuotations([FromQuery] QuotationListRequestDto request)
+    public async Task<IActionResult> GetQuotations([FromQuery] QuotationListRequestDto request)
     {
         try
         {
@@ -437,7 +437,7 @@ public class SalesController : BaseApiController
     }
 
     [HttpGet("quotations/{id}")]
-    public async Task<ActionResult<ApiResponse<QuotationDto>>> GetQuotation(int id)
+    public async Task<IActionResult> GetQuotation(int id)
     {
         try
         {
@@ -454,7 +454,7 @@ public class SalesController : BaseApiController
     }
 
     [HttpPost("quotations")]
-    public async Task<ActionResult<ApiResponse<QuotationDto>>> CreateQuotation([FromBody] CreateQuotationDto dto)
+    public async Task<IActionResult> CreateQuotation([FromBody] CreateQuotationDto dto)
     {
         try
         {
@@ -525,7 +525,7 @@ public class SalesController : BaseApiController
     }
 
     [HttpPost("quotations/{id}/accept")]
-    public async Task<ActionResult<ApiResponse>> AcceptQuotation(int id, [FromBody] AcceptQuotationDto dto)
+    public async Task<IActionResult> AcceptQuotation(int id, [FromBody] AcceptQuotationDto dto)
     {
         try
         {
@@ -552,7 +552,7 @@ public class SalesController : BaseApiController
     }
 
     [HttpPost("quotations/{id}/reject")]
-    public async Task<ActionResult<ApiResponse>> RejectQuotation(int id, [FromBody] RejectQuotationDto dto)
+    public async Task<IActionResult> RejectQuotation(int id, [FromBody] RejectQuotationDto dto)
     {
         try
         {
@@ -579,7 +579,7 @@ public class SalesController : BaseApiController
     }
 
     [HttpPost("quotations/{id}/convert")]
-    public async Task<ActionResult<ApiResponse<SaleDto>>> ConvertQuotationToSale(int id)
+    public async Task<IActionResult> ConvertQuotationToSale(int id)
     {
         try
         {
@@ -605,7 +605,7 @@ public class SalesController : BaseApiController
     #region Statistics
 
     [HttpGet("statistics")]
-    public async Task<ActionResult<ApiResponse<SalesStatisticsDto>>> GetStatistics()
+    public async Task<IActionResult> GetStatistics()
     {
         try
         {

@@ -215,7 +215,7 @@ public class CancelWorkflowRequestDto
 public class SendSignalRequestDto
 {
     public string SignalName { get; set; } = string.Empty;
-    public object? Data { get; set; }
+    public IDictionary<string, object?>? Data { get; set; }
 }
 
 /// <summary>
@@ -224,7 +224,7 @@ public class SendSignalRequestDto
 public class BroadcastSignalRequestDto
 {
     public string SignalName { get; set; } = string.Empty;
-    public object? Data { get; set; }
+    public IDictionary<string, object?>? Data { get; set; }
     public string? WorkflowId { get; set; }
 }
 
@@ -234,7 +234,7 @@ public class BroadcastSignalRequestDto
 public class TriggerEventRequestDto
 {
     public string EventName { get; set; } = string.Empty;
-    public object? EventData { get; set; }
+    public IDictionary<string, object?>? EventData { get; set; }
 }
 
 /// <summary>

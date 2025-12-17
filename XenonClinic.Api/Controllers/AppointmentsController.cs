@@ -136,8 +136,7 @@ public class AppointmentsController : BaseApiController
             Items = items,
             PageNumber = request.PageNumber,
             PageSize = request.PageSize,
-            TotalCount = totalCount,
-            TotalPages = (int)Math.Ceiling(totalCount / (double)request.PageSize)
+            TotalCount = totalCount
         };
 
         return ApiOk(paginatedResult);
@@ -700,8 +699,8 @@ public class AppointmentsController : BaseApiController
                 ? query.OrderByDescending(a => a.Patient!.FullNameEn)
                 : query.OrderBy(a => a.Patient!.FullNameEn),
             "providername" => descending
-                ? query.OrderByDescending(a => a.Provider!.FullName)
-                : query.OrderBy(a => a.Provider!.FullName),
+                ? query.OrderByDescending(a => a.Provider!.FullNameEn)
+                : query.OrderBy(a => a.Provider!.FullNameEn),
             "status" => descending
                 ? query.OrderByDescending(a => a.Status)
                 : query.OrderBy(a => a.Status),
@@ -726,7 +725,7 @@ public class AppointmentsController : BaseApiController
             BranchId = appointment.BranchId,
             BranchName = appointment.Branch?.Name,
             ProviderId = appointment.ProviderId,
-            ProviderName = appointment.Provider?.FullName,
+            ProviderName = appointment.Provider?.FullNameEn,
             StartTime = appointment.StartTime,
             EndTime = appointment.EndTime,
             Type = appointment.Type,
@@ -745,7 +744,7 @@ public class AppointmentsController : BaseApiController
         {
             Id = appointment.Id,
             PatientName = appointment.Patient?.FullNameEn ?? "Unknown",
-            ProviderName = appointment.Provider?.FullName,
+            ProviderName = appointment.Provider?.FullNameEn,
             StartTime = appointment.StartTime,
             EndTime = appointment.EndTime,
             Type = appointment.Type,
