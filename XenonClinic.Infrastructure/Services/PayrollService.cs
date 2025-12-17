@@ -584,7 +584,7 @@ public class PayrollService : IPayrollService
     {
         var payslips = await _context.Payslips
             .Include(p => p.Employee)
-            .Where(p => p.PayrollPeriodId == periodId && !string.IsNullOrEmpty(p.Employee.Email))
+            .Where(p => p.PayrollPeriodId == periodId && p.Employee != null && !string.IsNullOrEmpty(p.Employee.Email))
             .ToListAsync();
 
         var successCount = 0;
@@ -742,7 +742,7 @@ public class PayrollService : IPayrollService
     {
         var query = _context.WpsSubmissions
             .Include(w => w.PayrollPeriod)
-            .Where(w => w.PayrollPeriod.BranchId == branchId);
+            .Where(w => w.PayrollPeriod != null && w.PayrollPeriod.BranchId == branchId);
 
         if (year.HasValue)
             query = query.Where(w => w.SubmittedDate.Year == year.Value);
@@ -1032,9 +1032,9 @@ public class PayrollService : IPayrollService
             YtdOtherDeductions = payslips.Sum(p => p.OtherDeductions),
             YtdTotalDeductions = payslips.Sum(p => p.TotalDeductions),
             YtdNetPay = payslips.Sum(p => p.NetPay),
-            MonthlyBreakdown = payslips.Select(p => new MonthlyEarningsSummaryDto
+            MonthlyBreakdown = payslips.Where(p => p.PayrollPeriod != null).Select(p => new MonthlyEarningsSummaryDto
             {
-                Month = p.PayrollPeriod.StartDate.Month,
+                Month = p.PayrollPeriod!.StartDate.Month,
                 MonthName = CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(p.PayrollPeriod.StartDate.Month),
                 Year = p.PayrollPeriod.StartDate.Year,
                 GrossPay = p.GrossPay,
@@ -1052,7 +1052,8 @@ public class PayrollService : IPayrollService
             .Include(p => p.Employee)
             .ThenInclude(e => e!.Department)
             .Include(p => p.PayrollPeriod)
-            .Where(p => p.PayrollPeriod != null && p.PayrollPeriod.BranchId == branchId &&
+            .Where(p => p.PayrollPeriod != null &&
+                       p.PayrollPeriod.BranchId == branchId &&
                        p.PayrollPeriod.StartDate >= startDate &&
                        p.PayrollPeriod.EndDate <= endDate)
             .ToListAsync();

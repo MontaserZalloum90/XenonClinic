@@ -1,3 +1,4 @@
+using FluentValidation.Results;
 using Microsoft.AspNetCore.Mvc;
 
 namespace XenonClinic.Api.Controllers;
@@ -14,7 +15,7 @@ public abstract class BaseApiController : ControllerBase
     /// </summary>
     protected IActionResult ApiOk<T>(T data, string? message = null)
     {
-        return Ok(ApiResponse<T>.SuccessResult(data, message));
+        return Ok(ApiResponse<T>.SuccessWithData(data, message));
     }
 
     /// <summary>
@@ -22,7 +23,7 @@ public abstract class BaseApiController : ControllerBase
     /// </summary>
     protected IActionResult ApiOk(string? message = null)
     {
-        return Ok(ApiResponse.Ok(message));
+        return Ok(ApiResponse.SuccessResponse(message));
     }
 
     /// <summary>
@@ -30,7 +31,7 @@ public abstract class BaseApiController : ControllerBase
     /// </summary>
     protected IActionResult ApiCreated<T>(T data, string? location = null, string? message = null)
     {
-        var response = ApiResponse<T>.SuccessResult(data, message ?? "Resource created successfully");
+        var response = ApiResponse<T>.SuccessWithData(data, message ?? "Resource created successfully");
         if (!string.IsNullOrEmpty(location))
         {
             return Created(location, response);
@@ -52,6 +53,20 @@ public abstract class BaseApiController : ControllerBase
     protected IActionResult ApiBadRequest(string error, IDictionary<string, string[]>? validationErrors = null)
     {
         return BadRequest(ApiResponse.Failure(error, validationErrors));
+    }
+
+    /// <summary>
+    /// Returns a bad request response with FluentValidation errors.
+    /// </summary>
+    protected IActionResult ApiBadRequest(IEnumerable<ValidationFailure> validationFailures)
+    {
+        var errors = validationFailures
+            .GroupBy(x => x.PropertyName)
+            .ToDictionary(
+                g => g.Key,
+                g => g.Select(x => x.ErrorMessage).ToArray());
+
+        return BadRequest(ApiResponse.Failure("Validation failed", errors));
     }
 
     /// <summary>
@@ -150,7 +165,7 @@ public abstract class BaseApiController : ControllerBase
             PageSize = pageSize
         };
 
-        return Ok(ApiResponse<PaginatedResponse<T>>.SuccessResult(paginatedResponse, message));
+        return Ok(ApiResponse<PaginatedResponse<T>>.SuccessWithData(paginatedResponse, message));
     }
 }
 
@@ -166,7 +181,7 @@ public class ApiResponse
     public string? TraceId { get; set; }
     public DateTime Timestamp { get; set; } = DateTime.UtcNow;
 
-    public static ApiResponse Ok(string? message = null) => new()
+    public static ApiResponse SuccessResponse(string? message = null) => new()
     {
         Success = true,
         Message = message
@@ -187,19 +202,27 @@ public class ApiResponse<T> : ApiResponse
 {
     public T? Data { get; set; }
 
-    public static ApiResponse<T> SuccessResult(T data, string? message = null) => new()
+    public static ApiResponse<T> SuccessWithData(T data, string? message = null)
     {
-        Success = true,
-        Data = data,
-        Message = message
-    };
+        var response = new ApiResponse<T>
+        {
+            Data = data,
+            Message = message
+        };
+        response.Success = true;
+        return response;
+    }
 
-    public new static ApiResponse<T> Failure(string error, IDictionary<string, string[]>? validationErrors = null) => new()
+    public new static ApiResponse<T> Failure(string error, IDictionary<string, string[]>? validationErrors = null)
     {
-        Success = false,
-        Error = error,
-        ValidationErrors = validationErrors
-    };
+        var response = new ApiResponse<T>
+        {
+            Error = error,
+            ValidationErrors = validationErrors
+        };
+        response.Success = false;
+        return response;
+    }
 }
 
 /// <summary>

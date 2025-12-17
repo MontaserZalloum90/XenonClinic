@@ -278,7 +278,6 @@ public class ClinicalVisitsController : BaseApiController
             VisitDate = dto.VisitDate,
             ChiefComplaint = dto.ChiefComplaint,
             Notes = dto.Notes,
-            ProviderId = dto.ProviderId,
             CreatedBy = _userContext.UserId
         };
 
@@ -361,7 +360,6 @@ public class ClinicalVisitsController : BaseApiController
             VisitDate = dto.VisitDate,
             ChiefComplaint = dto.ChiefComplaint,
             Notes = dto.Notes,
-            ProviderId = dto.ProviderId,
             CreatedBy = _userContext.UserId
         };
 
@@ -640,16 +638,16 @@ public class ClinicalVisitsController : BaseApiController
         PatientId = assessment.PatientId,
         AssessmentDate = assessment.AssessmentDate,
         Diagnosis = assessment.Diagnosis,
-        PresentingComplaint = assessment.PresentingComplaint,
+        PresentingComplaint = assessment.ChiefComplaint,
         HistoryOfPresentIllness = assessment.HistoryOfPresentIllness,
-        PastMedicalHistory = assessment.PastMedicalHistory,
-        ObjectiveFindings = assessment.ObjectiveFindings,
-        RangeOfMotion = assessment.RangeOfMotion,
-        StrengthAssessment = assessment.StrengthAssessment,
+        PastMedicalHistory = assessment.MedicalHistory,
+        ObjectiveFindings = assessment.PostureAssessment,
+        RangeOfMotion = null,
+        StrengthAssessment = assessment.MuscleTesting,
         FunctionalLimitations = assessment.FunctionalLimitations,
-        TreatmentGoals = assessment.TreatmentGoals,
+        TreatmentGoals = assessment.ShortTermGoals,
         TreatmentPlan = assessment.TreatmentPlan,
-        PlannedSessions = assessment.PlannedSessions,
+        PlannedSessions = assessment.EstimatedDurationWeeks,
         AssessedBy = assessment.PhysiotherapistId
     };
 

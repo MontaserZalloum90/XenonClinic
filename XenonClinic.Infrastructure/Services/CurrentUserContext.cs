@@ -12,7 +12,7 @@ namespace XenonClinic.Infrastructure.Services;
 /// Provides centralized access to current user context.
 /// Eliminates code duplication across services that need user information.
 /// </summary>
-public class CurrentUserContext : ICurrentUserContext
+public class CurrentUserContext : ICurrentUserContext, ICurrentUserService
 {
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly UserManager<ApplicationUser> _userManager;
@@ -100,6 +100,24 @@ public class CurrentUserContext : ICurrentUserContext
             if (tenantIdClaim != null && int.TryParse(tenantIdClaim, out var tenantId))
             {
                 return tenantId;
+            }
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// BUG FIX: Synchronous access to current user's company ID.
+    /// </summary>
+    public int? CompanyId
+    {
+        get
+        {
+            var httpContext = _httpContextAccessor.HttpContext;
+            if (httpContext?.User == null) return null;
+            var companyIdClaim = httpContext.User.FindFirst("company_id")?.Value;
+            if (companyIdClaim != null && int.TryParse(companyIdClaim, out var companyId))
+            {
+                return companyId;
             }
             return null;
         }
@@ -227,5 +245,17 @@ public class CurrentUserContext : ICurrentUserContext
         if (user == null) return false;
 
         return await _userManager.IsInRoleAsync(user, role);
+    }
+
+    /// <summary>
+    /// BUG FIX: Synchronous role check for controllers.
+    /// Uses claims-based role checking for efficiency.
+    /// </summary>
+    public bool IsInRole(string role)
+    {
+        var httpContext = _httpContextAccessor.HttpContext;
+        if (httpContext?.User == null) return false;
+
+        return httpContext.User.IsInRole(role);
     }
 }

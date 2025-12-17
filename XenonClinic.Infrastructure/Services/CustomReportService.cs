@@ -940,7 +940,7 @@ public class CustomReportService : ICustomReportService
             ["FailedExecutions"] = history.Count(h => h.Status == "Failed"),
             ["AverageExecutionTime"] = history.Any() ? history.Average(h => h.ExecutionTimeMs) : 0,
             ["TotalRecordsGenerated"] = history.Sum(h => h.RecordCount),
-            ["LastExecuted"] = history.MaxBy(h => h.ExecutedAt)?.ExecutedAt
+            ["LastExecuted"] = history.MaxBy(h => h.ExecutedAt)?.ExecutedAt ?? (object)DBNull.Value
         };
     }
 

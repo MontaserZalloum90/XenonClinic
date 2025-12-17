@@ -1167,8 +1167,14 @@ public class FinancialController : BaseApiController
 
     private static ExpenseStatus MapToExpenseStatus(ExpenseStatus status)
     {
-        // This method is an identity mapping and can be simplified
-        return status;
+        return status switch
+        {
+            ExpenseStatus.Pending => ExpenseStatus.Pending,
+            ExpenseStatus.Approved => ExpenseStatus.Approved,
+            ExpenseStatus.Paid => ExpenseStatus.Paid,
+            ExpenseStatus.Rejected => ExpenseStatus.Rejected,
+            _ => ExpenseStatus.Pending
+        };
     }
 
     #endregion

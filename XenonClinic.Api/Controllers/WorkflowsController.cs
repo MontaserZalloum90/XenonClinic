@@ -462,7 +462,7 @@ public class WorkflowsController : BaseApiController
             InputParameters = definition.InputParameters?.Select(p => new WorkflowParameterDto
             {
                 Name = p.Name,
-                Type = p.Type,
+                Type = p.Type ?? "string",
                 Description = p.Description,
                 IsRequired = p.IsRequired,
                 DefaultValue = p.DefaultValue,
@@ -471,14 +471,14 @@ public class WorkflowsController : BaseApiController
             OutputParameters = definition.OutputParameters?.Select(p => new WorkflowParameterDto
             {
                 Name = p.Name,
-                Type = p.Type,
+                Type = p.Type ?? "string",
                 Description = p.Description,
                 DefaultValue = p.DefaultValue
             }).ToList() ?? new List<WorkflowParameterDto>(),
             Variables = definition.Variables?.Select(v => new WorkflowVariableDto
             {
                 Name = v.Name,
-                Type = v.Type,
+                Type = v.Type ?? "string",
                 DefaultValue = v.DefaultValue,
                 Scope = v.Scope.ToString()
             }).ToList() ?? new List<WorkflowVariableDto>(),
@@ -586,9 +586,9 @@ public class WorkflowsController : BaseApiController
         return new WorkflowExecutionRecordDto
         {
             Id = record.Id,
-            ActivityId = record.ActivityId,
-            ActivityName = record.ActivityName,
-            ActivityType = record.ActivityType,
+            ActivityId = record.ActivityId ?? string.Empty,
+            ActivityName = record.ActivityName ?? string.Empty,
+            ActivityType = record.ActivityType ?? string.Empty,
             RecordType = record.Type.ToString(),
             Timestamp = record.Timestamp,
             DurationMs = record.Duration?.TotalMilliseconds,

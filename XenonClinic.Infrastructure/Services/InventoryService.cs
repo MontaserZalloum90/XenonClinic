@@ -149,6 +149,39 @@ public class InventoryService : IInventoryService
             .ToListAsync();
     }
 
+    /// <summary>
+    /// Determines the stock change for a transaction.
+    /// Returns positive value for additions, negative for removals.
+    /// </summary>
+    private static int CalculateStockChange(InventoryTransactionType transactionType, int quantity)
+    {
+        return transactionType switch
+        {
+            InventoryTransactionType.Purchase => quantity,    // Stock coming in from supplier
+            InventoryTransactionType.Return => quantity,      // Return from patient adds stock back
+            InventoryTransactionType.Sale => -quantity,       // Stock going out to patient
+            InventoryTransactionType.Transfer => -quantity,   // Stock leaving this branch
+            InventoryTransactionType.Adjustment => quantity,  // Adjustment quantity is already signed (positive or negative)
+            _ => throw new ArgumentOutOfRangeException(nameof(transactionType), transactionType, "Unknown transaction type")
+        };
+    }
+
+    /// <summary>
+    /// Determines if a transaction type removes stock (requires sufficient stock).
+    /// </summary>
+    private static bool IsStockRemoval(InventoryTransactionType transactionType, int quantity)
+    {
+        return transactionType switch
+        {
+            InventoryTransactionType.Purchase => false,
+            InventoryTransactionType.Return => false,
+            InventoryTransactionType.Sale => true,
+            InventoryTransactionType.Transfer => true,
+            InventoryTransactionType.Adjustment => quantity < 0, // Negative adjustment removes stock
+            _ => throw new ArgumentOutOfRangeException(nameof(transactionType), transactionType, "Unknown transaction type")
+        };
+    }
+
     public async Task<InventoryTransaction> CreateTransactionAsync(InventoryTransaction transaction)
     {
         // BUG FIX: Add null check for transaction parameter
@@ -174,15 +207,13 @@ public class InventoryService : IInventoryService
         await using var dbTransaction = await _context.Database.BeginTransactionAsync();
         try
         {
-            // Purchase and Return add stock, Sale removes stock, Adjustment can be positive or negative
-            var stockChange = transaction.TransactionType == InventoryTransactionType.Sale
-                ? -Math.Abs(transaction.Quantity)
-                : transaction.Quantity;
+            var stockChange = CalculateStockChange(transaction.TransactionType, transaction.Quantity);
+            var isRemoval = IsStockRemoval(transaction.TransactionType, transaction.Quantity);
 
-            // BUG FIX: Validate stock won't go negative for sales
-            if (transaction.TransactionType == InventoryTransactionType.Sale && item.QuantityOnHand < Math.Abs(transaction.Quantity))
+            // BUG FIX: Validate stock won't go negative for stock removals
+            if (isRemoval && item.QuantityOnHand < Math.Abs(stockChange))
             {
-                throw new InvalidOperationException($"Insufficient stock. Available: {item.QuantityOnHand}, Requested: {transaction.Quantity}");
+                throw new InvalidOperationException($"Insufficient stock. Available: {item.QuantityOnHand}, Requested: {Math.Abs(stockChange)}");
             }
 
             _context.InventoryTransactions.Add(transaction);
@@ -237,14 +268,10 @@ public class InventoryService : IInventoryService
                 throw new KeyNotFoundException($"Inventory item with ID {transaction.InventoryItemId} not found");
             }
 
-            // Reverse old transaction effect (Sale removes stock, others add stock)
-            var oldStockChange = oldTransaction.TransactionType == InventoryTransactionType.Sale
-                ? -Math.Abs(oldTransaction.Quantity)
-                : oldTransaction.Quantity;
+            // Reverse old transaction effect
+            var oldStockChange = CalculateStockChange(oldTransaction.TransactionType, oldTransaction.Quantity);
             // Apply new transaction effect
-            var newStockChange = transaction.TransactionType == InventoryTransactionType.Sale
-                ? -Math.Abs(transaction.Quantity)
-                : transaction.Quantity;
+            var newStockChange = CalculateStockChange(transaction.TransactionType, transaction.Quantity);
 
             var newStock = item.QuantityOnHand - oldStockChange + newStockChange;
 
@@ -290,12 +317,11 @@ public class InventoryService : IInventoryService
             var item = await _context.InventoryItems.FindAsync(transaction.InventoryItemId);
             if (item != null)
             {
-                // Reverse the transaction effect (Sale removed stock so add it back, others added stock so subtract)
-                var stockChange = transaction.TransactionType == InventoryTransactionType.Sale
-                    ? Math.Abs(transaction.Quantity)  // Reverse the sale (add stock back)
-                    : -transaction.Quantity;  // Reverse the purchase/adjustment (remove stock)
+                // Reverse the original stock change by negating it
+                var originalStockChange = CalculateStockChange(transaction.TransactionType, transaction.Quantity);
+                var reversalStockChange = -originalStockChange;
 
-                var newStock = item.QuantityOnHand + stockChange;
+                var newStock = item.QuantityOnHand + reversalStockChange;
 
                 // BUG FIX: Validate stock won't go negative after reversal
                 if (newStock < 0)
@@ -484,7 +510,7 @@ public class InventoryService : IInventoryService
             {
                 InventoryItemId = itemId,
                 TransactionType = InventoryTransactionType.Adjustment,
-                Quantity = absoluteDifference,
+                Quantity = difference > 0 ? absoluteDifference : -absoluteDifference, // Positive for additions, negative for removals
                 UnitPrice = item.CostPrice,
                 TotalAmount = absoluteDifference * item.CostPrice,
                 TransactionDate = DateTime.UtcNow,

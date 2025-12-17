@@ -37,8 +37,11 @@ public class RadiologyController : BaseApiController
     [ProducesResponseType(typeof(ApiResponse<IEnumerable<ImagingStudyDto>>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetImagingStudies()
     {
-        var branchId = _currentUserService.BranchId ?? 0;
-        var studies = await _radiologyService.GetImagingStudiesByBranchIdAsync(branchId);
+        var branchId = _currentUserService.BranchId;
+        if (branchId == null)
+            return ApiBadRequest("Branch context is required");
+
+        var studies = await _radiologyService.GetImagingStudiesByBranchIdAsync(branchId.Value);
 
         var studyDtos = studies.Select(MapToImagingStudyDto).ToList();
         return ApiOk(studyDtos);
@@ -51,8 +54,11 @@ public class RadiologyController : BaseApiController
     [ProducesResponseType(typeof(ApiResponse<IEnumerable<ImagingStudyDto>>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetActiveImagingStudies()
     {
-        var branchId = _currentUserService.BranchId ?? 0;
-        var studies = await _radiologyService.GetActiveImagingStudiesAsync(branchId);
+        var branchId = _currentUserService.BranchId;
+        if (branchId == null)
+            return ApiBadRequest("Branch context is required");
+
+        var studies = await _radiologyService.GetActiveImagingStudiesAsync(branchId.Value);
 
         var studyDtos = studies.Select(MapToImagingStudyDto).ToList();
         return ApiOk(studyDtos);
@@ -65,8 +71,11 @@ public class RadiologyController : BaseApiController
     [ProducesResponseType(typeof(ApiResponse<IEnumerable<ImagingStudyDto>>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetImagingStudiesByModality(string modality)
     {
-        var branchId = _currentUserService.BranchId ?? 0;
-        var studies = await _radiologyService.GetImagingStudiesByCategoryAsync(branchId, modality);
+        var branchId = _currentUserService.BranchId;
+        if (branchId == null)
+            return ApiBadRequest("Branch context is required");
+
+        var studies = await _radiologyService.GetImagingStudiesByCategoryAsync(branchId.Value, modality);
 
         var studyDtos = studies.Select(MapToImagingStudyDto).ToList();
         return ApiOk(studyDtos);
@@ -95,8 +104,11 @@ public class RadiologyController : BaseApiController
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetImagingStudyByCode(string studyCode)
     {
-        var branchId = _currentUserService.BranchId ?? 0;
-        var study = await _radiologyService.GetImagingStudyByCodeAsync(studyCode, branchId);
+        var branchId = _currentUserService.BranchId;
+        if (branchId == null)
+            return ApiBadRequest("Branch context is required");
+
+        var study = await _radiologyService.GetImagingStudyByCodeAsync(studyCode, branchId.Value);
         if (study == null)
             return ApiNotFound("Imaging study not found");
 
@@ -111,20 +123,24 @@ public class RadiologyController : BaseApiController
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> CreateImagingStudy([FromBody] CreateImagingStudyDto dto)
     {
+        var branchId = _currentUserService.BranchId;
+        if (branchId == null)
+            return ApiBadRequest("Branch context is required");
+
         var study = new LabTest
         {
             TestCode = dto.StudyCode,
             TestName = dto.StudyName,
-            Description = dto.Description,
+            Description = $"{dto.Modality}: {dto.Description}",
             Category = TestCategory.Imaging,
             Price = dto.Price,
             TurnaroundTimeHours = dto.EstimatedDurationMinutes / 60,
             RequiresFasting = dto.RequiresFasting,
             PreparationInstructions = dto.PatientPreparation,
-            BranchId = _currentUserService.BranchId ?? 0,
+            BranchId = branchId.Value,
             IsActive = true,
             CreatedAt = DateTime.UtcNow,
-            CreatedBy = _currentUserService.UserId
+            CreatedBy = _currentUserService.UserId ?? "system"
         };
 
         var created = await _radiologyService.CreateImagingStudyAsync(study);
@@ -148,7 +164,7 @@ public class RadiologyController : BaseApiController
 
         study.TestCode = dto.StudyCode;
         study.TestName = dto.StudyName;
-        study.Description = dto.Description;
+        study.Description = $"{dto.Modality}: {dto.Description}";
         study.Category = TestCategory.Imaging;
         study.Price = dto.Price;
         study.TurnaroundTimeHours = dto.EstimatedDurationMinutes / 60;
@@ -189,8 +205,11 @@ public class RadiologyController : BaseApiController
     [ProducesResponseType(typeof(ApiResponse<IEnumerable<RadiologyOrderDto>>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetRadiologyOrders()
     {
-        var branchId = _currentUserService.BranchId ?? 0;
-        var orders = await _radiologyService.GetRadiologyOrdersByBranchIdAsync(branchId);
+        var branchId = _currentUserService.BranchId;
+        if (branchId == null)
+            return ApiBadRequest("Branch context is required");
+
+        var orders = await _radiologyService.GetRadiologyOrdersByBranchIdAsync(branchId.Value);
 
         var orderDtos = orders.Select(MapToRadiologyOrderDto).ToList();
         return ApiOk(orderDtos);
@@ -203,8 +222,11 @@ public class RadiologyController : BaseApiController
     [ProducesResponseType(typeof(ApiResponse<IEnumerable<RadiologyOrderDto>>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetPendingRadiologyOrders()
     {
-        var branchId = _currentUserService.BranchId ?? 0;
-        var orders = await _radiologyService.GetPendingRadiologyOrdersAsync(branchId);
+        var branchId = _currentUserService.BranchId;
+        if (branchId == null)
+            return ApiBadRequest("Branch context is required");
+
+        var orders = await _radiologyService.GetPendingRadiologyOrdersAsync(branchId.Value);
 
         var orderDtos = orders.Select(MapToRadiologyOrderDto).ToList();
         return ApiOk(orderDtos);
@@ -217,8 +239,11 @@ public class RadiologyController : BaseApiController
     [ProducesResponseType(typeof(ApiResponse<IEnumerable<RadiologyOrderDto>>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetCompletedRadiologyOrders()
     {
-        var branchId = _currentUserService.BranchId ?? 0;
-        var orders = await _radiologyService.GetCompletedRadiologyOrdersAsync(branchId);
+        var branchId = _currentUserService.BranchId;
+        if (branchId == null)
+            return ApiBadRequest("Branch context is required");
+
+        var orders = await _radiologyService.GetCompletedRadiologyOrdersAsync(branchId.Value);
 
         var orderDtos = orders.Select(MapToRadiologyOrderDto).ToList();
         return ApiOk(orderDtos);
@@ -246,8 +271,11 @@ public class RadiologyController : BaseApiController
         [FromQuery] DateTime startDate,
         [FromQuery] DateTime endDate)
     {
-        var branchId = _currentUserService.BranchId ?? 0;
-        var orders = await _radiologyService.GetRadiologyOrdersByDateRangeAsync(branchId, startDate, endDate);
+        var branchId = _currentUserService.BranchId;
+        if (branchId == null)
+            return ApiBadRequest("Branch context is required");
+
+        var orders = await _radiologyService.GetRadiologyOrdersByDateRangeAsync(branchId.Value, startDate, endDate);
 
         var orderDtos = orders.Select(MapToRadiologyOrderDto).ToList();
         return ApiOk(orderDtos);
@@ -291,8 +319,11 @@ public class RadiologyController : BaseApiController
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> CreateRadiologyOrder([FromBody] CreateRadiologyOrderDto dto)
     {
-        var branchId = _currentUserService.BranchId ?? 0;
-        var orderNumber = await _radiologyService.GenerateRadiologyOrderNumberAsync(branchId);
+        var branchId = _currentUserService.BranchId;
+        if (branchId == null)
+            return ApiBadRequest("Branch context is required");
+
+        var orderNumber = await _radiologyService.GenerateRadiologyOrderNumberAsync(branchId.Value);
 
         var order = new LabOrder
         {
@@ -300,18 +331,19 @@ public class RadiologyController : BaseApiController
             OrderDate = DateTime.UtcNow,
             Status = LabOrderStatus.Pending,
             PatientId = dto.PatientId,
-            VisitId = dto.AppointmentId,
+            VisitId = dto.AppointmentId, // Using VisitId as appointment reference
             OrderingDoctorId = dto.ReferringDoctorId,
             IsUrgent = dto.IsUrgent || dto.IsStat,
             ClinicalNotes = dto.ClinicalIndication,
             Notes = dto.Notes,
-            BranchId = branchId,
+            BranchId = branchId ?? 0,
             CreatedAt = DateTime.UtcNow,
-            CreatedBy = _currentUserService.UserId
+            CreatedBy = _currentUserService.UserId ?? string.Empty
         };
 
         // Add order items
         decimal total = 0;
+        decimal discountAmount = 0;
         foreach (var itemDto in dto.Items)
         {
             var study = await _radiologyService.GetImagingStudyByIdAsync(itemDto.ImagingStudyId);
@@ -328,7 +360,7 @@ public class RadiologyController : BaseApiController
                     Price = price,
                     Notes = itemDto.Notes,
                     CreatedAt = DateTime.UtcNow,
-                    CreatedBy = _currentUserService.UserId
+                    CreatedBy = _currentUserService.UserId ?? string.Empty
                 });
             }
         }
@@ -336,7 +368,8 @@ public class RadiologyController : BaseApiController
         // Apply order-level discount
         if (dto.DiscountPercentage.HasValue && dto.DiscountPercentage.Value > 0)
         {
-            total -= total * (dto.DiscountPercentage.Value / 100);
+            discountAmount = total * (dto.DiscountPercentage.Value / 100);
+            total -= discountAmount;
         }
 
         order.TotalAmount = total;
@@ -540,6 +573,10 @@ public class RadiologyController : BaseApiController
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> CreateImagingResult([FromBody] CreateImagingResultDto dto)
     {
+        var branchId = _currentUserService.BranchId;
+        if (branchId == null)
+            return ApiBadRequest("Branch context is required");
+
         var result = new LabResult
         {
             LabOrderId = dto.RadiologyOrderId,
@@ -549,7 +586,7 @@ public class RadiologyController : BaseApiController
             Interpretation = dto.Findings,
             Notes = dto.Notes,
             AttachmentPath = dto.ImagePath,
-            BranchId = _currentUserService.BranchId ?? 0,
+            BranchId = branchId.Value,
             CreatedAt = DateTime.UtcNow,
             CreatedBy = _currentUserService.UserId
         };
@@ -663,16 +700,19 @@ public class RadiologyController : BaseApiController
         [FromQuery] DateTime? startDate = null,
         [FromQuery] DateTime? endDate = null)
     {
-        var branchId = _currentUserService.BranchId ?? 0;
+        var branchId = _currentUserService.BranchId;
+        if (branchId == null)
+            return ApiBadRequest("Branch context is required");
+
         var start = startDate ?? DateTime.UtcNow.AddMonths(-1);
         var end = endDate ?? DateTime.UtcNow;
 
-        var totalOrders = await _radiologyService.GetTotalRadiologyOrdersCountAsync(branchId);
-        var pendingOrders = await _radiologyService.GetPendingRadiologyOrdersCountAsync(branchId);
-        var completedOrders = await _radiologyService.GetCompletedRadiologyOrdersCountAsync(branchId, start, end);
-        var totalRevenue = await _radiologyService.GetTotalRadiologyRevenueAsync(branchId, start, end);
-        var topStudies = await _radiologyService.GetMostOrderedStudiesAsync(branchId, 10);
-        var modalityDistribution = await _radiologyService.GetOrdersByModalityDistributionAsync(branchId);
+        var totalOrders = await _radiologyService.GetTotalRadiologyOrdersCountAsync(branchId.Value);
+        var pendingOrders = await _radiologyService.GetPendingRadiologyOrdersCountAsync(branchId.Value);
+        var completedOrders = await _radiologyService.GetCompletedRadiologyOrdersCountAsync(branchId.Value, start, end);
+        var totalRevenue = await _radiologyService.GetTotalRadiologyRevenueAsync(branchId.Value, start, end);
+        var topStudies = await _radiologyService.GetMostOrderedStudiesAsync(branchId.Value, 10);
+        var modalityDistribution = await _radiologyService.GetOrdersByModalityDistributionAsync(branchId.Value);
 
         var statistics = new RadiologyStatisticsDto
         {
@@ -701,8 +741,11 @@ public class RadiologyController : BaseApiController
     [ProducesResponseType(typeof(ApiResponse<Dictionary<string, int>>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetModalityDistribution()
     {
-        var branchId = _currentUserService.BranchId ?? 0;
-        var distribution = await _radiologyService.GetOrdersByModalityDistributionAsync(branchId);
+        var branchId = _currentUserService.BranchId;
+        if (branchId == null)
+            return ApiBadRequest("Branch context is required");
+
+        var distribution = await _radiologyService.GetOrdersByModalityDistributionAsync(branchId.Value);
         return ApiOk(distribution);
     }
 
@@ -713,8 +756,11 @@ public class RadiologyController : BaseApiController
     [ProducesResponseType(typeof(ApiResponse<IEnumerable<TopImagingStudyDto>>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetTopStudies([FromQuery] int count = 10)
     {
-        var branchId = _currentUserService.BranchId ?? 0;
-        var topStudies = await _radiologyService.GetMostOrderedStudiesAsync(branchId, count);
+        var branchId = _currentUserService.BranchId;
+        if (branchId == null)
+            return ApiBadRequest("Branch context is required");
+
+        var topStudies = await _radiologyService.GetMostOrderedStudiesAsync(branchId.Value, count);
 
         var topStudyDtos = topStudies.Select(t => new TopImagingStudyDto
         {
@@ -738,8 +784,8 @@ public class RadiologyController : BaseApiController
             StudyCode = study.TestCode,
             StudyName = study.TestName,
             Description = study.Description,
-            Modality = study.Category == TestCategory.Imaging ? ImagingModality.XRay : ImagingModality.Other,
-            EstimatedDurationMinutes = (study.TurnaroundTimeHours ?? 0) * 60,
+            Modality = Enum.TryParse<ImagingModality>(study.Category.ToString(), out var modality) ? modality : ImagingModality.Other,
+            EstimatedDurationMinutes = study.TurnaroundTimeHours,
             Price = study.Price,
             PatientPreparation = study.PreparationInstructions,
             IsActive = study.IsActive,
@@ -763,14 +809,14 @@ public class RadiologyController : BaseApiController
             Status = MapToRadiologyOrderStatus(order.Status),
             PatientId = order.PatientId,
             PatientName = order.Patient?.FullNameEn,
-            AppointmentId = order.VisitId,
+            AppointmentId = order.VisitId, // Using VisitId as appointment reference
             ReferringDoctorId = order.OrderingDoctorId,
             IsUrgent = order.IsUrgent,
             IsStat = order.IsUrgent, // Using IsUrgent for STAT as well
             ClinicalIndication = order.ClinicalNotes,
             Notes = order.Notes,
             SubTotal = order.Items.Sum(oi => oi.Price),
-            DiscountAmount = 0,
+            DiscountAmount = 0, // LabOrder doesn't have DiscountAmount
             TotalPrice = order.TotalAmount,
             BranchId = order.BranchId,
             BranchName = order.Branch?.Name,
@@ -800,7 +846,7 @@ public class RadiologyController : BaseApiController
             ImagingStudyId = item.LabTestId,
             StudyCode = item.LabTest?.TestCode,
             StudyName = item.LabTest?.TestName,
-            Modality = item.LabTest?.Category == TestCategory.Imaging ? ImagingModality.XRay : ImagingModality.Other,
+            Modality = Enum.TryParse<ImagingModality>(item.LabTest?.Category.ToString(), out var modality) ? modality : ImagingModality.Other,
             Price = item.Price,
             FinalPrice = item.Price,
             Notes = item.Notes
@@ -817,7 +863,8 @@ public class RadiologyController : BaseApiController
             RadiologyOrderItemId = result.LabOrderItemId,
             ImagingStudyId = result.LabTestId,
             StudyName = result.LabTest?.TestName,
-            Modality = result.LabTest?.Category == TestCategory.Imaging ? ImagingModality.XRay : ImagingModality.Other,
+            Modality = result.LabTest != null && Enum.TryParse<ImagingModality>(result.LabTest.Category.ToString(), out var modality)
+                ? modality : ImagingModality.Other,
             Status = MapToImagingResultStatus(result.Status),
             ResultDate = result.ResultDate,
             Findings = result.Interpretation,
@@ -858,8 +905,8 @@ public class RadiologyController : BaseApiController
             LabResultStatus.Pending => ImagingResultStatus.Pending,
             LabResultStatus.InProgress => ImagingResultStatus.InProgress,
             LabResultStatus.Completed => ImagingResultStatus.Final,
+            LabResultStatus.Reviewed => ImagingResultStatus.Final,
             LabResultStatus.Verified => ImagingResultStatus.Verified,
-            // LabResultStatus doesn't have Cancelled, map to default
             _ => ImagingResultStatus.Pending
         };
     }

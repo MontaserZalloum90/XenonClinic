@@ -254,7 +254,47 @@ public static class SecurityEntityConfiguration
 // Security Entity Classes
 // ========================================
 
-// Note: AuditLog class is defined in XenonClinic.Core.Entities.AuditLog
+public class AuditLog
+{
+    public long Id { get; set; }
+    public DateTime Timestamp { get; set; } = DateTime.UtcNow;
+    public string EventType { get; set; } = string.Empty;
+    public string EventCategory { get; set; } = string.Empty;
+    public string Action { get; set; } = string.Empty;
+    public string ResourceType { get; set; } = string.Empty;
+    public string? ResourceId { get; set; }
+    public string? EntityType { get; set; }
+    public string? EntityId { get; set; }
+    public int? UserId { get; set; }
+    public string? UserName { get; set; }
+    public string? UserRole { get; set; }
+    public string? UserEmail { get; set; }
+    public int? PatientId { get; set; }
+    public bool IsPHIAccess { get; set; }
+    public string? IpAddress { get; set; }
+    public string? UserAgent { get; set; }
+    public string? SessionId { get; set; }
+    public string? RequestPath { get; set; }
+    public string? RequestMethod { get; set; }
+    public string? HttpMethod { get; set; }
+    public int? ResponseStatusCode { get; set; }
+    public string? OldValues { get; set; }
+    public string? NewValues { get; set; }
+    public string? AffectedFields { get; set; }
+    public string? Reason { get; set; }
+    public bool IsEmergencyAccess { get; set; }
+    public string? EmergencyJustification { get; set; }
+    public int BranchId { get; set; }
+    public int? TenantId { get; set; }
+    public int? CompanyId { get; set; }
+    public string? CorrelationId { get; set; }
+    public long? DurationMs { get; set; }
+    public bool IsSuccess { get; set; } = true;
+    public string? ErrorMessage { get; set; }
+    public string? AdditionalData { get; set; }
+    public string? IntegrityHash { get; set; }
+    public string? ModuleName { get; set; }
+}
 
 public class AuditRetentionPolicy
 {

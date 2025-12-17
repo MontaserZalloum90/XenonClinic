@@ -555,6 +555,9 @@ public class ConsentService : IConsentService
 
         var patient = await _context.Patients.FindAsync(patientId);
 
+        if (template == null)
+            throw new InvalidOperationException($"Consent form template with ID {templateId} not found");
+
         if (patient == null)
             throw new InvalidOperationException("Patient not found");
 
@@ -563,7 +566,7 @@ public class ConsentService : IConsentService
             .Replace("{{PatientName}}", $"{patient.FirstName} {patient.LastName}")
             .Replace("{{PatientDOB}}", patient.DateOfBirth.ToString("MM/dd/yyyy"))
             .Replace("{{Date}}", DateTime.UtcNow.ToString("MM/dd/yyyy"))
-            .Replace("{{ConsentType}}", template.ConsentType);
+            .Replace("{{ConsentType}}", template.ConsentType ?? string.Empty);
 
         return document;
     }

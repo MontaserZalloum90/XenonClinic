@@ -271,8 +271,8 @@ public class AnalyticsService : IAnalyticsService
         {
             DashboardId = dashboardId,
             WidgetId = Guid.NewGuid().ToString(),
-            Title = widget.Title ?? string.Empty,
-            WidgetType = widget.WidgetType ?? string.Empty,
+            Title = widget.Title,
+            WidgetType = widget.WidgetType,
             DataSource = widget.DataSource ?? string.Empty,
             ConfigurationJson = widget.Configuration != null ? JsonSerializer.Serialize(widget.Configuration) : null,
             PositionJson = widget.Position != null ? JsonSerializer.Serialize(widget.Position) : null,
@@ -329,8 +329,8 @@ public class AnalyticsService : IAnalyticsService
         {
             DashboardId = dashboardId,
             WidgetId = Guid.NewGuid().ToString(),
-            Title = widget.Title ?? string.Empty,
-            WidgetType = widget.WidgetType ?? string.Empty,
+            Title = widget.Title,
+            WidgetType = widget.WidgetType,
             DataSource = widget.DataSource ?? string.Empty,
             ConfigurationJson = widget.Configuration != null ? JsonSerializer.Serialize(widget.Configuration) : null,
             PositionJson = widget.Position != null ? JsonSerializer.Serialize(widget.Position) : null,
@@ -351,9 +351,9 @@ public class AnalyticsService : IAnalyticsService
         if (entity == null)
             return null;
 
-        entity.Title = widget.Title ?? entity.Title;
-        entity.WidgetType = widget.WidgetType ?? entity.WidgetType;
-        entity.DataSource = widget.DataSource ?? entity.DataSource;
+        entity.Title = widget.Title;
+        entity.WidgetType = widget.WidgetType;
+        entity.DataSource = widget.DataSource ?? string.Empty;
         entity.ConfigurationJson = widget.Configuration != null ? JsonSerializer.Serialize(widget.Configuration) : null;
         entity.PositionJson = widget.Position != null ? JsonSerializer.Serialize(widget.Position) : null;
         entity.FiltersJson = widget.Filters != null ? JsonSerializer.Serialize(widget.Filters) : null;
