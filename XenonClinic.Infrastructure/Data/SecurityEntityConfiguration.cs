@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using XenonClinic.Core.Entities;
 
 namespace XenonClinic.Infrastructure.Data;
 
@@ -32,7 +33,7 @@ public static class SecurityEntityConfiguration
             entity.Property(e => e.UserAgent).HasMaxLength(500);
             entity.Property(e => e.SessionId).HasMaxLength(100);
             entity.Property(e => e.RequestPath).HasMaxLength(500);
-            entity.Property(e => e.RequestMethod).HasMaxLength(10);
+            entity.Property(e => e.HttpMethod).HasMaxLength(10);
             entity.Property(e => e.CorrelationId).HasMaxLength(50);
             entity.Property(e => e.IntegrityHash).HasMaxLength(128);
 

@@ -372,7 +372,7 @@ public class WorkflowsController : BaseApiController
 
         try
         {
-            await _workflowEngine.SignalAsync(id, request.SignalName, request.Data);
+            await _workflowEngine.SignalAsync(id, request.SignalName, request.Data as IDictionary<string, object?>);
 
             _logger.LogInformation("Signal sent to workflow: {InstanceId}, Signal: {SignalName}",
                 id, request.SignalName);
@@ -395,7 +395,7 @@ public class WorkflowsController : BaseApiController
         if (string.IsNullOrWhiteSpace(request.SignalName))
             return ApiBadRequest(WorkflowValidationMessages.SignalNameRequired);
 
-        await _workflowEngine.BroadcastSignalAsync(request.SignalName, request.Data, request.WorkflowId);
+        await _workflowEngine.BroadcastSignalAsync(request.SignalName, request.Data as IDictionary<string, object?>, request.WorkflowId);
 
         _logger.LogInformation("Signal broadcast: {SignalName}, WorkflowId: {WorkflowId}",
             request.SignalName, request.WorkflowId ?? "All");
@@ -414,7 +414,7 @@ public class WorkflowsController : BaseApiController
         if (string.IsNullOrWhiteSpace(request.EventName))
             return ApiBadRequest(WorkflowValidationMessages.EventNameRequired);
 
-        var results = await _workflowEngine.TriggerEventAsync(request.EventName, request.EventData);
+        var results = await _workflowEngine.TriggerEventAsync(request.EventName, request.EventData as IDictionary<string, object?>);
 
         _logger.LogInformation("Event triggered: {EventName}, Workflows started: {Count}",
             request.EventName, results.Count);

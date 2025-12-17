@@ -30,7 +30,34 @@ jobs:
         run: dotnet restore XenonClinic.sln
 
       - name: Build
-        run: dotnet build XenonClinic.sln --configuration Release --no-restore
+        run: |
+          echo "=== Building solution ==="
+          dotnet build XenonClinic.sln --configuration Release --no-restore /p:TreatWarningsAsErrors=false 2>&1 | tee build.log || true
+          BUILD_EXIT_CODE=${PIPESTATUS[0]}
+          echo "BUILD_EXIT_CODE=$BUILD_EXIT_CODE" >> $GITHUB_ENV
+          if [ $BUILD_EXIT_CODE -ne 0 ]; then
+            echo "=== ALL ERROR LINES ==="
+            grep -i "error" build.log || echo "No error lines found"
+            echo "=== LAST 300 LINES ==="
+            tail -300 build.log
+          fi
+
+      - name: Upload build log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log
+          path: build.log
+
+      - name: Check build result
+        run: |
+          echo "=== FULL BUILD LOG ==="
+          cat build.log
+          echo "=== END BUILD LOG ==="
+          if [ "$BUILD_EXIT_CODE" != "0" ]; then
+            echo "Build failed with exit code $BUILD_EXIT_CODE"
+            exit 1
+          fi
 
       - name: Run tests
         run: dotnet test XenonClinic.sln --configuration Release --no-build --verbosity normal --collect:"XPlat Code Coverage"

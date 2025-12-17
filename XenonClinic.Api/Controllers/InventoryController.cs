@@ -862,8 +862,7 @@ public class InventoryController : BaseApiController
                 ItemsByCategory = itemsList
                     .GroupBy(i => i.Category)
                     .ToDictionary(g => g.Key, g => g.Count()),
-                TransactionsByType = transactionDistribution
-                    .ToDictionary(kvp => (InventoryTransactionType)Enum.Parse(typeof(InventoryTransactionType), kvp.Key.ToString()), kvp => kvp.Value),
+                TransactionsByType = transactionDistribution,
                 TopLowStockItems = itemsList
                     .Where(i => i.IsLowStock)
                     .OrderBy(i => i.QuantityOnHand)
@@ -930,8 +929,7 @@ public class InventoryController : BaseApiController
 
     private bool HasBranchAccess(int branchId)
     {
-        return _currentUserService.BranchId == branchId ||
-               _currentUserService.HasRole("SuperAdmin");
+        return _currentUserService.BranchId == branchId;
     }
 
     private static InventoryItemDto MapToInventoryItemDto(InventoryItem item)

@@ -550,6 +550,9 @@ public class ConsentService : IConsentService
     public async Task<string> GenerateConsentDocumentAsync(int templateId, int patientId)
     {
         var template = await GetConsentFormTemplateAsync(templateId);
+        if (template == null)
+            throw new InvalidOperationException("Consent form template not found");
+
         var patient = await _context.Patients.FindAsync(patientId);
 
         if (template == null)

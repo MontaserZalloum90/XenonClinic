@@ -42,7 +42,7 @@ public abstract class BaseApiController : ControllerBase
     /// <summary>
     /// Returns a no content response.
     /// </summary>
-    protected new ActionResult NoContent()
+    protected new IActionResult NoContent()
     {
         return StatusCode(204);
     }
@@ -92,6 +92,14 @@ public abstract class BaseApiController : ControllerBase
     }
 
     /// <summary>
+    /// Returns a not found response (generic version for typed responses).
+    /// </summary>
+    protected IActionResult ApiNotFound<T>(string error = "Resource not found")
+    {
+        return NotFound(ApiResponse<T>.Failure(error));
+    }
+
+    /// <summary>
     /// Returns an unauthorized response.
     /// </summary>
     protected IActionResult ApiUnauthorized(string error = "Unauthorized access")
@@ -100,11 +108,27 @@ public abstract class BaseApiController : ControllerBase
     }
 
     /// <summary>
+    /// Returns an unauthorized response (generic version for typed responses).
+    /// </summary>
+    protected IActionResult ApiUnauthorized<T>(string error = "Unauthorized access")
+    {
+        return Unauthorized(ApiResponse<T>.Failure(error));
+    }
+
+    /// <summary>
     /// Returns a forbidden response.
     /// </summary>
     protected IActionResult ApiForbidden(string error = "Access denied")
     {
         return StatusCode(403, ApiResponse.Failure(error));
+    }
+
+    /// <summary>
+    /// Returns a forbidden response (generic version for typed responses).
+    /// </summary>
+    protected IActionResult ApiForbidden<T>(string error = "Access denied")
+    {
+        return StatusCode(403, ApiResponse<T>.Failure(error));
     }
 
     /// <summary>

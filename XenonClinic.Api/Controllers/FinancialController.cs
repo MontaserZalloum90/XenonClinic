@@ -159,7 +159,9 @@ public class FinancialController : BaseApiController
         var validationResult = await _createAccountValidator.ValidateAsync(dto);
         if (!validationResult.IsValid)
         {
-            return ApiBadRequest(validationResult.Errors);
+            return ApiBadRequest("Validation failed", validationResult.Errors.ToDictionary(
+                e => e.PropertyName,
+                e => new[] { e.ErrorMessage }));
         }
 
         var branchId = GetCurrentBranchId();
@@ -210,7 +212,9 @@ public class FinancialController : BaseApiController
         var validationResult = await _updateAccountValidator.ValidateAsync(dto);
         if (!validationResult.IsValid)
         {
-            return ApiBadRequest(validationResult.Errors);
+            return ApiBadRequest("Validation failed", validationResult.Errors.ToDictionary(
+                e => e.PropertyName,
+                e => new[] { e.ErrorMessage }));
         }
 
         var existingAccount = await _financialService.GetAccountByIdAsync(id);
@@ -285,7 +289,9 @@ public class FinancialController : BaseApiController
         var validationResult = await _invoiceListValidator.ValidateAsync(request);
         if (!validationResult.IsValid)
         {
-            return ApiBadRequest(validationResult.Errors);
+            return ApiBadRequest("Validation failed", validationResult.Errors.ToDictionary(
+                e => e.PropertyName,
+                e => new[] { e.ErrorMessage }));
         }
 
         var branchId = GetCurrentBranchId();
@@ -399,7 +405,9 @@ public class FinancialController : BaseApiController
         var validationResult = await _createInvoiceValidator.ValidateAsync(dto);
         if (!validationResult.IsValid)
         {
-            return ApiBadRequest(validationResult.Errors);
+            return ApiBadRequest("Validation failed", validationResult.Errors.ToDictionary(
+                e => e.PropertyName,
+                e => new[] { e.ErrorMessage }));
         }
 
         var branchId = GetCurrentBranchId();
@@ -473,7 +481,9 @@ public class FinancialController : BaseApiController
         var validationResult = await _recordPaymentValidator.ValidateAsync(dto);
         if (!validationResult.IsValid)
         {
-            return ApiBadRequest(validationResult.Errors);
+            return ApiBadRequest("Validation failed", validationResult.Errors.ToDictionary(
+                e => e.PropertyName,
+                e => new[] { e.ErrorMessage }));
         }
 
         var invoice = await _financialService.GetInvoiceByIdAsync(id);
@@ -578,7 +588,9 @@ public class FinancialController : BaseApiController
         var validationResult = await _expenseListValidator.ValidateAsync(request);
         if (!validationResult.IsValid)
         {
-            return ApiBadRequest(validationResult.Errors);
+            return ApiBadRequest("Validation failed", validationResult.Errors.ToDictionary(
+                e => e.PropertyName,
+                e => new[] { e.ErrorMessage }));
         }
 
         var branchId = GetCurrentBranchId();
@@ -669,7 +681,9 @@ public class FinancialController : BaseApiController
         var validationResult = await _createExpenseValidator.ValidateAsync(dto);
         if (!validationResult.IsValid)
         {
-            return ApiBadRequest(validationResult.Errors);
+            return ApiBadRequest("Validation failed", validationResult.Errors.ToDictionary(
+                e => e.PropertyName,
+                e => new[] { e.ErrorMessage }));
         }
 
         var branchId = GetCurrentBranchId();
@@ -726,7 +740,9 @@ public class FinancialController : BaseApiController
         var validationResult = await _updateExpenseValidator.ValidateAsync(dto);
         if (!validationResult.IsValid)
         {
-            return ApiBadRequest(validationResult.Errors);
+            return ApiBadRequest("Validation failed", validationResult.Errors.ToDictionary(
+                e => e.PropertyName,
+                e => new[] { e.ErrorMessage }));
         }
 
         var existingExpense = await _financialService.GetExpenseByIdAsync(id);
@@ -777,7 +793,9 @@ public class FinancialController : BaseApiController
         var validationResult = await _approveExpenseValidator.ValidateAsync(dto);
         if (!validationResult.IsValid)
         {
-            return ApiBadRequest(validationResult.Errors);
+            return ApiBadRequest("Validation failed", validationResult.Errors.ToDictionary(
+                e => e.PropertyName,
+                e => new[] { e.ErrorMessage }));
         }
 
         var expense = await _financialService.GetExpenseByIdAsync(id);
@@ -825,7 +843,9 @@ public class FinancialController : BaseApiController
         var validationResult = await _rejectExpenseValidator.ValidateAsync(dto);
         if (!validationResult.IsValid)
         {
-            return ApiBadRequest(validationResult.Errors);
+            return ApiBadRequest("Validation failed", validationResult.Errors.ToDictionary(
+                e => e.PropertyName,
+                e => new[] { e.ErrorMessage }));
         }
 
         var expense = await _financialService.GetExpenseByIdAsync(id);
@@ -872,7 +892,9 @@ public class FinancialController : BaseApiController
         var validationResult = await _transactionListValidator.ValidateAsync(request);
         if (!validationResult.IsValid)
         {
-            return ApiBadRequest(validationResult.Errors);
+            return ApiBadRequest("Validation failed", validationResult.Errors.ToDictionary(
+                e => e.PropertyName,
+                e => new[] { e.ErrorMessage }));
         }
 
         var branchId = GetCurrentBranchId();
@@ -937,7 +959,9 @@ public class FinancialController : BaseApiController
         var validationResult = await _createTransactionValidator.ValidateAsync(dto);
         if (!validationResult.IsValid)
         {
-            return ApiBadRequest(validationResult.Errors);
+            return ApiBadRequest("Validation failed", validationResult.Errors.ToDictionary(
+                e => e.PropertyName,
+                e => new[] { e.ErrorMessage }));
         }
 
         var branchId = GetCurrentBranchId();

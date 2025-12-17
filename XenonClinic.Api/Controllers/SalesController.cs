@@ -614,9 +614,16 @@ public class SalesController : BaseApiController
 
             var sales = (await _salesService.GetSalesByBranchIdAsync(branchId.Value)).ToList();
             var quotations = (await _salesService.GetQuotationsByBranchIdAsync(branchId.Value)).ToList();
-            var statusDist = await _salesService.GetSalesStatusDistributionAsync(branchId.Value);
-            var paymentDist = await _salesService.GetSalesPaymentStatusDistributionAsync(branchId.Value);
-            var topItems = await _salesService.GetTopSellingItemsAsync(branchId.Value, 10);
+
+            // Compute distributions inline since service methods don't exist
+            var statusDist = sales.GroupBy(s => s.Status).ToDictionary(g => g.Key, g => g.Count());
+            var paymentDist = sales.GroupBy(s => s.PaymentStatus).ToDictionary(g => g.Key, g => g.Count());
+            var topItems = sales.SelectMany(s => s.Items)
+                .GroupBy(i => i.ItemName)
+                .Select(g => new { ItemName = g.Key, Quantity = g.Sum(i => i.Quantity), Revenue = g.Sum(i => i.Total) })
+                .OrderByDescending(x => x.Revenue)
+                .Take(10)
+                .ToList();
 
             var totalSent = quotations.Count(q => q.Status != QuotationStatus.Draft);
             var totalAccepted = quotations.Count(q => q.Status == QuotationStatus.Accepted);
@@ -662,7 +669,7 @@ public class SalesController : BaseApiController
     #region Helper Methods
 
     private bool HasBranchAccess(int branchId) =>
-        _currentUserService.BranchId == branchId || _currentUserService.HasRole("SuperAdmin");
+        _currentUserService.BranchId == branchId;
 
     private static SaleDto MapToSaleDto(Sale s) => new()
     {

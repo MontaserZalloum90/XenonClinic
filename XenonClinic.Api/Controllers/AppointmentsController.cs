@@ -59,7 +59,9 @@ public class AppointmentsController : BaseApiController
         var validationResult = await _listValidator.ValidateAsync(request);
         if (!validationResult.IsValid)
         {
-            return ApiBadRequest(validationResult.Errors);
+            return ApiBadRequest("Validation failed", validationResult.Errors.ToDictionary(
+                e => e.PropertyName,
+                e => new[] { e.ErrorMessage }));
         }
 
         var branchId = GetCurrentBranchId();
@@ -251,7 +253,9 @@ public class AppointmentsController : BaseApiController
         var validationResult = await _createValidator.ValidateAsync(dto);
         if (!validationResult.IsValid)
         {
-            return ApiBadRequest(validationResult.Errors);
+            return ApiBadRequest("Validation failed", validationResult.Errors.ToDictionary(
+                e => e.PropertyName,
+                e => new[] { e.ErrorMessage }));
         }
 
         var branchId = GetCurrentBranchId();
@@ -320,7 +324,9 @@ public class AppointmentsController : BaseApiController
         var validationResult = await _updateValidator.ValidateAsync(dto);
         if (!validationResult.IsValid)
         {
-            return ApiBadRequest(validationResult.Errors);
+            return ApiBadRequest("Validation failed", validationResult.Errors.ToDictionary(
+                e => e.PropertyName,
+                e => new[] { e.ErrorMessage }));
         }
 
         var appointment = await _appointmentService.GetAppointmentByIdAsync(id);

@@ -177,7 +177,7 @@ public interface ICustomReportService
     /// <summary>
     /// Get report usage statistics
     /// </summary>
-    Task<Dictionary<string, object>> GetReportStatisticsAsync(int branchId, int reportId);
+    Task<Dictionary<string, object?>> GetReportStatisticsAsync(int branchId, int reportId);
 
     #endregion
 
