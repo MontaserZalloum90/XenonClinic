@@ -1022,7 +1022,7 @@ public class ClinicalDecisionSupportService : IClinicalDecisionSupportService
 
     #region Medication Safety Check
 
-    public async Task<MedicationSafetyCheckResultDto> PerformComprehensiveSafetyCheckAsync(
+    public async Task<Core.DTOs.MedicationSafetyCheckResultDto> PerformComprehensiveSafetyCheckAsync(
         int patientId,
         string medicationCode,
         DosageCheckRequestDto? dosageInfo = null)
@@ -1079,7 +1079,7 @@ public class ClinicalDecisionSupportService : IClinicalDecisionSupportService
         warnings.AddRange(interactionCheck.Interactions.Select(i => $"Interaction: {i.Description}"));
         warnings.AddRange(contraindicationCheck.Contraindications.Select(c => $"Contraindication: {c.Description}"));
 
-        return new MedicationSafetyCheckResultDto
+        return new Core.DTOs.MedicationSafetyCheckResultDto
         {
             PatientId = patientId,
             MedicationCode = medicationCode,
@@ -1409,11 +1409,12 @@ public class ClinicalDecisionSupportService : IClinicalDecisionSupportService
         return await Task.FromResult(true);
     }
 
-    public async Task<MedicationSafetyCheckResultDto> PerformMedicationSafetyCheckAsync(int patientId, string medicationCode,
-        DosageCheckRequestDto? dosageInfo = null)
+    public Task<Core.Interfaces.MedicationSafetyCheckResultDto> PerformMedicationSafetyCheckAsync(int patientId, string medicationCode, DosageCheckRequestDto? dosageInfo = null)
     {
-        return await PerformComprehensiveSafetyCheckAsync(patientId, medicationCode, dosageInfo);
+        throw new NotImplementedException();
     }
+
+
 
     #endregion
 }

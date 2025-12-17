@@ -40,7 +40,7 @@ public class DiagnosticsController : BaseApiController
     [HttpGet("metrics")]
     [AllowAnonymous]
     [ProducesResponseType(typeof(ApiResponse<ApplicationMetrics>), StatusCodes.Status200OK)]
-    public IActionResult GetMetrics()
+    public IActionResult GetMetrics(ApplicationMetrics metrics)
     {
         Interlocked.Increment(ref _totalRequests);
 

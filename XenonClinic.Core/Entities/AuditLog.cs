@@ -176,26 +176,10 @@ public class AuditLog
     /// Module name (CaseManagement, Audiology, etc.)
     /// </summary>
     public string? ModuleName { get; set; }
-
-    /// <summary>
-    /// Session ID for tracking user sessions
-    /// </summary>
-    public string? SessionId { get; set; }
-
-    /// <summary>
-    /// Integrity hash for tamper detection
-    /// </summary>
-    public string? IntegrityHash { get; set; }
-
-    /// <summary>
-    /// Whether this log entry has been archived
-    /// </summary>
+    public string IntegrityHash { get; set; }
     public bool IsArchived { get; set; }
-
-    /// <summary>
-    /// When this log entry was archived
-    /// </summary>
-    public DateTime? ArchivedAt { get; set; }
+    public DateTime ArchivedAt { get; set; }
+    public string? SessionId { get; set; }
 }
 
 /// <summary>

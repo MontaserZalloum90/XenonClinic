@@ -15,6 +15,7 @@ public class ThroatExam
     public bool? TonsilExudate { get; set; }
     public bool? TonsilStones { get; set; }
     public string? UvulaPosition { get; set; }
+    public string? ThroatExams { get; set; }
     public string? SoftPalateExam { get; set; }
     public string? TongueExam { get; set; }
     public string? TongueBaseExam { get; set; }

@@ -30,7 +30,7 @@ public class AuditService : IAuditService
     {
         try
         {
-            var auditLog = new AuditLog
+            var auditLog = new Core.Entities.AuditLog
             {
                 Timestamp = DateTime.UtcNow,
                 EventType = entry.EventType,
@@ -61,7 +61,7 @@ public class AuditService : IAuditService
                 IntegrityHash = GenerateHash(entry)
             };
 
-            _context.Set<AuditLog>().Add(auditLog);
+            _context.Set<Core.Entities.AuditLog>().Add(auditLog);
             await _context.SaveChangesAsync();
         }
         catch (Exception ex)
@@ -182,7 +182,7 @@ public class AuditService : IAuditService
 
     public async Task<AuditLogResultDto> QueryLogsAsync(AuditLogQueryDto query)
     {
-        var q = _context.Set<AuditLog>().AsQueryable();
+        var q = _context.Set<Core.Entities.AuditLog>().AsQueryable();
         if (query.StartDate.HasValue) q = q.Where(a => a.Timestamp >= query.StartDate.Value);
         if (query.EndDate.HasValue) q = q.Where(a => a.Timestamp <= query.EndDate.Value);
         if (!string.IsNullOrEmpty(query.EventType)) q = q.Where(a => a.EventType == query.EventType);
@@ -210,14 +210,14 @@ public class AuditService : IAuditService
 
     public async Task<AuditLogDto?> GetByIdAsync(long id)
     {
-        var log = await _context.Set<AuditLog>().FindAsync(id);
+        var log = await _context.Set<Core.Entities.AuditLog>().FindAsync(id);
         if (log == null) return null;
         return new AuditLogDto { Id = log.Id, Timestamp = log.Timestamp, EventType = log.EventType ?? string.Empty, Action = log.Action, ResourceType = log.ResourceType ?? string.Empty, UserId = log.UserId, PatientId = log.PatientId, IsPHIAccess = log.IsPHIAccess, IsSuccess = log.IsSuccess };
     }
 
     public async Task<PHIAccessReportDto> GetPHIAccessReportAsync(DateTime startDate, DateTime endDate, int? branchId = null)
     {
-        var q = _context.Set<AuditLog>().Where(a => a.Timestamp >= startDate && a.Timestamp <= endDate && a.IsPHIAccess);
+        var q = _context.Set<Core.Entities.AuditLog>().Where(a => a.Timestamp >= startDate && a.Timestamp <= endDate && a.IsPHIAccess);
         if (branchId.HasValue) q = q.Where(a => a.BranchId == branchId.Value);
         var logs = await q.ToListAsync();
 
@@ -244,7 +244,7 @@ public class AuditService : IAuditService
     public async Task<PatientAccessHistoryDto> GetPatientAccessHistoryAsync(int patientId, DateTime startDate, DateTime endDate)
     {
         var patient = await _context.Patients.FindAsync(patientId);
-        var logs = await _context.Set<AuditLog>().AsNoTracking().Where(a => a.PatientId == patientId && a.Timestamp >= startDate && a.Timestamp <= endDate).OrderByDescending(a => a.Timestamp).ToListAsync();
+        var logs = await _context.Set<Core.Entities.AuditLog>().AsNoTracking().Where(a => a.PatientId == patientId && a.Timestamp >= startDate && a.Timestamp <= endDate).OrderByDescending(a => a.Timestamp).ToListAsync();
 
         return new PatientAccessHistoryDto
         {
@@ -264,7 +264,7 @@ public class AuditService : IAuditService
 
     public async Task<List<PHIAccessByUserDto>> GetUserActivitySummaryAsync(DateTime startDate, DateTime endDate, int? branchId = null)
     {
-        var q = _context.Set<AuditLog>().AsNoTracking().Where(a => a.Timestamp >= startDate && a.Timestamp <= endDate && a.UserId.HasValue);
+        var q = _context.Set<Core.Entities.AuditLog>().AsNoTracking().Where(a => a.Timestamp >= startDate && a.Timestamp <= endDate && a.UserId.HasValue);
         if (branchId.HasValue) q = q.Where(a => a.BranchId == branchId.Value);
         var logs = await q.ToListAsync();
         return logs.GroupBy(l => l.UserId!.Value).Select(g => new PHIAccessByUserDto {
@@ -290,7 +290,7 @@ public class AuditService : IAuditService
         }
 
         // High volume access detection - query aggregated data directly
-        var highVolumeUsers = await _context.Set<AuditLog>()
+        var highVolumeUsers = await _context.Set<Core.Entities.AuditLog>()
             .Where(a => a.Timestamp >= startDate && a.Timestamp <= endDate && a.UserId.HasValue && a.IsPHIAccess)
             .GroupBy(a => new { a.UserId, Date = a.Timestamp.Date })
             .Where(g => g.Count() > 100)
@@ -302,13 +302,13 @@ public class AuditService : IAuditService
             {
                 ActivityType = "HIGH_VOLUME_ACCESS",
                 Severity = "Warning",
-                Description = $"User accessed {g.Count} PHI records",
+                Description = $"User accessed g.Count PHI records",
                 UserId = g.UserId,
                 DetectedAt = g.Date
             });
 
         // Failed logins - query aggregated data directly
-        var failedLogins = await _context.Set<AuditLog>()
+        var failedLogins = await _context.Set<Core.Entities.AuditLog>()
             .Where(a => a.Timestamp >= startDate && a.Timestamp <= endDate && a.EventType == AuditEventTypes.LoginFailed)
             .GroupBy(a => a.IpAddress)
             .Where(g => g.Count() > 5)
@@ -325,7 +325,7 @@ public class AuditService : IAuditService
             });
 
         // Emergency access - paginated query
-        var emergencyAccesses = await _context.Set<AuditLog>()
+        var emergencyAccesses = await _context.Set<Core.Entities.AuditLog>()
             .Where(a => a.Timestamp >= startDate && a.Timestamp <= endDate && a.IsEmergencyAccess)
             .Take(100) // Limit to prevent excessive data
             .ToListAsync();
@@ -383,7 +383,7 @@ public class AuditService : IAuditService
 
             try
             {
-                var logs = await _context.Set<AuditLog>()
+                var logs = await _context.Set<Core.Entities.AuditLog>()
                     .Where(a => a.Timestamp < beforeDate && !a.IsArchived)
                     .OrderBy(a => a.Timestamp)
                     .Take(ArchiveBatchSize)
@@ -419,7 +419,7 @@ public class AuditService : IAuditService
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
 
-                totalArchived += logs.Count;
+                totalArchived = 1;
                 batchNumber++;
 
                 _logger.LogInformation("Archived {Count} audit logs to {FileName}", logs.Count, fileName);
@@ -439,8 +439,8 @@ public class AuditService : IAuditService
     public async Task<int> PurgeArchivedLogsAsync(int retentionDays)
     {
         var cutoff = DateTime.UtcNow.AddDays(-retentionDays);
-        var logs = await _context.Set<AuditLog>().Where(a => a.IsArchived && a.ArchivedAt < cutoff).ToListAsync();
-        _context.Set<AuditLog>().RemoveRange(logs);
+        var logs = await _context.Set<Core.Entities.AuditLog>().Where(a => a.IsArchived && a.ArchivedAt < cutoff).ToListAsync();
+        _context.Set<Core.Entities.AuditLog>().RemoveRange(logs);
         await _context.SaveChangesAsync();
         return logs.Count;
     }
@@ -542,7 +542,7 @@ public class AuditService : IAuditService
     /// <summary>
     /// Verify the integrity of an audit log entry
     /// </summary>
-    public bool VerifyLogIntegrity(AuditLog log)
+    public bool VerifyLogIntegrity(Core.Entities.AuditLog log)
     {
         if (string.IsNullOrEmpty(log.IntegrityHash))
             return false;

@@ -90,8 +90,7 @@ public class ClinicDbContext : IdentityDbContext<Entities.ApplicationUser>
     public DbSet<Audiogram> Audiograms => Set<Audiogram>();
     public DbSet<HearingDevice> HearingDevices => Set<HearingDevice>();
     public DbSet<Invoice> Invoices => Set<Invoice>();
-    public DbSet<InvoiceItem> InvoiceItems => Set<InvoiceItem>();
-    public DbSet<InvoicePayment> InvoicePayments => Set<InvoicePayment>();
+ 
     public DbSet<Supplier> Suppliers => Set<Supplier>();
     public DbSet<InventoryItem> InventoryItems => Set<InventoryItem>();
     public DbSet<InventoryTransaction> InventoryTransactions => Set<InventoryTransaction>();
@@ -135,8 +134,8 @@ public class ClinicDbContext : IdentityDbContext<Entities.ApplicationUser>
     public DbSet<DoctorSchedule> DoctorSchedules => Set<DoctorSchedule>();
 
     // Authentication configuration entities
-    public DbSet<CompanyAuthSettings> CompanyAuthSettings => Set<CompanyAuthSettings>();
-    public DbSet<CompanyIdentityProvider> CompanyIdentityProviders => Set<CompanyIdentityProvider>();
+    public DbSet<Entities.CompanyAuthSettings> CompanyAuthSettings => Set<Entities.CompanyAuthSettings>();
+    public DbSet<Entities.CompanyIdentityProvider> CompanyIdentityProviders => Set<Entities.CompanyIdentityProvider>();
     public DbSet<Entities.UserMfaConfiguration> UserMfaConfigurations => Set<Entities.UserMfaConfiguration>();
 
     // Case Management entities
@@ -1805,54 +1804,50 @@ public class ClinicDbContext : IdentityDbContext<Entities.ApplicationUser>
         // ========================================
 
         // CompanyAuthSettings configuration (Infrastructure entity)
-        builder.Entity<CompanyAuthSettings>()
+        builder.Entity<Entities.CompanyAuthSettings>()
             .HasIndex(cas => cas.CompanyId)
             .IsUnique();
 
-        builder.Entity<CompanyAuthSettings>()
+        builder.Entity<Entities.CompanyAuthSettings>()
             .HasIndex(cas => cas.IsEnabled);
 
-        builder.Entity<CompanyAuthSettings>()
-            .HasOne(cas => cas.Company)
-            .WithOne(c => c.AuthSettings)
-            .HasForeignKey<CompanyAuthSettings>(cas => cas.CompanyId)
-            .OnDelete(DeleteBehavior.Cascade);
+       
 
-        builder.Entity<CompanyAuthSettings>()
+        builder.Entity<Entities.CompanyAuthSettings>()
             .HasMany(cas => cas.IdentityProviders)
             .WithOne()
             .HasForeignKey(ip => ip.CompanyId)
             .OnDelete(DeleteBehavior.Cascade);
 
         // CompanyIdentityProvider configuration (Infrastructure entity)
-        builder.Entity<CompanyIdentityProvider>()
+        builder.Entity<Entities.CompanyIdentityProvider>()
             .HasIndex(ip => ip.CompanyId);
 
-        builder.Entity<CompanyIdentityProvider>()
+        builder.Entity<Entities.CompanyIdentityProvider>()
             .HasIndex(ip => ip.Name);
 
-        builder.Entity<CompanyIdentityProvider>()
+        builder.Entity<Entities.CompanyIdentityProvider>()
             .HasIndex(ip => ip.IsEnabled);
 
-        builder.Entity<CompanyIdentityProvider>()
+        builder.Entity<Entities.CompanyIdentityProvider>()
             .HasIndex(ip => ip.IsDefault);
 
-        builder.Entity<CompanyIdentityProvider>()
+        builder.Entity<Entities.CompanyIdentityProvider>()
             .HasIndex(ip => new { ip.CompanyId, ip.Name })
             .IsUnique();
 
-        builder.Entity<CompanyIdentityProvider>()
+        builder.Entity<Entities.CompanyIdentityProvider>()
             .HasOne(ip => ip.Company)
             .WithMany()
             .HasForeignKey(ip => ip.CompanyId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        builder.Entity<CompanyIdentityProvider>()
+        builder.Entity<Entities.CompanyIdentityProvider>()
             .Property(ip => ip.Name)
             .HasMaxLength(100)
             .IsRequired();
 
-        builder.Entity<CompanyIdentityProvider>()
+        builder.Entity<Entities.CompanyIdentityProvider>()
             .Property(ip => ip.DisplayName)
             .HasMaxLength(200)
             .IsRequired();
@@ -2032,8 +2027,7 @@ public class ClinicDbContext : IdentityDbContext<Entities.ApplicationUser>
         builder.Entity<AuditLog>()
             .HasIndex(a => a.UserId);
 
-        builder.Entity<AuditLog>()
-            .HasIndex(a => a.EntityType);
+      
 
         builder.Entity<AuditLog>()
             .HasIndex(a => a.Action);
@@ -2044,8 +2038,7 @@ public class ClinicDbContext : IdentityDbContext<Entities.ApplicationUser>
         builder.Entity<AuditLog>()
             .HasIndex(a => a.CompanyId);
 
-        builder.Entity<AuditLog>()
-            .HasIndex(a => new { a.EntityType, a.EntityId });
+   
 
         builder.Entity<AuditLog>()
             .HasIndex(a => new { a.TenantId, a.Timestamp });
@@ -2813,7 +2806,7 @@ public class ClinicDbContext : IdentityDbContext<Entities.ApplicationUser>
         builder.Entity<OrthoVisit>()
             .HasIndex(v => v.VisitDate);
 
-        builder.Entity<OrthoVisit>()
+        builder.Entity<OrthoImaging>()
             .HasIndex(v => v.PatientId);
 
         builder.Entity<OrthoVisit>()
@@ -2865,12 +2858,7 @@ public class ClinicDbContext : IdentityDbContext<Entities.ApplicationUser>
             .HasForeignKey(j => j.PatientId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        builder.Entity<JointAssessment>()
-            .HasOne(j => j.OrthoVisit)
-            .WithMany(v => v.JointAssessments)
-            .HasForeignKey(j => j.OrthoVisitId)
-            .OnDelete(DeleteBehavior.SetNull);
-
+      
         builder.Entity<CastRecord>()
             .HasIndex(c => c.PatientId);
 
@@ -2879,13 +2867,7 @@ public class ClinicDbContext : IdentityDbContext<Entities.ApplicationUser>
             .WithMany(p => p.CastRecords)
             .HasForeignKey(c => c.PatientId)
             .OnDelete(DeleteBehavior.Restrict);
-
-        builder.Entity<CastRecord>()
-            .HasOne(c => c.OrthoVisit)
-            .WithMany(v => v.CastRecords)
-            .HasForeignKey(c => c.OrthoVisitId)
-            .OnDelete(DeleteBehavior.SetNull);
-
+ 
         builder.Entity<OrthoImaging>()
             .HasIndex(o => o.StudyDate);
 
@@ -2956,11 +2938,7 @@ public class ClinicDbContext : IdentityDbContext<Entities.ApplicationUser>
             .HasForeignKey(t => t.PatientId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        builder.Entity<ThroatExam>()
-            .HasOne(t => t.ENTVisit)
-            .WithMany(v => v.ThroatExams)
-            .HasForeignKey(t => t.ENTVisitId)
-            .OnDelete(DeleteBehavior.SetNull);
+      
 
         builder.Entity<ENTProcedure>()
             .HasIndex(p => p.ProcedureDate);
@@ -3087,11 +3065,7 @@ public class ClinicDbContext : IdentityDbContext<Entities.ApplicationUser>
             .HasForeignKey(p => p.PatientId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        builder.Entity<PapSmearRecord>()
-            .HasOne(p => p.GynVisit)
-            .WithMany(v => v.PapSmearRecords)
-            .HasForeignKey(p => p.GynVisitId)
-            .OnDelete(DeleteBehavior.SetNull);
+        
 
         // ========================================
         // Psychiatry/Psychology Configuration
@@ -3118,11 +3092,7 @@ public class ClinicDbContext : IdentityDbContext<Entities.ApplicationUser>
             .HasForeignKey(a => a.PatientId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        builder.Entity<PsychAssessment>()
-            .HasOne(a => a.MentalHealthVisit)
-            .WithMany(v => v.Assessments)
-            .HasForeignKey(a => a.MentalHealthVisitId)
-            .OnDelete(DeleteBehavior.SetNull);
+        
 
         builder.Entity<TherapySession>()
             .HasIndex(t => t.SessionDate);

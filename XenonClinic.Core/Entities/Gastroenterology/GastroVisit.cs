@@ -46,11 +46,6 @@ public class GastroVisit
     public Appointment? Appointment { get; set; }
     public ICollection<EndoscopyRecord> Endoscopies { get; set; } = new List<EndoscopyRecord>();
     public ICollection<GastroProcedure> Procedures { get; set; } = new List<GastroProcedure>();
-    public ICollection<LiverFunctionTest> LiverFunctionTests { get; set; } = new List<LiverFunctionTest>();
-
-    /// <summary>
-    /// Alias for Endoscopies for compatibility
-    /// </summary>
-    [System.ComponentModel.DataAnnotations.Schema.NotMapped]
-    public ICollection<EndoscopyRecord> EndoscopyRecords { get => Endoscopies; set => Endoscopies = value; }
-}
+     public ICollection<LiverFunctionTest> LiverFunctionTests { get; set; } = new List<LiverFunctionTest>();
+     public ICollection<EndoscopyRecord> EndoscopyRecords { get; set; } = new List<EndoscopyRecord>();
+ }

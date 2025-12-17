@@ -15,6 +15,6 @@
 
   <ItemGroup>
     <ProjectReference Include="../XenonClinic.Core/XenonClinic.Core.csproj" />
-    <ProjectReference Include="../XenonClinic.Infrastructure/XenonClinic.Infrastructure.csproj" />
+    <ProjectReference Include="..\XenonClinic.Infrastructure\XenonClinic.Infrastructure.csproj" />
   </ItemGroup>
 </Project>
