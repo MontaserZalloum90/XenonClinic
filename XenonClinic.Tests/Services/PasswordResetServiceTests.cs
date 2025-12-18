@@ -50,7 +50,7 @@ public class PasswordResetServiceTests
         // Assert
         Assert.True(result.IsValid);
         Assert.Empty(result.Errors);
-        Assert.True(result.Strength > 50);
+        Assert.True(result.StrengthScore > 50);
     }
 
     [Fact]
@@ -149,7 +149,7 @@ public class PasswordResetServiceTests
         var strongResult = _service.ValidatePassword(strongPassword);
 
         // Assert
-        Assert.True(strongResult.Strength > weakResult.Strength);
+        Assert.True(strongResult.StrengthScore > weakResult.StrengthScore);
     }
 
     [Fact]

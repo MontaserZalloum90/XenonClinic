@@ -65,9 +65,9 @@ public class ExceptionHandlingTests
 
         // Assert
         var response = await ReadResponse(context);
-        response.Errors.Should().NotBeNull();
-        response.Errors.Should().ContainKey("Name");
-        response.Errors.Should().ContainKey("Email");
+        response.ValidationErrors.Should().NotBeNull();
+        response.ValidationErrors.Should().ContainKey("Name");
+        response.ValidationErrors.Should().ContainKey("Email");
     }
 
     [Fact]

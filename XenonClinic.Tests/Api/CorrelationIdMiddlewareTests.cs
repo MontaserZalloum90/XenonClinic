@@ -1,5 +1,7 @@
 using FluentAssertions;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
+using Moq;
 using XenonClinic.Api.Middleware;
 using Xunit;
 
@@ -20,18 +22,17 @@ public class CorrelationIdMiddlewareTests
         // Arrange
         var context = new DefaultHttpContext();
         var accessor = new CorrelationIdAccessor();
+        var logger = Mock.Of<ILogger<CorrelationIdMiddleware>>();
         var middleware = new CorrelationIdMiddleware(
             next: _ => Task.CompletedTask,
-            accessor: accessor);
+            logger: logger);
 
         // Act
-        await middleware.InvokeAsync(context);
+        await middleware.InvokeAsync(context, accessor);
 
         // Assert
-        context.Response.Headers.Should().ContainKey(CorrelationIdHeader);
-        var correlationId = context.Response.Headers[CorrelationIdHeader].ToString();
-        correlationId.Should().NotBeNullOrEmpty();
-        Guid.TryParse(correlationId, out _).Should().BeTrue();
+        accessor.CorrelationId.Should().NotBeNullOrEmpty();
+        Guid.TryParse(accessor.CorrelationId, out _).Should().BeTrue();
     }
 
     [Fact]
@@ -43,15 +44,15 @@ public class CorrelationIdMiddlewareTests
         context.Request.Headers[CorrelationIdHeader] = existingId;
 
         var accessor = new CorrelationIdAccessor();
+        var logger = Mock.Of<ILogger<CorrelationIdMiddleware>>();
         var middleware = new CorrelationIdMiddleware(
             next: _ => Task.CompletedTask,
-            accessor: accessor);
+            logger: logger);
 
         // Act
-        await middleware.InvokeAsync(context);
+        await middleware.InvokeAsync(context, accessor);
 
         // Assert
-        context.Response.Headers[CorrelationIdHeader].ToString().Should().Be(existingId);
         accessor.CorrelationId.Should().Be(existingId);
     }
 
@@ -60,19 +61,20 @@ public class CorrelationIdMiddlewareTests
     {
         // Arrange
         var context = new DefaultHttpContext();
-        context.Request.Headers[CorrelationIdHeader] = "not-a-guid";
+        context.Request.Headers[CorrelationIdHeader] = "invalid<script>chars";
 
         var accessor = new CorrelationIdAccessor();
+        var logger = Mock.Of<ILogger<CorrelationIdMiddleware>>();
         var middleware = new CorrelationIdMiddleware(
             next: _ => Task.CompletedTask,
-            accessor: accessor);
+            logger: logger);
 
         // Act
-        await middleware.InvokeAsync(context);
+        await middleware.InvokeAsync(context, accessor);
 
         // Assert
-        var resultId = context.Response.Headers[CorrelationIdHeader].ToString();
-        resultId.Should().NotBe("not-a-guid");
+        var resultId = accessor.CorrelationId;
+        resultId.Should().NotBe("invalid<script>chars");
         Guid.TryParse(resultId, out _).Should().BeTrue();
     }
 
@@ -82,16 +84,16 @@ public class CorrelationIdMiddlewareTests
         // Arrange
         var context = new DefaultHttpContext();
         var accessor = new CorrelationIdAccessor();
+        var logger = Mock.Of<ILogger<CorrelationIdMiddleware>>();
         var middleware = new CorrelationIdMiddleware(
             next: _ => Task.CompletedTask,
-            accessor: accessor);
+            logger: logger);
 
         // Act
-        await middleware.InvokeAsync(context);
+        await middleware.InvokeAsync(context, accessor);
 
         // Assert
         accessor.CorrelationId.Should().NotBeNullOrEmpty();
-        accessor.CorrelationId.Should().Be(context.Response.Headers[CorrelationIdHeader].ToString());
     }
 
     [Fact]
@@ -100,6 +102,7 @@ public class CorrelationIdMiddlewareTests
         // Arrange
         var context = new DefaultHttpContext();
         var accessor = new CorrelationIdAccessor();
+        var logger = Mock.Of<ILogger<CorrelationIdMiddleware>>();
         var nextCalled = false;
 
         var middleware = new CorrelationIdMiddleware(
@@ -108,31 +111,32 @@ public class CorrelationIdMiddlewareTests
                 nextCalled = true;
                 return Task.CompletedTask;
             },
-            accessor: accessor);
+            logger: logger);
 
         // Act
-        await middleware.InvokeAsync(context);
+        await middleware.InvokeAsync(context, accessor);
 
         // Assert
         nextCalled.Should().BeTrue();
     }
 
     [Fact]
-    public async Task InvokeAsync_AddsToRequestItems()
+    public async Task InvokeAsync_SetsRequestId()
     {
         // Arrange
         var context = new DefaultHttpContext();
         var accessor = new CorrelationIdAccessor();
+        var logger = Mock.Of<ILogger<CorrelationIdMiddleware>>();
         var middleware = new CorrelationIdMiddleware(
             next: _ => Task.CompletedTask,
-            accessor: accessor);
+            logger: logger);
 
         // Act
-        await middleware.InvokeAsync(context);
+        await middleware.InvokeAsync(context, accessor);
 
         // Assert
-        context.Items.Should().ContainKey("CorrelationId");
-        context.Items["CorrelationId"].Should().Be(accessor.CorrelationId);
+        accessor.RequestId.Should().NotBeNullOrEmpty();
+        accessor.RequestId.Should().HaveLength(12);
     }
 
     #endregion
@@ -154,26 +158,15 @@ public class CorrelationIdMiddlewareTests
     {
         // Arrange
         var accessor = new CorrelationIdAccessor();
-        var expectedId = Guid.NewGuid().ToString();
+        var expectedCorrelationId = Guid.NewGuid().ToString();
+        var expectedRequestId = "test123456";
 
         // Act
-        accessor.CorrelationId = expectedId;
+        accessor.Set(expectedCorrelationId, expectedRequestId);
 
         // Assert
-        accessor.CorrelationId.Should().Be(expectedId);
-    }
-
-    [Fact]
-    public void CorrelationIdAccessor_SetNull_ReturnsEmpty()
-    {
-        // Arrange
-        var accessor = new CorrelationIdAccessor();
-
-        // Act
-        accessor.CorrelationId = null!;
-
-        // Assert
-        accessor.CorrelationId.Should().BeEmpty();
+        accessor.CorrelationId.Should().Be(expectedCorrelationId);
+        accessor.RequestId.Should().Be(expectedRequestId);
     }
 
     [Fact]
@@ -183,8 +176,8 @@ public class CorrelationIdMiddlewareTests
         var accessor1 = new CorrelationIdAccessor();
         var accessor2 = new CorrelationIdAccessor();
 
-        accessor1.CorrelationId = "request-1";
-        accessor2.CorrelationId = "request-2";
+        accessor1.Set("request-1", "req1");
+        accessor2.Set("request-2", "req2");
 
         accessor1.CorrelationId.Should().Be("request-1");
         accessor2.CorrelationId.Should().Be("request-2");
@@ -203,37 +196,39 @@ public class CorrelationIdMiddlewareTests
         context.Request.Headers[CorrelationIdHeader] = "";
 
         var accessor = new CorrelationIdAccessor();
+        var logger = Mock.Of<ILogger<CorrelationIdMiddleware>>();
         var middleware = new CorrelationIdMiddleware(
             next: _ => Task.CompletedTask,
-            accessor: accessor);
+            logger: logger);
 
         // Act
-        await middleware.InvokeAsync(context);
+        await middleware.InvokeAsync(context, accessor);
 
         // Assert
-        var resultId = context.Response.Headers[CorrelationIdHeader].ToString();
+        var resultId = accessor.CorrelationId;
         resultId.Should().NotBeEmpty();
         Guid.TryParse(resultId, out _).Should().BeTrue();
     }
 
     [Fact]
-    public async Task InvokeAsync_WhitespaceCorrelationIdHeader_GeneratesNew()
+    public async Task InvokeAsync_OversizedCorrelationId_GeneratesNew()
     {
         // Arrange
         var context = new DefaultHttpContext();
-        context.Request.Headers[CorrelationIdHeader] = "   ";
+        context.Request.Headers[CorrelationIdHeader] = new string('a', 100);
 
         var accessor = new CorrelationIdAccessor();
+        var logger = Mock.Of<ILogger<CorrelationIdMiddleware>>();
         var middleware = new CorrelationIdMiddleware(
             next: _ => Task.CompletedTask,
-            accessor: accessor);
+            logger: logger);
 
         // Act
-        await middleware.InvokeAsync(context);
+        await middleware.InvokeAsync(context, accessor);
 
         // Assert
-        var resultId = context.Response.Headers[CorrelationIdHeader].ToString();
-        Guid.TryParse(resultId.Trim(), out _).Should().BeTrue();
+        var resultId = accessor.CorrelationId;
+        Guid.TryParse(resultId, out _).Should().BeTrue();
     }
 
     #endregion

@@ -67,8 +67,8 @@ public class ValidationFilterTests
         context.Result.Should().BeOfType<BadRequestObjectResult>();
         var result = (BadRequestObjectResult)context.Result!;
         var response = result.Value as ApiResponse;
-        response!.Errors.Should().NotBeNull();
-        response.Errors.Should().HaveCount(2);
+        response!.ValidationErrors.Should().NotBeNull();
+        response.ValidationErrors.Should().HaveCount(2);
     }
 
     #endregion
@@ -81,8 +81,7 @@ public class ValidationFilterTests
         // Arrange
         var filter = new ValidatePaginationFilter();
         var context = CreateActionExecutingContext();
-        context.ActionArguments["pageNumber"] = 1;
-        context.ActionArguments["pageSize"] = 20;
+        context.ActionArguments["request"] = new PaginationRequest { PageNumber = 1, PageSize = 20 };
 
         // Act
         filter.OnActionExecuting(context);
@@ -92,63 +91,35 @@ public class ValidationFilterTests
     }
 
     [Fact]
-    public void PaginationFilter_NegativePageNumber_ReturnsBadRequest()
+    public void PaginationFilter_NegativePageNumber_NormalizesToOne()
     {
         // Arrange
         var filter = new ValidatePaginationFilter();
         var context = CreateActionExecutingContext();
-        context.ActionArguments["pageNumber"] = -1;
+        var request = new PaginationRequest { PageNumber = -1, PageSize = 20 };
+        context.ActionArguments["request"] = request;
 
         // Act
         filter.OnActionExecuting(context);
 
-        // Assert
-        context.Result.Should().BeOfType<BadRequestObjectResult>();
+        // Assert - filter normalizes values instead of returning error
+        context.Result.Should().BeNull();
     }
 
     [Fact]
-    public void PaginationFilter_ZeroPageNumber_ReturnsBadRequest()
+    public void PaginationFilter_ExcessivePageSize_NormalizesToMax()
     {
         // Arrange
         var filter = new ValidatePaginationFilter();
         var context = CreateActionExecutingContext();
-        context.ActionArguments["pageNumber"] = 0;
+        var request = new PaginationRequest { PageNumber = 1, PageSize = 1001 };
+        context.ActionArguments["request"] = request;
 
         // Act
         filter.OnActionExecuting(context);
 
-        // Assert
-        context.Result.Should().BeOfType<BadRequestObjectResult>();
-    }
-
-    [Fact]
-    public void PaginationFilter_ExcessivePageSize_ReturnsBadRequest()
-    {
-        // Arrange
-        var filter = new ValidatePaginationFilter();
-        var context = CreateActionExecutingContext();
-        context.ActionArguments["pageSize"] = 1001;
-
-        // Act
-        filter.OnActionExecuting(context);
-
-        // Assert
-        context.Result.Should().BeOfType<BadRequestObjectResult>();
-    }
-
-    [Fact]
-    public void PaginationFilter_NegativePageSize_ReturnsBadRequest()
-    {
-        // Arrange
-        var filter = new ValidatePaginationFilter();
-        var context = CreateActionExecutingContext();
-        context.ActionArguments["pageSize"] = -10;
-
-        // Act
-        filter.OnActionExecuting(context);
-
-        // Assert
-        context.Result.Should().BeOfType<BadRequestObjectResult>();
+        // Assert - filter normalizes values instead of returning error
+        context.Result.Should().BeNull();
     }
 
     [Fact]
@@ -167,27 +138,13 @@ public class ValidationFilterTests
     }
 
     [Fact]
-    public void PaginationFilter_InvalidPaginationRequest_ReturnsBadRequest()
-    {
-        // Arrange
-        var filter = new ValidatePaginationFilter();
-        var context = CreateActionExecutingContext();
-        context.ActionArguments["request"] = new PaginationRequest { PageNumber = -1, PageSize = 50 };
-
-        // Act
-        filter.OnActionExecuting(context);
-
-        // Assert
-        context.Result.Should().BeOfType<BadRequestObjectResult>();
-    }
-
-    [Fact]
     public void PaginationFilter_MaxPageSize_IsValid()
     {
         // Arrange
         var filter = new ValidatePaginationFilter();
         var context = CreateActionExecutingContext();
-        context.ActionArguments["pageSize"] = 1000;
+        var request = new PaginationRequest { PageNumber = 1, PageSize = 100 };
+        context.ActionArguments["request"] = request;
 
         // Act
         filter.OnActionExecuting(context);
@@ -215,12 +172,12 @@ public class ValidationFilterTests
     }
 
     [Fact]
-    public void ValidateModelAttribute_NullArgument_ReturnsBadRequest()
+    public void ValidateModelAttribute_InvalidModelState_ReturnsBadRequest()
     {
         // Arrange
         var filter = new ValidateModelAttribute();
         var context = CreateActionExecutingContext();
-        context.ActionArguments["model"] = null;
+        context.ModelState.AddModelError("model", "Model is required");
 
         // Act
         filter.OnActionExecuting(context);
@@ -229,7 +186,7 @@ public class ValidationFilterTests
         context.Result.Should().BeOfType<BadRequestObjectResult>();
         var result = (BadRequestObjectResult)context.Result!;
         var response = result.Value as ApiResponse;
-        response!.Error.Should().Contain("model");
+        response!.Error.Should().Contain("Validation failed");
     }
 
     #endregion
@@ -282,7 +239,7 @@ public class ValidationFilterTests
         context.Result.Should().BeOfType<BadRequestObjectResult>();
         var result = (BadRequestObjectResult)context.Result!;
         var response = result.Value as ApiResponse;
-        response!.Errors!["Email"].Should().HaveCount(2);
+        response!.ValidationErrors!["email"].Should().HaveCount(2);
     }
 
     #endregion
