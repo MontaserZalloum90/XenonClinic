@@ -7,6 +7,7 @@ using XenonClinic.Core.Interfaces;
 using XenonClinic.Infrastructure.Data;
 using XenonClinic.Infrastructure.Services;
 using Xunit;
+using PatientEntity = XenonClinic.Core.Entities.Patient;
 
 namespace XenonClinic.Tests.Sales;
 
@@ -57,7 +58,7 @@ public class SalesServiceSaleTests : IDisposable
         _context.Branches.Add(branch);
 
         // Create test patient
-        var patient = new Patient
+        var patient = new PatientEntity
         {
             Id = _testPatientId,
             FirstName = "Test",

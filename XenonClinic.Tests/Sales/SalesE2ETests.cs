@@ -9,6 +9,7 @@ using XenonClinic.Core.Interfaces;
 using XenonClinic.Infrastructure.Data;
 using XenonClinic.Infrastructure.Services;
 using Xunit;
+using PatientEntity = XenonClinic.Core.Entities.Patient;
 
 namespace XenonClinic.Tests.Sales;
 
@@ -31,9 +32,9 @@ public class SalesE2ETests : IDisposable
     private Branch _branchA1 = null!;
     private Branch _branchA2 = null!;
     private Branch _branchB1 = null!;
-    private Patient _patientA1 = null!;
-    private Patient _patientA2 = null!;
-    private Patient _patientB1 = null!;
+    private PatientEntity _patientA1 = null!;
+    private PatientEntity _patientA2 = null!;
+    private PatientEntity _patientB1 = null!;
 
     private int _sequenceCounter = 0;
 
@@ -135,7 +136,7 @@ public class SalesE2ETests : IDisposable
         _context.Branches.AddRange(_branchA1, _branchA2, _branchB1);
 
         // Create patients
-        _patientA1 = new Patient
+        _patientA1 = new PatientEntity
         {
             Id = 1,
             BranchId = _branchA1.Id,
@@ -145,7 +146,7 @@ public class SalesE2ETests : IDisposable
             Gender = "Male"
         };
 
-        _patientA2 = new Patient
+        _patientA2 = new PatientEntity
         {
             Id = 2,
             BranchId = _branchA2.Id,
@@ -155,7 +156,7 @@ public class SalesE2ETests : IDisposable
             Gender = "Female"
         };
 
-        _patientB1 = new Patient
+        _patientB1 = new PatientEntity
         {
             Id = 3,
             BranchId = _branchB1.Id,
@@ -718,7 +719,7 @@ public class SalesE2ETests : IDisposable
 
     #region Helper Methods
 
-    private async Task<Sale> CreateSaleForPatient(Patient patient, Branch branch, decimal total)
+    private async Task<Sale> CreateSaleForPatient(PatientEntity patient, Branch branch, decimal total)
     {
         var sale = new Sale
         {
@@ -746,7 +747,7 @@ public class SalesE2ETests : IDisposable
         return await _service.CreateSaleAsync(sale);
     }
 
-    private async Task<Sale> CreateAndPaySaleForPatient(Patient patient, Branch branch, decimal amount)
+    private async Task<Sale> CreateAndPaySaleForPatient(PatientEntity patient, Branch branch, decimal amount)
     {
         var sale = await CreateSaleForPatient(patient, branch, amount);
         await _service.ConfirmSaleAsync(sale.Id);

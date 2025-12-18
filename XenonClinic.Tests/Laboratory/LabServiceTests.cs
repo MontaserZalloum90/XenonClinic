@@ -7,6 +7,7 @@ using XenonClinic.Core.Interfaces;
 using XenonClinic.Infrastructure.Data;
 using XenonClinic.Infrastructure.Services;
 using Xunit;
+using PatientEntity = XenonClinic.Core.Entities.Patient;
 
 namespace XenonClinic.Tests.Laboratory;
 
@@ -19,7 +20,7 @@ public class LabServiceTests : IDisposable
     private readonly Mock<ISequenceGenerator> _sequenceGeneratorMock;
     private readonly LabService _service;
     private readonly Branch _testBranch;
-    private readonly Patient _testPatient;
+    private readonly PatientEntity _testPatient;
 
     public LabServiceTests()
     {
@@ -42,7 +43,7 @@ public class LabServiceTests : IDisposable
         };
         _context.Branches.Add(_testBranch);
 
-        _testPatient = new Patient
+        _testPatient = new PatientEntity
         {
             Id = 1,
             FullNameEn = "Test Patient",

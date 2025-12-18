@@ -7,6 +7,7 @@ using XenonClinic.Core.Interfaces;
 using XenonClinic.Infrastructure.Data;
 using XenonClinic.Infrastructure.Services;
 using Xunit;
+using PatientEntity = XenonClinic.Core.Entities.Patient;
 
 namespace XenonClinic.Tests.Financial;
 
@@ -18,7 +19,7 @@ public class FinancialServiceTests : IDisposable
     private readonly ClinicDbContext _context;
     private readonly FinancialService _service;
     private readonly Branch _testBranch;
-    private readonly Patient _testPatient;
+    private readonly PatientEntity _testPatient;
     private readonly Mock<ISequenceGenerator> _mockSequenceGenerator;
 
     public FinancialServiceTests()
@@ -44,7 +45,7 @@ public class FinancialServiceTests : IDisposable
         };
         _context.Branches.Add(_testBranch);
 
-        _testPatient = new Patient
+        _testPatient = new PatientEntity
         {
             Id = 1,
             FullNameEn = "Test Patient",

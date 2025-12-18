@@ -7,6 +7,7 @@ using XenonClinic.Core.Interfaces;
 using XenonClinic.Infrastructure.Data;
 using XenonClinic.Infrastructure.Services;
 using Xunit;
+using PatientEntity = XenonClinic.Core.Entities.Patient;
 
 namespace XenonClinic.Tests.Sales;
 
@@ -53,7 +54,7 @@ public class SalesIntegrationTests : IDisposable
         };
         _context.Branches.Add(branch);
 
-        var patient1 = new Patient
+        var patient1 = new PatientEntity
         {
             Id = _testPatientId,
             FirstName = "Ahmed",
@@ -63,7 +64,7 @@ public class SalesIntegrationTests : IDisposable
             Gender = "Male"
         };
 
-        var patient2 = new Patient
+        var patient2 = new PatientEntity
         {
             Id = _testPatientId2,
             FirstName = "Sara",
