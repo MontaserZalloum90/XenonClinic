@@ -96,7 +96,7 @@ public class MonitoringController : ControllerBase
 
         var summary = new
         {
-            checked = results.Count(),
+            totalChecked = results.Count(),
             healthy = results.Count(r => r.OverallStatus == HealthStatus.Healthy),
             degraded = results.Count(r => r.OverallStatus == HealthStatus.Degraded),
             unhealthy = results.Count(r => r.OverallStatus == HealthStatus.Unhealthy)
