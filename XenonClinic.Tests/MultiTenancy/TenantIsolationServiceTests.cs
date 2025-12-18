@@ -8,6 +8,7 @@ using XenonClinic.Infrastructure.Data;
 using XenonClinic.Infrastructure.Entities;
 using XenonClinic.Infrastructure.Services;
 using Xunit;
+using PatientEntity = XenonClinic.Core.Entities.Patient;
 
 namespace XenonClinic.Tests.MultiTenancy;
 
@@ -332,7 +333,7 @@ public class TenantIsolationServiceTests : IDisposable
         SetupTenantContext(tenantId: null, isSuperAdmin: true);
 
         // Add a patient to branch B1
-        var patient = new Patient
+        var patient = new PatientEntity
         {
             Id = 1,
             BranchId = _branchB1.Id,
@@ -344,7 +345,7 @@ public class TenantIsolationServiceTests : IDisposable
         await _context.SaveChangesAsync();
 
         // Act
-        var result = await _service.ValidateEntityBranchAsync<Patient>(patient.Id);
+        var result = await _service.ValidateEntityBranchAsync<PatientEntity>(patient.Id);
 
         // Assert
         result.Should().BeTrue();
@@ -356,7 +357,7 @@ public class TenantIsolationServiceTests : IDisposable
         // Arrange
         SetupTenantContext(tenantId: 1);
 
-        var patient = new Patient
+        var patient = new PatientEntity
         {
             Id = 2,
             BranchId = _branchA1.Id,
@@ -368,7 +369,7 @@ public class TenantIsolationServiceTests : IDisposable
         await _context.SaveChangesAsync();
 
         // Act
-        var result = await _service.ValidateEntityBranchAsync<Patient>(patient.Id);
+        var result = await _service.ValidateEntityBranchAsync<PatientEntity>(patient.Id);
 
         // Assert
         result.Should().BeTrue();
@@ -380,7 +381,7 @@ public class TenantIsolationServiceTests : IDisposable
         // Arrange
         SetupTenantContext(tenantId: 1);
 
-        var patient = new Patient
+        var patient = new PatientEntity
         {
             Id = 3,
             BranchId = _branchB1.Id,
@@ -392,7 +393,7 @@ public class TenantIsolationServiceTests : IDisposable
         await _context.SaveChangesAsync();
 
         // Act
-        var result = await _service.ValidateEntityBranchAsync<Patient>(patient.Id);
+        var result = await _service.ValidateEntityBranchAsync<PatientEntity>(patient.Id);
 
         // Assert
         result.Should().BeFalse();
@@ -408,15 +409,15 @@ public class TenantIsolationServiceTests : IDisposable
         // Arrange
         var patients = new[]
         {
-            new Patient { Id = 10, BranchId = _branchA1.Id, EmiratesId = "P1", FullNameEn = "P1", DateOfBirth = DateTime.Now },
-            new Patient { Id = 11, BranchId = _branchA2.Id, EmiratesId = "P2", FullNameEn = "P2", DateOfBirth = DateTime.Now },
-            new Patient { Id = 12, BranchId = _branchB1.Id, EmiratesId = "P3", FullNameEn = "P3", DateOfBirth = DateTime.Now }
+            new PatientEntity { Id = 10, BranchId = _branchA1.Id, EmiratesId = "P1", FullNameEn = "P1", DateOfBirth = DateTime.Now },
+            new PatientEntity { Id = 11, BranchId = _branchA2.Id, EmiratesId = "P2", FullNameEn = "P2", DateOfBirth = DateTime.Now },
+            new PatientEntity { Id = 12, BranchId = _branchB1.Id, EmiratesId = "P3", FullNameEn = "P3", DateOfBirth = DateTime.Now }
         };
         _context.Patients.AddRange(patients);
         await _context.SaveChangesAsync();
 
         // Act
-        var result = await _service.AuditEntityIsolationAsync<Patient>();
+        var result = await _service.AuditEntityIsolationAsync<PatientEntity>();
 
         // Assert
         result.EntityType.Should().Be("Patient");

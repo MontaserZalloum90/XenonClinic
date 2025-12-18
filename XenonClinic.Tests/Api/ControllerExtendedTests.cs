@@ -8,6 +8,7 @@ using XenonClinic.Core.Entities;
 using XenonClinic.Core.Interfaces;
 using XenonClinic.Infrastructure.Data;
 using Xunit;
+using PatientEntity = XenonClinic.Core.Entities.Patient;
 
 namespace XenonClinic.Tests.Api;
 
@@ -63,7 +64,7 @@ public class ControllerExtendedTests : IAsyncLifetime
     [Fact]
     public async Task PatientController_GetPatient_ReturnsOk()
     {
-        var patient = new Patient { Id = 1, FullNameEn = "Test Patient", BranchId = 1 };
+        var patient = new PatientEntity { Id = 1, FullNameEn = "Test Patient", BranchId = 1 };
         _mockPatientService.Setup(s => s.GetPatientByIdAsync(1)).ReturnsAsync(patient);
 
         var result = await _mockPatientService.Object.GetPatientByIdAsync(1);
@@ -75,7 +76,7 @@ public class ControllerExtendedTests : IAsyncLifetime
     [Fact]
     public async Task PatientController_GetPatient_NotFound_ReturnsNull()
     {
-        _mockPatientService.Setup(s => s.GetPatientByIdAsync(999)).ReturnsAsync((Patient?)null);
+        _mockPatientService.Setup(s => s.GetPatientByIdAsync(999)).ReturnsAsync((PatientEntity?)null);
 
         var result = await _mockPatientService.Object.GetPatientByIdAsync(999);
 
@@ -85,9 +86,9 @@ public class ControllerExtendedTests : IAsyncLifetime
     [Fact]
     public async Task PatientController_CreatePatient_ReturnsCreated()
     {
-        var newPatient = new Patient { FullNameEn = "New Patient", BranchId = 1 };
-        _mockPatientService.Setup(s => s.CreatePatientAsync(It.IsAny<Patient>()))
-            .ReturnsAsync(new Patient { Id = 1, FullNameEn = "New Patient", BranchId = 1 });
+        var newPatient = new PatientEntity { FullNameEn = "New Patient", BranchId = 1 };
+        _mockPatientService.Setup(s => s.CreatePatientAsync(It.IsAny<PatientEntity>()))
+            .ReturnsAsync(new PatientEntity { Id = 1, FullNameEn = "New Patient", BranchId = 1 });
 
         var result = await _mockPatientService.Object.CreatePatientAsync(newPatient);
 
@@ -98,12 +99,12 @@ public class ControllerExtendedTests : IAsyncLifetime
     [Fact]
     public async Task PatientController_UpdatePatient_ReturnsOk()
     {
-        var patient = new Patient { Id = 1, FullNameEn = "Updated Patient", BranchId = 1 };
-        _mockPatientService.Setup(s => s.UpdatePatientAsync(It.IsAny<Patient>())).Returns(Task.CompletedTask);
+        var patient = new PatientEntity { Id = 1, FullNameEn = "Updated Patient", BranchId = 1 };
+        _mockPatientService.Setup(s => s.UpdatePatientAsync(It.IsAny<PatientEntity>())).Returns(Task.CompletedTask);
 
         await _mockPatientService.Object.UpdatePatientAsync(patient);
 
-        _mockPatientService.Verify(s => s.UpdatePatientAsync(It.IsAny<Patient>()), Times.Once);
+        _mockPatientService.Verify(s => s.UpdatePatientAsync(It.IsAny<PatientEntity>()), Times.Once);
     }
 
     [Fact]
@@ -122,7 +123,7 @@ public class ControllerExtendedTests : IAsyncLifetime
     [InlineData("Test")]
     public async Task PatientController_SearchPatients_ReturnsMatches(string searchTerm)
     {
-        var patients = new List<Patient>
+        var patients = new List<PatientEntity>
         {
             new() { Id = 1, FullNameEn = $"{searchTerm} Patient", BranchId = 1 }
         };
@@ -136,7 +137,7 @@ public class ControllerExtendedTests : IAsyncLifetime
     [Fact]
     public async Task PatientController_GetPatientsByBranch_ReturnsOk()
     {
-        var patients = new List<Patient>
+        var patients = new List<PatientEntity>
         {
             new() { Id = 1, FullNameEn = "Patient 1", BranchId = 1 },
             new() { Id = 2, FullNameEn = "Patient 2", BranchId = 1 }
@@ -154,7 +155,7 @@ public class ControllerExtendedTests : IAsyncLifetime
     [InlineData(50)]
     public async Task PatientController_GetPatient_VariousIds_ReturnsCorrectPatient(int patientId)
     {
-        var patient = new Patient { Id = patientId, FullNameEn = $"Patient {patientId}", BranchId = 1 };
+        var patient = new PatientEntity { Id = patientId, FullNameEn = $"Patient {patientId}", BranchId = 1 };
         _mockPatientService.Setup(s => s.GetPatientByIdAsync(patientId)).ReturnsAsync(patient);
 
         var result = await _mockPatientService.Object.GetPatientByIdAsync(patientId);
@@ -560,10 +561,10 @@ public class ControllerExtendedTests : IAsyncLifetime
     [Fact]
     public async Task Controller_ServiceThrowsDbException_PropagatesError()
     {
-        _mockPatientService.Setup(s => s.CreatePatientAsync(It.IsAny<Patient>()))
+        _mockPatientService.Setup(s => s.CreatePatientAsync(It.IsAny<PatientEntity>()))
             .ThrowsAsync(new DbUpdateException("Database error"));
 
-        var action = () => _mockPatientService.Object.CreatePatientAsync(new Patient());
+        var action = () => _mockPatientService.Object.CreatePatientAsync(new PatientEntity());
 
         await action.Should().ThrowAsync<DbUpdateException>();
     }
@@ -572,7 +573,7 @@ public class ControllerExtendedTests : IAsyncLifetime
     public async Task Controller_NullInput_HandledGracefully()
     {
         _mockPatientService.Setup(s => s.SearchPatientsAsync(1, null!))
-            .ReturnsAsync(new List<Patient>());
+            .ReturnsAsync(new List<PatientEntity>());
 
         var result = await _mockPatientService.Object.SearchPatientsAsync(1, null!);
 
@@ -587,7 +588,7 @@ public class ControllerExtendedTests : IAsyncLifetime
     public async Task Controller_ConcurrentGetRequests_AllSucceed()
     {
         _mockPatientService.Setup(s => s.GetPatientByIdAsync(It.IsAny<int>()))
-            .ReturnsAsync((int id) => new Patient { Id = id, FullNameEn = $"Patient {id}", BranchId = 1 });
+            .ReturnsAsync((int id) => new PatientEntity { Id = id, FullNameEn = $"Patient {id}", BranchId = 1 });
 
         var tasks = Enumerable.Range(1, 50)
             .Select(id => _mockPatientService.Object.GetPatientByIdAsync(id))
@@ -602,11 +603,11 @@ public class ControllerExtendedTests : IAsyncLifetime
     public async Task Controller_ConcurrentCreateRequests_AllSucceed()
     {
         var counter = 0;
-        _mockPatientService.Setup(s => s.CreatePatientAsync(It.IsAny<Patient>()))
-            .ReturnsAsync((Patient p) => new Patient { Id = ++counter, FullNameEn = p.FullNameEn, BranchId = 1 });
+        _mockPatientService.Setup(s => s.CreatePatientAsync(It.IsAny<PatientEntity>()))
+            .ReturnsAsync((PatientEntity p) => new PatientEntity { Id = ++counter, FullNameEn = p.FullNameEn, BranchId = 1 });
 
         var tasks = Enumerable.Range(1, 20)
-            .Select(i => _mockPatientService.Object.CreatePatientAsync(new Patient { FullNameEn = $"Patient {i}", BranchId = 1 }))
+            .Select(i => _mockPatientService.Object.CreatePatientAsync(new PatientEntity { FullNameEn = $"Patient {i}", BranchId = 1 }))
             .ToList();
 
         var results = await Task.WhenAll(tasks);
@@ -626,7 +627,7 @@ public class ControllerExtendedTests : IAsyncLifetime
     public async Task Controller_GetWithPagination_ReturnsCorrectPage(int page, int pageSize)
     {
         var totalPatients = Enumerable.Range(1, 100)
-            .Select(i => new Patient { Id = i, FullNameEn = $"Patient {i}", BranchId = 1 })
+            .Select(i => new PatientEntity { Id = i, FullNameEn = $"Patient {i}", BranchId = 1 })
             .ToList();
 
         var pagedPatients = totalPatients
