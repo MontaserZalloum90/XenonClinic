@@ -1,5 +1,6 @@
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
+using Moq;
 using XenonClinic.Core.Entities;
 using XenonClinic.Core.Enums;
 using XenonClinic.Core.Interfaces;
@@ -17,6 +18,7 @@ public class HRServiceExtendedTests : IAsyncLifetime
 {
     private ClinicDbContext _context = null!;
     private IHRService _hrService = null!;
+    private Mock<ISequenceGenerator> _sequenceGeneratorMock = null!;
 
     public async Task InitializeAsync()
     {
@@ -25,7 +27,10 @@ public class HRServiceExtendedTests : IAsyncLifetime
             .Options;
 
         _context = new ClinicDbContext(options);
-        _hrService = new HRService(_context);
+        _sequenceGeneratorMock = new Mock<ISequenceGenerator>();
+        _sequenceGeneratorMock.Setup(x => x.GenerateAsync(It.IsAny<string>(), It.IsAny<int?>()))
+            .ReturnsAsync("HR-0001");
+        _hrService = new HRService(_context, _sequenceGeneratorMock.Object);
         await SeedExtendedTestDataAsync();
     }
 
