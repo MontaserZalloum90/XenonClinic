@@ -2,7 +2,7 @@
 FROM node:20-alpine AS base
 WORKDIR /app
 
-# Install dependencies using npm workspaces
+# Install dependencies
 FROM base AS deps
 # Copy root package files for workspace support
 COPY package.json package-lock.json ./
@@ -12,7 +12,7 @@ COPY Xenon.PublicWebsite/package.json ./Xenon.PublicWebsite/
 # Create dummy directory for admin workspace (required by npm workspaces)
 RUN mkdir -p XenonClinic.React && echo '{"name":"xenonclinic-react","version":"0.0.0"}' > XenonClinic.React/package.json
 # Install all workspace dependencies
-RUN npm ci --workspace=Shared.UI --workspace=Xenon.PublicWebsite
+RUN npm ci
 
 # Build shared library
 FROM deps AS shared-build

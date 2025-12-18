@@ -8,20 +8,18 @@ FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 
-# Copy solution and project files
-COPY ["XenonClinic.sln", "."]
-COPY ["XenonClinic.Core/XenonClinic.Core.csproj", "XenonClinic.Core/"]
-COPY ["XenonClinic.Infrastructure/XenonClinic.Infrastructure.csproj", "XenonClinic.Infrastructure/"]
+# Copy solution and project files for Xenon.Platform
+COPY ["Xenon.Platform/Xenon.Platform.sln", "Xenon.Platform/"]
 COPY ["Xenon.Platform/src/Xenon.Platform.Domain/Xenon.Platform.Domain.csproj", "Xenon.Platform/src/Xenon.Platform.Domain/"]
 COPY ["Xenon.Platform/src/Xenon.Platform.Application/Xenon.Platform.Application.csproj", "Xenon.Platform/src/Xenon.Platform.Application/"]
 COPY ["Xenon.Platform/src/Xenon.Platform.Infrastructure/Xenon.Platform.Infrastructure.csproj", "Xenon.Platform/src/Xenon.Platform.Infrastructure/"]
 COPY ["Xenon.Platform/src/Xenon.Platform.Api/Xenon.Platform.Api.csproj", "Xenon.Platform/src/Xenon.Platform.Api/"]
 
 # Restore dependencies
-RUN dotnet restore "Xenon.Platform/src/Xenon.Platform.Api/Xenon.Platform.Api.csproj"
+RUN dotnet restore "Xenon.Platform/Xenon.Platform.sln"
 
 # Copy everything else
-COPY . .
+COPY Xenon.Platform/ Xenon.Platform/
 
 # Build
 WORKDIR "/src/Xenon.Platform/src/Xenon.Platform.Api"
