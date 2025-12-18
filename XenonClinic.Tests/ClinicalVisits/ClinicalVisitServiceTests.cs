@@ -11,6 +11,7 @@ using XenonClinic.Core.Interfaces;
 using XenonClinic.Infrastructure.Data;
 using XenonClinic.Infrastructure.Services;
 using Xunit;
+using PatientEntity = XenonClinic.Core.Entities.Patient;
 
 namespace XenonClinic.Tests.ClinicalVisits;
 
@@ -39,7 +40,7 @@ public class ClinicalVisitServiceTests : IDisposable
     private void SeedTestData()
     {
         // Create test patient
-        var patient = new Patient
+        var patient = new PatientEntity
         {
             Id = _testPatientId,
             BranchId = _testBranchId,

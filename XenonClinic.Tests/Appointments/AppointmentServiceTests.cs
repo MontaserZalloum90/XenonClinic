@@ -6,6 +6,7 @@ using XenonClinic.Core.Interfaces;
 using XenonClinic.Infrastructure.Data;
 using XenonClinic.Infrastructure.Services;
 using Xunit;
+using PatientEntity = XenonClinic.Core.Entities.Patient;
 
 namespace XenonClinic.Tests.Appointments;
 
@@ -56,7 +57,7 @@ public class AppointmentServiceTests : IAsyncLifetime
         };
         _context.Branches.Add(branch);
 
-        var patient = new Patient
+        var patient = new PatientEntity
         {
             Id = 1,
             BranchId = 1,

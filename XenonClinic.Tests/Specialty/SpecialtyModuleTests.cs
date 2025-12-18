@@ -7,6 +7,7 @@ using XenonClinic.Core.Entities.Ophthalmology;
 using XenonClinic.Core.Entities.Dermatology;
 using XenonClinic.Infrastructure.Data;
 using Xunit;
+using PatientEntity = XenonClinic.Core.Entities.Patient;
 
 namespace XenonClinic.Tests.Specialty;
 
@@ -42,10 +43,10 @@ public class SpecialtyModuleTests : IAsyncLifetime
         _context.Branches.Add(branch);
 
         // Seed patients
-        var patients = new List<Patient>();
+        var patients = new List<PatientEntity>();
         for (int i = 1; i <= 100; i++)
         {
-            patients.Add(new Patient
+            patients.Add(new PatientEntity
             {
                 Id = i,
                 BranchId = 1,
