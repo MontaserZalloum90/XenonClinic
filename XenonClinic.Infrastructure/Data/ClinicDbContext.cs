@@ -134,9 +134,9 @@ public class ClinicDbContext : IdentityDbContext<Entities.ApplicationUser>
     public DbSet<DoctorSchedule> DoctorSchedules => Set<DoctorSchedule>();
 
     // Authentication configuration entities
-    public DbSet<Entities.CompanyAuthSettings> CompanyAuthSettings => Set<Entities.CompanyAuthSettings>();
-    public DbSet<Entities.CompanyIdentityProvider> CompanyIdentityProviders => Set<Entities.CompanyIdentityProvider>();
-    public DbSet<Entities.UserMfaConfiguration> UserMfaConfigurations => Set<Entities.UserMfaConfiguration>();
+    public DbSet<CompanyAuthSettings> CompanyAuthSettings => Set<CompanyAuthSettings>();
+    public DbSet<CompanyIdentityProvider> CompanyIdentityProviders => Set<CompanyIdentityProvider>();
+    public DbSet<UserMfaConfiguration> UserMfaConfigurations => Set<UserMfaConfiguration>();
 
     // Case Management entities
     public DbSet<Case> Cases => Set<Case>();
