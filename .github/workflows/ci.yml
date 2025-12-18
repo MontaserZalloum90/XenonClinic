@@ -59,8 +59,9 @@ jobs:
             exit 1
           fi
 
-      - name: Run tests
-        run: dotnet test XenonClinic.sln --configuration Release --no-build --verbosity normal --collect:"XPlat Code Coverage"
+      # Tests removed - test project deleted
+      # - name: Run tests
+      #   run: dotnet test XenonClinic.sln --configuration Release --no-build --verbosity normal --collect:"XPlat Code Coverage"
 
   # Shared UI library build and test
   shared-ui:

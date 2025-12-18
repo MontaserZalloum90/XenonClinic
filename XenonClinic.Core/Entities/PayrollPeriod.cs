@@ -48,6 +48,7 @@ public class Payslip
     public decimal FoodAllowance { get; set; }
     public decimal OtherAllowances { get; set; }
     public decimal Overtime { get; set; }
+    public decimal OvertimePay { get; set; }
     public decimal Bonus { get; set; }
     public decimal Commission { get; set; }
     public decimal GrossPay { get; set; }
@@ -55,6 +56,7 @@ public class Payslip
     // Deductions
     public decimal SocialInsurance { get; set; }
     public decimal HealthInsurance { get; set; }
+    public decimal PensionContribution { get; set; }
     public decimal Tax { get; set; }
     public decimal LoanDeduction { get; set; }
     public decimal AdvanceDeduction { get; set; }
@@ -72,6 +74,15 @@ public class Payslip
     public string Status { get; set; } = "Calculated"; // Calculated, Approved, Paid
     public DateTime? PaidDate { get; set; }
     public string? PaymentReference { get; set; }
+
+    // Year-to-date totals
+    public decimal YtdGross { get; set; }
+    public decimal YtdTax { get; set; }
+    public decimal YtdNet { get; set; }
+
+    // Leave balances
+    public decimal AnnualLeaveBalance { get; set; }
+    public decimal SickLeaveBalance { get; set; }
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? UpdatedAt { get; set; }

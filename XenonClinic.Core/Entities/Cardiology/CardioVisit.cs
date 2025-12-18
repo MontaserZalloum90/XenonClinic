@@ -7,6 +7,7 @@ public class CardioVisit
     public int Id { get; set; }
     public int PatientId { get; set; }
     public int BranchId { get; set; }
+    public int? ProviderId { get; set; }
     public int? AppointmentId { get; set; }
     public DateTime VisitDate { get; set; }
     public string? ChiefComplaint { get; set; }

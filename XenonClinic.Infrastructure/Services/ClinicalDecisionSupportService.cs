@@ -1409,7 +1409,7 @@ public class ClinicalDecisionSupportService : IClinicalDecisionSupportService
         return await Task.FromResult(true);
     }
 
-    public Task<Core.Interfaces.MedicationSafetyCheckResultDto> PerformMedicationSafetyCheckAsync(int patientId, string medicationCode, DosageCheckRequestDto? dosageInfo = null)
+    public Task<MedicationSafetyCheckResultDto> PerformMedicationSafetyCheckAsync(int patientId, string medicationCode, DosageCheckRequestDto? dosageInfo = null)
     {
         throw new NotImplementedException();
     }

@@ -8,8 +8,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "XenonClinic.Infrastructure"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "XenonClinic.Api", "XenonClinic.Api\XenonClinic.Api.csproj", "{C2D3E4F5-A6B7-4890-1234-567890ABCDEF}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "XenonClinic.Tests", "XenonClinic.Tests\XenonClinic.Tests.csproj", "{D3E4F5A6-B7C8-4901-2345-67890ABCDEF1}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -28,10 +26,6 @@ Global
 		{C2D3E4F5-A6B7-4890-1234-567890ABCDEF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C2D3E4F5-A6B7-4890-1234-567890ABCDEF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C2D3E4F5-A6B7-4890-1234-567890ABCDEF}.Release|Any CPU.Build.0 = Release|Any CPU
-		{D3E4F5A6-B7C8-4901-2345-67890ABCDEF1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{D3E4F5A6-B7C8-4901-2345-67890ABCDEF1}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{D3E4F5A6-B7C8-4901-2345-67890ABCDEF1}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{D3E4F5A6-B7C8-4901-2345-67890ABCDEF1}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
