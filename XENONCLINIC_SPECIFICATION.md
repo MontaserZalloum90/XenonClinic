@@ -4,9 +4,10 @@
   <overview>
     XenonClinic is a comprehensive, multi-tenant healthcare management system (ERP) designed for clinics,
     hospitals, and healthcare organizations. The system provides complete patient care, clinical documentation,
-    financial management, HR/payroll, inventory control, and support for 14+ medical specialties. Built with
-    modern clean architecture principles, the platform offers multi-tenancy with data isolation, role-based
-    access control, and extensive customization capabilities including custom UI schemas and terminology per tenant.
+    financial management, sales and billing, procurement, HR/payroll, inventory control, and support for 22+
+    medical specialties. Built with modern clean architecture principles, the platform offers multi-tenancy
+    with data isolation, role-based access control, telemedicine support, FHIR/HL7 interoperability, and
+    extensive customization capabilities including custom UI schemas and terminology per tenant.
   </overview>
 
   <technology_stack>
@@ -61,12 +62,13 @@
     <statistics>
       <total_code_lines>44,592+ (services alone)</total_code_lines>
       <api_endpoints>401+</api_endpoints>
-      <database_entities>118+</database_entities>
-      <controllers>20+</controllers>
-      <services>40+</services>
-      <dtos>27+</dtos>
-      <enums>30+</enums>
-      <specialty_modules>14+</specialty_modules>
+      <database_entities>306+</database_entities>
+      <controllers>19+</controllers>
+      <services>60+</services>
+      <dtos>707+</dtos>
+      <enums>150+</enums>
+      <specialty_modules>22+</specialty_modules>
+      <formally_defined_modules>10</formally_defined_modules>
     </statistics>
   </architecture>
 
@@ -431,6 +433,112 @@
         - WpsSubmission - WPS submission records
       </entities>
     </payroll_module>
+
+    <sales_module>
+      <description>Complete sales and billing management</description>
+      <features>
+        - Sales order creation and management
+        - Quotation/estimate generation
+        - Quotation to sale conversion
+        - Sales confirmation and completion workflow
+        - Patient-linked sales tracking
+        - Overdue sales monitoring
+        - Payment recording and tracking
+        - Partial payment support
+        - Sales statistics and analytics
+        - Discount and pricing management
+        - Sales item line management
+        - Sales cancellation workflow
+        - Sales history and reporting
+      </features>
+      <entities>
+        - Sale - Sales transaction records
+        - SaleItem - Individual line items in sales
+        - Quotation - Pre-sales estimates/quotes
+        - QuotationItem - Quotation line items
+        - Payment - Payment records linked to sales
+      </entities>
+      <enums>
+        - SaleStatus (Draft, Confirmed, Completed, Cancelled)
+        - QuotationStatus (Draft, Sent, Accepted, Rejected, Expired)
+        - PaymentStatus (Pending, Completed, Failed, Refunded)
+      </enums>
+      <api_endpoints>
+        - GET /api/sales - List all sales with filtering
+        - GET /api/sales/{id} - Get sale details
+        - GET /api/sales/patient/{patientId} - Get patient's sales history
+        - GET /api/sales/overdue - Get overdue/unpaid sales
+        - POST /api/sales - Create new sale
+        - PUT /api/sales/{id}/confirm - Confirm sale
+        - PUT /api/sales/{id}/complete - Mark sale as complete
+        - PUT /api/sales/{id}/cancel - Cancel sale
+        - DELETE /api/sales/{id} - Delete sale
+        - GET /api/sales/{id}/payments - Get sale payments
+        - POST /api/sales/{id}/payments - Record payment for sale
+        - GET /api/sales/quotations - List quotations
+        - GET /api/sales/quotations/{id} - Get quotation details
+        - POST /api/sales/quotations - Create quotation
+        - PUT /api/sales/quotations/{id} - Update quotation
+        - POST /api/sales/quotations/{id}/accept - Accept quotation
+        - POST /api/sales/quotations/{id}/reject - Reject quotation
+        - POST /api/sales/quotations/{id}/convert - Convert quotation to sale
+        - GET /api/sales/statistics - Get sales statistics and KPIs
+      </api_endpoints>
+    </sales_module>
+
+    <procurement_module>
+      <description>Complete procurement and purchasing management</description>
+      <features>
+        - Purchase order creation and management
+        - Supplier/vendor management
+        - Goods receipt processing
+        - Purchase order approval workflow
+        - Supplier payment tracking
+        - Purchase order status tracking (Draft, Approved, Ordered, Received, Closed)
+        - Partial receipt handling
+        - External lab management for outsourced services
+        - Quotation request from suppliers
+        - Price comparison
+        - Supplier performance tracking
+        - Reorder point management
+        - Purchase history and reporting
+      </features>
+      <entities>
+        - PurchaseOrder - Purchase order records
+        - PurchaseOrderItem - PO line items
+        - GoodsReceipt - Goods receipt records
+        - GoodsReceiptItem - Receipt line items
+        - Supplier - Vendor/supplier information
+        - SupplierPayment - Supplier payment records
+        - ExternalLab - External lab partnerships
+      </entities>
+      <enums>
+        - PurchaseOrderStatus (Draft, Approved, Ordered, PartiallyReceived, Received, Closed, Cancelled)
+        - GoodsReceiptStatus (Pending, PartiallyReceived, Completed, Rejected)
+        - SupplierPaymentStatus (Pending, Paid, PartiallyPaid, Overdue)
+      </enums>
+      <api_endpoints>
+        - GET /api/procurement/purchase-orders - List purchase orders
+        - GET /api/procurement/purchase-orders/{id} - Get PO details
+        - POST /api/procurement/purchase-orders - Create purchase order
+        - PUT /api/procurement/purchase-orders/{id} - Update purchase order
+        - PUT /api/procurement/purchase-orders/{id}/approve - Approve PO
+        - PUT /api/procurement/purchase-orders/{id}/cancel - Cancel PO
+        - DELETE /api/procurement/purchase-orders/{id} - Delete PO
+        - GET /api/procurement/goods-receipts - List goods receipts
+        - POST /api/procurement/goods-receipts - Create goods receipt
+        - PUT /api/procurement/goods-receipts/{id} - Update goods receipt
+        - GET /api/procurement/suppliers - List suppliers
+        - GET /api/procurement/suppliers/{id} - Get supplier details
+        - POST /api/procurement/suppliers - Create supplier
+        - PUT /api/procurement/suppliers/{id} - Update supplier
+        - DELETE /api/procurement/suppliers/{id} - Delete supplier
+        - GET /api/procurement/suppliers/{id}/payments - Get supplier payments
+        - POST /api/procurement/suppliers/{id}/payments - Record supplier payment
+        - GET /api/procurement/external-labs - List external labs
+        - POST /api/procurement/external-labs - Add external lab
+      </api_endpoints>
+    </procurement_module>
   </core_modules>
 
   <specialty_modules>
@@ -822,27 +930,298 @@
         - Campaign status management
       </features>
       <entities>Lead, Campaign, MarketingActivity, LeadSource, CampaignStatus</entities>
+      <enums>LeadSource, LeadStatus, CampaignStatus, CampaignType</enums>
     </marketing_crm>
+
+    <communication_notifications>
+      <description>Multi-channel communication and notification system</description>
+      <features>
+        - In-app messaging between patients and providers
+        - Message threads with attachments
+        - Email notifications
+        - SMS notifications
+        - WhatsApp integration
+        - Push notifications (mobile and web)
+        - Notification templates with multi-language support
+        - Scheduled notifications
+        - Topic-based subscriptions
+        - Device registration and management
+        - Notification preferences per user
+        - Delivery tracking and history
+        - Appointment reminders
+        - Lab result notifications
+        - Prescription refill reminders
+      </features>
+      <entities>
+        - MessageThread - Conversation threads
+        - Message - Individual messages
+        - MessageAttachment - Message attachments
+        - PatientNotification - Notification records
+        - NotificationPreferences - User notification settings
+        - NotificationTemplate - Notification templates
+        - NotificationTemplateLocalization - Multi-language templates
+        - ScheduledPushNotification - Scheduled notifications
+        - PushNotificationHistoryEntry - Notification history
+        - PushDevice - Registered devices
+        - PushNotificationTopic - Notification topics
+        - TopicSubscription - Topic subscriptions
+        - PushConfiguration - Push service configuration
+      </entities>
+      <services>IPushNotificationService, IEmailService, ISmsService, IWhatsAppService</services>
+    </communication_notifications>
+
+    <telemedicine>
+      <description>Virtual care and telemedicine support</description>
+      <features>
+        - Telemedicine appointment scheduling
+        - Virtual visit support
+        - Doctor telemedicine availability flag
+        - Telemedicine meeting links in appointments
+        - Video consultation integration
+        - Remote patient monitoring support
+        - Virtual waiting room concept
+        - Telemedicine-specific appointment types
+      </features>
+      <entities>
+        - Doctor.OffersTelemedicine - Doctor telemedicine availability
+        - Appointment.IsTelemedicine - Telemedicine appointment flag
+        - Appointment.TelemedicineLink - Video call link
+      </entities>
+    </telemedicine>
+
+    <fhir_hl7_integration>
+      <description>Healthcare interoperability standards compliance</description>
+      <features>
+        - HL7 FHIR R4 compliance
+        - FHIR resource mapping
+        - Patient resource export
+        - Observation resources
+        - DiagnosticReport resources
+        - Medication resources
+        - Encounter resources
+        - Practitioner resources
+        - Healthcare data exchange
+        - Interoperability with external systems
+      </features>
+      <services>IFhirService</services>
+      <standards>HL7 FHIR R4, HL7 v2.x support</standards>
+    </fhir_hl7_integration>
+
+    <clinical_decision_support>
+      <description>AI-assisted clinical decision support system</description>
+      <features>
+        - Drug-drug interaction checking
+        - Drug-allergy interaction alerts
+        - Clinical guidelines recommendations
+        - Diagnostic suggestions
+        - Treatment protocol guidance
+        - Critical value alerts
+        - Duplicate therapy detection
+        - Dosage recommendations
+        - Clinical reminders
+        - Evidence-based medicine support
+      </features>
+      <services>IClinicalDecisionSupportService, IDrugDatabaseService</services>
+      <api_endpoints>
+        - GET /api/cds/drug-interactions - Check drug interactions
+        - GET /api/cds/allergy-check - Check patient allergies
+        - GET /api/cds/recommendations - Get clinical recommendations
+        - GET /api/cds/guidelines - Get clinical guidelines
+      </api_endpoints>
+    </clinical_decision_support>
+
+    <consent_management>
+      <description>Patient consent and privacy management</description>
+      <features>
+        - Digital consent form creation
+        - Consent form templates
+        - Multi-language consent forms
+        - Electronic signature capture
+        - Consent history tracking
+        - Consent expiration management
+        - Consent revocation
+        - HIPAA compliance support
+        - GDPR compliance support
+        - Consent audit trail
+        - Procedure-specific consents
+        - Research consent tracking
+      </features>
+      <entities>
+        - PatientConsent - Patient consent records
+        - ConsentHistory - Consent change history
+        - ConsentFormTemplate - Reusable consent templates
+      </entities>
+      <services>IConsentService</services>
+      <api_endpoints>
+        - GET /api/consent/templates - List consent templates
+        - POST /api/consent/templates - Create consent template
+        - GET /api/consent/patient/{patientId} - Get patient consents
+        - POST /api/consent - Record patient consent
+        - PUT /api/consent/{id}/revoke - Revoke consent
+        - GET /api/consent/{id}/history - Get consent history
+      </api_endpoints>
+    </consent_management>
+
+    <oauth_authentication>
+      <description>OAuth and multi-provider authentication</description>
+      <features>
+        - OAuth 2.0 support
+        - Multiple identity provider support
+        - Google authentication
+        - Microsoft/Azure AD authentication
+        - Social login integration
+        - Dynamic authentication configuration
+        - Multi-factor authentication (MFA)
+        - Company-specific auth settings
+        - OAuth account linking
+        - Token management
+        - Session management
+        - SSO (Single Sign-On) support
+      </features>
+      <entities>
+        - OAuthLinkedAccount - Linked OAuth accounts
+        - OAuthConfig - OAuth provider configuration
+        - OAuthState - OAuth state tokens
+        - CompanyAuthSettings - Company auth configuration
+        - CompanyIdentityProvider - Identity provider setup
+        - UserMfaConfiguration - User MFA settings
+      </entities>
+      <services>IOAuthService, IDynamicAuthenticationService, ICompanyAuthConfigService, IMfaService</services>
+    </oauth_authentication>
+
+    <backup_disaster_recovery>
+      <description>Backup and disaster recovery management</description>
+      <features>
+        - Automated database backups
+        - Scheduled backup jobs
+        - Backup validation
+        - Point-in-time recovery
+        - Backup history tracking
+        - Restore capabilities
+        - Off-site backup support
+        - Backup retention policies
+        - Backup encryption
+        - Recovery testing
+      </features>
+      <entities>BackupRecord - Backup history and metadata</entities>
+      <services>IBackupService</services>
+      <api_endpoints>
+        - GET /api/backup/history - Get backup history
+        - POST /api/backup/create - Trigger backup
+        - POST /api/backup/restore - Restore from backup
+        - GET /api/backup/status - Get backup status
+      </api_endpoints>
+    </backup_disaster_recovery>
+
+    <background_jobs>
+      <description>Background job processing and scheduling</description>
+      <features>
+        - Scheduled job execution
+        - Report generation jobs
+        - Email notification jobs
+        - Data cleanup jobs
+        - Sync jobs (calendar, external systems)
+        - Job status monitoring
+        - Job retry logic
+        - Job history tracking
+        - Cron-based scheduling
+      </features>
+      <services>IBackgroundJobService</services>
+      <api_endpoints>
+        - GET /api/jobs - List scheduled jobs
+        - GET /api/jobs/{id} - Get job details
+        - POST /api/jobs/{id}/run - Trigger job manually
+        - PUT /api/jobs/{id}/pause - Pause job
+        - GET /api/jobs/history - Get job execution history
+      </api_endpoints>
+    </background_jobs>
+
+    <file_storage>
+      <description>File and document storage management</description>
+      <features>
+        - Cloud storage integration
+        - Local file storage
+        - Document versioning
+        - File type validation
+        - File size limits
+        - Secure file access
+        - File encryption at rest
+        - Temporary file handling
+        - Image optimization
+        - PDF generation
+      </features>
+      <services>IFileStorageService</services>
+    </file_storage>
+
+    <localization>
+      <description>Multi-language and localization support</description>
+      <features>
+        - Multi-language UI
+        - RTL (Right-to-Left) language support
+        - Arabic language support
+        - Date/time localization
+        - Number formatting
+        - Currency formatting
+        - Translatable notification templates
+        - Per-tenant terminology customization
+      </features>
+      <services>ILocalizationService</services>
+    </localization>
+
+    <theme_customization>
+      <description>UI theme and branding customization</description>
+      <features>
+        - Custom color schemes
+        - Logo customization
+        - Per-tenant branding
+        - Light/dark mode
+        - Custom CSS support
+        - Component theming
+      </features>
+      <services>IThemeService</services>
+    </theme_customization>
+
+    <license_management>
+      <description>License and feature licensing</description>
+      <features>
+        - Feature-based licensing
+        - Module activation/deactivation
+        - License validation
+        - Usage tracking per license
+        - License expiration handling
+        - Feature flags
+      </features>
+      <entities>LicenseConfig, Feature, TenantFeature</entities>
+      <services>ILicenseValidator, ILicenseGuardService</services>
+    </license_management>
   </advanced_features>
 
   <database_schema>
     <overview>
-      <total_entities>118+</total_entities>
+      <total_entities>306+</total_entities>
       <lookup_entities>25+</lookup_entities>
       <multi_tenant_entities>15+</multi_tenant_entities>
       <specialty_module_entities>60+</specialty_module_entities>
       <configuration_entities>10+</configuration_entities>
+      <total_enums>150+</total_enums>
     </overview>
 
     <core_tables>
-      <multi_tenancy>Tenants, Companies, Branches, TenantSettings, CompanySettings, Features, TenantFeatures</multi_tenancy>
-      <patient_clinical>Patients, PatientMedicalHistory, PatientDocuments, PatientAllergies, Appointments, ClinicalVisits, Diagnoses, Procedures, Prescriptions, VitalSigns</patient_clinical>
-      <financial>Invoices, Payments, Accounts, Expenses, FinancialTransactions, Vouchers, InsuranceClaims</financial>
-      <inventory>InventoryItems, InventoryTransactions, Suppliers, PurchaseOrders, GoodsReceipts</inventory>
-      <hr_payroll>Employees, Doctors, Attendance, LeaveRequests, PerformanceReviews, Departments, JobPositions, PayrollPeriods, Payslips</hr_payroll>
-      <laboratory>LabTests, LabOrders, LabResults, ExternalLabs</laboratory>
-      <radiology>DicomStudies, DicomSeries, DicomInstances, RadiologyReports, PacsServerConfigs</radiology>
-      <pharmacy>FormularyDrugs, DrugPricings, ControlledSubstances, DrugAdverseEvents</pharmacy>
+      <multi_tenancy>Tenants, Companies, Branches, TenantSettings, CompanySettings, Features, TenantFeatures, TenantTerminology, TenantUISchema, TenantFormLayout, TenantListLayout, TenantNavigation, UserBranch</multi_tenancy>
+      <patient_clinical>Patients, PatientMedicalHistory, PatientDocuments, PatientAllergies, PatientInsurance, PatientConsent, Appointments, ClinicalVisits, Diagnoses, Procedures, Prescriptions, VitalSigns, Visits</patient_clinical>
+      <sales>Sales, SaleItems, Quotations, QuotationItems, Payments</sales>
+      <procurement>PurchaseOrders, PurchaseOrderItems, GoodsReceipts, GoodsReceiptItems, Suppliers, SupplierPayments, ExternalLabs</procurement>
+      <financial>Invoices, InvoicePayments, Accounts, FinancialAccounts, FinancialTransactions, Expenses, ExpenseCategories, Vouchers, VoucherLines, InsuranceClaims, InsuranceClaimItems, InsurancePreAuthorizations, PaymentGatewayConfigs, PaymentGatewayTransactions</financial>
+      <inventory>InventoryItems, InventoryTransactions</inventory>
+      <hr_payroll>Employees, Doctors, Attendance, AttendanceRecords, LeaveRequests, PerformanceReviews, Departments, JobPositions, PayrollPeriods, Payslips, SalaryComponents, TaxConfigurations, WpsSubmissions</hr_payroll>
+      <laboratory>LabTests, LabOrders, LabOrderItems, LabResults, ExternalLabs, SpecimenTypes, TestCategories</laboratory>
+      <radiology>DicomStudies, DicomSeries, DicomInstances, DicomWorklistEntries, RadiologyReports, PacsServerConfigs</radiology>
+      <pharmacy>FormularyDrugs, DrugPricings, ControlledSubstanceInfo, DrugAdverseEvents, DrugDatabaseUpdates, PatientAssistancePrograms</pharmacy>
+      <communication>MessageThreads, Messages, MessageAttachments, PatientNotifications, NotificationPreferences, NotificationTemplates, PushDevices, PushNotificationTopics, TopicSubscriptions, ScheduledPushNotifications, PushNotificationHistoryEntries</communication>
+      <analytics>AnalyticsDashboards, AnalyticsDashboardWidgets, AnalyticsAlerts, AnalyticsAlertRules, AnalyticsAnomalies, DashboardShares, CustomReportDefinitions, ReportSchedules, SavedReports, ReportWidgets</analytics>
+      <security>Roles, Permissions, RolePermissions, UserRoles, UserPermissions, DataAccessRules, SecuritySettings, ApiKeys, PasswordHistory, AuditLogs</security>
+      <case_management>Cases, CaseTypes, CaseStatuses, CaseNotes, CaseActivities</case_management>
+      <marketing>Leads, Campaigns, MarketingActivities</marketing>
     </core_tables>
 
     <base_entity_fields>
@@ -1040,6 +1419,71 @@
       - GET /api/security/users/{id}/permissions
       - PUT /api/security/users/{id}/permissions
     </security>
+
+    <sales>
+      - GET /api/sales - List sales
+      - GET /api/sales/{id} - Get sale details
+      - POST /api/sales - Create sale
+      - PUT /api/sales/{id}/confirm - Confirm sale
+      - PUT /api/sales/{id}/complete - Complete sale
+      - PUT /api/sales/{id}/cancel - Cancel sale
+      - DELETE /api/sales/{id} - Delete sale
+      - GET /api/sales/patient/{patientId} - Get patient sales
+      - GET /api/sales/overdue - Get overdue sales
+      - GET /api/sales/{id}/payments - Get sale payments
+      - POST /api/sales/{id}/payments - Record payment
+      - GET /api/sales/quotations - List quotations
+      - POST /api/sales/quotations - Create quotation
+      - POST /api/sales/quotations/{id}/accept - Accept quotation
+      - POST /api/sales/quotations/{id}/reject - Reject quotation
+      - POST /api/sales/quotations/{id}/convert - Convert to sale
+      - GET /api/sales/statistics - Sales statistics
+    </sales>
+
+    <procurement>
+      - GET /api/procurement/purchase-orders - List POs
+      - POST /api/procurement/purchase-orders - Create PO
+      - GET /api/procurement/purchase-orders/{id} - Get PO details
+      - PUT /api/procurement/purchase-orders/{id} - Update PO
+      - PUT /api/procurement/purchase-orders/{id}/approve - Approve PO
+      - PUT /api/procurement/purchase-orders/{id}/cancel - Cancel PO
+      - GET /api/procurement/goods-receipts - List goods receipts
+      - POST /api/procurement/goods-receipts - Create goods receipt
+      - GET /api/procurement/suppliers - List suppliers
+      - POST /api/procurement/suppliers - Create supplier
+      - PUT /api/procurement/suppliers/{id} - Update supplier
+      - GET /api/procurement/suppliers/{id}/payments - Supplier payments
+      - POST /api/procurement/suppliers/{id}/payments - Record payment
+      - GET /api/procurement/external-labs - List external labs
+    </procurement>
+
+    <consent>
+      - GET /api/consent/templates - List consent templates
+      - POST /api/consent/templates - Create consent template
+      - GET /api/consent/patient/{patientId} - Get patient consents
+      - POST /api/consent - Record consent
+      - PUT /api/consent/{id}/revoke - Revoke consent
+    </consent>
+
+    <clinical_decision_support>
+      - GET /api/cds/drug-interactions - Check drug interactions
+      - GET /api/cds/allergy-check - Check patient allergies
+      - GET /api/cds/recommendations - Get clinical recommendations
+    </clinical_decision_support>
+
+    <backup>
+      - GET /api/backup/history - Get backup history
+      - POST /api/backup/create - Trigger backup
+      - POST /api/backup/restore - Restore from backup
+      - GET /api/backup/status - Get backup status
+    </backup>
+
+    <jobs>
+      - GET /api/jobs - List scheduled jobs
+      - GET /api/jobs/{id} - Get job details
+      - POST /api/jobs/{id}/run - Trigger job
+      - PUT /api/jobs/{id}/pause - Pause job
+    </jobs>
   </api_endpoints_summary>
 
   <ui_layout>
@@ -1058,11 +1502,16 @@
       - Appointments section
       - Clinical section (Visits, Lab, Radiology)
       - Pharmacy section
-      - Financial section (Invoices, Payments, Expenses)
-      - Inventory section
-      - HR section (Employees, Attendance, Leave)
-      - Specialty modules (expandable)
-      - Reports section
+      - Sales section (Sales, Quotations, Payments)
+      - Procurement section (Purchase Orders, Suppliers, Goods Receipt)
+      - Financial section (Invoices, Payments, Expenses, Insurance Claims)
+      - Inventory section (Items, Stock, Transactions)
+      - HR section (Employees, Attendance, Leave, Performance)
+      - Payroll section (Payroll, Payslips, WPS)
+      - Specialty modules (expandable - 22+ specialties)
+      - Marketing section (Leads, Campaigns)
+      - Case Management section
+      - Analytics & Reports section
       - Settings at bottom
       - User profile at bottom
     </sidebar_navigation>
@@ -1330,12 +1779,280 @@
     </step>
   </implementation_steps>
 
+  <gaps_missing_modules>
+    <description>
+      The following healthcare modules are NOT currently implemented as dedicated modules in the system.
+      These represent potential areas for future development to create a complete hospital management solution.
+    </description>
+
+    <hospital_operations>
+      <nursing_module>
+        <status>NOT IMPLEMENTED</status>
+        <description>Dedicated nursing care management</description>
+        <missing_features>
+          - Nursing care plans
+          - Nursing assessments
+          - Medication administration records (MAR)
+          - Nursing shift handover
+          - Patient care schedules
+          - Nursing notes and documentation
+          - Nurse-to-patient assignment
+        </missing_features>
+      </nursing_module>
+
+      <operating_room_management>
+        <status>NOT IMPLEMENTED</status>
+        <description>Surgery and operating room scheduling</description>
+        <missing_features>
+          - OR scheduling and booking
+          - Surgery team allocation
+          - Pre-operative assessments
+          - Post-operative care tracking
+          - Anesthesia records
+          - Surgical equipment tracking
+          - OR utilization reports
+        </missing_features>
+        <note>General procedures are tracked but no dedicated OR management</note>
+      </operating_room_management>
+
+      <emergency_department>
+        <status>NOT IMPLEMENTED</status>
+        <description>Emergency department operations</description>
+        <missing_features>
+          - Triage system
+          - Emergency case prioritization
+          - Trauma tracking
+          - Emergency protocols
+          - Resuscitation records
+          - ED-specific workflows
+        </missing_features>
+        <note>Only emergency access/contact fields exist in general entities</note>
+      </emergency_department>
+
+      <icu_management>
+        <status>NOT IMPLEMENTED</status>
+        <description>Intensive care unit management</description>
+        <missing_features>
+          - ICU bed management
+          - Ventilator tracking
+          - Continuous monitoring integration
+          - ICU scoring systems (APACHE, SOFA)
+          - ICU-specific vital signs
+          - Critical care protocols
+        </missing_features>
+      </icu_management>
+
+      <bed_management>
+        <status>NOT IMPLEMENTED</status>
+        <description>Hospital bed and room management</description>
+        <missing_features>
+          - Bed allocation and assignment
+          - Room occupancy tracking
+          - Bed cleaning status
+          - Transfer management
+          - Admission/discharge bed workflow
+          - Bed utilization reports
+        </missing_features>
+      </bed_management>
+
+      <discharge_management>
+        <status>NOT IMPLEMENTED</status>
+        <description>Patient discharge workflow</description>
+        <missing_features>
+          - Discharge summaries
+          - Discharge instructions
+          - Follow-up scheduling at discharge
+          - Discharge checklist
+          - Take-home medications
+          - Discharge coordination
+        </missing_features>
+      </discharge_management>
+
+      <queue_management>
+        <status>NOT IMPLEMENTED</status>
+        <description>Patient queue and waiting room management</description>
+        <missing_features>
+          - Digital queuing system
+          - Waiting time tracking
+          - Queue displays
+          - Token/number generation
+          - Department-wise queues
+          - Priority queuing
+        </missing_features>
+      </queue_management>
+    </hospital_operations>
+
+    <support_services>
+      <blood_bank>
+        <status>NOT IMPLEMENTED</status>
+        <description>Blood bank and transfusion services</description>
+        <missing_features>
+          - Blood inventory management
+          - Donor registration and management
+          - Blood grouping and cross-matching
+          - Transfusion tracking
+          - Blood component separation
+          - Blood expiry tracking
+          - Donor appointment scheduling
+        </missing_features>
+      </blood_bank>
+
+      <mortuary_services>
+        <status>NOT IMPLEMENTED</status>
+        <description>Mortuary and death records management</description>
+        <missing_features>
+          - Death certificate generation
+          - Body storage management
+          - Release authorization
+          - Autopsy records
+          - Funeral home coordination
+        </missing_features>
+      </mortuary_services>
+
+      <sterilization_cssd>
+        <status>NOT IMPLEMENTED</status>
+        <description>Central Sterile Services Department</description>
+        <missing_features>
+          - Instrument sterilization tracking
+          - Sterilization cycles
+          - Instrument set management
+          - Sterility validation
+          - Equipment maintenance
+        </missing_features>
+      </sterilization_cssd>
+
+      <kitchen_dietary>
+        <status>NOT IMPLEMENTED</status>
+        <description>Kitchen and dietary management</description>
+        <missing_features>
+          - Patient diet orders
+          - Meal planning and preparation
+          - Dietary restrictions tracking
+          - Kitchen inventory
+          - Meal delivery scheduling
+          - Nutritionist consultations
+        </missing_features>
+      </kitchen_dietary>
+
+      <housekeeping>
+        <status>NOT IMPLEMENTED</status>
+        <description>Hospital housekeeping management</description>
+        <missing_features>
+          - Cleaning schedules
+          - Room cleaning status
+          - Housekeeping task assignment
+          - Cleaning supplies inventory
+          - Infection control cleaning
+        </missing_features>
+      </housekeeping>
+
+      <linen_laundry>
+        <status>NOT IMPLEMENTED</status>
+        <description>Linen and laundry management</description>
+        <missing_features>
+          - Linen inventory
+          - Laundry schedules
+          - Linen distribution
+          - Contaminated linen handling
+        </missing_features>
+      </linen_laundry>
+
+      <maintenance_management>
+        <status>NOT IMPLEMENTED</status>
+        <description>Facility and equipment maintenance</description>
+        <missing_features>
+          - Preventive maintenance schedules
+          - Work order management
+          - Equipment breakdown tracking
+          - Maintenance staff assignment
+          - Spare parts inventory
+          - Equipment calibration
+        </missing_features>
+      </maintenance_management>
+
+      <asset_management>
+        <status>NOT IMPLEMENTED</status>
+        <description>Hospital asset and equipment tracking</description>
+        <missing_features>
+          - Asset registry
+          - Asset depreciation
+          - Asset location tracking
+          - Asset maintenance history
+          - Asset lifecycle management
+        </missing_features>
+        <note>Only equipment references exist in current system</note>
+      </asset_management>
+    </support_services>
+
+    <quality_compliance>
+      <quality_management>
+        <status>NOT IMPLEMENTED</status>
+        <description>Quality management system</description>
+        <missing_features>
+          - Incident reporting
+          - Corrective actions (CAPA)
+          - Quality indicators
+          - Accreditation tracking
+          - Policy management
+          - Quality audits
+        </missing_features>
+      </quality_management>
+
+      <infection_control>
+        <status>NOT IMPLEMENTED</status>
+        <description>Infection control and surveillance</description>
+        <missing_features>
+          - Nosocomial infection tracking
+          - Outbreak management
+          - Infection control protocols
+          - Hand hygiene compliance
+          - Antibiotic stewardship
+          - Isolation management
+        </missing_features>
+      </infection_control>
+
+      <referral_management>
+        <status>PARTIAL</status>
+        <description>Patient referral tracking</description>
+        <missing_features>
+          - Dedicated referral module
+          - Referral tracking and status
+          - External referral management
+          - Referral reports
+        </missing_features>
+        <note>Only referral fields exist in insurance plan; no dedicated referral workflow</note>
+      </referral_management>
+    </quality_compliance>
+
+    <recommendations>
+      <priority_high>
+        - Bed Management (critical for inpatient facilities)
+        - Nursing Module (essential for hospital operations)
+        - Discharge Management (patient safety and continuity)
+        - Queue Management (patient experience)
+      </priority_high>
+      <priority_medium>
+        - Operating Room Management (surgical facilities)
+        - ICU Management (critical care units)
+        - Blood Bank (hospitals with transfusion services)
+        - Quality Management (accreditation requirements)
+      </priority_medium>
+      <priority_low>
+        - Mortuary Services (specialized facilities)
+        - Kitchen/Dietary (large hospitals)
+        - Housekeeping (can use external systems)
+        - Laundry Management (can use external systems)
+      </priority_low>
+    </recommendations>
+  </gaps_missing_modules>
+
   <success_criteria>
     <functionality>
       - All 401+ API endpoints functional
       - Multi-tenancy with complete data isolation
-      - All 14+ specialty modules operational
+      - All 22+ specialty modules operational
       - Patient lifecycle fully managed
+      - Sales and procurement workflows complete
       - Financial operations complete
       - Lab and radiology workflows functional
     </functionality>
